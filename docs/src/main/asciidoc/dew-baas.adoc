@@ -1,0 +1,24 @@
+ifndef::imagesdir[:imagesdir: . ]
+:_imagesdir: {imagesdir}
+:imagesdir: {_imagesdir}/_chapter
+
+== Dew BaaS 平台
+:revnumber: 20201001
+:author: gudaoxuri
+:doctype: book
+:encoding: utf-8
+:lang: zh-CN
+:toc: left
+:toclevels: 4
+:toc-title: 章节
+:numbered:
+:data-uri:
+:allow-uri-read:
+:imagesoutdir: .asciidoctor
+
+.版本
+|===
+|版本号 |修订内容  |修改时间 |修改人
+
+|20201001 |初始化文档 |2020-10-01 |蒋震宇
+|===
