@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.domain.ident;
+package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.common.service.domain.IdEntity;
+import idealworld.dew.baas.common.service.domain.SafeEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -28,33 +28,42 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 账号扩展信息.
+ * 角色定义信息.
  *
  * @author gudaoxuri
  */
 @Entity
-@Table(name = "iam_account_ext", indexes = {
-        @Index(columnList = "relAccountId"),
-        @Index(columnList = "code")
+@Table(name = "iam_role_def", indexes = {
+        @Index(columnList = "relTenantId,relAppId,code", unique = true)
 })
-@org.hibernate.annotations.Table(appliesTo = "iam_account_ext",
-        comment = "账号扩展信息")
+@org.hibernate.annotations.Table(appliesTo = "iam_role_def",
+        comment = "角色定义信息")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class AccountExt extends IdEntity {
+public class RuleDef extends SafeEntity {
 
     @Column(nullable = false,
-            columnDefinition = "varchar(255) comment '字段编码'")
+            columnDefinition = "varchar(255) comment '角色定义编码'")
     private String code;
 
     @Column(nullable = false,
-            columnDefinition = "varchar(2000) comment '字段值'")
-    private String value;
+            columnDefinition = "varchar(255) comment '角色定义名称'")
+    private String name;
 
     @Column(nullable = false,
-            columnDefinition = "bigint comment '关联账号Id'")
-    private Long relAccountId;
+            columnDefinition = "int comment '显示排序，asc'")
+    private Integer sort;
+
+    // 为空表示是系统或租户管理员
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联应用Id'")
+    private Long relAppId;
+
+    // 为空表示是系统或租户管理员
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联租户Id'")
+    private Long relTenantId;
 
 }

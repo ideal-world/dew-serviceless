@@ -2,7 +2,7 @@ ifndef::imagesdir[:imagesdir: . ]
 :_imagesdir: {imagesdir}
 :imagesdir: {_imagesdir}/_chapter
 
-== Dew BaaS 平台
+= Dew BaaS 平台
 :revnumber: 20201001
 :author: gudaoxuri
 :doctype: book
@@ -22,3 +22,17 @@ ifndef::imagesdir[:imagesdir: . ]
 
 |20201001 |初始化文档 |2020-10-01 |蒋震宇
 |===
+
+include::../../../../README.adoc[]
+include::./_chapter/quick-start.adoc[]
+include::./_chapter/user-manual.adoc[]
+include::./_chapter/configuration.adoc[]
+include::./_chapter/best-practices.adoc[]
+include::../../../../CONTRIBUTING.adoc[]
+include::../../../../CHANGELOG.adoc[]
+== 架构设计
+include::./_chapter/design/design-summary.adoc[]
+=== 各服务设计
+include::./_chapter/design/design-services-iam.adoc[]
+
+

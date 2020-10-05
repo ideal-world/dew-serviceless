@@ -27,7 +27,13 @@ import lombok.experimental.SuperBuilder;
 import javax.persistence.*;
 
 /**
- * 租户认证信息.
+ * 租户认证配置.
+ * <p>
+ * 用于指定当前租户可使用的认证类型及个性化配置。
+ * <p>
+ * {@link AccountIdentKind#USERNAME} 为基础认证，所有租户都必须包含此认证类型。
+ * <p>
+ * 所有认证类型都支持使用自己的AK及基础认证的SK(密码)作为认证方式。
  *
  * @author gudaoxuri
  */
@@ -37,7 +43,7 @@ import javax.persistence.*;
         @Index(columnList = "status")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_tenant_ident",
-        comment = "租户认证信息")
+        comment = "租户认证配置")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

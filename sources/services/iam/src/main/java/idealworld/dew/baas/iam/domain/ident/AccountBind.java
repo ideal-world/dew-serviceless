@@ -26,7 +26,7 @@ import lombok.experimental.SuperBuilder;
 import javax.persistence.*;
 
 /**
- * 账号绑定信息.
+ * 账号绑定.
  *
  * @author gudaoxuri
  */
@@ -36,7 +36,7 @@ import javax.persistence.*;
         @Index(columnList = "toTenantId,toAccountId")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_bind",
-        comment = "账号绑定信息")
+        comment = "账号绑定")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

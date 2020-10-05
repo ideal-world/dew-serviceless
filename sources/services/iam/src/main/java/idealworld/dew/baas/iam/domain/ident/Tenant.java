@@ -29,7 +29,11 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 租户信息.
+ * 租户.
+ * <p>
+ * 数据隔离单位，不同租户间的数据不能直接共享。
+ * <p>
+ * 一个租户可以有多个应用。
  *
  * @author gudaoxuri
  */
@@ -38,7 +42,7 @@ import javax.persistence.Table;
         @Index(columnList = "status")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_tenant",
-        comment = "租户信息")
+        comment = "租户")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

@@ -1,0 +1,13 @@
+:projectdir: ../../../../../..
+
+[[design-services-iam]]
+==== 用户权限服务TBD
+
+==== 数据模型
+
+[source,java]
+----
+include::{projectdir}/sources/services/iam/src/main/java/idealworld/dew/baas/iam/domain/ident/Tenant.java[]
+----
+
+

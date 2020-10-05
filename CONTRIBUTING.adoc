@@ -1,0 +1,23 @@
+== 开发指南
+
+``Dew-BAAS`` 基于 Apache 2.0 license 分发，如果您要向 ``Dew`` 贡献代码或 Fork 为自己的分支项目请遵循许可证要求。
+
+SCM： https://github.com/ideal-world/dew-saas[https://github.com/ideal-world/dew-saas]
+
+Issues： https://github.com/ideal-world/dew-saas/issues
+
+=== 代码要求
+
+本项目使用修改版的Google CheckStyle做为代码规范，规则文件见 ``checkstyle.xml``。
+
+代码的变更需要有有对应的单元/集成测试。
+
+提交前请运行 ``mvn clean test -P qa``，确认代码通过CheckStyle检查和测试。
+
+发起 ``Pull Request`` 后会调用 ``travis-ci`` 和 ``codacy`` 进行自动化代码检查，如有问题不会执行 ``Merge`` 。
+
+=== 环境要求TBD
+
+
+
+

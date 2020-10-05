@@ -45,12 +45,16 @@ import javax.persistence.Table;
 public class Rule extends SafeEntity {
 
     @Column(nullable = false,
-            columnDefinition = "varchar(255) comment '角色编码'")
-    private String code;
+            columnDefinition = "bigint comment '关联角色定义Id'")
+    private String relRoleDefId;
 
     @Column(nullable = false,
-            columnDefinition = "varchar(255) comment '角色名称'")
-    private String name;
+            columnDefinition = "bigint comment '关联群组Id'")
+    private String relGroupId;
+
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联群组节点Id'")
+    private String relGroupNodeId;
 
     @Column(nullable = false,
             columnDefinition = "int comment '显示排序，asc'")

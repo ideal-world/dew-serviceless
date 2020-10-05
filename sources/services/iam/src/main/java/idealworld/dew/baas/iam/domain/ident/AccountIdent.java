@@ -27,7 +27,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 /**
- * 账号认证信息.
+ * 账号认证.
  *
  * @author gudaoxuri
  */
@@ -39,7 +39,7 @@ import java.util.Date;
         @Index(columnList = "relAccountId,kind,validStartTime,validEndTime")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_ident",
-        comment = "账号认证信息")
+        comment = "账号认证")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

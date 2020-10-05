@@ -27,7 +27,7 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 记录删除信息.
+ * 记录删除日志.
  *
  * @author gudaoxuri
  */
@@ -36,7 +36,7 @@ import javax.persistence.Table;
         @Index(columnList = "kind,entityName")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_del_record",
-        comment = "记录删除信息")
+        comment = "记录删除日志")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

@@ -29,7 +29,9 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 应用信息.
+ * 应用.
+ * <p>
+ * 面向业务系统，一般而言，一个应用对应于一个业务系统，但并不强制这种一对一的关系。
  *
  * @author gudaoxuri
  */
@@ -39,7 +41,7 @@ import javax.persistence.Table;
         @Index(columnList = "status")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_app",
-        comment = "应用信息")
+        comment = "应用")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

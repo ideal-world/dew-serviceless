@@ -28,7 +28,13 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 账号凭证信息.
+ * 租户凭证配置.
+ * <p>
+ * 用于指定当前租户凭证类型及个性化配置。
+ * <p>
+ * 一个账号可以有一个或多个凭证，每个凭证类型有各自可保留的版本数量。
+ * <p>
+ * 此模型用于处理单点、单终端、多终端同时登录的问题。
  *
  * @author gudaoxuri
  */
@@ -37,28 +43,24 @@ import javax.persistence.Table;
         @Index(columnList = "relAccountId,kind")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_cert",
-        comment = "账号凭证信息")
+        comment = "账号凭证")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class AccountCert extends SafeEntity {
+public class TenantCert extends SafeEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(255) comment '凭证类型名称'")
-    private String kind;
+    private String category;
 
     @Column(nullable = false,
             columnDefinition = "tinyint comment '凭证保留的版本数量'")
     private Integer version;
 
     @Column(nullable = false,
-            columnDefinition = "bigint comment '凭证有效时间（秒）'")
-    private Long validTimeSec;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联账号Id'")
-    private Long relAccountId;
+            columnDefinition = "bigint comment '关联租户Id'")
+    private Long relTenantId;
 
 
 }

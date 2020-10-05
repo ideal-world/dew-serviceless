@@ -16,7 +16,7 @@
 
 package idealworld.dew.baas.iam.domain.ident;
 
-import idealworld.dew.baas.common.service.domain.SafeEntity;
+import idealworld.dew.baas.common.service.domain.IdEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -28,26 +28,30 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 账号应用关联.
+ * 账号扩展值.
  *
  * @author gudaoxuri
  */
 @Entity
-@Table(name = "iam_account_app", indexes = {
+@Table(name = "iam_account_ext_value", indexes = {
         @Index(columnList = "relAccountId"),
-        @Index(columnList = "relAppId")
+        @Index(columnList = "code")
 })
-@org.hibernate.annotations.Table(appliesTo = "iam_account_app",
-        comment = "账号应用关联")
+@org.hibernate.annotations.Table(appliesTo = "iam_account_ext_value",
+        comment = "账号扩展值")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class AccountApp extends SafeEntity {
+public class AccountExtValue extends IdEntity {
 
     @Column(nullable = false,
-            columnDefinition = "bigint comment '关联应用Id'")
-    private Long relAppId;
+            columnDefinition = "varchar(255) comment '字段编码'")
+    private String code;
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(2000) comment '字段值'")
+    private String value;
 
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联账号Id'")

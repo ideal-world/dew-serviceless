@@ -30,7 +30,9 @@ import javax.persistence.Table;
 import java.util.Date;
 
 /**
- * 应用认证信息.
+ * 应用认证.
+ *
+ *
  *
  * @author gudaoxuri
  */
@@ -41,7 +43,7 @@ import java.util.Date;
         @Index(columnList = "status")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_app_ident",
-        comment = "应用认证信息")
+        comment = "应用认证")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

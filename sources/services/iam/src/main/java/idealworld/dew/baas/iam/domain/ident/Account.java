@@ -29,7 +29,11 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 账号信息.
+ * 账号.
+ * <p>
+ * 用户身份单位。
+ * <p>
+ * 隶属于租户，即便是同一个自然人在不同租户间也会有各自的账号，同一租户的不同应用共享账号信息。
  *
  * @author gudaoxuri
  */
@@ -39,13 +43,16 @@ import javax.persistence.Table;
         @Index(columnList = "openId", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account",
-        comment = "账号信息")
+        comment = "账号")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class Account extends SafeEntity {
 
+    /**
+     * OpenId是账号对外提供的主键，给业务方使用，用于标识账号唯一性的字段。
+     */
     @Column(nullable = false,
             columnDefinition = "varchar(100) comment 'Open Id'")
     private String openId;
@@ -62,8 +69,13 @@ public class Account extends SafeEntity {
             columnDefinition = "varchar(2000) comment '账号扩展信息，Json格式'")
     private String parameters;
 
+    /**
+     * 父子账号可用于支持RAM（ Resource Access Management）用户功能。
+     * <p>
+     * 父子账号间OpenId相同。
+     */
     @Column(nullable = false,
-            columnDefinition = "bigint comment '父账号Id'")
+            columnDefinition = "bigint comment '父账号Id，不存在时为空'")
     private Long parentId;
 
     @Column(nullable = false,

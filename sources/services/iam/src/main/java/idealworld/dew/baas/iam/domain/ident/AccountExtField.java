@@ -25,22 +25,22 @@ import lombok.experimental.SuperBuilder;
 import javax.persistence.*;
 
 /**
- * 账号字段信息.
+ * 账号扩展字段配置.
  *
  * @author gudaoxuri
  */
 @Entity
-@Table(name = "iam_account_field", indexes = {
+@Table(name = "iam_account_ext_field", indexes = {
         @Index(columnList = "relTenantId,relAppId"),
         @Index(columnList = "code")
 })
-@org.hibernate.annotations.Table(appliesTo = "iam_account_field",
-        comment = "账号字段信息")
+@org.hibernate.annotations.Table(appliesTo = "iam_account_ext_field",
+        comment = "账号扩展字段配置")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class AccountField extends SafeEntity {
+public class AccountExtField extends SafeEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(255) comment '字段编码，同租户、应用下唯一'")
