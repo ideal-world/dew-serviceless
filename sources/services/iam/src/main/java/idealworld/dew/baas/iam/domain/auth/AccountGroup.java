@@ -28,19 +28,17 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 账号群组信息.
+ * 账号群组.
  *
  * @author gudaoxuri
  */
 @Entity
 @Table(name = "iam_account_group", indexes = {
-        @Index(columnList = "relAccountId,relGroupId,relGroupNodeId", unique = true),
-        @Index(columnList = "relAccountId"),
-        @Index(columnList = "relGroupId"),
+        @Index(columnList = "relAccountId,relGroupNodeId", unique = true),
         @Index(columnList = "relGroupNodeId")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_group",
-        comment = "账号群组信息")
+        comment = "账号群组")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
@@ -50,10 +48,6 @@ public class AccountGroup extends SafeEntity {
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联账号Id'")
     private Long relAccountId;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联群组Id'")
-    private Long relGroupId;
 
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联群组节点Id'")

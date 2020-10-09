@@ -34,7 +34,7 @@ public enum ResourceKind {
     /**
      * HTTP(s).
      */
-    HTTP("HTTP"),
+    API("API"),
     /**
      * 菜单.
      */
@@ -44,11 +44,11 @@ public enum ResourceKind {
      */
     ELEMENT("ELEMENT"),
     /**
-     * Reldb.
+     * 关系数据库.
      */
     RELDB("RELDB"),
     /**
-     * Cache.
+     * 缓存.
      */
     CACHE("CACHE"),
     /**
@@ -56,9 +56,9 @@ public enum ResourceKind {
      */
     MQ("MQ"),
     /**
-     * Object Storage.
+     * 对象存储.
      */
-    OBJ("OBJ");
+    OBJECT("OBJECT");
 
     private final String code;
 

@@ -31,8 +31,7 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "iam_account_ext_field", indexes = {
-        @Index(columnList = "relTenantId,relAppId"),
-        @Index(columnList = "code")
+        @Index(columnList = "relTenantId,relAppId,code", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_ext_field",
         comment = "账号扩展字段配置")

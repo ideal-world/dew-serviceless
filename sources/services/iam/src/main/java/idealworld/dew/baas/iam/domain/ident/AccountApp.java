@@ -34,7 +34,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "iam_account_app", indexes = {
-        @Index(columnList = "relAccountId"),
+        @Index(columnList = "relAccountId,relAppId", unique = true),
         @Index(columnList = "relAppId")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_app",

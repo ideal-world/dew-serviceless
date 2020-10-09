@@ -28,16 +28,16 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 角色信息.
+ * 角色.
  *
  * @author gudaoxuri
  */
 @Entity
 @Table(name = "iam_role", indexes = {
-        @Index(columnList = "relTenantId,relAppId,code", unique = true)
+        @Index(columnList = "relRoleDefId,relGroupNodeId", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_role",
-        comment = "角色信息")
+        comment = "角色")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
@@ -49,10 +49,6 @@ public class Rule extends SafeEntity {
     private String relRoleDefId;
 
     @Column(nullable = false,
-            columnDefinition = "bigint comment '关联群组Id'")
-    private String relGroupId;
-
-    @Column(nullable = false,
             columnDefinition = "bigint comment '关联群组节点Id'")
     private String relGroupNodeId;
 
@@ -60,12 +56,10 @@ public class Rule extends SafeEntity {
             columnDefinition = "int comment '显示排序，asc'")
     private Integer sort;
 
-    // 为空表示是系统或租户管理员
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联应用Id'")
     private Long relAppId;
 
-    // 为空表示是系统或租户管理员
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联租户Id'")
     private Long relTenantId;

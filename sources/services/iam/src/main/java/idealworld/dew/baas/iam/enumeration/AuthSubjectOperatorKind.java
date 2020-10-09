@@ -21,52 +21,56 @@ import idealworld.dew.baas.common.resp.StandardResp;
 import java.util.Arrays;
 
 /**
- * 权限主体类型枚举.
+ * 权限主体运算类型枚举.
  *
  * @author gudaoxuri
  */
-public enum AuthSubjectKind {
+public enum AuthSubjectOperatorKind {
 
     /**
-     * 租户.
+     * 等于.
      */
-    TENANT("TENANT"),
+    EQ("EQ"),
     /**
-     * 应用.
+     * 不等于.
      */
-    APP("APP"),
+    NEQ("NEQ"),
     /**
-     * 角色.
+     * 包含.
+     * <p>
+     * 可用于群组当前及祖父节点
      */
-    ROLE("ROLE"),
+    INCLUDE("INCLUDE"),
     /**
-     * 群组节点.
+     * 不包含.
      */
-    GROUP_NODE("GROUP_NODE"),
+    EXCLUSIVE("EXCLUSIVE"),
     /**
-     * 账户.
+     * LIKE.
+     * <p>
+     * 用于群组当前及子孙节点
      */
-    ACCOUNT("ACCOUNT");
+    LIKE("LIKE");
 
     private final String code;
 
-    AuthSubjectKind(String code) {
+    AuthSubjectOperatorKind(String code) {
         this.code = code;
     }
 
     /**
-     * Parse auth subject kind.
+     * Parse auth subject operator kind.
      *
      * @param code the code
-     * @return the auth subject kind
+     * @return the auth subject operator kind
      */
-    public static AuthSubjectKind parse(String code) {
-        return Arrays.stream(AuthSubjectKind.values())
+    public static AuthSubjectOperatorKind parse(String code) {
+        return Arrays.stream(AuthSubjectOperatorKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Auth Subject kind {" + code + "} NOT exist.")));
+                                "Auth Subject Operator kind {" + code + "} NOT exist.")));
     }
 
     @Override

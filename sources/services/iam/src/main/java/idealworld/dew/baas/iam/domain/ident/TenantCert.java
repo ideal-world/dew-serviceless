@@ -40,10 +40,10 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "iam_account_cert", indexes = {
-        @Index(columnList = "relAccountId,kind")
+        @Index(columnList = "relTenantId,category", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_cert",
-        comment = "账号凭证")
+        comment = "租户凭证配置")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

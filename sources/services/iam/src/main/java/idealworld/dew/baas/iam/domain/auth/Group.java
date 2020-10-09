@@ -26,17 +26,16 @@ import lombok.experimental.SuperBuilder;
 import javax.persistence.*;
 
 /**
- * 群组信息.
+ * 群组.
  *
  * @author gudaoxuri
  */
 @Entity
 @Table(name = "iam_group", indexes = {
-        @Index(columnList = "relAppId"),
-        @Index(columnList = "relTenantId")
+        @Index(columnList = "relTenantId,relAppId,name", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_group",
-        comment = "群组信息")
+        comment = "群组")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

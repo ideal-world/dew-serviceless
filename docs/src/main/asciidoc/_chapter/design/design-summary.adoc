@@ -1,2 +1,41 @@
 [[design-summary]]
 === 概要设计TBD
+
+==== 核心流程
+
+应用/用户
+
+http://0.0.0.0/
+
+head: _Dew_Token_ = xxxx
+head: _Dew_App_Id_ = xxxx
+
+GET/POST/PUT/DELETE/PATCH
+fetch/create/modify/delete/patch
+
+http://.../res?<resource uri>
+
+Dew.init(
+ {
+   api: <default resource subject code>,
+   sql: <default resource subject code>,
+   cache: <default resource subject code>,
+   mq: <default resource subject code>,
+   object: <default resource subject code>,
+   menu: <default resource subject code>,
+   element: <default resource subject code>,
+ }
+)
+
+Dew.api.fetch/delete('<path?query>')
+Dew.api.create/modify/patch('<path?query>','<body>')
+Dew.sql('<sql>')
+Dew.cache.fetch/delete('<key>')
+Dew.cache.create/modify('<key>','<value>')
+Dew.mq.delete('<topic>')
+Dew.mq.subscribe('<topic>',(msg) => {})
+Dew.object.fetch/delete('<key>')
+Dew.object.create/modify('<key>','<value>')
+Dew.menu.fetch()
+Dew.element.fetch()
+

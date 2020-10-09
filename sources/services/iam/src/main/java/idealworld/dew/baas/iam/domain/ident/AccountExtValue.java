@@ -34,8 +34,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "iam_account_ext_value", indexes = {
-        @Index(columnList = "relAccountId"),
-        @Index(columnList = "code")
+        @Index(columnList = "relAccountId,code", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_ext_value",
         comment = "账号扩展值")

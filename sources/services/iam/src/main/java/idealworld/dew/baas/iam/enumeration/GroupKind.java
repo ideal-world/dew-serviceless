@@ -43,10 +43,10 @@ public enum GroupKind {
     }
 
     /**
-     * Parse organization kind.
+     * Parse group kind.
      *
      * @param code the code
-     * @return the organization kind
+     * @return the group kind
      */
     public static GroupKind parse(String code) {
         return Arrays.stream(GroupKind.values())
@@ -54,7 +54,7 @@ public enum GroupKind {
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Organization kind {" + code + "} NOT exist.")));
+                                "Group kind {" + code + "} NOT exist.")));
     }
 
     @Override

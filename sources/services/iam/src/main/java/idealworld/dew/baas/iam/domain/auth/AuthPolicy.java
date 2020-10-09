@@ -20,25 +20,27 @@ import idealworld.dew.baas.common.service.domain.SafeEntity;
 import idealworld.dew.baas.iam.enumeration.AuthActionKind;
 import idealworld.dew.baas.iam.enumeration.AuthResultKind;
 import idealworld.dew.baas.iam.enumeration.AuthSubjectKind;
+import idealworld.dew.baas.iam.enumeration.AuthSubjectOperatorKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.persistence.*;
+import java.util.Date;
 
 /**
- * 权限策略信息.
+ * 权限策略.
  *
  * @author gudaoxuri
  */
 @Entity
 @Table(name = "iam_auth_policy", indexes = {
-        @Index(columnList = "relSubjectKind,relSubjectId,relResourceId,actionKind", unique = true),
+        @Index(columnList = "relSubjectKind,relSubjectId,effectiveTime,expiredTime,relResourceId,actionKind", unique = true),
         @Index(columnList = "relResourceId,actionKind")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_auth_policy",
-        comment = "权限策略信息")
+        comment = "权限策略")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
@@ -46,13 +48,25 @@ import javax.persistence.*;
 public class AuthPolicy extends SafeEntity {
 
     @Column(nullable = false,
-            columnDefinition = "varchar(100) comment '关联权限主体类型名称'")
+            columnDefinition = "varchar(20) comment '关联权限主体类型名称'")
     @Enumerated(EnumType.STRING)
     private AuthSubjectKind relSubjectKind;
 
     @Column(nullable = false,
-            columnDefinition = "bigint comment '关联权限主体Id'")
-    private Long relSubjectId;
+            columnDefinition = "varchar(10000) comment '关联权限主体Ids,有多个时逗号分隔'")
+    private String relSubjectIds;
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(20) comment '关联权限主体运算类型名称'")
+    private AuthSubjectOperatorKind subjectOperator;
+
+    @Column(nullable = false,
+            columnDefinition = "timestamp comment '生效时间'")
+    protected Date effectiveTime;
+
+    @Column(nullable = false,
+            columnDefinition = "timestamp comment '失效时间'")
+    protected Date expiredTime;
 
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联资源Id'")
@@ -66,6 +80,7 @@ public class AuthPolicy extends SafeEntity {
             columnDefinition = "varchar(100) comment '操作结果名称'")
     private AuthResultKind resultKind;
 
+    // TODO
     @Column(nullable = false,
             columnDefinition = "varchar(5000) comment '操作结果为修正时的内容'")
     private String resultModifyContent;

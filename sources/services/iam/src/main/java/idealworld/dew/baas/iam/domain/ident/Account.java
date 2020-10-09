@@ -39,8 +39,8 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "iam_account", indexes = {
-        @Index(columnList = "relTenantId,status"),
-        @Index(columnList = "openId", unique = true)
+        @Index(columnList = "openId,parentId", unique = true),
+        @Index(columnList = "relTenantId,status")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account",
         comment = "账号")

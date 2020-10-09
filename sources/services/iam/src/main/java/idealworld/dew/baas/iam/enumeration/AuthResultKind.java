@@ -47,10 +47,10 @@ public enum AuthResultKind {
     }
 
     /**
-     * Parse resource kind.
+     * Parse auth result kind.
      *
      * @param code the code
-     * @return the resource kind
+     * @return the auth result kind
      */
     public static AuthResultKind parse(String code) {
         return Arrays.stream(AuthResultKind.values())
@@ -58,7 +58,7 @@ public enum AuthResultKind {
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Resource kind {" + code + "} NOT exist.")));
+                                "Auth Result kind {" + code + "} NOT exist.")));
     }
 
     @Override

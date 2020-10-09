@@ -38,7 +38,7 @@ public enum AuthActionKind {
     /**
      * 全量更新.
      */
-    UPDATE("UPDATE"),
+    MODIFY("MODIFY"),
     /**
      * 局部更新.
      */
@@ -55,10 +55,10 @@ public enum AuthActionKind {
     }
 
     /**
-     * Parse resource kind.
+     * Parse auth action kind.
      *
      * @param code the code
-     * @return the resource kind
+     * @return the auth action kind
      */
     public static AuthActionKind parse(String code) {
         return Arrays.stream(AuthActionKind.values())
@@ -66,7 +66,7 @@ public enum AuthActionKind {
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Resource kind {" + code + "} NOT exist.")));
+                                "Auth Action kind {" + code + "} NOT exist.")));
     }
 
     @Override

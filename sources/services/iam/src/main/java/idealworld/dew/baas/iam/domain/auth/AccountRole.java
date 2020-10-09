@@ -28,18 +28,17 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 账号角色信息.
+ * 账号角色.
  *
  * @author gudaoxuri
  */
 @Entity
 @Table(name = "iam_account_role", indexes = {
         @Index(columnList = "relAccountId,relRoleId", unique = true),
-        @Index(columnList = "relAccountId"),
         @Index(columnList = "relRoleId")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_role",
-        comment = "账号角色信息")
+        comment = "账号角色")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

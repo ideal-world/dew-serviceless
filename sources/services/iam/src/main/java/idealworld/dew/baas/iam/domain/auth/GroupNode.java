@@ -28,7 +28,7 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 群组节点信息.
+ * 群组节点.
  *
  * @author gudaoxuri
  */
@@ -38,7 +38,7 @@ import javax.persistence.Table;
         @Index(columnList = "parentId")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_group_node",
-        comment = "群组节点信息")
+        comment = "群组节点")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

@@ -28,7 +28,7 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 
 /**
- * 角色定义信息.
+ * 角色定义.
  *
  * @author gudaoxuri
  */
@@ -37,7 +37,7 @@ import javax.persistence.Table;
         @Index(columnList = "relTenantId,relAppId,code", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_role_def",
-        comment = "角色定义信息")
+        comment = "角色定义")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
@@ -56,12 +56,10 @@ public class RuleDef extends SafeEntity {
             columnDefinition = "int comment '显示排序，asc'")
     private Integer sort;
 
-    // 为空表示是系统或租户管理员
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联应用Id'")
     private Long relAppId;
 
-    // 为空表示是系统或租户管理员
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联租户Id'")
     private Long relTenantId;

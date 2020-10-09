@@ -62,7 +62,7 @@ public class Tenant extends SafeEntity {
     private Boolean allowAccountRegister;
 
     @Column(nullable = false,
-            columnDefinition = "varchar(2000) comment '租户扩展信息，Json格式'")
+            columnDefinition = "varchar(5000) comment '租户扩展信息，Json格式'")
     private String parameters;
 
     @Column(nullable = false,

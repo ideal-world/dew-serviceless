@@ -76,14 +76,6 @@ public class TenantIdent extends SafeEntity {
     private Long validTimeSec;
 
     @Column(nullable = false,
-            columnDefinition = "varchar(1000) comment 'OAuth下的应用密钥ID或是AppId'")
-    private String oauthAk;
-
-    @Column(nullable = false,
-            columnDefinition = "varchar(2000) comment 'OAuth下的应用密钥'")
-    private String oauthSk;
-
-    @Column(nullable = false,
             columnDefinition = "bigint comment '关联租户Id'")
     private Long relTenantId;
 

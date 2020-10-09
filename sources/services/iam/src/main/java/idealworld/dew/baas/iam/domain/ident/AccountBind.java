@@ -32,8 +32,9 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "iam_account_bind", indexes = {
-        @Index(columnList = "fromTenantId,fromAccountId"),
-        @Index(columnList = "toTenantId,toAccountId")
+        @Index(columnList = "fromAccountId,toAccountId", unique = true),
+        @Index(columnList = "fromTenantId"),
+        @Index(columnList = "toTenantId")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_bind",
         comment = "账号绑定")
