@@ -17,6 +17,7 @@
 package idealworld.dew.baas.common;
 
 import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.exception.RTException;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -36,16 +37,22 @@ public class Constant {
      * 未定义对象的标识，多用于全局Id标识.
      */
     public static final Long OBJECT_UNDEFINED = 0L;
+
     /**
-     * 永不过期的时间.
+     * 最小的时间.
      */
-    public static Date NEVER_EXPIRE_TIME;
+    public static Date MIN_TIME;
+    /**
+     * 最大的时间.
+     */
+    public static Date MAX_TIME;
 
     static {
         try {
-            NEVER_EXPIRE_TIME = $.time().yyyy_MM_dd.parse("3000-01-01");
+            MIN_TIME = $.time().yyyy_MM_dd.parse("1970-01-01");
+            MAX_TIME = $.time().yyyy_MM_dd.parse("3000-01-01");
         } catch (ParseException e) {
-            e.printStackTrace();
+            throw new RTException(e);
         }
     }
 

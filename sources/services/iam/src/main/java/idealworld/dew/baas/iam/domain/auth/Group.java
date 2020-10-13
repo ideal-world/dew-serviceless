@@ -16,7 +16,8 @@
 
 package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.common.service.domain.SafeEntity;
+import idealworld.dew.baas.common.domain.SafeEntity;
+import idealworld.dew.baas.iam.domain.AppBasedEntity;
 import idealworld.dew.baas.iam.enumeration.GroupKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -40,7 +41,7 @@ import javax.persistence.*;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Group extends SafeEntity {
+public class Group extends AppBasedEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(100) comment '群组类型名称'")
@@ -56,16 +57,8 @@ public class Group extends SafeEntity {
     private String icon;
 
     @Column(nullable = false,
-            columnDefinition = "int comment '群组显示排序，asc'")
+            columnDefinition = "int comment '显示排序，asc'")
     private Integer sort;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联应用Id'")
-    private Long relAppId;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联租户Id'")
-    private Long relTenantId;
 
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联群组Id，用于多树合成'")

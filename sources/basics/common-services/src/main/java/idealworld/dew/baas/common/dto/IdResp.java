@@ -14,34 +14,28 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.domain.ident;
+package idealworld.dew.baas.common.dto;
 
-import idealworld.dew.baas.common.service.domain.BasicSoftDelEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 /**
- * 记录删除日志.
+ * 基础Id响应.
  *
  * @author gudaoxuri
  */
-@Entity
-@Table(name = "iam_del_record", indexes = {
-        @Index(columnList = "kind,entityName")
-})
-@org.hibernate.annotations.Table(appliesTo = "iam_del_record",
-        comment = "记录删除日志")
 @Data
 @SuperBuilder
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class SoftDelRecord extends BasicSoftDelEntity {
+public class IdResp implements Serializable {
 
+    @NotNull
+    @Schema(title = "Id", required = true)
+    private Long id;
 
 }

@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="author" content="gudaoxuri">
 <title>Dew BaaS 平台</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
@@ -436,12 +437,53 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 @media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
 </style>
 </head>
-<body class="article">
+<body class="book toc2 toc-left">
 <div id="header">
+<h1>Dew BaaS 平台</h1>
+<div class="details">
+<span id="author" class="author">gudaoxuri</span><br>
+<span id="revnumber">version 20201001</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">章节</div>
+<ul class="sectlevel1">
+<li><a href="#_new_generation_baas_platform">1. New generation BAAS platform.</a></li>
+<li><a href="#quick-start">2. 快速入门TBD</a></li>
+<li><a href="#user-manual">3. 使用手册TBD</a></li>
+<li><a href="#configuration">4. 配置速查TBD</a></li>
+<li><a href="#best-practices">5. 最佳实践TBD</a></li>
+<li><a href="#_开发指南">6. 开发指南</a>
+<ul class="sectlevel2">
+<li><a href="#_代码要求">6.1. 代码要求</a></li>
+<li><a href="#_环境要求tbd">6.2. 环境要求TBD</a></li>
+</ul>
+</li>
+<li><a href="#_版本tbd">7. 版本TBD</a>
+<ul class="sectlevel2">
+<li><a href="#_通道说明">7.1. 通道说明</a></li>
+<li><a href="#_发行记录">7.2. 发行记录</a></li>
+</ul>
+</li>
+<li><a href="#_架构设计">8. 架构设计</a>
+<ul class="sectlevel2">
+<li><a href="#design-summary">8.1. 概要设计TBD</a>
+<ul class="sectlevel3">
+<li><a href="#_核心流程">8.1.1. 核心流程</a></li>
+</ul>
+</li>
+<li><a href="#_各服务设计">8.2. 各服务设计</a>
+<ul class="sectlevel3">
+<li><a href="#design-services-iam">8.2.1. 用户权限服务TBD</a></li>
+<li><a href="#_数据模型">8.2.2. 数据模型</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
 </div>
 <div id="content">
-<div class="sect1">
-<h2 id="_dew_baas_平台">Dew BaaS 平台</h2>
+<div id="preamble">
 <div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <caption class="title">Table 1. 版本</caption>
@@ -470,11 +512,273 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </table>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_new_generation_baas_platform">1. New generation BAAS platform.</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Building……</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="quick-start">2. 快速入门TBD</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="user-manual">3. 使用手册TBD</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuration">4. 配置速查TBD</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="best-practices">5. 最佳实践TBD</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="_开发指南">6. 开发指南</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>Dew-BAAS</code> 基于 Apache 2.0 license 分发，如果您要向 <code>Dew</code> 贡献代码或 Fork 为自己的分支项目请遵循许可证要求。</p>
+</div>
+<div class="paragraph">
+<p>SCM： <a href="https://github.com/ideal-world/dew-saas">https://github.com/ideal-world/dew-saas</a></p>
+</div>
+<div class="paragraph">
+<p>Issues： <a href="https://github.com/ideal-world/dew-saas/issues" class="bare">https://github.com/ideal-world/dew-saas/issues</a></p>
+</div>
+<div class="sect2">
+<h3 id="_代码要求">6.1. 代码要求</h3>
+<div class="paragraph">
+<p>本项目使用修改版的Google CheckStyle做为代码规范，规则文件见 <code>checkstyle.xml</code>。</p>
+</div>
+<div class="paragraph">
+<p>代码的变更需要有有对应的单元/集成测试。</p>
+</div>
+<div class="paragraph">
+<p>提交前请运行 <code>mvn clean test -P qa</code>，确认代码通过CheckStyle检查和测试。</p>
+</div>
+<div class="paragraph">
+<p>发起 <code>Pull Request</code> 后会调用 <code>travis-ci</code> 和 <code>codacy</code> 进行自动化代码检查，如有问题不会执行 <code>Merge</code> 。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_环境要求tbd">6.2. 环境要求TBD</h3>
+
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_版本tbd">7. 版本TBD</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_通道说明">7.1. 通道说明</h3>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p><code>Dew-BAAS</code>有多个版本通道，使用时请谨慎选择：</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><code>GA</code> General Availability，正式版本，通过内部测试没有已知错误并且经过生产验证，生产环境首选！</p>
+</li>
+<li>
+<p><code>RC</code> Release Candidate，发行候选版本，通过内部测试没有已知错误，可用于生产环境。</p>
+</li>
+<li>
+<p><code>Beta</code> 公开测试版本，没有已知的Major类型Bug，但允许存在个别minor类型Bugs，生产环境使用需要谨慎评估！</p>
+</li>
+<li>
+<p><code>Alpha</code> 内部测试版本，很早期的测试版本，未经过内部测试，可能存在较多Bugs，此版本类似技术预览版（Technical Preview），切 <strong>不可</strong> 用于生产环境！</p>
+</li>
+<li>
+<p><code>SNAPSHOT</code> 快照版本，类似Nightly版本，更新频繁此不保证质量，切 <strong>不可</strong> 用于生产环境！</p>
+</li>
+</ol>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+版本号遵循 <a href="https://semver.org/"><code>semver</code></a> 规范。
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_发行记录">7.2. 发行记录</h3>
+
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_架构设计">8. 架构设计</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="design-summary">8.1. 概要设计TBD</h3>
+<div class="sect3">
+<h4 id="_核心流程">8.1.1. 核心流程</h4>
+<div class="paragraph">
+<p>应用/用户</p>
+</div>
+<div class="paragraph">
+<p><a href="http://0.0.0.0/" class="bare">http://0.0.0.0/</a></p>
+</div>
+<div class="paragraph">
+<p>head: <em>Dew_Token</em> = xxxx
+head: <em>Dew_App_Id</em> = xxxx</p>
+</div>
+<div class="paragraph">
+<p>GET/POST/PUT/DELETE/PATCH
+fetch/create/modify/delete/patch</p>
+</div>
+<div class="paragraph">
+<p><a href="http://&#8230;&#8203;/res?&lt;resource" class="bare">http://&#8230;&#8203;/res?&lt;resource</a> uri&gt;</p>
+</div>
+<div class="paragraph">
+<p>Dew.init(
+ {
+   api: &lt;default resource subject code&gt;,
+   sql: &lt;default resource subject code&gt;,
+   cache: &lt;default resource subject code&gt;,
+   mq: &lt;default resource subject code&gt;,
+   object: &lt;default resource subject code&gt;,
+   menu: &lt;default resource subject code&gt;,
+   element: &lt;default resource subject code&gt;,
+ }
+)</p>
+</div>
+<div class="paragraph">
+<p>Dew.api.fetch/delete('&lt;path?query&gt;')
+Dew.api.create/modify/patch('&lt;path?query&gt;','&lt;body&gt;')
+Dew.sql('&lt;sql&gt;')
+Dew.cache.fetch/delete('&lt;key&gt;')
+Dew.cache.create/modify('&lt;key&gt;','&lt;value&gt;')
+Dew.mq.delete('&lt;topic&gt;')
+Dew.mq.subscribe('&lt;topic&gt;',(msg) &#8658; {})
+Dew.object.fetch/delete('&lt;key&gt;')
+Dew.object.create/modify('&lt;key&gt;','&lt;value&gt;')
+Dew.menu.fetch()
+Dew.element.fetch()</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_各服务设计">8.2. 各服务设计</h3>
+<div class="sect3">
+<h4 id="design-services-iam">8.2.1. 用户权限服务TBD</h4>
+
+</div>
+<div class="sect3">
+<h4 id="_数据模型">8.2.2. 数据模型</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">/*
+ * Copyright 2020. the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package idealworld.dew.baas.iam.domain.ident;
+
+import idealworld.dew.baas.common.enumeration.CommonStatus;
+import idealworld.dew.baas.common.domain.SafeEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Index;
+import javax.persistence.Table;
+
+/**
+ * 租户.
+ * &lt;p&gt;
+ * 数据隔离单位，不同租户间的数据不能直接共享。
+ * &lt;p&gt;
+ * 一个租户可以有多个应用。
+ *
+ * @author gudaoxuri
+ */
+@Entity
+@Table(name = "iam_tenant", indexes = {
+        @Index(columnList = "status")
+})
+@org.hibernate.annotations.Table(appliesTo = "iam_tenant",
+        comment = "租户")
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+public class Tenant extends SafeEntity {
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(255) comment '租户名称'")
+    private String name;
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(1000) comment '租户图标（路径）'")
+    private String icon;
+
+    @Column(nullable = false,
+            columnDefinition = "tinyint(1) comment '是否开放账号注册'")
+    private Boolean allowAccountRegister;
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(5000) comment '租户扩展信息，Json格式'")
+    private String parameters;
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(50) comment '租户状态'")
+    private CommonStatus status;
+
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 20201001<br>
-Last updated 2020-09-28 13:13:48 +0800
+Last updated 2020-10-05 13:51:05 +0800
 </div>
 </div>
 </body>

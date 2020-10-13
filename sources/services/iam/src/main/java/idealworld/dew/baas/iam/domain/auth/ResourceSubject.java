@@ -16,7 +16,7 @@
 
 package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.common.service.domain.SafeEntity;
+import idealworld.dew.baas.iam.domain.AppBasedEntity;
 import idealworld.dew.baas.iam.enumeration.ResourceKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,10 +28,6 @@ import javax.persistence.*;
 
 /**
  * 资源主体.
- * <p>
- * {@link #relAppId} 及 {@link #relTenantId} 不为空时 表示应用私有资源主体
- * {@link #relAppId} 为空时 表示租户级资源主体
- * {@link #relTenantId} 为空时 表示全局资源主体
  * <p>
  * 所有三方调用都视为资源，需要配置资源主体，比如微信公众号、华为云等
  *
@@ -80,8 +76,9 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "iam_resource_subject", indexes = {
-        @Index(columnList = "relTenantId,relAppId,kind,code", unique = true),
-        @Index(columnList = "uri", unique = true),
+        @Index(columnList = "relTenantId,relAppId,code", unique = true),
+        @Index(columnList = "relTenantId,relAppId,uri", unique = true),
+        @Index(columnList = "relTenantId,relAppId,kind"),
         @Index(columnList = "defaultByApp")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_resource_subject",
@@ -90,7 +87,7 @@ import javax.persistence.*;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class ResourceSubject extends SafeEntity {
+public class ResourceSubject extends AppBasedEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(255) comment '资源主体编码'")
@@ -104,6 +101,18 @@ public class ResourceSubject extends SafeEntity {
     @Column(nullable = false,
             columnDefinition = "varchar(5000) comment '资源主体连接URI'")
     private String uri;
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(255) comment '资源主体名称'")
+    private String name;
+
+    @Column(nullable = false,
+            columnDefinition = "int comment '资源主体显示排序，asc'")
+    private Integer sort;
+
+    @Column(nullable = false,
+            columnDefinition = "tinyint(1) comment '是否默认'")
+    private Boolean defaultByApp;
 
     @Column(nullable = false,
             columnDefinition = "varchar(1000) comment 'AK，部分类型支持写到URI中'")
@@ -120,25 +129,5 @@ public class ResourceSubject extends SafeEntity {
     @Column(nullable = false,
             columnDefinition = "varchar(1000) comment '第三方平台项目名，如华为云的ProjectId'")
     private String platformProjectId;
-
-    @Column(nullable = false,
-            columnDefinition = "varchar(255) comment '资源主体名称'")
-    private String name;
-
-    @Column(nullable = false,
-            columnDefinition = "int comment '资源主体显示排序，asc'")
-    private Integer sort;
-
-    @Column(nullable = false,
-            columnDefinition = "tinyint(1) comment '是否默认'")
-    private Boolean defaultByApp;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联应用Id'")
-    private Long relAppId;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联租户Id'")
-    private Long relTenantId;
 
 }

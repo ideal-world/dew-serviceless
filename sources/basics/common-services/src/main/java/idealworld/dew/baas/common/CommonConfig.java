@@ -27,7 +27,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Data
-@ConfigurationProperties(prefix = "dew.baas.common")
 public class CommonConfig {
+
+    private String eventNotifyTopicName="";
 
 }

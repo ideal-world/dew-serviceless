@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.common.service.domain;
+package idealworld.dew.baas.common.domain;
 
 import group.idealworld.dew.Dew;
 import idealworld.dew.baas.common.Constant;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
@@ -32,18 +33,17 @@ import java.util.Date;
  *
  * @author gudaoxuri
  */
-@MappedSuperclass
+@Entity
+@Table(name = "dew_del_record", indexes = {
+        @Index(columnList = "kind,entityName")
+})
+@org.hibernate.annotations.Table(appliesTo = "dew_del_record",
+        comment = "记录删除信息")
 @Data
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public abstract class BasicSoftDelEntity extends IdEntity {
-
-    /**
-     * The Kind.
-     */
-    @Column(nullable = false,
-            columnDefinition = "varchar(255) comment '对象类型'")
-    protected String kind;
+public class SoftDelEntity extends IdEntity {
 
     /**
      * The Entity name.

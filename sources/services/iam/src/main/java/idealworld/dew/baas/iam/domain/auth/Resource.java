@@ -16,7 +16,7 @@
 
 package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.common.service.domain.SafeEntity;
+import idealworld.dew.baas.iam.domain.AppBasedEntity;
 import idealworld.dew.baas.iam.enumeration.ResourceKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -33,13 +33,7 @@ import javax.persistence.Table;
  * <p>
  * URI格式： <resource kind>://<resource subject code>/<[path]>[?<property key>=<property value>]
  * <p>
- * {@link #relAppId} 及 {@link #relTenantId} 继承自 {@link ResourceSubject} 但可以重写后者，实际使用以此为准
- * <p>
- * {@link #relAppId} 及 {@link #relTenantId} 不为空时 表示应用私有资源
- * {@link #relAppId} 为空时 表示租户级资源
- * {@link #relTenantId} 为空时 表示全局资源
  * <path> 为空时 表示为（整个）该资源主体
- * expose = ture 时 表示该资源（无论是否是私有还是租户级）可以开放订阅
  * <p>
  * {@link ResourceKind#API}:
  * path = <API路径>
@@ -105,8 +99,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "iam_resource", indexes = {
-        @Index(columnList = "uri", unique = true),
-        @Index(columnList = "relTenantId,relAppId"),
+        @Index(columnList = "relTenantId,relAppId,uri", unique = true),
         @Index(columnList = "parentId")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_resource",
@@ -115,15 +108,11 @@ import javax.persistence.Table;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Resource extends SafeEntity {
+public class Resource extends AppBasedEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(5000) comment 'URI'")
     private String uri;
-
-    @Column(nullable = false,
-            columnDefinition = "varchar(1000) comment '触发后的操作，多用于菜单链接'")
-    private String action;
 
     @Column(nullable = false,
             columnDefinition = "varchar(255) comment '资源名称'")
@@ -138,23 +127,19 @@ public class Resource extends SafeEntity {
     private Integer sort;
 
     @Column(nullable = false,
+            columnDefinition = "varchar(1000) comment '触发后的操作，多用于菜单链接'")
+    private String action;
+
+    @Column(nullable = false,
+            columnDefinition = "tinyint(1) comment '是否是资源组'")
+    private Boolean group;
+
+    @Column(nullable = false,
             columnDefinition = "bigint comment '资源所属组Id'")
     private Long parentId;
 
     @Column(nullable = false,
-            columnDefinition = "tinyint(1) comment '是否公开'")
-    private Boolean expose;
-
-    @Column(nullable = false,
             columnDefinition = "bigint comment '关联资源主体Id'")
-    private Long relResourceSubject;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联应用Id'")
-    private Long relAppId;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联租户Id'")
-    private Long relTenantId;
+    private Long relResourceSubjectId;
 
 }

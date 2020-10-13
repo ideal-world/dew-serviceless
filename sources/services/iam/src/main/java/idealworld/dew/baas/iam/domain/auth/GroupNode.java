@@ -16,7 +16,7 @@
 
 package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.common.service.domain.SafeEntity;
+import idealworld.dew.baas.common.domain.SafeEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -60,14 +60,6 @@ public class GroupNode extends SafeEntity {
     @Column(nullable = false,
             columnDefinition = "varchar(2000) comment '节点扩展信息，Json格式'")
     private String parameters;
-
-    @Column(nullable = false,
-            columnDefinition = "int comment '节点显示排序，asc'")
-    private Integer sort;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '上级节点Id'")
-    private Long parentId;
 
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联群组Id'")

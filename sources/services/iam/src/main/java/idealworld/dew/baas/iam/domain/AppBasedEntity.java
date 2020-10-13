@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.common.service.domain;
+package idealworld.dew.baas.iam.domain;
 
+import idealworld.dew.baas.common.domain.SafeEntity;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
 
 /**
- * Id entity.
+ * App Based entity.
  *
  * @author gudaoxuri
  */
@@ -34,13 +34,20 @@ import javax.persistence.MappedSuperclass;
 @Data
 @SuperBuilder
 @NoArgsConstructor
-public abstract class IdEntity extends PkEntity<Long> {
+@EqualsAndHashCode(callSuper = true)
+public abstract class AppBasedEntity extends SafeEntity {
 
-    /**
-     * The Id.
-     */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    protected Long id;
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联应用Id'")
+    private Long relAppId;
+
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联租户Id'")
+    private Long relTenantId;
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(100) comment '开放等级类型名称'")
+    @Enumerated(EnumType.STRING)
+    private ExposeKind exposeKind;
 
 }

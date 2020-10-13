@@ -28,10 +28,6 @@ import java.util.Arrays;
 public enum ResourceKind {
 
     /**
-     * 资源组.
-     */
-    GROUP("GROUP"),
-    /**
      * HTTP(s).
      */
     API("API"),

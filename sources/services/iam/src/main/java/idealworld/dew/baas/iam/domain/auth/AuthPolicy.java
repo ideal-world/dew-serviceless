@@ -16,7 +16,7 @@
 
 package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.common.service.domain.SafeEntity;
+import idealworld.dew.baas.iam.domain.AppBasedEntity;
 import idealworld.dew.baas.iam.enumeration.AuthActionKind;
 import idealworld.dew.baas.iam.enumeration.AuthResultKind;
 import idealworld.dew.baas.iam.enumeration.AuthSubjectKind;
@@ -31,12 +31,16 @@ import java.util.Date;
 
 /**
  * 权限策略.
+ * <p>
+ * 支持跨应用、租户的权限分配（发布--订阅模式）.
+ * <p>
+ * 仅资源所有者可以分配自己的资源权限.
  *
  * @author gudaoxuri
  */
 @Entity
 @Table(name = "iam_auth_policy", indexes = {
-        @Index(columnList = "relSubjectKind,relSubjectId,effectiveTime,expiredTime,relResourceId,actionKind", unique = true),
+        @Index(columnList = "relSubjectKind,relSubjectIds,effectiveTime,expiredTime,relResourceId,actionKind", unique = true),
         @Index(columnList = "relResourceId,actionKind")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_auth_policy",
@@ -45,7 +49,7 @@ import java.util.Date;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class AuthPolicy extends SafeEntity {
+public class AuthPolicy extends AppBasedEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(20) comment '关联权限主体类型名称'")
@@ -74,10 +78,12 @@ public class AuthPolicy extends SafeEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(100) comment '操作类型名称'")
+    @Enumerated(EnumType.STRING)
     private AuthActionKind actionKind;
 
     @Column(nullable = false,
             columnDefinition = "varchar(100) comment '操作结果名称'")
+    @Enumerated(EnumType.STRING)
     private AuthResultKind resultKind;
 
     // TODO
@@ -97,11 +103,4 @@ public class AuthPolicy extends SafeEntity {
             columnDefinition = "bigint comment '关联权限主体的租户Id'")
     private Long relSubjectTenantId;
 
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联资源的应用Id'")
-    private Long relResourceAppId;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联资源的租户Id'")
-    private Long relResourceTenantId;
 }

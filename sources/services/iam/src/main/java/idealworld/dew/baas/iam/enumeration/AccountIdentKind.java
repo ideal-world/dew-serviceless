@@ -66,7 +66,7 @@ public enum AccountIdentKind {
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Ident Ident kind {" + code + "} NOT exist.")));
+                                "Account Ident kind {" + code + "} NOT exist.")));
     }
 
     @Override

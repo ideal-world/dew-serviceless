@@ -28,6 +28,10 @@ import java.util.Arrays;
 public enum AuthActionKind {
 
     /**
+     * 所有.
+     */
+    ALL("*"),
+    /**
      * 获取.
      */
     FETCH("FETCH"),

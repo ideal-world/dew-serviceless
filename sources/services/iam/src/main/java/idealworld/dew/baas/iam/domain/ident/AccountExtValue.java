@@ -16,7 +16,7 @@
 
 package idealworld.dew.baas.iam.domain.ident;
 
-import idealworld.dew.baas.common.service.domain.IdEntity;
+import idealworld.dew.baas.common.domain.IdEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

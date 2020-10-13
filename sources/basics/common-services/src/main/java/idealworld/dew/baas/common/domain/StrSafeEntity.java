@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.common.service.domain;
+package idealworld.dew.baas.common.domain;
 
 import group.idealworld.dew.Dew;
 import idealworld.dew.baas.common.Constant;

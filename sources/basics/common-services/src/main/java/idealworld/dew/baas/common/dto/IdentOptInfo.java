@@ -14,30 +14,27 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.common.service.domain;
+package idealworld.dew.baas.common.dto;
 
+import group.idealworld.dew.core.auth.dto.OptInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
+import java.util.Map;
 
 /**
- * Id entity.
+ * Ident opt info.
  *
  * @author gudaoxuri
  */
-@MappedSuperclass
 @Data
-@SuperBuilder
-@NoArgsConstructor
-public abstract class StrIdEntity extends PkEntity<String> {
+@Schema(title = "操作用户信息")
+public class IdentOptInfo extends OptInfo<IdentOptInfo> {
 
-    /**
-     * The Id.
-     */
-    @Id
-    protected String id;
+    @Schema(title = "关联租户Id", required = true)
+    private Long relTenantId;
+
+    @Schema(title = "账号扩展信息", required = true)
+    private Map<String, Object> parameters;
 
 }

@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.common.service.domain;
+package idealworld.dew.baas.iam;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-
-import javax.persistence.MappedSuperclass;
-import java.io.Serializable;
+import idealworld.dew.baas.DewBAASApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 
 /**
- * PK entity.
+ * IAM application.
  *
- * @param <E> the type parameter
  * @author gudaoxuri
  */
-@MappedSuperclass
-@Data
-@SuperBuilder
-@NoArgsConstructor
-public abstract class PkEntity<E extends Serializable> implements Serializable {
+@SpringBootApplication
+public class IAMApplication extends DewBAASApplication {
 
-    public abstract E getId();
+    /**
+     * The entry point of application.
+     *
+     * @param args the input arguments
+     */
+    public static void main(String[] args) {
+        new SpringApplicationBuilder(IAMApplication.class).run(args);
+    }
 
 }

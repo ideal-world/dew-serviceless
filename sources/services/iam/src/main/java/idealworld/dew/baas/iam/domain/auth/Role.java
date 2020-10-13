@@ -14,38 +14,46 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.common.service.domain;
+package idealworld.dew.baas.iam.domain.auth;
 
+import idealworld.dew.baas.iam.domain.AppBasedEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.Entity;
+import javax.persistence.Index;
+import javax.persistence.Table;
 
 /**
- * Config entity.
+ * 角色.
  *
  * @author gudaoxuri
  */
-@MappedSuperclass
+@Entity
+@Table(name = "iam_role", indexes = {
+        @Index(columnList = "relRoleDefId,relGroupNodeId", unique = true)
+})
+@org.hibernate.annotations.Table(appliesTo = "iam_role",
+        comment = "角色")
 @Data
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public abstract class ConfigEntity extends SafeEntity {
+public class Role extends AppBasedEntity {
 
-    /**
-     * The Key.
-     */
     @Column(nullable = false,
-            columnDefinition = "varchar(255) comment 'Key'")
-    protected String k;
+            columnDefinition = "bigint comment '关联角色定义Id'")
+    private Long relRoleDefId;
 
-    /**
-     * The Value.
-     */
     @Column(nullable = false,
-            columnDefinition = "varchar(1024) comment 'Value'")
-    protected String v;
+            columnDefinition = "bigint comment '关联群组节点Id'")
+    private Long relGroupNodeId;
+
+    @Column(nullable = false,
+            columnDefinition = "int comment '显示排序，asc'")
+    private Integer sort;
 
 }
