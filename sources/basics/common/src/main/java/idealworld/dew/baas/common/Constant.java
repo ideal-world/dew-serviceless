@@ -36,7 +36,7 @@ public class Constant {
     /**
      * 未定义对象的标识，多用于全局Id标识.
      */
-    public static final Long OBJECT_UNDEFINED = 0L;
+    public static final long OBJECT_UNDEFINED = 0L;
 
     /**
      * 最小的时间.

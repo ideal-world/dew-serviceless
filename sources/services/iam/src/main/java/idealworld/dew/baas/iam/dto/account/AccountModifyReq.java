@@ -14,46 +14,45 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.role;
+package idealworld.dew.baas.iam.dto.account;
 
-import idealworld.dew.baas.iam.dto.AppBasedResp;
+import idealworld.dew.baas.common.enumeration.CommonStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
- * 角色响应.
+ * 添加或修改账号请求.
  *
  * @author gudaoxuri
  */
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@Schema(title = "角色响应")
-public class RoleResp extends AppBasedResp {
+@Schema(title = "添加或修改账号请求")
+public class AccountModifyReq implements Serializable {
 
-    @NotNull
-    @Schema(title = "关联角色定义Id", required = true)
-    private Long relRoleDefId;
-
-    @NotNull
-    @Schema(title = "关联群组节点Id", required = true)
-    private Long relGroupNodeId;
-
-    @NotNull
-    @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色名称", required = true)
+    @Schema(title = "群组名称")
     private String name;
 
-    @NotNull
-    @Schema(title = "显示排序，asc", required = true)
-    private Integer sort;
+    @Size(max = 1000)
+    @Schema(title = "账号头像（路径）")
+    private String avatar;
+
+    @Schema(title = "账号扩展信息，Json格式")
+    private String parameters;
+
+    @Schema(title = "父账号Id")
+    private Long parentId;
+
+    @Schema(title = "账号状态")
+    private CommonStatus status;
 
 }

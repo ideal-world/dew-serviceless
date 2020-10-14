@@ -14,46 +14,48 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.role;
+package idealworld.dew.baas.iam.dto.group;
 
-import idealworld.dew.baas.iam.dto.AppBasedResp;
+import idealworld.dew.baas.iam.enumeration.GroupKind;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
- * 角色响应.
+ * 修改角色定义请求.
  *
  * @author gudaoxuri
  */
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@Schema(title = "角色响应")
-public class RoleResp extends AppBasedResp {
+@Schema(title = "修改角色定义请求")
+public class GroupModifyReq implements Serializable {
 
-    @NotNull
-    @Schema(title = "关联角色定义Id", required = true)
-    private Long relRoleDefId;
+    @Schema(title = "群组类型")
+    private GroupKind kind;
 
-    @NotNull
-    @Schema(title = "关联群组节点Id", required = true)
-    private Long relGroupNodeId;
-
-    @NotNull
-    @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色名称", required = true)
+    @Schema(title = "群组名称")
     private String name;
 
-    @NotNull
-    @Schema(title = "显示排序，asc", required = true)
+    @Size(max = 1000)
+    @Schema(title = "群组图标（路径）")
+    private String icon;
+
+    @Schema(title = "显示排序，asc")
     private Integer sort;
+
+    @Schema(title = "关联群组Id，用于多树合成")
+    private Long relGroupId;
+
+    @Schema(title = "关联群起始组节点Id，用于多树合成")
+    private Long relGroupNodeId;
 
 }

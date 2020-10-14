@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.role;
+package idealworld.dew.baas.iam.dto.account;
 
+import idealworld.dew.baas.common.dto.IdResp;
+import idealworld.dew.baas.common.enumeration.CommonStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -28,31 +28,45 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 添加或修改角色定义请求.
+ * 账号响应.
  *
  * @author gudaoxuri
  */
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改角色定义请求")
-public class RoleDefAddOrModifyReq implements Serializable {
+@EqualsAndHashCode(callSuper = true)
+@Schema(title = "账号响应")
+public class AccountResp extends IdResp {
+
+    @NotNull
+    @NotBlank
+    @Size(max = 100)
+    @Schema(title = "Open Id", required = true)
+    private String openId;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色定义编码", required = true)
-    private String code;
-
-    @NotNull
-    @NotBlank
-    @Size(max = 255)
-    @Schema(title = "角色定义名称", required = true)
+    @Schema(title = "群组名称", required = true)
     private String name;
 
-    @Schema(title = "显示排序，asc")
-    @Builder.Default
-    private Integer sort = 0;
+    @NotNull
+    @Size(max = 1000)
+    @Schema(title = "账号头像（路径）", required = true)
+    private String avatar;
+
+    @NotNull
+    @Schema(title = "账号扩展信息，Json格式", required = true)
+    private String parameters ;
+
+    @NotNull
+    @Schema(title = "父账号Id")
+    private Long parentId;
+
+    @NotNull
+    @Schema(title = "账号状态")
+    private CommonStatus status;
 
 }

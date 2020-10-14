@@ -14,59 +14,59 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.group;
+package idealworld.dew.baas.iam.dto.account;
 
-import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
+import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
- * 添加或修改群组节点请求.
+ * 添加账号认证请求.
  *
  * @author gudaoxuri
  */
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改群组节点请求")
-public class GroupNodeAddOrModifyReq implements Serializable {
+@Schema(title = "添加账号认证请求")
+public class AccountIdentAddReq implements Serializable {
 
-    @Size(max = 1000)
-    @Schema(title = "业务编码")
-    @Builder.Default
-    private String busCode = "";
+    @NotNull
+    @Schema(title = "账号认证类型", required = true)
+    private AccountIdentKind kind;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "节点名称", required = true)
-    private String name;
+    @Schema(title = "账号认证名称", required = true)
+    private String ak;
 
-    @Size(max = 2000)
-    @Schema(title = "节点扩展信息，Json格式")
+    @Size(max = 255)
+    @Schema(title = "账号认证密钥")
     @Builder.Default
-    private String parameters = "";
+    private String sk="";
 
-    @Schema(title = "上级节点Id")
-    @Builder.Default
-    private Long parentId = Constant.OBJECT_UNDEFINED;
+    @Schema(title = "账号认证有效开始时间")
+    private Date validStartTime;
 
-    @Schema(title = "同级上一个节点Id")
-    @Builder.Default
-    private Long siblingId = Constant.OBJECT_UNDEFINED;
+    @Schema(title = "账号认证有效结束时间")
+    private Date validEndTime;
 
     @NotNull
-    @Schema(title = "关联群组Id", required = true)
-    private Long relGroupId;
+    @Schema(title = "关联账号Id", required = true)
+    private Long relAccountId;
 
 }

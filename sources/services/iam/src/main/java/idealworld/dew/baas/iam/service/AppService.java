@@ -22,11 +22,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class AuthService extends IAMBasicService {
+public class AppService extends IAMBasicService {
 
-    private static final String BUSINESS_RESOURCE = "AUTH";
+    private static final String BUSINESS_RESOURCE = "APP";
 
-    protected Resp<Void> checkAppMembership(Long relAppId, Long relTenantId) {
+    Resp<Void> checkAppMembership(Long appId, Long tenantId) {
         // relAppId是否有权限
         // relAppId 与否隶属于 relTenantId
         return Resp.success(null);

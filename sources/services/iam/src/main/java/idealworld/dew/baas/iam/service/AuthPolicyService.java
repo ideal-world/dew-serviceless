@@ -24,10 +24,10 @@ import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.auth.AuthPolicy;
 import idealworld.dew.baas.iam.domain.auth.QAuthPolicy;
 import idealworld.dew.baas.iam.domain.auth.QResource;
-import idealworld.dew.baas.iam.dto.authpolicy.AuthPolicyAddOrModifyReq;
+import idealworld.dew.baas.iam.dto.authpolicy.AuthPolicyAddReq;
+import idealworld.dew.baas.iam.dto.authpolicy.AuthPolicyModifyReq;
 import idealworld.dew.baas.iam.dto.authpolicy.AuthPolicyResp;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,11 +42,8 @@ public class AuthPolicyService extends IAMBasicService {
 
     private static final String BUSINESS_AUTH_POLICY = "AUTH_POLICY";
 
-    @Autowired
-    private AuthService authService;
-
     @Transactional
-    public Resp<Long> addAuthPolicy(AuthPolicyAddOrModifyReq authPolicyAddReq, Long relAppId, Long relTenantId) {
+    public Resp<Long> addAuthPolicy(AuthPolicyAddReq authPolicyAddReq, Long relAppId, Long relTenantId) {
         var qResource = QResource.resource;
         if (sqlBuilder.select(qResource.id)
                 .from(qResource)
@@ -75,9 +72,9 @@ public class AuthPolicyService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Long> modifyAuthPolicy(Long authPolicyId, AuthPolicyAddOrModifyReq authPolicyModifyReq, Long relAppId, Long relTenantId) {
+    public Resp<Void> modifyAuthPolicy(Long authPolicyId, AuthPolicyModifyReq authPolicyModifyReq, Long relAppId, Long relTenantId) {
         var qResource = QResource.resource;
-        if (sqlBuilder.select(qResource.id)
+        if (authPolicyModifyReq.getRelResourceId() != null && sqlBuilder.select(qResource.id)
                 .from(qResource)
                 .where(qResource.id.eq(authPolicyModifyReq.getRelResourceId()))
                 .where(qResource.relTenantId.eq(relTenantId))
@@ -86,22 +83,44 @@ public class AuthPolicyService extends IAMBasicService {
             return StandardResp.unAuthorized(BUSINESS_AUTH_POLICY, "权限策略对应的资源不合法");
         }
         var qAuthPolicy = QAuthPolicy.authPolicy;
-        if (sqlBuilder.select(qAuthPolicy.id)
-                .from(qAuthPolicy)
-                .where(qAuthPolicy.relSubjectKind.eq(authPolicyModifyReq.getRelSubjectKind()))
-                .where(qAuthPolicy.relSubjectIds.eq(authPolicyModifyReq.getRelSubjectIds()))
-                .where(qAuthPolicy.effectiveTime.eq(authPolicyModifyReq.getEffectiveTime()))
-                .where(qAuthPolicy.expiredTime.eq(authPolicyModifyReq.getExpiredTime()))
-                .where(qAuthPolicy.relResourceId.eq(authPolicyModifyReq.getRelResourceId()))
-                .where(qAuthPolicy.actionKind.eq(authPolicyModifyReq.getActionKind()))
-                .fetchCount() != 0) {
-            return StandardResp.conflict(BUSINESS_AUTH_POLICY, "权限策略已存在");
+        var authPolicyUpdate = sqlBuilder.update(qResource)
+                .where(qResource.id.eq(authPolicyId))
+                .where(qResource.relTenantId.eq(relTenantId))
+                .where(qResource.relAppId.eq(relAppId));
+        if (authPolicyModifyReq.getRelSubjectKind() != null) {
+            authPolicyUpdate.set(qAuthPolicy.relSubjectKind, authPolicyModifyReq.getRelSubjectKind());
         }
-        var authPolicy = $.bean.copyProperties(authPolicyModifyReq, AuthPolicy.class);
-        authPolicy.setId(authPolicyId);
-        authPolicy.setRelTenantId(relTenantId);
-        authPolicy.setRelAppId(relAppId);
-        return updateEntity(authPolicy);
+        if (authPolicyModifyReq.getRelSubjectIds() != null) {
+            authPolicyUpdate.set(qAuthPolicy.relSubjectIds, authPolicyModifyReq.getRelSubjectIds());
+        }
+        if (authPolicyModifyReq.getSubjectOperator() != null) {
+            authPolicyUpdate.set(qAuthPolicy.subjectOperator, authPolicyModifyReq.getSubjectOperator());
+        }
+        if (authPolicyModifyReq.getEffectiveTime() != null) {
+            authPolicyUpdate.set(qAuthPolicy.effectiveTime, authPolicyModifyReq.getEffectiveTime());
+        }
+        if (authPolicyModifyReq.getExpiredTime() != null) {
+            authPolicyUpdate.set(qAuthPolicy.expiredTime, authPolicyModifyReq.getExpiredTime());
+        }
+        if (authPolicyModifyReq.getRelResourceId() != null) {
+            authPolicyUpdate.set(qAuthPolicy.relResourceId, authPolicyModifyReq.getRelResourceId());
+        }
+        if (authPolicyModifyReq.getActionKind() != null) {
+            authPolicyUpdate.set(qAuthPolicy.actionKind, authPolicyModifyReq.getActionKind());
+        }
+        if (authPolicyModifyReq.getResultKind() != null) {
+            authPolicyUpdate.set(qAuthPolicy.resultKind, authPolicyModifyReq.getResultKind());
+        }
+        if (authPolicyModifyReq.getExclusive() != null) {
+            authPolicyUpdate.set(qAuthPolicy.exclusive, authPolicyModifyReq.getExclusive());
+        }
+        if (authPolicyModifyReq.getRelSubjectAppId() != null) {
+            authPolicyUpdate.set(qAuthPolicy.relSubjectAppId, authPolicyModifyReq.getRelSubjectAppId());
+        }
+        if (authPolicyModifyReq.getRelSubjectTenantId() != null) {
+            authPolicyUpdate.set(qAuthPolicy.relSubjectTenantId, authPolicyModifyReq.getRelSubjectTenantId());
+        }
+        return updateEntity(authPolicyUpdate);
     }
 
     public Resp<AuthPolicyResp> getAuthPolicy(Long authPolicyId, Long relAppId, Long relTenantId) {
@@ -127,7 +146,7 @@ public class AuthPolicyService extends IAMBasicService {
                 .where(qAuthPolicy.relAppId.eq(relAppId)));
     }
 
-    public Resp<Page<AuthPolicyResp>> pageAuthPolicy(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<Page<AuthPolicyResp>> pageAuthPolicies(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
         var qAuthPolicy = QAuthPolicy.authPolicy;
         return pageDTOs(sqlBuilder.select(Projections.bean(AuthPolicyResp.class,
                 qAuthPolicy.relSubjectKind,

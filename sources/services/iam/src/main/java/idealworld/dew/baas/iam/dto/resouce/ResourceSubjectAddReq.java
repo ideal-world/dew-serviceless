@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.iam.dto.resouce;
 
-import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import idealworld.dew.baas.iam.enumeration.ResourceKind;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,7 +30,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 添加或修改资源主体请求.
+ * 添加资源主体请求.
  *
  * @author gudaoxuri
  */
@@ -39,8 +38,8 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改资源主体请求")
-public class ResourceSubjectAddOrModifyReq implements Serializable {
+@Schema(title = "添加资源主体请求")
+public class ResourceSubjectAddReq implements Serializable {
 
     @NotNull
     @NotBlank

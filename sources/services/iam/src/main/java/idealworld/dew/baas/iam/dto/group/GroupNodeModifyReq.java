@@ -14,46 +14,45 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.role;
+package idealworld.dew.baas.iam.dto.group;
 
-import idealworld.dew.baas.iam.dto.AppBasedResp;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
- * 角色响应.
+ * 修改群组节点请求.
  *
  * @author gudaoxuri
  */
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@Schema(title = "角色响应")
-public class RoleResp extends AppBasedResp {
+@Schema(title = "修改群组节点请求")
+public class GroupNodeModifyReq implements Serializable {
 
-    @NotNull
-    @Schema(title = "关联角色定义Id", required = true)
-    private Long relRoleDefId;
+    @Size(max = 1000)
+    @Schema(title = "业务编码")
+    private String busCode;
 
-    @NotNull
-    @Schema(title = "关联群组节点Id", required = true)
-    private Long relGroupNodeId;
-
-    @NotNull
-    @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色名称", required = true)
+    @Schema(title = "节点名称")
     private String name;
 
-    @NotNull
-    @Schema(title = "显示排序，asc", required = true)
-    private Integer sort;
+    @Size(max = 2000)
+    @Schema(title = "节点扩展信息，Json格式")
+    private String parameters;
+
+    @Schema(title = "上级节点Id")
+    private Long parentId;
+
+    @Schema(title = "同级上一个节点Id")
+    private Long siblingId;
 
 }

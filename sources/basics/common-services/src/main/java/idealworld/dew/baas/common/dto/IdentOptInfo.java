@@ -19,8 +19,10 @@ package idealworld.dew.baas.common.dto;
 import group.idealworld.dew.core.auth.dto.OptInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Ident opt info.
@@ -28,13 +30,28 @@ import java.util.Map;
  * @author gudaoxuri
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(title = "操作用户信息")
 public class IdentOptInfo extends OptInfo<IdentOptInfo> {
 
-    @Schema(title = "关联租户Id", required = true)
-    private Long relTenantId;
+    @Schema(title = "群组列表", required = true)
+    private Set<GroupInfo> groupInfo;
 
-    @Schema(title = "账号扩展信息", required = true)
-    private Map<String, Object> parameters;
+    @Data
+    @Schema(title = "群组信息", required = true)
+    public static class GroupInfo{
+
+        @Schema(title = "群组Id", required = true)
+        private String groupId;
+        @Schema(title = "群组节点Id", required = true)
+        private String groupNodeId;
+        @Schema(title = "群组业务编码", required = true)
+        private String groupNodeBusCode;
+        @Schema(title = "群组显示名称", required = true)
+        private String groupName;
+        @Schema(title = "群组节点显示名称", required = true)
+        private String groupNodeName;
+
+    }
 
 }

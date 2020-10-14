@@ -69,14 +69,14 @@ public interface StorageService<P extends Serializable> {
     default <E extends PkEntity<P>> void postUpdateEntity(E entity) {
     }
 
-    default Resp<P> updateEntity(PkEntity<P> pkEntity) {
+    default Resp<Void> updateEntity(PkEntity<P> pkEntity) {
         var preUpdateEntityR = preUpdateEntity(pkEntity);
         if (!preUpdateEntityR.ok()) {
             return Resp.error(preUpdateEntityR);
         }
         entityManager().merge(pkEntity);
         postUpdateEntity(pkEntity);
-        return StandardResp.success(pkEntity.getId());
+        return StandardResp.success(null);
     }
 
     default Resp<Void> preUpdateEntity(JPAUpdateClause updateClause) {
@@ -112,7 +112,7 @@ public interface StorageService<P extends Serializable> {
         if (!preUpdateEntitiesR.ok()) {
             return Resp.error(preUpdateEntitiesR);
         }
-        var updatedNum= updateClause.execute();
+        var updatedNum = updateClause.execute();
         postUpdateEntities(updateClause);
         return StandardResp.success(updatedNum);
     }
@@ -170,13 +170,17 @@ public interface StorageService<P extends Serializable> {
             log().warn("没有需要软删的记录 {}", jpaQuery.toString());
             return StandardResp.notFound("BASIC", "没有需要软删的记录");
         }
+        return softDelEntity(entity);
+    }
+
+    default <E extends PkEntity<P>> Resp<Void> softDelEntity(E entity) {
         var preSoftDeleteEntityR = preSoftDeleteEntity(entity);
         if (!preSoftDeleteEntityR.ok()) {
             return Resp.error(preSoftDeleteEntityR);
         }
-        log().info("Soft Delete entity {} , cond : {}", jpaQuery.getType().getSimpleName(), jpaQuery.toString());
+        log().info("Soft Delete entity {} , cond : {}", entity.getClass().getSimpleName(), entity.getId());
         var softDelEntity = SoftDelEntity.builder()
-                .entityName(jpaQuery.getType().getSimpleName())
+                .entityName(entity.getClass().getSimpleName())
                 .recordId(entity.getId() + "")
                 .content($.json.toJsonString(entity))
                 .build();
@@ -188,14 +192,14 @@ public interface StorageService<P extends Serializable> {
 
     default <E extends PkEntity<P>> Resp<Long> softDelEntities(JPAQuery<E> jpaQuery) {
         var deleteEntities = jpaQuery.fetch();
-        for(E entity : deleteEntities){
+        for (E entity : deleteEntities) {
             var preSoftDeleteEntityR = preSoftDeleteEntity(entity);
             if (!preSoftDeleteEntityR.ok()) {
                 return Resp.error(preSoftDeleteEntityR);
             }
         }
         log().info("Soft Delete entities {} , cond : {}", jpaQuery.getType().getSimpleName(), jpaQuery.toString());
-        var deleteCounts =deleteEntities
+        var deleteCounts = deleteEntities
                 .stream()
                 .map(entity -> {
                     var softDelEntity = SoftDelEntity.builder()

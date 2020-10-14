@@ -50,8 +50,6 @@ public abstract class IAMBasicService extends CommonService<Long> {
             add(AccountBind.class.getName());
             add(AccountApp.class.getName());
             add(AccountIdent.class.getName());
-            add(AccountExtField.class.getName());
-            add(AccountExtValue.class.getName());
             add(App.class.getName());
             add(AppIdent.class.getName());
         }

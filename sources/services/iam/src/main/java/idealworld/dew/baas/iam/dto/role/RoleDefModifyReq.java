@@ -16,44 +16,36 @@
 
 package idealworld.dew.baas.iam.dto.role;
 
-import idealworld.dew.baas.iam.dto.AppBasedResp;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
- * 角色响应.
+ * 修改角色定义请求.
  *
  * @author gudaoxuri
  */
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@Schema(title = "角色响应")
-public class RoleResp extends AppBasedResp {
+@Schema(title = "修改角色定义请求")
+public class RoleDefModifyReq implements Serializable {
 
-    @NotNull
-    @Schema(title = "关联角色定义Id", required = true)
-    private Long relRoleDefId;
-
-    @NotNull
-    @Schema(title = "关联群组节点Id", required = true)
-    private Long relGroupNodeId;
-
-    @NotNull
-    @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色名称", required = true)
+    @Schema(title = "角色定义编码")
+    private String code;
+
+    @Size(max = 255)
+    @Schema(title = "角色定义名称")
     private String name;
 
-    @NotNull
-    @Schema(title = "显示排序，asc", required = true)
+    @Schema(title = "显示排序，asc")
     private Integer sort;
 
 }

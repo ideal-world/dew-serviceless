@@ -16,27 +16,28 @@
 
 package idealworld.dew.baas.iam.dto.role;
 
-import idealworld.dew.baas.iam.dto.AppBasedResp;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
- * 角色响应.
+ * 添加角色请求.
  *
  * @author gudaoxuri
  */
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@Schema(title = "角色响应")
-public class RoleResp extends AppBasedResp {
+@Schema(title = "添加角色请求")
+public class RoleAddReq implements Serializable {
 
     @NotNull
     @Schema(title = "关联角色定义Id", required = true)
@@ -52,8 +53,8 @@ public class RoleResp extends AppBasedResp {
     @Schema(title = "角色名称", required = true)
     private String name;
 
-    @NotNull
-    @Schema(title = "显示排序，asc", required = true)
-    private Integer sort;
+    @Schema(title = "显示排序，asc")
+    @Builder.Default
+    private Integer sort = 0;
 
 }

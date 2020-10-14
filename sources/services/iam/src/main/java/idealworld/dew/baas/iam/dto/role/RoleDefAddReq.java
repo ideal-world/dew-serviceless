@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.group;
+package idealworld.dew.baas.iam.dto.role;
 
-import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.iam.enumeration.GroupKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -31,42 +28,31 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 添加或修改群组请求.
+ * 添加角色定义请求.
  *
  * @author gudaoxuri
  */
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改角色定义请求")
-public class GroupAddOrModifyReq implements Serializable {
-
-    @NotNull
-    @Schema(title = "群组类型", required = true)
-    private GroupKind kind;
+@Schema(title = "添加角色定义请求")
+public class RoleDefAddReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "群组名称", required = true)
-    private String name;
+    @Schema(title = "角色定义编码", required = true)
+    private String code;
 
-    @Size(max = 1000)
-    @Schema(title = "群组图标（路径）")
-    @Builder.Default
-    private String icon = "";
+    @NotNull
+    @NotBlank
+    @Size(max = 255)
+    @Schema(title = "角色定义名称", required = true)
+    private String name;
 
     @Schema(title = "显示排序，asc")
     @Builder.Default
     private Integer sort = 0;
-
-    @Schema(title = "关联群组Id，用于多树合成")
-    @Builder.Default
-    private Long relGroupId = Constant.OBJECT_UNDEFINED;
-
-    @Schema(title = "关联群起始组节点Id，用于多树合成")
-    @Builder.Default
-    private Long relGroupNodeId = Constant.OBJECT_UNDEFINED;
 
 }

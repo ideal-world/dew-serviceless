@@ -53,6 +53,10 @@ public class Role extends AppBasedEntity {
     private Long relGroupNodeId;
 
     @Column(nullable = false,
+            columnDefinition = "varchar(255) comment '角色名称'")
+    private String name;
+
+    @Column(nullable = false,
             columnDefinition = "int comment '显示排序，asc'")
     private Integer sort;
 

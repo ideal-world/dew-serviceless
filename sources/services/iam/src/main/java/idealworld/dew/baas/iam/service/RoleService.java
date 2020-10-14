@@ -25,10 +25,8 @@ import idealworld.dew.baas.iam.domain.auth.QRole;
 import idealworld.dew.baas.iam.domain.auth.QRoleDef;
 import idealworld.dew.baas.iam.domain.auth.Role;
 import idealworld.dew.baas.iam.domain.auth.RoleDef;
-import idealworld.dew.baas.iam.dto.role.RoleAddOrModifyReq;
-import idealworld.dew.baas.iam.dto.role.RoleDefAddOrModifyReq;
-import idealworld.dew.baas.iam.dto.role.RoleDefResp;
-import idealworld.dew.baas.iam.dto.role.RoleResp;
+import idealworld.dew.baas.iam.domain.ident.QAccount;
+import idealworld.dew.baas.iam.dto.role.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,7 +44,7 @@ public class RoleService extends IAMBasicService {
     private static final String BUSINESS_ROLE_DEF = "ROLE_DEF";
 
     @Transactional
-    public Resp<Long> addRoleDef(RoleDefAddOrModifyReq roleDefAddReq, Long relAppId, Long relTenantId) {
+    public Resp<Long> addRoleDef(RoleDefAddReq roleDefAddReq, Long relAppId, Long relTenantId) {
         var qRoleDef = QRoleDef.roleDef;
         if (sqlBuilder.select(qRoleDef.id)
                 .from(qRoleDef)
@@ -63,9 +61,9 @@ public class RoleService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Long> modifyRoleDef(Long roleDefId, RoleDefAddOrModifyReq roleDefModifyReq, Long relAppId, Long relTenantId) {
+    public Resp<Void> modifyRoleDef(Long roleDefId, RoleDefModifyReq roleDefModifyReq, Long relAppId, Long relTenantId) {
         var qRoleDef = QRoleDef.roleDef;
-        if (sqlBuilder.select(qRoleDef.id)
+        if (roleDefModifyReq.getCode() != null && sqlBuilder.select(qRoleDef.id)
                 .from(qRoleDef)
                 .where(qRoleDef.relTenantId.eq(relTenantId))
                 .where(qRoleDef.relAppId.eq(relAppId))
@@ -74,11 +72,20 @@ public class RoleService extends IAMBasicService {
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_ROLE_DEF, "角色定义编码已存在");
         }
-        var roleDef = $.bean.copyProperties(roleDefModifyReq, RoleDef.class);
-        roleDef.setId(roleDefId);
-        roleDef.setRelTenantId(relTenantId);
-        roleDef.setRelAppId(relAppId);
-        return updateEntity(roleDef);
+        var roleDefUpdate = sqlBuilder.update(qRoleDef)
+                .where(qRoleDef.id.eq(roleDefId))
+                .where(qRoleDef.relTenantId.eq(relTenantId))
+                .where(qRoleDef.relAppId.eq(relAppId));
+        if (roleDefModifyReq.getCode() != null) {
+            roleDefUpdate.set(qRoleDef.code, roleDefModifyReq.getCode());
+        }
+        if (roleDefModifyReq.getName() != null) {
+            roleDefUpdate.set(qRoleDef.name, roleDefModifyReq.getName());
+        }
+        if (roleDefModifyReq.getSort() != null) {
+            roleDefUpdate.set(qRoleDef.sort, roleDefModifyReq.getSort());
+        }
+        return updateEntity(roleDefUpdate);
     }
 
     public Resp<RoleDefResp> getRoleDef(Long roleDefId, Long relAppId, Long relTenantId) {
@@ -122,10 +129,23 @@ public class RoleService extends IAMBasicService {
                 .where(qRoleDef.relAppId.eq(relAppId)));
     }
 
+    Resp<Void> checkRoleMembership(Long roleId,Long appId, Long tenantId) {
+        var qRole = QRole.role;
+        if (sqlBuilder.select(qRole.id)
+                .from(qRole)
+                .where(qRole.id.eq(roleId))
+                .where(qRole.relTenantId.eq(tenantId))
+                .where(qRole.relAppId.eq(tenantId))
+                .fetchCount() == 0) {
+            return StandardResp.unAuthorized(BUSINESS_ROLE, "角色不合法");
+        }
+        return Resp.success(null);
+    }
+
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addRole(RoleAddOrModifyReq roleAddReq, Long relAppId, Long relTenantId) {
+    public Resp<Long> addRole(RoleAddReq roleAddReq, Long relAppId, Long relTenantId) {
         var qRole = QRole.role;
         if (sqlBuilder.select(qRole.id)
                 .from(qRole)
@@ -141,21 +161,19 @@ public class RoleService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Long> modifyRole(Long roleId, RoleAddOrModifyReq roleModifyReq, Long relAppId, Long relTenantId) {
+    public Resp<Void> modifyRole(Long roleId, RoleModifyReq roleModifyReq, Long relAppId, Long relTenantId) {
         var qRole = QRole.role;
-        if (sqlBuilder.select(qRole.id)
-                .from(qRole)
-                .where(qRole.relRoleDefId.eq(roleModifyReq.getRelRoleDefId()))
-                .where(qRole.relGroupNodeId.eq(roleModifyReq.getRelGroupNodeId()))
-                .where(qRole.id.ne(roleId))
-                .fetchCount() != 0) {
-            return StandardResp.conflict(BUSINESS_ROLE, "角色已存在");
+        var roleUpdate = sqlBuilder.update(qRole)
+                .where(qRole.id.eq(roleId))
+                .where(qRole.relTenantId.eq(relTenantId))
+                .where(qRole.relAppId.eq(relAppId));
+        if (roleModifyReq.getName() != null) {
+            roleUpdate.set(qRole.name, roleModifyReq.getName());
         }
-        var role = $.bean.copyProperties(roleModifyReq, Role.class);
-        role.setId(roleId);
-        role.setRelTenantId(relTenantId);
-        role.setRelAppId(relAppId);
-        return updateEntity(role);
+        if (roleModifyReq.getSort() != null) {
+            roleUpdate.set(qRole.sort, roleModifyReq.getSort());
+        }
+        return updateEntity(roleUpdate);
     }
 
     public Resp<RoleResp> getRole(Long roleId, Long relAppId, Long relTenantId) {
@@ -164,6 +182,7 @@ public class RoleService extends IAMBasicService {
                 qRole.id,
                 qRole.relRoleDefId,
                 qRole.relGroupNodeId,
+                qRole.name,
                 qRole.sort,
                 qRole.exposeKind,
                 qRole.relAppId,
@@ -174,12 +193,13 @@ public class RoleService extends IAMBasicService {
                 .where(qRole.relAppId.eq(relAppId)));
     }
 
-    public Resp<Page<RoleResp>> pageRole(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<Page<RoleResp>> pageRoles(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
         var qRole = QRole.role;
         return pageDTOs(sqlBuilder.select(Projections.bean(RoleResp.class,
                 qRole.id,
                 qRole.relRoleDefId,
                 qRole.relGroupNodeId,
+                qRole.name,
                 qRole.sort,
                 qRole.exposeKind,
                 qRole.relAppId,

@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.role;
+package idealworld.dew.baas.iam.dto.account;
 
-import idealworld.dew.baas.iam.dto.AppBasedResp;
+import idealworld.dew.baas.common.dto.IdResp;
+import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.Date;
 
 /**
- * 角色响应.
+ * 账号认证响应.
  *
  * @author gudaoxuri
  */
@@ -35,25 +40,29 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(title = "角色响应")
-public class RoleResp extends AppBasedResp {
+@Schema(title = "账号认证响应")
+public class AccountIdentResp extends IdResp {
 
     @NotNull
-    @Schema(title = "关联角色定义Id", required = true)
-    private Long relRoleDefId;
-
-    @NotNull
-    @Schema(title = "关联群组节点Id", required = true)
-    private Long relGroupNodeId;
+    @Schema(title = "账号认证类型", required = true)
+    private AccountIdentKind kind;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色名称", required = true)
-    private String name;
+    @Schema(title = "账号认证名称", required = true)
+    private String ak;
 
     @NotNull
-    @Schema(title = "显示排序，asc", required = true)
-    private Integer sort;
+    @Schema(title = "账号认证有效开始时间", required = true)
+    private Date validStartTime;
+
+    @NotNull
+    @Schema(title = "账号认证有效结束时间", required = true)
+    private Date validEndTime;
+
+    @NotNull
+    @Schema(title = "关联账号Id", required = true)
+    private Long relAccountId;
 
 }

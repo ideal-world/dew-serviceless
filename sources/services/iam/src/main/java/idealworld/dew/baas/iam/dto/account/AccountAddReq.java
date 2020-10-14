@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.resouce;
+package idealworld.dew.baas.iam.dto.account;
 
-import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -29,7 +29,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 添加或修改资源请求.
+ * 添加或修改账号请求.
  *
  * @author gudaoxuri
  */
@@ -37,49 +37,23 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改资源请求")
-public class ResourceAddOrModifyReq implements Serializable {
+@Schema(title = "添加或修改账号请求")
+public class AccountAddReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源名称", required = true)
+    @Schema(title = "群组名称", required = true)
     private String name;
 
-    @NotNull
-    @NotBlank
-    @Size(max = 5000)
-    @Schema(title = "资源URI", required = true)
-    private String uri;
-
     @Size(max = 1000)
-    @Schema(title = "资源图标（路径）")
+    @Schema(title = "账号头像（路径）")
     @Builder.Default
-    private String icon = "";
+    private String avatar = "";
 
-    @Size(max = 1000)
-    @Schema(title = "触发后的操作，多用于菜单链接")
+    @Schema(title = "账号扩展信息，Json格式")
     @Builder.Default
-    private String action = "";
+    private String parameters = "{}";
 
-    @Schema(title = "资源显示排序，asc")
-    @Builder.Default
-    private Integer sort = 0;
-
-    @Schema(title = "是否是资源组")
-    @Builder.Default
-    private Boolean group = false;
-
-    @Schema(title = "资源所属组Id")
-    @Builder.Default
-    private Long parentId = 0L;
-
-    @NotNull
-    @Schema(title = "关联资源主体Id", required = true)
-    private Long relResourceSubjectId;
-
-    @Schema(title = "开放等级类型")
-    @Builder.Default
-    private ExposeKind exposeKind = ExposeKind.APP;
 
 }

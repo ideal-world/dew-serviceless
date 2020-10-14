@@ -68,10 +68,6 @@ public class AccountIdent extends SafeEntity {
     private Date validEndTime;
 
     @Column(nullable = false,
-            columnDefinition = "bigint comment '账号认证剩余有效次数'")
-    private Long validTimes;
-
-    @Column(nullable = false,
             columnDefinition = "bigint comment '关联账号Id'")
     private Long relAccountId;
 

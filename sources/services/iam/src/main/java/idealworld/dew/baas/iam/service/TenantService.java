@@ -16,12 +16,20 @@
 
 package idealworld.dew.baas.iam.service;
 
-import idealworld.dew.baas.common.dto.IdentOptInfo;
+import com.ecfront.dew.common.Resp;
+import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.enumeration.CommonStatus;
+import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.IAMConfig;
+import idealworld.dew.baas.iam.domain.ident.QTenantIdent;
+import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import javax.annotation.Nullable;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
@@ -38,13 +46,16 @@ public class TenantService extends IAMBasicService {
     private static final Map<String, Pattern> VALID_RULES = new ConcurrentHashMap<>();
 
     private static final String BUSINESS_TENANT = "TENANT";
+    private static final String BUSINESS_TENANT_IDENT = "TENANT_IDENT";
     private static final String BUSINESS_TENANT_CERT = "TENANT_CERT";
 
     @Autowired
     private IAMConfig iamConfig;
-    /*@Autowired
-    private AccountService accountService;
+
     @Autowired
+    private AccountService accountService;
+
+      /*@Autowired
     private OrganizationService organizationService;
     @Autowired
     private PositionService positionService;
@@ -52,6 +63,48 @@ public class TenantService extends IAMBasicService {
     private PostService postService;
     @Autowired
     private InterceptService interceptService;*/
+
+    Resp<Date> validRuleAndGetValidEndTime(AccountIdentKind kind, @Nullable String ak,@Nullable String sk, Long relTenantId) {
+        if (relTenantId.equals(Constant.OBJECT_UNDEFINED)) {
+            // 表示租户管理员注册时临时分配的虚拟租户号
+            return StandardResp.success(Constant.MAX_TIME);
+        }
+        var qTenantIdent = QTenantIdent.tenantIdent;
+        var tenantIdent = sqlBuilder
+                .select(qTenantIdent.validAKRule,
+                        qTenantIdent.validSKRule,
+                        qTenantIdent.validTimeSec)
+                .from(qTenantIdent)
+                .where(qTenantIdent.status.eq(CommonStatus.ENABLED))
+                .where(qTenantIdent.kind.eq(kind))
+                .where(qTenantIdent.relTenantId.eq(relTenantId))
+                .fetchOne();
+        if (tenantIdent == null) {
+            return StandardResp.badRequest(BUSINESS_TENANT_IDENT, "认证不存在或已禁用");
+        }
+        var validAkRule = tenantIdent.get(0, String.class);
+        var validSkRule = tenantIdent.get(1, String.class);
+        var validTimeSec = tenantIdent.get(2, Long.class);
+        if (ak != null && !StringUtils.isEmpty(validAkRule)) {
+            if (!VALID_RULES.containsKey(validAkRule)) {
+                VALID_RULES.put(validAkRule, Pattern.compile(validAkRule));
+            }
+            if (!VALID_RULES.get(validAkRule).matcher(ak).matches()) {
+                return StandardResp.badRequest(BUSINESS_TENANT_CERT, "认证名规则不合法");
+            }
+        }
+        if (sk != null && !StringUtils.isEmpty(validSkRule)) {
+            if (!VALID_RULES.containsKey(validSkRule)) {
+                VALID_RULES.put(validSkRule, Pattern.compile(validSkRule));
+            }
+            if (!VALID_RULES.get(validSkRule).matcher(sk).matches()) {
+                return StandardResp.badRequest(BUSINESS_TENANT_CERT, "认证密钥规则不合法");
+            }
+        }
+        return StandardResp.success(validTimeSec == null || validTimeSec.equals(Constant.OBJECT_UNDEFINED)
+                ? Constant.MAX_TIME
+                : new Date(System.currentTimeMillis() + validTimeSec * 1000));
+    }
 
     /**
      * Register tenant.

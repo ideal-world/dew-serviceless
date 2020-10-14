@@ -27,10 +27,7 @@ import idealworld.dew.baas.iam.domain.auth.Group;
 import idealworld.dew.baas.iam.domain.auth.GroupNode;
 import idealworld.dew.baas.iam.domain.auth.QGroup;
 import idealworld.dew.baas.iam.domain.auth.QGroupNode;
-import idealworld.dew.baas.iam.dto.group.GroupAddOrModifyReq;
-import idealworld.dew.baas.iam.dto.group.GroupNodeAddOrModifyReq;
-import idealworld.dew.baas.iam.dto.group.GroupNodeResp;
-import idealworld.dew.baas.iam.dto.group.GroupResp;
+import idealworld.dew.baas.iam.dto.group.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +39,8 @@ import java.util.stream.Collectors;
 
 /**
  * Group service.
+ * <p>
+ * // TODO 不同组合成一个组
  *
  * @author gudaoxuri
  */
@@ -56,7 +55,7 @@ public class GroupService extends IAMBasicService {
     private IAMConfig iamConfig;
 
     @Transactional
-    public Resp<Long> addGroup(GroupAddOrModifyReq groupAddReq, Long relAppId, Long relTenantId) {
+    public Resp<Long> addGroup(GroupAddReq groupAddReq, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
         if (sqlBuilder.select(qGroup.id)
                 .from(qGroup)
@@ -73,9 +72,9 @@ public class GroupService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Long> modifyGroup(Long groupId, GroupAddOrModifyReq groupModifyReq, Long relAppId, Long relTenantId) {
+    public Resp<Void> modifyGroup(Long groupId, GroupModifyReq groupModifyReq, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
-        if (sqlBuilder.select(qGroup.id)
+        if (groupModifyReq.getName() != null && sqlBuilder.select(qGroup.id)
                 .from(qGroup)
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
@@ -84,11 +83,29 @@ public class GroupService extends IAMBasicService {
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_GROUP, "群组名称已存在");
         }
-        var group = $.bean.copyProperties(groupModifyReq, Group.class);
-        group.setId(groupId);
-        group.setRelTenantId(relTenantId);
-        group.setRelAppId(relAppId);
-        return updateEntity(group);
+        var groupUpdate = sqlBuilder.update(qGroup)
+                .where(qGroup.id.eq(groupId))
+                .where(qGroup.relTenantId.eq(relTenantId))
+                .where(qGroup.relAppId.eq(relAppId));
+        if (groupModifyReq.getKind() != null) {
+            groupUpdate.set(qGroup.kind, groupModifyReq.getKind());
+        }
+        if (groupModifyReq.getName() != null) {
+            groupUpdate.set(qGroup.name, groupModifyReq.getName());
+        }
+        if (groupModifyReq.getIcon() != null) {
+            groupUpdate.set(qGroup.icon, groupModifyReq.getIcon());
+        }
+        if (groupModifyReq.getSort() != null) {
+            groupUpdate.set(qGroup.sort, groupModifyReq.getSort());
+        }
+        if (groupModifyReq.getRelGroupId() != null) {
+            groupUpdate.set(qGroup.relGroupId, groupModifyReq.getRelGroupId());
+        }
+        if (groupModifyReq.getRelGroupNodeId() != null) {
+            groupUpdate.set(qGroup.relGroupNodeId, groupModifyReq.getRelGroupNodeId());
+        }
+        return updateEntity(groupUpdate);
     }
 
     public Resp<GroupResp> getGroup(Long groupId, Long relAppId, Long relTenantId) {
@@ -110,7 +127,7 @@ public class GroupService extends IAMBasicService {
                 .where(qGroup.relAppId.eq(relAppId)));
     }
 
-    public Resp<Page<GroupResp>> pageRoleDef(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<Page<GroupResp>> pageRoleDefs(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
         return pageDTOs(sqlBuilder.select(Projections.bean(GroupResp.class,
                 qGroup.id,
@@ -141,7 +158,7 @@ public class GroupService extends IAMBasicService {
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addGroupNode(GroupNodeAddOrModifyReq groupNodeAddReq, Long relAppId, Long relTenantId) {
+    public Resp<Long> addGroupNode(GroupNodeAddReq groupNodeAddReq, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
         if (sqlBuilder.select(qGroup.id)
                 .from(qGroup)
@@ -158,29 +175,43 @@ public class GroupService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Long> modifyGroupNode(Long groupNodeId, GroupNodeAddOrModifyReq groupNodeModifyReq, Long relAppId, Long relTenantId) {
+    public Resp<Void> modifyGroupNode(Long groupNodeId, GroupNodeModifyReq groupNodeModifyReq, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
-        if (sqlBuilder.select(qGroup.id)
-                .from(qGroup)
-                .where(qGroup.id.eq(groupNodeModifyReq.getRelGroupId()))
+        var qGroupNode = QGroupNode.groupNode;
+        var relGroupId = sqlBuilder.select(qGroupNode.relGroupId)
+                .from(qGroupNode)
+                .leftJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
+                .where(qGroupNode.id.eq(groupNodeId))
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
-                .fetchCount() == 0) {
+                .fetchOne();
+        if (relGroupId == null) {
             return StandardResp.unAuthorized(BUSINESS_GROUP_NODE, "关联群组不合法");
         }
-        var groupNode = $.bean.copyProperties(groupNodeModifyReq, GroupNode.class);
-        var groupNodeCode = packageGroupNodeCode(groupNodeModifyReq.getRelGroupId(), groupNodeModifyReq.getParentId(), groupNodeModifyReq.getSiblingId());
-        groupNode.setId(groupNodeId);
-        groupNode.setCode(groupNodeCode);
-        return updateEntity(groupNode);
+        var groupNodeUpdate = sqlBuilder.update(qGroupNode)
+                .where(qGroupNode.id.eq(groupNodeId));
+        if (groupNodeModifyReq.getBusCode() != null) {
+            groupNodeUpdate.set(qGroupNode.busCode, groupNodeModifyReq.getBusCode());
+        }
+        if (groupNodeModifyReq.getName() != null) {
+            groupNodeUpdate.set(qGroupNode.name, groupNodeModifyReq.getName());
+        }
+        if (groupNodeModifyReq.getParameters() != null) {
+            groupNodeUpdate.set(qGroupNode.parameters, groupNodeModifyReq.getParameters());
+        }
+        if (groupNodeModifyReq.getParentId() != null || groupNodeModifyReq.getSiblingId() != null) {
+            var groupNodeCode = packageGroupNodeCode(relGroupId, groupNodeModifyReq.getParentId(), groupNodeModifyReq.getSiblingId());
+            groupNodeUpdate.set(qGroupNode.code, groupNodeCode);
+        }
+        return updateEntity(groupNodeUpdate);
     }
 
     private String packageGroupNodeCode(Long relGroupId, Long parentId, Long siblingId) {
-        if (parentId.longValue() == Constant.OBJECT_UNDEFINED && siblingId.longValue() == Constant.OBJECT_UNDEFINED) {
+        if (parentId == Constant.OBJECT_UNDEFINED && siblingId == Constant.OBJECT_UNDEFINED) {
             return iamConfig.getApp().getInitNodeCode();
         }
         var qGroupNode = QGroupNode.groupNode;
-        if (siblingId.longValue() == Constant.OBJECT_UNDEFINED) {
+        if (siblingId == Constant.OBJECT_UNDEFINED) {
             var parentCode = sqlBuilder.select(qGroupNode.code)
                     .from(qGroupNode)
                     .where(qGroupNode.relGroupId.eq(relGroupId))
@@ -252,12 +283,27 @@ public class GroupService extends IAMBasicService {
         var qGroup = QGroup.group;
         var qGroupNode = QGroupNode.groupNode;
         return softDelEntity(sqlBuilder
-                .selectFrom(qGroup)
-                .from(qGroupNode)
+                .selectFrom(qGroupNode)
                 .leftJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
                 .where(qGroupNode.id.eq(groupNodeId))
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId)));
+    }
+
+    Resp<Void> checkGroupNodeMembership(Long groupNodeId, Long appId, Long tenantId) {
+        var qGroup = QGroup.group;
+        var qGroupNode = QGroupNode.groupNode;
+        if (sqlBuilder
+                .select(qGroupNode.id)
+                .from(qGroupNode)
+                .leftJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
+                .where(qGroupNode.id.eq(groupNodeId))
+                .where(qGroup.relTenantId.eq(tenantId))
+                .where(qGroup.relAppId.eq(appId))
+                .fetchCount() == 0) {
+            return StandardResp.unAuthorized(BUSINESS_GROUP_NODE, "群组节点不合法");
+        }
+        return Resp.success(null);
     }
 
 }

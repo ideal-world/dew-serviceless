@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.role;
+package idealworld.dew.baas.iam.dto.account;
 
+import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
- * 添加或修改角色请求.
+ * 修改账号认证请求.
  *
  * @author gudaoxuri
  */
@@ -34,19 +38,21 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改角色请求")
-public class RoleAddOrModifyReq implements Serializable {
+@Schema(title = "修改账号认证请求")
+public class AccountIdentModifyReq implements Serializable {
 
-    @NotNull
-    @Schema(title = "关联角色定义Id", required = true)
-    private Long relRoleDefId;
+    @Size(max = 255)
+    @Schema(title = "账号认证名称")
+    private String ak;
 
-    @NotNull
-    @Schema(title = "关联群组节点Id", required = true)
-    private Long relGroupNodeId;
+    @Size(max = 255)
+    @Schema(title = "账号认证密钥")
+    private String sk;
 
-    @Schema(title = "显示排序，asc")
-    @Builder.Default
-    private Integer sort = 0;
+    @Schema(title = "账号认证有效开始时间")
+    private Date validStartTime;
+
+    @Schema(title = "账号认证有效结束时间")
+    private Date validEndTime;
 
 }

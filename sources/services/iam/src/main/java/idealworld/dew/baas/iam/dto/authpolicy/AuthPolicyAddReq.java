@@ -27,9 +27,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -37,7 +34,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 添加或修改权限策略请求.
+ * 添加权限策略请求.
  *
  * @author gudaoxuri
  */
@@ -45,8 +42,8 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改权限策略请求")
-public class AuthPolicyAddOrModifyReq implements Serializable {
+@Schema(title = "添加权限策略请求")
+public class AuthPolicyAddReq implements Serializable {
 
     @NotNull
     @Schema(title = "关联权限主体类型", required = true)
