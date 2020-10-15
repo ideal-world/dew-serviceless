@@ -46,6 +46,7 @@ public class AccountModifyReq implements Serializable {
     @Schema(title = "账号头像（路径）")
     private String avatar;
 
+    @Size(max = 2000)
     @Schema(title = "账号扩展信息，Json格式")
     private String parameters;
 

@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.account;
+package idealworld.dew.baas.iam.dto.app;
 
+import idealworld.dew.baas.common.enumeration.CommonStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import lombok.experimental.Tolerate;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 添加或修改账号请求.
+ * 修改应用请求.
  *
  * @author gudaoxuri
  */
@@ -37,24 +36,23 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改账号请求")
-public class AccountAddReq implements Serializable {
+@Schema(title = "修改应用请求")
+public class AppModifyReq implements Serializable {
 
-    @NotNull
-    @NotBlank
     @Size(max = 255)
-    @Schema(title = "群组名称", required = true)
+    @Schema(title = "应用名称")
     private String name;
 
     @Size(max = 1000)
-    @Schema(title = "账号头像（路径）")
-    @Builder.Default
-    private String avatar = "";
+    @Schema(title = "应用图标")
+    private String icon;
 
     @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式")
-    @Builder.Default
-    private String parameters = "{}";
+    @Schema(title = "应用扩展信息（Json格式）")
+    private String parameters;
+
+    @Schema(title = "应用状态")
+    private CommonStatus status;
 
 
 }

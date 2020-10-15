@@ -58,6 +58,7 @@ public class AccountResp extends IdResp {
     private String avatar;
 
     @NotNull
+    @Size(max = 2000)
     @Schema(title = "账号扩展信息，Json格式", required = true)
     private String parameters ;
 

@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.account;
+package idealworld.dew.baas.iam.dto.app;
 
+import idealworld.dew.baas.common.Constant;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
- * 添加或修改账号请求.
+ * 添加应用认证请求.
  *
  * @author gudaoxuri
  */
@@ -37,24 +38,18 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改账号请求")
-public class AccountAddReq implements Serializable {
+@Schema(title = "添加应用认证请求")
+public class AppIdentAddReq implements Serializable {
 
     @NotNull
     @NotBlank
-    @Size(max = 255)
-    @Schema(title = "群组名称", required = true)
-    private String name;
-
     @Size(max = 1000)
-    @Schema(title = "账号头像（路径）")
-    @Builder.Default
-    private String avatar = "";
+    @Schema(title = "应用认证用途", required = true)
+    private String note;
 
-    @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式")
+    @Schema(title = "应用认证有效时间")
     @Builder.Default
-    private String parameters = "{}";
+    private Date validTime = Constant.MAX_TIME;
 
 
 }

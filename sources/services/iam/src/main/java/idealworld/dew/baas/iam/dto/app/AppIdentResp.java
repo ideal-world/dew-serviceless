@@ -14,47 +14,49 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.account;
+package idealworld.dew.baas.iam.dto.app;
 
+import idealworld.dew.baas.common.dto.IdResp;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
+import java.util.Date;
 
 /**
- * 添加或修改账号请求.
+ * 应用认证响应.
  *
  * @author gudaoxuri
  */
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改账号请求")
-public class AccountAddReq implements Serializable {
+@EqualsAndHashCode(callSuper = true)
+@Schema(title = "应用认证响应")
+public class AppIdentResp extends IdResp {
+
+    @NotNull
+    @NotBlank
+    @Size(max = 1000)
+    @Schema(title = "应用认证用途", required = true)
+    private String note;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "群组名称", required = true)
-    private String name;
+    @Schema(title = "应用认证名称", required = true)
+    private String ak;
 
-    @Size(max = 1000)
-    @Schema(title = "账号头像（路径）")
-    @Builder.Default
-    private String avatar = "";
-
-    @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式")
-    @Builder.Default
-    private String parameters = "{}";
+    @NotNull
+    @Schema(title = "应用认证有效时间", required = true)
+    private Date validTime;
 
 
 }

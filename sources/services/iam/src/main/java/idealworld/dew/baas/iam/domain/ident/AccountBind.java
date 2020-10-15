@@ -28,6 +28,8 @@ import javax.persistence.*;
 /**
  * 账号绑定.
  *
+ * // TODO 实现该功能及对应的权限集成
+ *
  * @author gudaoxuri
  */
 @Entity

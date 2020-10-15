@@ -65,7 +65,7 @@ public class AccountService extends IAMBasicService {
     private RoleService roleService;
 
     @Transactional
-    public Resp<Long> addAccount(AccountAddReq accountAddReq, Long relAppId, Long relTenantId) {
+    public Resp<Long> addAccount(AccountAddReq accountAddReq, Long relTenantId) {
         var account = $.bean.copyProperties(accountAddReq, Account.class);
         account.setOpenId($.field.createUUID());
         account.setParentId(Constant.OBJECT_UNDEFINED);
@@ -75,7 +75,7 @@ public class AccountService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Void> modifyAccount(Long accountId, AccountModifyReq accountModifyReq, Long relAppId, Long relTenantId) {
+    public Resp<Void> modifyAccount(Long accountId, AccountModifyReq accountModifyReq, Long relTenantId) {
         var qAccount = QAccount.account;
         if (accountModifyReq.getParentId() != null
                 && !checkAccountMembership(accountModifyReq.getParentId(), relTenantId).ok()) {
@@ -118,7 +118,7 @@ public class AccountService extends IAMBasicService {
                 .where(qAccount.relTenantId.eq(relTenantId)));
     }
 
-    public Resp<Page<AccountResp>> pageAccounts(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<Page<AccountResp>> pageAccounts(Long pageNumber, Integer pageSize, Long relTenantId) {
         var qAccount = QAccount.account;
         return pageDTOs(sqlBuilder.select(Projections.bean(AccountResp.class,
                 qAccount.id,
@@ -134,7 +134,7 @@ public class AccountService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Void> deleteAccount(Long accountId, Long relAppId, Long relTenantId) {
+    public Resp<Void> deleteAccount(Long accountId, Long relTenantId) {
         var qAccount = QAccount.account;
         return softDelEntity(sqlBuilder
                 .selectFrom(qAccount)
@@ -157,7 +157,7 @@ public class AccountService extends IAMBasicService {
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addAccountIdent(AccountIdentAddReq accountIdentAddReq, Long relAppId, Long relTenantId) {
+    public Resp<Long> addAccountIdent(AccountIdentAddReq accountIdentAddReq, Long relTenantId) {
         var qAccountIdent = QAccountIdent.accountIdent;
         if (sqlBuilder.select(qAccountIdent.id)
                 .from(qAccountIdent)
@@ -165,6 +165,14 @@ public class AccountService extends IAMBasicService {
                 .where(qAccountIdent.relTenantId.eq(relTenantId))
                 .fetchCount() == 0) {
             return StandardResp.unAuthorized(BUSINESS_ACCOUNT_IDENT, "关联账号不合法");
+        }
+        if (sqlBuilder.select(qAccountIdent.id)
+                .from(qAccountIdent)
+                .where(qAccountIdent.relTenantId.eq(relTenantId))
+                .where(qAccountIdent.kind.eq(accountIdentAddReq.getKind()))
+                .where(qAccountIdent.ak.eq(accountIdentAddReq.getAk()))
+                .fetchCount() != 0) {
+            return StandardResp.conflict(BUSINESS_ACCOUNT_IDENT, "账号认证类型与AK已存在");
         }
         var validRuleAndGetValidEndTimeR = tenantService.validRuleAndGetValidEndTime(
                 accountIdentAddReq.getKind(),
@@ -194,7 +202,7 @@ public class AccountService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Void> modifyAccountIdent(Long accountIdentId, AccountIdentModifyReq accountIdentModifyReq, Long relAppId, Long relTenantId) {
+    public Resp<Void> modifyAccountIdent(Long accountIdentId, AccountIdentModifyReq accountIdentModifyReq, Long relTenantId) {
         var qAccountIdent = QAccountIdent.accountIdent;
         var accountIdentKindAndAk = sqlBuilder.select(qAccountIdent.kind, qAccountIdent.ak)
                 .from(qAccountIdent)
@@ -205,7 +213,16 @@ public class AccountService extends IAMBasicService {
             return StandardResp.unAuthorized(BUSINESS_ACCOUNT_IDENT, "账号认证不合法");
         }
         var accountIdentKind = accountIdentKindAndAk.get(0, AccountIdentKind.class);
-        var accountIdentAk = accountIdentKindAndAk.get(1, String.class);
+        var accountIdentAk = accountIdentModifyReq.getAk() != null ? accountIdentModifyReq.getAk() : accountIdentKindAndAk.get(1, String.class);
+        if (sqlBuilder.select(qAccountIdent.id)
+                .from(qAccountIdent)
+                .where(qAccountIdent.relTenantId.eq(relTenantId))
+                .where(qAccountIdent.kind.eq(accountIdentKind))
+                .where(qAccountIdent.ak.eq(accountIdentAk))
+                .where(qAccountIdent.id.ne(accountIdentId))
+                .fetchCount() != 0) {
+            return StandardResp.conflict(BUSINESS_ACCOUNT_IDENT, "账号认证类型与AK已存在");
+        }
         var validRuleAndGetValidEndTimeR = tenantService.validRuleAndGetValidEndTime(
                 accountIdentKind,
                 accountIdentModifyReq.getAk(),
@@ -222,7 +239,7 @@ public class AccountService extends IAMBasicService {
         }
         if (accountIdentModifyReq.getSk() != null) {
             var processIdentSkR = processIdentSk(accountIdentKind,
-                    accountIdentModifyReq.getAk() != null ? accountIdentModifyReq.getAk() : accountIdentAk,
+                    accountIdentAk,
                     accountIdentModifyReq.getSk(),
                     relTenantId);
             if (!processIdentSkR.ok()) {
@@ -239,7 +256,7 @@ public class AccountService extends IAMBasicService {
         return updateEntity(accountIdentUpdate);
     }
 
-    public Resp<List<AccountIdentResp>> findAccountIdents(Long relAccountId, Long relAppId, Long relTenantId) {
+    public Resp<List<AccountIdentResp>> findAccountIdents(Long relAccountId, Long relTenantId) {
         var qAccountIdent = QAccountIdent.accountIdent;
         return findDTOs(sqlBuilder.select(Projections.bean(AccountIdentResp.class,
                 qAccountIdent.kind,
@@ -254,7 +271,7 @@ public class AccountService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Void> deleteAccountIdent(Long accountIdentId, Long relAppId, Long relTenantId) {
+    public Resp<Void> deleteAccountIdent(Long accountIdentId, Long relTenantId) {
         var qAccountIdent = QAccountIdent.accountIdent;
         return softDelEntity(sqlBuilder
                 .selectFrom(qAccountIdent)
@@ -287,18 +304,14 @@ public class AccountService extends IAMBasicService {
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addAccountApp(Long accountId, Long appId, Long relAppId, Long relTenantId) {
+    public Resp<Long> addAccountApp(Long accountId, Long relAppId, Long relTenantId) {
         var checkAccountMembershipR = checkAccountMembership(accountId, relTenantId);
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
         }
-        var checkAppMembership = appService.checkAppMembership(appId, relTenantId);
-        if (!checkAppMembership.ok()) {
-            return Resp.error(checkAppMembership);
-        }
         return saveEntity(AccountApp.builder()
                 .relAccountId(accountId)
-                .relAppId(appId)
+                .relAppId(relAppId)
                 .build());
     }
 
@@ -308,14 +321,11 @@ public class AccountService extends IAMBasicService {
         var accountApp = sqlBuilder
                 .selectFrom(qAccountApp)
                 .where(qAccountApp.id.eq(accountAppId))
+                .where(qAccountApp.relAppId.eq(relAppId))
                 .fetchOne();
         var checkAccountMembershipR = checkAccountMembership(accountApp.getRelAccountId(), relTenantId);
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
-        }
-        var checkAppMembership = appService.checkAppMembership(accountApp.getRelAppId(), relTenantId);
-        if (!checkAppMembership.ok()) {
-            return Resp.error(checkAppMembership);
         }
         return softDelEntity(accountApp);
     }

@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.iam.domain.ident;
 
-import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.domain.SafeEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -31,8 +30,6 @@ import java.util.Date;
 
 /**
  * 应用认证.
- *
- *
  *
  * @author gudaoxuri
  */
@@ -70,7 +67,4 @@ public class AppIdent extends SafeEntity {
             columnDefinition = "bigint comment '关联应用Id'")
     private Long relAppId;
 
-    @Column(nullable = false,
-            columnDefinition = "varchar(50) comment '应用认证状态'")
-    private CommonStatus status;
 }
