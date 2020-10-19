@@ -256,7 +256,7 @@ public class ResourceService extends IAMBasicService {
             resourceUpdate.set(qResource.sort, resourceModifyReq.getSort());
         }
         if (resourceModifyReq.getGroup() != null) {
-            resourceUpdate.set(qResource.group, resourceModifyReq.getGroup());
+            resourceUpdate.set(qResource.resGroup, resourceModifyReq.getGroup());
         }
         if (resourceModifyReq.getParentId() != null) {
             resourceUpdate.set(qResource.parentId, resourceModifyReq.getParentId());
@@ -277,7 +277,7 @@ public class ResourceService extends IAMBasicService {
                 qResource.name,
                 qResource.action,
                 qResource.sort,
-                qResource.group,
+                qResource.resGroup,
                 qResource.parentId,
                 qResource.relResourceSubjectId,
                 qResource.exposeKind,
@@ -299,7 +299,7 @@ public class ResourceService extends IAMBasicService {
                 qResource.name,
                 qResource.action,
                 qResource.sort,
-                qResource.group,
+                qResource.resGroup,
                 qResource.parentId,
                 qResource.relResourceSubjectId,
                 qResource.exposeKind,
@@ -348,7 +348,7 @@ public class ResourceService extends IAMBasicService {
                         qResource.name,
                         qResource.action,
                         qResource.sort,
-                        qResource.group,
+                        qResource.resGroup,
                         qResource.parentId,
                         qResource.relResourceSubjectId,
                         qResource.exposeKind,

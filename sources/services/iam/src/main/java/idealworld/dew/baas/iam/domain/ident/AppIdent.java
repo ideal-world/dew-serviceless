@@ -36,8 +36,7 @@ import java.util.Date;
 @Entity
 @Table(name = "iam_app_ident", indexes = {
         @Index(columnList = "ak", unique = true),
-        @Index(columnList = "relAppId,validTime"),
-        @Index(columnList = "status")
+        @Index(columnList = "relAppId,validTime")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_app_ident",
         comment = "应用认证")

@@ -16,8 +16,6 @@
 
 package idealworld.dew.baas.iam.service;
 
-import group.idealworld.dew.Dew;
-import group.idealworld.dew.core.cluster.ClusterElection;
 import idealworld.dew.baas.common.service.CommonService;
 import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.domain.auth.*;
@@ -67,7 +65,5 @@ public abstract class IAMBasicService extends CommonService<Long> {
     public boolean notifyByMQ(String entityName) {
         return NOTIFY_BY_MQ_ENTITIES.contains(entityName);
     }
-
-    protected static final ClusterElection ELECTION = Dew.cluster.election.instance("iam");
 
 }

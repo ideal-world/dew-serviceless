@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.iam.domain.ident;
 
-import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.domain.SafeEntity;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import lombok.Data;
@@ -78,9 +77,5 @@ public class TenantIdent extends SafeEntity {
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联租户Id'")
     private Long relTenantId;
-
-    @Column(nullable = false,
-            columnDefinition = "varchar(50) comment '租户认证状态'")
-    private CommonStatus status;
 
 }

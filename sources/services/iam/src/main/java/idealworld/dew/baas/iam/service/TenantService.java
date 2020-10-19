@@ -16,16 +16,19 @@
 
 package idealworld.dew.baas.iam.service;
 
+import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
+import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.resp.StandardResp;
-import idealworld.dew.baas.iam.IAMConfig;
-import idealworld.dew.baas.iam.domain.ident.QTenantIdent;
+import idealworld.dew.baas.iam.domain.ident.*;
+import idealworld.dew.baas.iam.dto.tenant.*;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Nullable;
@@ -49,22 +52,209 @@ public class TenantService extends IAMBasicService {
     private static final String BUSINESS_TENANT_IDENT = "TENANT_IDENT";
     private static final String BUSINESS_TENANT_CERT = "TENANT_CERT";
 
-    @Autowired
-    private IAMConfig iamConfig;
+    @Transactional
+    public Resp<Long> addTenant(TenantAddReq tenantAddReq) {
+        var tenant = $.bean.copyProperties(tenantAddReq, Tenant.class);
+        tenant.setStatus(CommonStatus.ENABLED);
+        return saveEntity(tenant);
+    }
 
-    @Autowired
-    private AccountService accountService;
+    @Transactional
+    public Resp<Void> modifyTenant(Long tenantId, TenantModifyReq tenantModifyReq, Long relTenantId) {
+        if (tenantId.longValue() != relTenantId.longValue()) {
+            return StandardResp.unAuthorized(BUSINESS_TENANT, "租户Id不合法");
+        }
+        var qTenant = QTenant.tenant;
+        var tenantUpdate = sqlBuilder.update(qTenant)
+                .where(qTenant.id.eq(tenantId));
+        if (tenantModifyReq.getName() != null) {
+            tenantUpdate.set(qTenant.name, tenantModifyReq.getName());
+        }
+        if (tenantModifyReq.getIcon() != null) {
+            tenantUpdate.set(qTenant.icon, tenantModifyReq.getIcon());
+        }
+        if (tenantModifyReq.getAllowAccountRegister() != null) {
+            tenantUpdate.set(qTenant.allowAccountRegister, tenantModifyReq.getAllowAccountRegister());
+        }
+        if (tenantModifyReq.getParameters() != null) {
+            tenantUpdate.set(qTenant.parameters, tenantModifyReq.getParameters());
+        }
+        if (tenantModifyReq.getStatus() != null) {
+            tenantUpdate.set(qTenant.status, tenantModifyReq.getStatus());
+        }
+        return updateEntity(tenantUpdate);
+    }
 
-      /*@Autowired
-    private OrganizationService organizationService;
-    @Autowired
-    private PositionService positionService;
-    @Autowired
-    private PostService postService;
-    @Autowired
-    private InterceptService interceptService;*/
+    public Resp<TenantResp> getTenant(Long tenantId, Long relTenantId) {
+        if (tenantId.longValue() != relTenantId.longValue()) {
+            return StandardResp.unAuthorized(BUSINESS_TENANT, "租户Id不合法");
+        }
+        var qTenant = QTenant.tenant;
+        return getDTO(sqlBuilder.select(Projections.bean(TenantResp.class,
+                qTenant.id,
+                qTenant.name,
+                qTenant.icon,
+                qTenant.allowAccountRegister,
+                qTenant.parameters,
+                qTenant.status))
+                .from(qTenant)
+                .where(qTenant.id.eq(tenantId)));
+    }
 
-    Resp<Date> validRuleAndGetValidEndTime(AccountIdentKind kind, @Nullable String ak,@Nullable String sk, Long relTenantId) {
+    public Resp<Page<TenantResp>> pageTenants(Long pageNumber, Integer pageSize, Long relTenantId) {
+        var qTenant = QTenant.tenant;
+        return pageDTOs(sqlBuilder.select(Projections.bean(TenantResp.class,
+                qTenant.id,
+                qTenant.name,
+                qTenant.icon,
+                qTenant.allowAccountRegister,
+                qTenant.parameters,
+                qTenant.status))
+                .from(qTenant), pageNumber, pageSize);
+    }
+
+    @Transactional
+    public Resp<Void> deleteTenant(Long tenantId, Long relTenantId) {
+        if (tenantId.longValue() != relTenantId.longValue()) {
+            return StandardResp.unAuthorized(BUSINESS_TENANT, "租户Id不合法");
+        }
+        var qTenant = QTenant.tenant;
+        return softDelEntity(sqlBuilder
+                .selectFrom(qTenant)
+                .where(qTenant.id.eq(tenantId)));
+    }
+
+    // --------------------------------------------------------------------
+
+    @Transactional
+    public Resp<Long> addTenantIdent(TenantIdentAddReq tenantIdentAddReq, Long relTenantId) {
+        var tenantIdent = $.bean.copyProperties(tenantIdentAddReq, TenantIdent.class);
+        tenantIdent.setRelTenantId(relTenantId);
+        return saveEntity(tenantIdent);
+    }
+
+    @Transactional
+    public Resp<Void> modifyTenantIdent(Long tenantIdentId, TenantIdentModifyReq tenantIdentModifyReq, Long relTenantId) {
+        var qTenantIdent = QTenantIdent.tenantIdent;
+        var tenantIdentUpdate = sqlBuilder.update(qTenantIdent)
+                .where(qTenantIdent.id.eq(tenantIdentId))
+                .where(qTenantIdent.relTenantId.eq(relTenantId));
+        if (tenantIdentModifyReq.getKind() != null) {
+            tenantIdentUpdate.set(qTenantIdent.kind, tenantIdentModifyReq.getKind());
+        }
+        if (tenantIdentModifyReq.getValidAKRule() != null) {
+            tenantIdentUpdate.set(qTenantIdent.validAKRule, tenantIdentModifyReq.getValidAKRule());
+        }
+        if (tenantIdentModifyReq.getValidAKRuleNote() != null) {
+            tenantIdentUpdate.set(qTenantIdent.validAKRuleNote, tenantIdentModifyReq.getValidAKRuleNote());
+        }
+        if (tenantIdentModifyReq.getValidSKRule() != null) {
+            tenantIdentUpdate.set(qTenantIdent.validSKRule, tenantIdentModifyReq.getValidSKRule());
+        }
+        if (tenantIdentModifyReq.getValidSKRuleNote() != null) {
+            tenantIdentUpdate.set(qTenantIdent.validSKRuleNote, tenantIdentModifyReq.getValidSKRuleNote());
+        }
+        if (tenantIdentModifyReq.getValidTimeSec() != null) {
+            tenantIdentUpdate.set(qTenantIdent.validTimeSec, tenantIdentModifyReq.getValidTimeSec());
+        }
+        return updateEntity(tenantIdentUpdate);
+    }
+
+    public Resp<TenantIdentResp> getTenantIdent(Long tenantIdentId, Long relTenantId) {
+        var qTenantIdent = QTenantIdent.tenantIdent;
+        return getDTO(sqlBuilder.select(Projections.bean(TenantIdentResp.class,
+                qTenantIdent.id,
+                qTenantIdent.kind,
+                qTenantIdent.validAKRule,
+                qTenantIdent.validAKRuleNote,
+                qTenantIdent.validSKRule,
+                qTenantIdent.validSKRuleNote,
+                qTenantIdent.validTimeSec))
+                .from(qTenantIdent)
+                .where(qTenantIdent.id.eq(tenantIdentId))
+                .where(qTenantIdent.relTenantId.eq(relTenantId)));
+    }
+
+    public Resp<Page<TenantIdentResp>> pageTenantIdents(Long pageNumber, Integer pageSize, Long relTenantId) {
+        var qTenantIdent = QTenantIdent.tenantIdent;
+        return pageDTOs(sqlBuilder.select(Projections.bean(TenantIdentResp.class,
+                qTenantIdent.id,
+                qTenantIdent.kind,
+                qTenantIdent.validAKRule,
+                qTenantIdent.validAKRuleNote,
+                qTenantIdent.validSKRule,
+                qTenantIdent.validSKRuleNote,
+                qTenantIdent.validTimeSec))
+                .from(qTenantIdent)
+                .where(qTenantIdent.relTenantId.eq(relTenantId)), pageNumber, pageSize);
+    }
+
+    @Transactional
+    public Resp<Void> deleteTenantIdent(Long tenantIdentId, Long relTenantId) {
+        var qTenantIdent = QTenantIdent.tenantIdent;
+        return softDelEntity(sqlBuilder
+                .selectFrom(qTenantIdent)
+                .where(qTenantIdent.id.eq(tenantIdentId))
+                .where(qTenantIdent.relTenantId.eq(relTenantId)));
+    }
+
+    // --------------------------------------------------------------------
+
+    @Transactional
+    public Resp<Long> addTenantCert(TenantCertAddReq tenantCertAddReq, Long relTenantId) {
+        var tenantCert = $.bean.copyProperties(tenantCertAddReq, TenantCert.class);
+        tenantCert.setRelTenantId(relTenantId);
+        return saveEntity(tenantCert);
+    }
+
+    @Transactional
+    public Resp<Void> modifyTenantCert(Long tenantCertId, TenantCertModifyReq tenantCertModifyReq, Long relTenantId) {
+        var qTenantCert = QTenantCert.tenantCert;
+        var tenantCertUpdate = sqlBuilder.update(qTenantCert)
+                .where(qTenantCert.id.eq(tenantCertId))
+                .where(qTenantCert.relTenantId.eq(relTenantId));
+        if (tenantCertModifyReq.getCategory() != null) {
+            tenantCertUpdate.set(qTenantCert.category, tenantCertModifyReq.getCategory());
+        }
+        if (tenantCertModifyReq.getVersion() != null) {
+            tenantCertUpdate.set(qTenantCert.version, tenantCertModifyReq.getVersion());
+        }
+        return updateEntity(tenantCertUpdate);
+    }
+
+    public Resp<TenantCertResp> getTenantCert(Long tenantCertId, Long relTenantId) {
+        var qTenantCert = QTenantCert.tenantCert;
+        return getDTO(sqlBuilder.select(Projections.bean(TenantCertResp.class,
+                qTenantCert.id,
+                qTenantCert.category,
+                qTenantCert.version))
+                .from(qTenantCert)
+                .where(qTenantCert.id.eq(tenantCertId))
+                .where(qTenantCert.relTenantId.eq(relTenantId)));
+    }
+
+    public Resp<Page<TenantCertResp>> pageTenantCerts(Long pageNumber, Integer pageSize, Long relTenantId) {
+        var qTenantCert = QTenantCert.tenantCert;
+        return pageDTOs(sqlBuilder.select(Projections.bean(TenantCertResp.class,
+                qTenantCert.id,
+                qTenantCert.category,
+                qTenantCert.version))
+                .from(qTenantCert)
+                .where(qTenantCert.relTenantId.eq(relTenantId)), pageNumber, pageSize);
+    }
+
+    @Transactional
+    public Resp<Void> deleteTenantCert(Long tenantCertId, Long relTenantId) {
+        var qTenantCert = QTenantCert.tenantCert;
+        return softDelEntity(sqlBuilder
+                .selectFrom(qTenantCert)
+                .where(qTenantCert.id.eq(tenantCertId))
+                .where(qTenantCert.relTenantId.eq(relTenantId)));
+    }
+
+    // --------------------------------------------------------------------
+
+    Resp<Date> validRuleAndGetValidEndTime(AccountIdentKind kind, @Nullable String ak, @Nullable String sk, Long relTenantId) {
         if (relTenantId.equals(Constant.OBJECT_UNDEFINED)) {
             // 表示租户管理员注册时临时分配的虚拟租户号
             return StandardResp.success(Constant.MAX_TIME);
@@ -75,7 +265,6 @@ public class TenantService extends IAMBasicService {
                         qTenantIdent.validSKRule,
                         qTenantIdent.validTimeSec)
                 .from(qTenantIdent)
-                .where(qTenantIdent.status.eq(CommonStatus.ENABLED))
                 .where(qTenantIdent.kind.eq(kind))
                 .where(qTenantIdent.relTenantId.eq(relTenantId))
                 .fetchOne();
@@ -105,400 +294,5 @@ public class TenantService extends IAMBasicService {
                 ? Constant.MAX_TIME
                 : new Date(System.currentTimeMillis() + validTimeSec * 1000));
     }
-
-    /**
-     * Register tenant.
-     *
-     * @param registerTenantReq the register tenant req
-     * @return the resp
-     *//*
-    @Transactional
-    public Resp<IdentOptInfo> registerTenant(RegisterTenantReq registerTenantReq) {
-        log.info("Register Tenant : {}", $.json.toJsonString(registerTenantReq));
-        if (!iamConfig.isAllowTenantRegister()) {
-            return StandardResp.locked(BUSINESS_TENANT, "The current configuration does not allow tenants to self-register");
-        }
-        var tenantAdminPostId = postService.getTenantAdminPostId();
-        var addAccountR = accountService.addAccountExt(AddAccountReq.builder()
-                .name(registerTenantReq.getAccountName())
-                .identReq(AddAccountIdentReq.builder()
-                        .kind(registerTenantReq.getIdentKind())
-                        .ak(registerTenantReq.getAk())
-                        .sk(registerTenantReq.getSk())
-                        .build())
-                .postReq(AddAccountPostReq.builder()
-                        .relPostId(tenantAdminPostId)
-                        .build())
-                .build(), Constant.OBJECT_UNDEFINED);
-        if (!addAccountR.ok()) {
-            return StandardResp.error(addAccountR);
-        }
-        var openId = accountService.getOpenId(addAccountR.getBody()).getBody();
-        var tenant = Tenant.builder()
-                .name(registerTenantReq.getTenantName())
-                .icon("")
-                .parameters("{}")
-                .allowAccountRegister(registerTenantReq.getAllowAccountRegister() != null ?
-                        registerTenantReq.getAllowAccountRegister() : false)
-                .globalAccount(registerTenantReq.getGlobalAccount() != null ?
-                        registerTenantReq.getGlobalAccount() : true)
-                .allowCrossTenant(registerTenantReq.getAllowCrossTenant() != null ?
-                        registerTenantReq.getAllowCrossTenant() : false)
-                .status(CommonStatus.ENABLED)
-                .createUser(openId)
-                .updateUser(openId)
-                .build();
-        saveEntity(tenant);
-        interceptService.changeTenantStatus(tenant.getId(), CommonStatus.ENABLED);
-        accountService.updateAccountTenant(addAccountR.getBody(), tenant.getId());
-        addTenantIdent(AddTenantIdentReq.builder()
-                .kind(registerTenantReq.getIdentKind())
-                .build(), tenant.getId());
-        // 自动登录
-        return accountService.login(
-                LoginReq.builder()
-                        .identKind(registerTenantReq.getIdentKind())
-                        .ak(registerTenantReq.getAk())
-                        .sk(registerTenantReq.getSk())
-                        .build(), tenant.getId());
-    }
-
-    *//**
-     * Gets tenant info.
-     *
-     * @param tenantId the tenant id
-     * @return the tenant info
-     *//*
-    public Resp<TenantInfoResp> getTenantInfo(Long tenantId) {
-        var qTenant = QTenant.tenant;
-        var qAccountCreateUser = new QAccount("createUser");
-        var qAccountUpdateUser = new QAccount("updateUser");
-        var tenantQuery = sqlBuilder
-                .select(Projections.bean(
-                        TenantInfoResp.class,
-                        qTenant.id,
-                        qTenant.name,
-                        qTenant.icon,
-                        qTenant.allowAccountRegister,
-                        qTenant.globalAccount,
-                        qTenant.allowCrossTenant,
-                        qTenant.parameters,
-                        qTenant.status,
-                        qTenant.createTime,
-                        qTenant.updateTime,
-                        qAccountCreateUser.name.as("createUserName"),
-                        qAccountUpdateUser.name.as("updateUserName")))
-                .from(qTenant)
-                .leftJoin(qAccountCreateUser).on(qTenant.createUser.eq(qAccountCreateUser.openId))
-                .leftJoin(qAccountUpdateUser).on(qTenant.updateUser.eq(qAccountUpdateUser.openId))
-                .where(qTenant.id.eq(tenantId));
-        return getDTO(tenantQuery);
-    }
-
-    *//**
-     * Modify tenant.
-     *
-     * @param modifyTenantReq the modify tenant req
-     * @param tenantId        the tenant id
-     * @return the resp
-     *//*
-    @Transactional
-    public Resp<Void> modifyTenant(ModifyTenantReq modifyTenantReq, Long tenantId) {
-        var qTenant = QTenant.tenant;
-        var updateClause = sqlBuilder.update(qTenant)
-                .where(qTenant.id.eq(tenantId))
-                .set(qTenant.name, modifyTenantReq.getName());
-        if (modifyTenantReq.getIcon() != null) {
-            updateClause.set(qTenant.icon, modifyTenantReq.getIcon());
-        }
-        if (modifyTenantReq.getAllowAccountRegister() != null) {
-            updateClause.set(qTenant.allowAccountRegister, modifyTenantReq.getAllowAccountRegister());
-        }
-        if (modifyTenantReq.getGlobalAccount() != null) {
-            updateClause.set(qTenant.globalAccount, modifyTenantReq.getGlobalAccount());
-        }
-        if (modifyTenantReq.getAllowCrossTenant() != null) {
-            updateClause.set(qTenant.allowCrossTenant, modifyTenantReq.getAllowCrossTenant());
-        }
-        if (modifyTenantReq.getParameters() != null) {
-            updateClause.set(qTenant.parameters, modifyTenantReq.getParameters());
-        }
-        if (modifyTenantReq.getStatus() != null) {
-            updateClause.set(qTenant.status, modifyTenantReq.getStatus());
-            interceptService.changeTenantStatus(tenantId, modifyTenantReq.getStatus());
-        }
-        return updateEntity(updateClause);
-    }
-
-    *//**
-     * Un register tenant.
-     *
-     * @param tenantId the tenant id
-     * @return the resp
-     *//*
-    @Transactional
-    public Resp<Void> unRegisterTenant(Long tenantId) {
-        log.info("Un-Register Tenant : {}", tenantId);
-        var qApp = QApp.app;
-        var count = sqlBuilder
-                .selectFrom(qApp)
-                .where(qApp.relTenantId.eq(tenantId))
-                .fetchCount();
-        if (count != 0) {
-            log.warn("Un-Register Tenant error: need to delete the app first");
-            return StandardResp.conflict(BUSINESS_TENANT, "请先删除租户下的所有应用");
-        }
-        // 删除账号
-        accountService.deleteAccounts(tenantId);
-        // 删除机构
-        organizationService.deleteOrganization(Constant.OBJECT_UNDEFINED, tenantId);
-        // 删除职位
-        positionService.deletePositions(Constant.OBJECT_UNDEFINED, tenantId);
-        // 删除租户认证
-        deleteTenantIdent(tenantId);
-        var qTenant = QTenant.tenant;
-        interceptService.changeTenantStatus(tenantId, CommonStatus.DISABLED);
-        return softDelEntity(sqlBuilder
-                .selectFrom(qTenant)
-                .where(qTenant.id.eq(tenantId))
-        );
-    }
-
-    *//**
-     * Allow account register.
-     *
-     * @param tenantId the tenant id
-     * @return the resp
-     *//*
-    protected Resp<Boolean> allowAccountRegister(Long tenantId) {
-        var qTenant = QTenant.tenant;
-        var isAllow = sqlBuilder.select(qTenant.allowAccountRegister)
-                .from(qTenant)
-                .where(qTenant.id.eq(tenantId))
-                .fetchOne();
-        return StandardResp.success(isAllow);
-    }
-
-    // ========================== Ident ==============================
-
-    *//**
-     * Add tenant ident.
-     *
-     * @param addTenantIdentReq the add tenant ident req
-     * @param relTenantId       the rel tenant id
-     * @return the resp
-     *//*
-    @Transactional
-    public Resp<Long> addTenantIdent(AddTenantIdentReq addTenantIdentReq,
-                                     Long relTenantId) {
-        var qTenantIdent = QTenantIdent.tenantIdent;
-        if (sqlBuilder.select(qTenantIdent.id)
-                .from(qTenantIdent)
-                .where(qTenantIdent.relTenantId.eq(relTenantId))
-                .where(qTenantIdent.kind.eq(addTenantIdentReq.getKind()))
-                .fetchCount() != 0) {
-            return StandardResp.conflict(BUSINESS_TENANT_CERT, "认证已存在");
-        }
-        log.info("Add Tenant Ident : {}", $.json.toJsonString(addTenantIdentReq));
-        var tenantIdent = TenantIdent.builder()
-                .kind(addTenantIdentReq.getKind())
-                .validRuleNote(addTenantIdentReq.getValidRuleNote() != null ? addTenantIdentReq.getValidRuleNote() : "")
-                .validRule(addTenantIdentReq.getValidRule() != null ? addTenantIdentReq.getValidRule() : "")
-                .validTimeSec(addTenantIdentReq.getValidTimeSec() != null
-                        ? addTenantIdentReq.getValidTimeSec() : Constant.OBJECT_UNDEFINED)
-                .oauthAk(addTenantIdentReq.getOauthAk() != null ? addTenantIdentReq.getOauthAk() : "")
-                .oauthSk(addTenantIdentReq.getOauthSk() != null ? addTenantIdentReq.getOauthSk() : "")
-                .status(CommonStatus.ENABLED)
-                .relTenantId(relTenantId)
-                .build();
-        return saveEntity(tenantIdent);
-    }
-
-    *//**
-     * Find tenant ident info.
-     *
-     * @param relTenantId the rel tenant id
-     * @return the resp
-     *//*
-    public Resp<List<TenantIdentInfoResp>> findTenantIdentInfo(Long relTenantId) {
-        var qTenantIdent = QTenantIdent.tenantIdent;
-        var qAccountCreateUser = new QAccount("createUser");
-        var qAccountUpdateUser = new QAccount("updateUser");
-        var query = sqlBuilder
-                .select(Projections.bean(
-                        TenantIdentInfoResp.class,
-                        qTenantIdent.id,
-                        qTenantIdent.kind,
-                        qTenantIdent.validRuleNote,
-                        qTenantIdent.validRule,
-                        qTenantIdent.validTimeSec,
-                        qTenantIdent.oauthAk,
-                        qTenantIdent.oauthSk,
-                        qTenantIdent.status,
-                        qTenantIdent.createTime,
-                        qTenantIdent.updateTime,
-                        qAccountCreateUser.name.as("createUserName"),
-                        qAccountUpdateUser.name.as("updateUserName")))
-                .from(qTenantIdent)
-                .leftJoin(qAccountCreateUser).on(qTenantIdent.createUser.eq(qAccountCreateUser.openId))
-                .leftJoin(qAccountUpdateUser).on(qTenantIdent.updateUser.eq(qAccountUpdateUser.openId))
-                .where(qTenantIdent.relTenantId.eq(relTenantId));
-        return findDTOs(query);
-    }
-
-    *//**
-     * Modify tenant ident.
-     *
-     * @param modifyTenantIdentReq the modify tenant ident req
-     * @param tenantIdentId        the tenant ident id
-     * @param relTenantId          the rel tenant id
-     * @return the resp
-     *//*
-    @Transactional
-    public Resp<Void> modifyTenantIdent(ModifyTenantIdentReq modifyTenantIdentReq, Long tenantIdentId,
-                                        Long relTenantId) {
-        var qTenantIdent = QTenantIdent.tenantIdent;
-        var updateClause = sqlBuilder.update(qTenantIdent)
-                .where(qTenantIdent.id.eq(tenantIdentId))
-                .where(qTenantIdent.relTenantId.eq(relTenantId));
-        if (modifyTenantIdentReq.getValidRule() != null) {
-            updateClause.set(qTenantIdent.validRule, modifyTenantIdentReq.getValidRule());
-        }
-        if (modifyTenantIdentReq.getValidRuleNote() != null) {
-            updateClause.set(qTenantIdent.validRuleNote, modifyTenantIdentReq.getValidRuleNote());
-        }
-        if (modifyTenantIdentReq.getValidTimeSec() != null) {
-            updateClause.set(qTenantIdent.validTimeSec, modifyTenantIdentReq.getValidTimeSec());
-        }
-        if (modifyTenantIdentReq.getOauthAk() != null) {
-            updateClause.set(qTenantIdent.oauthAk, modifyTenantIdentReq.getOauthAk());
-        }
-        if (modifyTenantIdentReq.getOauthSk() != null) {
-            updateClause.set(qTenantIdent.oauthSk, modifyTenantIdentReq.getOauthSk());
-        }
-        if (modifyTenantIdentReq.getStatus() != null) {
-            updateClause.set(qTenantIdent.status, modifyTenantIdentReq.getStatus());
-        }
-        return updateEntity(updateClause);
-    }
-
-    *//**
-     * Delete tenant ident.
-     *
-     * @param relTenantId the rel tenant id
-     * @return the resp
-     *//*
-    @Transactional
-    public Resp<Long> deleteTenantIdent(Long relTenantId) {
-        log.info("Delete Tenant Ident By TenantId : {}", relTenantId);
-        var qTenantIdent = QTenantIdent.tenantIdent;
-        return softDelEntities(sqlBuilder
-                .selectFrom(qTenantIdent)
-                .where(qTenantIdent.relTenantId.eq(relTenantId)));
-    }
-
-    *//**
-     * Delete tenant ident.
-     *
-     * @param tenantIdentId the tenant ident id
-     * @param relTenantId   the rel tenant id
-     * @return the resp
-     *//*
-    @Transactional
-    public Resp<Void> deleteTenantIdent(Long tenantIdentId, Long relTenantId) {
-        log.info("Delete Tenant Ident By Id : {}", tenantIdentId);
-        var qTenantIdent = QTenantIdent.tenantIdent;
-        return deleteEntity(sqlBuilder
-                .delete(qTenantIdent)
-                .where(qTenantIdent.id.eq(tenantIdentId))
-                .where(qTenantIdent.relTenantId.eq(relTenantId)));
-    }
-
-    *//**
-     * Check valid rule and return valid time.
-     *
-     * @param kind        the kind
-     * @param sk          the sk
-     * @param relTenantId the rel tenant id
-     * @return the resp
-     *//*
-    protected Resp<Date> checkValidRuleAndReturnValidTime(AccountIdentKind kind, String sk, Long relTenantId) {
-        if (relTenantId.equals(Constant.OBJECT_UNDEFINED)) {
-            // 表示租户管理员注册时临时分配的虚拟租户号
-            return StandardResp.success(Constant.NEVER_EXPIRE_TIME);
-        }
-        var qTenantIdent = QTenantIdent.tenantIdent;
-        var tenantIdent = sqlBuilder
-                .select(qTenantIdent.validRule,
-                        qTenantIdent.validTimeSec)
-                .from(qTenantIdent)
-                .where(qTenantIdent.status.eq(CommonStatus.ENABLED))
-                .where(qTenantIdent.kind.eq(kind))
-                .where(qTenantIdent.relTenantId.eq(relTenantId))
-                .fetchOne();
-        if (tenantIdent == null) {
-            return StandardResp.badRequest(BUSINESS_TENANT_CERT, "认证不存在或已禁用");
-        }
-        var validRule = tenantIdent.get(0, String.class);
-        var validTimeSec = tenantIdent.get(1, Long.class);
-        if (!StringUtils.isEmpty(validRule)) {
-            if (!VALID_RULES.containsKey(validRule)) {
-                VALID_RULES.put(validRule, Pattern.compile(validRule));
-            }
-            if (!VALID_RULES.get(validRule).matcher(sk).matches()) {
-                return StandardResp.badRequest(BUSINESS_TENANT_CERT, "认证密钥规则不合法");
-            }
-        }
-        return StandardResp.success(validTimeSec == null || validTimeSec.equals(Constant.OBJECT_UNDEFINED)
-                ? Constant.NEVER_EXPIRE_TIME
-                : new Date(System.currentTimeMillis() + validTimeSec * 1000));
-    }
-
-    *//**
-     * Check valid rule.
-     *
-     * @param kind        the kind
-     * @param sk          the sk
-     * @param relTenantId the rel tenant id
-     * @return the resp
-     *//*
-    protected Resp<Boolean> checkValidRule(AccountIdentKind kind, String sk, Long relTenantId) {
-        var qTenantIdent = QTenantIdent.tenantIdent;
-        var validRule = sqlBuilder
-                .select(qTenantIdent.validRule)
-                .from(qTenantIdent)
-                .where(qTenantIdent.status.eq(CommonStatus.ENABLED))
-                .where(qTenantIdent.kind.eq(kind))
-                .where(qTenantIdent.relTenantId.eq(relTenantId))
-                .fetchOne();
-        if (validRule == null) {
-            return StandardResp.badRequest(BUSINESS_TENANT_CERT, "认证不存在或已禁用");
-        }
-        if (!StringUtils.isEmpty(validRule)) {
-            if (!VALID_RULES.containsKey(validRule)) {
-                VALID_RULES.put(validRule, Pattern.compile(validRule));
-            }
-            if (!VALID_RULES.get(validRule).matcher(sk).matches()) {
-                return StandardResp.badRequest(BUSINESS_TENANT_CERT, "认证密钥规则不合法");
-            }
-        }
-        return StandardResp.success(true);
-    }
-
-    *//**
-     * Gets tenant ident.
-     *
-     * @param kind        the kind
-     * @param relTenantId the rel tenant id
-     * @return the tenant ident
-     *//*
-    protected Resp<TenantIdent> getTenantIdent(AccountIdentKind kind, Long relTenantId) {
-        var qTenantIdent = QTenantIdent.tenantIdent;
-        return getDTO(sqlBuilder
-                .selectFrom(qTenantIdent)
-                .where(qTenantIdent.relTenantId.eq(relTenantId))
-                .where(qTenantIdent.status.eq(CommonStatus.ENABLED))
-                .where(qTenantIdent.kind.eq(kind)));
-    }*/
 
 }

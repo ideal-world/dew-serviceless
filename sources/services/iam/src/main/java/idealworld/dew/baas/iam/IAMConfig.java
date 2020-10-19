@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "dew.baas.iam")
 public class IAMConfig extends CommonConfig {
 
+    // TODO config
     private boolean allowTenantRegister = false;
 
     private Security security = new Security();

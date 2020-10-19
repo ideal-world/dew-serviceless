@@ -35,14 +35,14 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "dew_del_record", indexes = {
-        @Index(columnList = "kind,entityName")
+        @Index(columnList = "entityName,recordId",unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "dew_del_record",
         comment = "记录删除信息")
 @Data
 @SuperBuilder
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class SoftDelEntity extends IdEntity {
 
     /**

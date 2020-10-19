@@ -16,20 +16,17 @@
 
 package idealworld.dew.baas.iam.dto.account;
 
+import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 添加账号请求.
+ * 修改账号绑定请求.
  *
  * @author gudaoxuri
  */
@@ -37,24 +34,22 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加账号请求")
-public class AccountAddReq implements Serializable {
+@Schema(title = "修改账号绑定请求")
+public class AccountBindModifyReq implements Serializable {
 
-    @NotNull
-    @NotBlank
-    @Size(max = 255)
-    @Schema(title = "账号名称", required = true)
-    private String name;
+    @Schema(title = "源租户Id")
+    private Long fromTenantId;
 
-    @Size(max = 1000)
-    @Schema(title = "账号头像（路径）")
-    @Builder.Default
-    private String avatar = "";
+    @Schema(title = "源租户账号Id")
+    private Long fromAccountId;
 
-    @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式")
-    @Builder.Default
-    private String parameters = "{}";
+    @Schema(title = "目标租户Id")
+    private Long toTenantId;
 
+    @Schema(title = "目标户账号Id")
+    private Long toAccountId;
+
+    @Schema(title = "绑定使用的账号认证类型名称")
+    private AccountIdentKind identKind;
 
 }

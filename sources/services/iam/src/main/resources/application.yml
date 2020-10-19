@@ -1,0 +1,27 @@
+spring:
+  profiles:
+    active: test
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+dew:
+  cluster:
+    cache: redis
+    mq: redis
+    lock: redis
+    election: redis
+  basic:
+    format:
+      auto-trim-from-req: true
+  security:
+    router:
+      enabled: true
+      roleAuth:
+        0-0-SYSTEM_ADMIN:
+          all: ["/admin/**"]
+        0-0-TENANT_ADMIN:
+          all: ["/console/**"]
+
+
+

@@ -34,8 +34,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "iam_group_node", indexes = {
-        @Index(columnList = "relGroupId,code", unique = true),
-        @Index(columnList = "parentId")
+        @Index(columnList = "relGroupId,code", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_group_node",
         comment = "群组节点")

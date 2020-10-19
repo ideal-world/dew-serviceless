@@ -1,0 +1,30 @@
+spring:
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+  datasource:
+#    driver-class-name: org.h2.Driver
+#    url: jdbc:h2:./iam.db;AUTO_SERVER=TRUE
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/iam?useUnicode=true&characterEncoding=utf-8&rewriteBatchedStatements=true
+    username: root
+    password: 123456
+dew:
+  basic:
+    name: web示例
+    version: 1.0
+    desc: 这是一个Web示例
+    web-site: http://www.idealworld.group
+    doc:
+      base-package: idealworld.dew.baas.iam.controller
+
+server:
+  port: 8081
+
+logging:
+  level:
+    idealworld: trace
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql: trace
+

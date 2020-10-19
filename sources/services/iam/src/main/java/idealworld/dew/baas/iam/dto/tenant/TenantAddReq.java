@@ -16,13 +16,11 @@
 
 package idealworld.dew.baas.iam.dto.tenant;
 
-import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Tolerate;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -30,7 +28,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 租户注册请求.
+ * 添加租户请求.
  *
  * @author gudaoxuri
  */
@@ -38,35 +36,27 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "租户注册请求")
-public class RegisterTenantReq implements Serializable {
+@Schema(title = "添加租户请求")
+public class TenantAddReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
     @Schema(title = "租户名称", required = true)
-    private String tenantName;
-    @NotNull
-    @NotBlank
-    @Size(max = 255)
-    @Schema(title = "账户名称", required = true)
-    private String accountName;
+    private String name;
+
+    @Size(max = 1000)
+    @Schema(title = "租户图标（路径）")
+    @Builder.Default
+    private String icon = "";
+
     @Schema(title = "是否开放账号注册")
+    @Builder.Default
     private Boolean allowAccountRegister = false;
-    @Schema(title = "是否允许跨租户")
-    private Boolean allowCrossTenant = false;
-    @NotNull
-    @Schema(title = "认证类型", required = true)
-    private AccountIdentKind identKind;
-    @NotNull
-    @NotBlank
-    @Size(max = 255)
-    @Schema(title = "认证名", required = true)
-    private String ak;
-    @NotNull
-    @NotBlank
-    @Size(max = 255)
-    @Schema(title = "认证密钥", required = true)
-    private String sk;
+
+    @Size(max = 5000)
+    @Schema(title = "租户扩展信息，Json格式")
+    @Builder.Default
+    private String parameters = "{}";
 
 }

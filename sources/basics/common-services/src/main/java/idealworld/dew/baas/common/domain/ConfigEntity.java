@@ -22,19 +22,26 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.Entity;
+import javax.persistence.Index;
+import javax.persistence.Table;
 
 /**
  * Config entity.
  *
  * @author gudaoxuri
  */
-@MappedSuperclass
+@Entity
+@Table(name = "dew_config", indexes = {
+        @Index(columnList = "k", unique = true)
+})
+@org.hibernate.annotations.Table(appliesTo = "dew_config",
+        comment = "通用配置信息")
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public abstract class ConfigEntity extends SafeEntity {
+public class ConfigEntity extends SafeEntity {
 
     /**
      * The Key.
@@ -47,7 +54,7 @@ public abstract class ConfigEntity extends SafeEntity {
      * The Value.
      */
     @Column(nullable = false,
-            columnDefinition = "varchar(1024) comment 'Value'")
+            columnDefinition = "varchar(3000) comment 'Value'")
     protected String v;
 
 }

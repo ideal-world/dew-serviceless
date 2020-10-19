@@ -14,47 +14,58 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.account;
+package idealworld.dew.baas.iam.dto.tenant;
 
+import idealworld.dew.baas.common.dto.IdResp;
+import idealworld.dew.baas.common.enumeration.CommonStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 
 /**
- * 添加账号请求.
+ * 租户响应.
  *
  * @author gudaoxuri
  */
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加账号请求")
-public class AccountAddReq implements Serializable {
+@EqualsAndHashCode(callSuper = true)
+@Schema(title = "租户响应")
+public class TenantResp extends IdResp {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "账号名称", required = true)
+    @Schema(title = "租户名称", required = true)
     private String name;
 
+    @NotNull
+    @NotBlank
     @Size(max = 1000)
-    @Schema(title = "账号头像（路径）")
-    @Builder.Default
-    private String avatar = "";
+    @Schema(title = "租户图标（路径）", required = true)
+    private String icon;
 
-    @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式")
-    @Builder.Default
-    private String parameters = "{}";
+    @NotNull
+    @Schema(title = "是否开放账号注册", required = true)
+    private Boolean allowAccountRegister;
 
+    @NotNull
+    @NotBlank
+    @Size(max = 5000)
+    @Schema(title = "租户扩展信息，Json格式", required = true)
+    private String parameters;
+
+    @NotNull
+    @Schema(title = "租户状态", required = true)
+    private CommonStatus status;
 
 }

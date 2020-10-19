@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.account;
+package idealworld.dew.baas.iam.dto.tenant;
 
+import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 添加账号请求.
+ * 修改租户认证配置请求.
  *
  * @author gudaoxuri
  */
@@ -37,24 +35,29 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加账号请求")
-public class AccountAddReq implements Serializable {
+@Schema(title = "修改租户认证配置请求")
+public class TenantIdentModifyReq implements Serializable {
 
-    @NotNull
-    @NotBlank
-    @Size(max = 255)
-    @Schema(title = "账号名称", required = true)
-    private String name;
-
-    @Size(max = 1000)
-    @Schema(title = "账号头像（路径）")
-    @Builder.Default
-    private String avatar = "";
+    @Schema(title = "租户认证类型名称")
+    private AccountIdentKind kind;
 
     @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式")
-    @Builder.Default
-    private String parameters = "{}";
+    @Schema(title = "认证AK校验正则规则说明")
+    private String validAKRuleNote;
 
+    @Size(max = 2000)
+    @Schema(title = "认证AK校验正则规则")
+    private String validAKRule;
+
+    @Size(max = 2000)
+    @Schema(title = "认证SK校验正则规则说明")
+    private String validSKRuleNote;
+
+    @Size(max = 2000)
+    @Schema(title = "认证SK校验正则规则")
+    private String validSKRule;
+
+    @Schema(title = "认证有效时间（秒）")
+    private Long validTimeSec;
 
 }

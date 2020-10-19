@@ -132,7 +132,7 @@ public class Resource extends AppBasedEntity {
 
     @Column(nullable = false,
             columnDefinition = "tinyint(1) comment '是否是资源组'")
-    private Boolean group;
+    private Boolean resGroup;
 
     @Column(nullable = false,
             columnDefinition = "bigint comment '资源所属组Id'")

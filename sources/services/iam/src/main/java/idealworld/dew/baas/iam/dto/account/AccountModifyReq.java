@@ -27,7 +27,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 添加或修改账号请求.
+ * 修改账号请求.
  *
  * @author gudaoxuri
  */
@@ -35,11 +35,11 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加或修改账号请求")
+@Schema(title = "修改账号请求")
 public class AccountModifyReq implements Serializable {
 
     @Size(max = 255)
-    @Schema(title = "群组名称")
+    @Schema(title = "账号名称")
     private String name;
 
     @Size(max = 1000)

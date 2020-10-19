@@ -58,8 +58,6 @@ public class AccountService extends IAMBasicService {
     @Autowired
     private TenantService tenantService;
     @Autowired
-    private AppService appService;
-    @Autowired
     private GroupService groupService;
     @Autowired
     private RoleService roleService;

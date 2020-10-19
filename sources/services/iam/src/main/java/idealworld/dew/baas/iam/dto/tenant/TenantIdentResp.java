@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.account;
+package idealworld.dew.baas.iam.dto.tenant;
 
 import idealworld.dew.baas.common.dto.IdResp;
-import idealworld.dew.baas.common.enumeration.CommonStatus;
+import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -28,7 +28,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 账号响应.
+ * 租户认证配置响应.
  *
  * @author gudaoxuri
  */
@@ -37,37 +37,39 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(title = "账号响应")
-public class AccountResp extends IdResp {
+@Schema(title = "租户认证配置响应")
+public class TenantIdentResp extends IdResp {
+
+    @NotNull
+    @Schema(title = "租户认证类型名称",required = true)
+    private AccountIdentKind kind;
 
     @NotNull
     @NotBlank
-    @Size(max = 100)
-    @Schema(title = "Open Id", required = true)
-    private String openId;
-
-    @NotNull
-    @NotBlank
-    @Size(max = 255)
-    @Schema(title = "账号名称", required = true)
-    private String name;
-
-    @NotNull
-    @Size(max = 1000)
-    @Schema(title = "账号头像（路径）", required = true)
-    private String avatar;
-
-    @NotNull
     @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式", required = true)
-    private String parameters ;
+    @Schema(title = "认证AK校验正则规则说明",required = true)
+    private String validAKRuleNote;
 
     @NotNull
-    @Schema(title = "父账号Id")
-    private Long parentId;
+    @NotBlank
+    @Size(max = 2000)
+    @Schema(title = "认证AK校验正则规则",required = true)
+    private String validAKRule;
 
     @NotNull
-    @Schema(title = "账号状态")
-    private CommonStatus status;
+    @NotBlank
+    @Size(max = 2000)
+    @Schema(title = "认证SK校验正则规则说明",required = true)
+    private String validSKRuleNote;
+
+    @NotNull
+    @NotBlank
+    @Size(max = 2000)
+    @Schema(title = "认证SK校验正则规则",required = true)
+    private String validSKRule;
+
+    @NotNull
+    @Schema(title = "认证有效时间（秒）",required = true)
+    private Long validTimeSec;
 
 }

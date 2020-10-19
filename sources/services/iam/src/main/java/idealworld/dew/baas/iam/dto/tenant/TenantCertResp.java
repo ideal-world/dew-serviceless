@@ -14,47 +14,41 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.dto.account;
+package idealworld.dew.baas.iam.dto.tenant;
 
+import idealworld.dew.baas.common.dto.IdResp;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 
 /**
- * 添加账号请求.
+ * 租户凭证配置响应.
  *
  * @author gudaoxuri
  */
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加账号请求")
-public class AccountAddReq implements Serializable {
+@EqualsAndHashCode(callSuper = true)
+@Schema(title = "租户凭证配置响应")
+public class TenantCertResp extends IdResp {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "账号名称", required = true)
-    private String name;
+    @Schema(title = "凭证类型名称", required = true)
+    private String category;
 
-    @Size(max = 1000)
-    @Schema(title = "账号头像（路径）")
-    @Builder.Default
-    private String avatar = "";
-
-    @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式")
-    @Builder.Default
-    private String parameters = "{}";
-
+    @NotNull
+    @Schema(title = "凭证保留的版本数量", required = true)
+    private Integer version;
 
 }
