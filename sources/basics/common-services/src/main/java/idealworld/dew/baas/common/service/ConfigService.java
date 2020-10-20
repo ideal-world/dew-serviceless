@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.common.service;
 
-import com.ecfront.dew.common.Resp;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import idealworld.dew.baas.common.domain.ConfigEntity;
 import idealworld.dew.baas.common.domain.QConfigEntity;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -48,31 +48,36 @@ public class ConfigService {
     @Autowired
     protected EntityManager entityManager;
 
+    private QConfigEntity qConfigEntity = QConfigEntity.configEntity;
+
     /**
-     * Get resp.
+     * Get.
      *
      * @param k the k
-     * @return the resp
+     * @return the v
      */
-    public Resp<String> get(String k) {
-        var qConfigEntity = QConfigEntity.configEntity;
-        return Resp.success(sqlBuilder.select(qConfigEntity.v)
+    public Optional<String> get(String k) {
+        var v = sqlBuilder.select(qConfigEntity.v)
                 .from(qConfigEntity)
                 .where(qConfigEntity.k.eq(k))
-                .fetchOne());
+                .fetchOne();
+        if (v == null) {
+            return Optional.empty();
+        }
+        return Optional.of(v);
     }
 
     /**
      * Find all.
      *
-     * @return the resp
+     * @return the map
      */
-    public Resp<Map<String, String>> findAll() {
+    public Map<String, String> findAll() {
         var qConfigEntity = QConfigEntity.configEntity;
-        return Resp.success(sqlBuilder.selectFrom(qConfigEntity)
+        return sqlBuilder.selectFrom(qConfigEntity)
                 .fetch()
                 .stream()
-                .collect(Collectors.toMap(ConfigEntity::getK, ConfigEntity::getV)));
+                .collect(Collectors.toMap(ConfigEntity::getK, ConfigEntity::getV));
     }
 
     /**
@@ -80,9 +85,8 @@ public class ConfigService {
      *
      * @param k the k
      * @param v the v
-     * @return the resp
      */
-    public Resp<Void> set(String k, String v) {
+    public void set(String k, String v) {
         var qConfigEntity = QConfigEntity.configEntity;
         if (sqlBuilder.select(qConfigEntity.id)
                 .from(qConfigEntity)
@@ -98,21 +102,18 @@ public class ConfigService {
                     .where(qConfigEntity.k.eq(k))
                     .execute();
         }
-        return Resp.success(null);
     }
 
     /**
      * Delete.
      *
      * @param k the k
-     * @return the resp
      */
-    public Resp<Void> delete(String k) {
+    public void delete(String k) {
         var qConfigEntity = QConfigEntity.configEntity;
         sqlBuilder.delete(qConfigEntity)
                 .where(qConfigEntity.k.eq(k))
                 .execute();
-        return Resp.success(null);
     }
 
 }

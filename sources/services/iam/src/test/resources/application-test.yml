@@ -17,7 +17,7 @@ dew:
     desc: 这是一个Web示例
     web-site: http://www.idealworld.group
     doc:
-      base-package: idealworld.dew.baas.iam.controller
+      base-package: idealworld.dew.baas.iam.scene.common.controller
 
 server:
   port: 8081

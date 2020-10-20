@@ -21,6 +21,8 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 /**
  * IAM config.
  *
@@ -31,11 +33,32 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "dew.baas.iam")
 public class IAMConfig extends CommonConfig {
 
-    // TODO config
-    private boolean allowTenantRegister = false;
+    @Override
+    protected void doSync(Map<String, String> config) {
+        if (config.containsKey(IAMConstant.CONFIG_TENANT_REGISTER_ALLOW)) {
+            allowTenantRegister = Boolean.parseBoolean(config.get(IAMConstant.CONFIG_TENANT_REGISTER_ALLOW));
+        }
+        if (config.containsKey(IAMConstant.CONFIG_ACCOUNT_VCODE_ERROR_TIMES)) {
+            security.accountVCodeMaxErrorTimes = Integer.parseInt(config.get(IAMConstant.CONFIG_ACCOUNT_VCODE_ERROR_TIMES));
+        }
+        if (config.containsKey(IAMConstant.CONFIG_ACCOUNT_VCODE_EXPIRE_SEC)) {
+            security.accountVCodeExpireSec = Integer.parseInt(config.get(IAMConstant.CONFIG_ACCOUNT_VCODE_EXPIRE_SEC));
+        }
+        if (config.containsKey(IAMConstant.CONFIG_APP_REQUEST_DATE_OFFSET_MS)) {
+            security.appRequestDateOffsetMs = Integer.parseInt(config.get(IAMConstant.CONFIG_APP_REQUEST_DATE_OFFSET_MS));
+        }
+        if (config.containsKey(IAMConstant.CONFIG_SERVICE_URL)) {
+            serviceUrl = config.get(IAMConstant.CONFIG_SERVICE_URL);
+        }
+    }
+
+
+    private Boolean allowTenantRegister = false;
+    private String serviceUrl = "";
 
     private Security security = new Security();
     private App app = new App();
+
 
     /**
      * Security.
@@ -43,15 +66,15 @@ public class IAMConfig extends CommonConfig {
     @Data
     public static class Security {
 
-        private String systemAdminPositionCode = "SYSTEM_ADMIN";
-        private String systemAdminPositionName = "系统管理员";
-        private String tenantAdminPositionCode = "TENANT_ADMIN";
-        private String tenantAdminPositionName = "租户管理员";
-        private String defaultPositionCode = "DEFAULT_ROLE";
-        private String defaultPositionName = "默认角色";
+        private String systemAdminRoleDefCode = "SYSTEM_ADMIN";
+        private String systemAdminRoleDefName = "系统管理员";
+        private String tenantAdminRoleDefCode = "TENANT_ADMIN";
+        private String tenantAdminRoleDefName = "租户管理员";
+        private String appAdminRoleDefCode = "APP_ADMIN";
+        private String appAdminRoleDefName = "应用管理员";
 
-        private Integer skKindByVCodeExpireSec = 60 * 5;
-        private Integer skKindByVCodeMaxErrorTimes = 5;
+        private Integer accountVCodeExpireSec = 60 * 5;
+        private Integer accountVCodeMaxErrorTimes = 5;
         private Integer appRequestDateOffsetMs = 5000;
 
     }
@@ -61,8 +84,13 @@ public class IAMConfig extends CommonConfig {
      */
     @Data
     public static class App {
+
+        private String iamAdminName = "dew";
+        private String iamTenantName = "平台租户";
+        private String iamAppName = "用户权限中心";
         private String authFieldName = "Authorization";
         private String initNodeCode = "10000";
+
     }
 
 }

@@ -57,7 +57,7 @@ public class AuthPolicy extends AppBasedEntity {
     private AuthSubjectKind relSubjectKind;
 
     @Column(nullable = false,
-            columnDefinition = "varchar(10000) comment '关联权限主体Ids,有多个时逗号分隔'")
+            columnDefinition = "varchar(10000) comment '关联权限主体Ids,有多个时逗号分隔,注意必须存在最后一个逗号'")
     private String relSubjectIds;
 
     @Column(nullable = false,

@@ -16,9 +16,14 @@
 
 package idealworld.dew.baas.common;
 
+import com.ecfront.dew.common.$;
+import idealworld.dew.baas.common.service.ConfigService;
 import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.Map;
 
 /**
  * The type Common config.
@@ -27,8 +32,29 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Data
-public class CommonConfig {
+public abstract class CommonConfig {
 
-    private String eventNotifyTopicName="";
+    private Integer syncIntervalSec = 60;
+    private String eventNotifyTopicName = "";
+
+    @Autowired
+    private ConfigService configService;
+
+    @PostConstruct
+    private void sync() {
+        // TODO　test
+        $.timer.periodic(syncIntervalSec, true, () -> {
+            var config = configService.findAll();
+            if (config.containsKey(Constant.CONFIG_EVENT_CONFIG_SYNC_INTERVAL_SEC)) {
+                syncIntervalSec = Integer.parseInt(config.get(Constant.CONFIG_EVENT_CONFIG_SYNC_INTERVAL_SEC));
+            }
+            if (config.containsKey(Constant.CONFIG_EVENT_NOTIFY_TOPIC_NAME)) {
+                eventNotifyTopicName = config.get(Constant.CONFIG_EVENT_NOTIFY_TOPIC_NAME);
+            }
+            doSync(config);
+        });
+    }
+
+    protected abstract void doSync(Map<String, String> config);
 
 }

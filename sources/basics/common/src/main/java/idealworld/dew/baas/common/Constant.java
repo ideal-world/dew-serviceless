@@ -30,6 +30,14 @@ import java.util.Date;
 public class Constant {
 
     /**
+     * 配置同步间隔时间.
+     */
+    public static final String CONFIG_EVENT_CONFIG_SYNC_INTERVAL_SEC = "event:config:sync:intervalsec";
+    /**
+     * 事件通知Topic名称.
+     */
+    public static final String CONFIG_EVENT_NOTIFY_TOPIC_NAME = "event:notify:topic:name";
+    /**
      * 角色分隔线.
      */
     public static final String ROLE_SPLIT = "-";

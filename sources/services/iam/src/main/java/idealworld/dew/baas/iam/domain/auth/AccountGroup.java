@@ -45,12 +45,13 @@ import javax.persistence.Table;
 @NoArgsConstructor
 public class AccountGroup extends SafeEntity {
 
+     @Column(nullable = false,
+            columnDefinition = "bigint comment '关联群组节点Id'")
+    private Long relGroupNodeId;
+
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联账号Id'")
     private Long relAccountId;
 
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联群组节点Id'")
-    private Long relGroupNodeId;
 
 }

@@ -14,44 +14,42 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.domain.auth;
+package idealworld.dew.baas.iam.scene.common.dto;
 
-import idealworld.dew.baas.common.domain.SafeEntity;
+import idealworld.dew.baas.common.dto.IdResp;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.validation.constraints.NotNull;
 
 /**
- * 账号角色.
+ * 带关联租户应用的响应.
  *
  * @author gudaoxuri
  */
-@Entity
-@Table(name = "iam_account_role", indexes = {
-        @Index(columnList = "relAccountId,relRoleId", unique = true),
-        @Index(columnList = "relRoleId")
-})
-@org.hibernate.annotations.Table(appliesTo = "iam_account_role",
-        comment = "账号角色")
 @Data
 @SuperBuilder
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class AccountRole extends SafeEntity {
+@EqualsAndHashCode(callSuper = true)
+public class AppBasedResp extends IdResp {
 
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联角色Id'")
-    private Long relRoleId;
+    @NotNull
+    @Schema(title = "所属应用Id", required = true)
+    private Long relAppId;
 
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联账号Id'")
-    private Long relAccountId;
+    @NotNull
+    @Schema(title = "所属租户Id", required = true)
+    private Long relTenantId;
 
+    @NotNull
+    @Schema(title = "开放等级类型", required = true)
+    private ExposeKind exposeKind;
 
 }
