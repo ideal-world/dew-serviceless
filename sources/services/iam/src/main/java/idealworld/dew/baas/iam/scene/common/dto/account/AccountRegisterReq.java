@@ -66,10 +66,11 @@ public class AccountRegisterReq implements Serializable {
     @Schema(title = "账号认证名称", required = true)
     private String ak;
 
+    @NotNull
+    @NotBlank
     @Size(max = 255)
-    @Schema(title = "账号认证密钥")
-    @Builder.Default
-    private String sk = "";
+    @Schema(title = "账号认证密钥", required = true)
+    private String sk;
 
     @NotNull
     @Schema(title = "关联应用Id")

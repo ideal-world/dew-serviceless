@@ -186,7 +186,7 @@ public class ACGroupService extends IAMBasicService {
         var qGroupNode = QGroupNode.groupNode;
         var relGroupId = sqlBuilder.select(qGroupNode.relGroupId)
                 .from(qGroupNode)
-                .leftJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
+                .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
                 .where(qGroupNode.id.eq(groupNodeId))
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
@@ -256,7 +256,7 @@ public class ACGroupService extends IAMBasicService {
         var qGroupNode = QGroupNode.groupNode;
         var roleNodes = sqlBuilder
                 .selectFrom(qGroupNode)
-                .leftJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
+                .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
                 .where(qGroupNode.relGroupId.eq(relGroupId))
@@ -305,7 +305,7 @@ public class ACGroupService extends IAMBasicService {
         var qGroupNode = QGroupNode.groupNode;
         return softDelEntity(sqlBuilder
                 .selectFrom(qGroupNode)
-                .leftJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
+                .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
                 .where(qGroupNode.id.eq(groupNodeId))
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId)));

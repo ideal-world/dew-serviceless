@@ -18,10 +18,10 @@ package idealworld.dew.baas.common.dto;
 
 import group.idealworld.dew.core.auth.dto.OptInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -29,22 +29,55 @@ import java.util.Set;
  *
  * @author gudaoxuri
  */
-@Data
 @EqualsAndHashCode(callSuper = true)
 @Schema(title = "操作用户信息")
 public class IdentOptInfo extends OptInfo<IdentOptInfo> {
 
+    @Schema(title = "应用Id", required = true)
+    private Long appId;
+
+    @Schema(title = "租户Id", required = true)
+    private Long tenantId;
+
     @Schema(title = "群组列表", required = true)
     private Set<GroupInfo> groupInfo;
 
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public IdentOptInfo setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+        return this;
+    }
+
+    public Long getAppId() {
+        return appId;
+    }
+
+    public IdentOptInfo setAppId(Long appId) {
+        this.appId = appId;
+        return this;
+    }
+
+    public Set<GroupInfo> getGroupInfo() {
+        return groupInfo;
+    }
+
+    public IdentOptInfo setGroupInfo(Set<GroupInfo> groupInfo) {
+        this.groupInfo = groupInfo;
+        return this;
+    }
+
     @Data
+    @Builder
     @Schema(title = "群组信息", required = true)
-    public static class GroupInfo{
+    public static class GroupInfo {
 
         @Schema(title = "群组Id", required = true)
-        private String groupId;
+        private Long groupId;
         @Schema(title = "群组节点Id", required = true)
-        private String groupNodeId;
+        private Long groupNodeId;
         @Schema(title = "群组业务编码", required = true)
         private String groupNodeBusCode;
         @Schema(title = "群组显示名称", required = true)

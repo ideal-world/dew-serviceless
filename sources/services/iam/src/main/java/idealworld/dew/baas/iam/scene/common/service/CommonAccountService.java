@@ -18,18 +18,20 @@ package idealworld.dew.baas.iam.scene.common.service;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Resp;
+import group.idealworld.dew.Dew;
 import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.resp.StandardResp;
-import idealworld.dew.baas.iam.domain.ident.Account;
-import idealworld.dew.baas.iam.domain.ident.AccountIdent;
-import idealworld.dew.baas.iam.domain.ident.QAccount;
-import idealworld.dew.baas.iam.domain.ident.QAccountIdent;
-import idealworld.dew.baas.iam.scene.common.dto.IAMOptInfo;
+import idealworld.dew.baas.iam.IAMConfig;
+import idealworld.dew.baas.iam.IAMConstant;
+import idealworld.dew.baas.iam.domain.ident.*;
+import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountChangeReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountIdentChangeReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountLoginReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountRegisterReq;
+import idealworld.dew.baas.iam.util.KeyHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,11 +49,13 @@ import java.util.Date;
 public class CommonAccountService extends IAMBasicService {
 
     @Autowired
+    private IAMConfig iamConfig;
+    @Autowired
     private CommonFunctionService commonFunctionService;
 
     @Transactional
-    public Resp<IAMOptInfo> register(AccountRegisterReq accountRegisterReq) {
-        var tenantIdR = commonFunctionService.getEnabledTenantIdByAppId(accountRegisterReq.getRelAppId());
+    public Resp<IdentOptInfo> register(AccountRegisterReq accountRegisterReq) {
+        var tenantIdR = commonFunctionService.getEnabledTenantIdByAppId(accountRegisterReq.getRelAppId(), true);
         if (!tenantIdR.ok()) {
             return Resp.error(tenantIdR);
         }
@@ -87,6 +91,7 @@ public class CommonAccountService extends IAMBasicService {
         var processIdentSkR = commonFunctionService.processIdentSk(accountRegisterReq.getKind(),
                 accountRegisterReq.getAk(),
                 accountRegisterReq.getSk(),
+                accountRegisterReq.getRelAppId(),
                 tenantIdR.getBody());
         if (!processIdentSkR.ok()) {
             return StandardResp.error(processIdentSkR);
@@ -108,19 +113,65 @@ public class CommonAccountService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<IAMOptInfo> login(AccountLoginReq accountLoginReq) {
-        // TODO
-        return Resp.success(null);
+    public Resp<IdentOptInfo> login(AccountLoginReq accountLoginReq) {
+        var tenantIdR = commonFunctionService.getEnabledTenantIdByAppId(accountLoginReq.getRelAppId(), false);
+        if (!tenantIdR.ok()) {
+            return Resp.error(tenantIdR);
+        }
+        log.info("login : [{}-{}] {}", tenantIdR.getBody(), accountLoginReq.getRelAppId(), $.json.toJsonString(accountLoginReq));
+        var qAccount = QAccount.account;
+        var qAccountApp = QAccountApp.accountApp;
+        var qAccountIdent = QAccountIdent.accountIdent;
+        var qTenantIdent = QTenantIdent.tenantIdent;
+        var now = new Date();
+        var accountInfo = sqlBuilder
+                .select(qAccountIdent.sk, qAccount.id, qAccount.openId)
+                .from(qAccountIdent)
+                .innerJoin(qAccountApp).on(qAccountApp.relAccountId.eq(qAccountIdent.relAccountId))
+                .innerJoin(qTenantIdent).on(qAccountIdent.relTenantId.eq(qTenantIdent.relTenantId))
+                .innerJoin(qAccount).on(qAccountIdent.relAccountId.eq(qAccount.id))
+                .where(qTenantIdent.kind.eq(accountLoginReq.getKind()))
+                .where(qAccountIdent.kind.eq(accountLoginReq.getKind()))
+                .where(qAccountIdent.ak.eq(accountLoginReq.getAk()))
+                .where(qAccountIdent.validStartTime.before(now))
+                .where(qAccountIdent.validEndTime.after(now))
+                .where(qAccount.relTenantId.eq(tenantIdR.getBody()))
+                .where(qAccount.status.eq(CommonStatus.ENABLED))
+                .fetchOne();
+        if (accountInfo == null) {
+            log.warn("Login Fail: [{}-{}] AK {} doesn't exist or has expired or account doesn't exist", tenantIdR.getBody(), accountLoginReq.getRelAppId(), accountLoginReq.getAk());
+            return StandardResp.notFound(BUSINESS_ACCOUNT, "登录认证 %s 不存在或已过期或是（应用关联）账号不存在", accountLoginReq.getAk());
+        }
+        var identSk = accountInfo.get(0, String.class);
+        var accountId = accountInfo.get(1, Long.class);
+        var openId = accountInfo.get(2, String.class);
+        var validateR = validateSK(accountLoginReq.getKind(), accountLoginReq.getAk(), accountLoginReq.getSk(), identSk, accountLoginReq.getRelAppId(), tenantIdR.getBody());
+        if (!validateR.ok()) {
+            log.warn("Login Fail: [{}-{}] SK {} error", tenantIdR.getBody(), accountLoginReq.getRelAppId(), accountLoginReq.getAk());
+            return StandardResp.error(validateR);
+        }
+        log.info("Login Success:  [{}-{}] ak {}", tenantIdR.getBody(), accountLoginReq.getRelAppId(), accountLoginReq.getAk());
+        String token = KeyHelper.generateToken();
+        var optInfo = new IdentOptInfo()
+                .setAccountCode(openId)
+                .setToken(token)
+                .setRoleInfo(commonFunctionService.findRoleInfo(accountId,accountLoginReq.getRelAppId()))
+                .setGroupInfo(commonFunctionService.findGroupInfo(accountId,accountLoginReq.getRelAppId()))
+                .setAppId(accountLoginReq.getRelAppId())
+                .setTenantId(tenantIdR.getBody());
+        Dew.auth.setOptInfo(optInfo);
+        return StandardResp.success(optInfo);
     }
 
     @Transactional
-    public Resp<Void> logout(String token) {
-        // TODO
-        return Resp.success(null);
+    public Resp<Void> logout(String token, String relOpenId) {
+        log.info("Logout Account {} by token {}", relOpenId, token);
+        Dew.auth.removeOptInfo(token);
+        return StandardResp.success(null);
     }
 
     @Transactional
-    public Resp<Void> changeIdent(AccountIdentChangeReq accountIdentChangeReq, Long relAccountId) {
+    public Resp<Void> changeIdent(AccountIdentChangeReq accountIdentChangeReq, Long relAccountId, Long relAppId) {
         var tenantIdR = commonFunctionService.getEnabledTenantIdByAccountId(relAccountId);
         if (!tenantIdR.ok()) {
             return Resp.error(tenantIdR);
@@ -136,6 +187,7 @@ public class CommonAccountService extends IAMBasicService {
         var processIdentSkR = commonFunctionService.processIdentSk(accountIdentChangeReq.getKind(),
                 accountIdentChangeReq.getAk(),
                 accountIdentChangeReq.getSk(),
+                relAppId,
                 tenantIdR.getBody());
         if (!processIdentSkR.ok()) {
             return StandardResp.error(processIdentSkR);
@@ -173,6 +225,47 @@ public class CommonAccountService extends IAMBasicService {
                 .set(qAccount.status, CommonStatus.DISABLED)
                 .where(qAccount.id.eq(relAccountId));
         return updateEntity(accountUpdate);
+    }
+
+    private Resp<Void> validateSK(AccountIdentKind identKind,
+                                  String ak, String inputSk, String storageSk, Long relAppId, Long tenantId) {
+        switch (identKind) {
+            case EMAIL:
+            case PHONE:
+                String tmpSk = Dew.cluster.cache.get(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + tenantId + ":" + ak);
+                if (tmpSk == null) {
+                    return StandardResp.badRequest(BUSINESS_ACCOUNT_CERT, "验证码不存在或已过期，请重新获取");
+                }
+                if (tmpSk.equalsIgnoreCase(inputSk)) {
+                    Dew.cluster.cache.del(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + tenantId + ":" + ak);
+                    Dew.cluster.cache.del(IAMConstant.CACHE_ACCOUNT_VCODE_ERROR_TIMES + tenantId + ":" + ak);
+                    return StandardResp.success(null);
+                }
+                if (Dew.cluster.cache.incrBy(IAMConstant.CACHE_ACCOUNT_VCODE_ERROR_TIMES + tenantId + ":" + ak, 1)
+                        >= iamConfig.getSecurity().getAccountVCodeMaxErrorTimes()) {
+                    Dew.cluster.cache.del(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + tenantId + ":" + ak);
+                    Dew.cluster.cache.del(IAMConstant.CACHE_ACCOUNT_VCODE_ERROR_TIMES + tenantId + ":" + ak);
+                    // TODO 需要特殊标记表示验证码过期
+                    return StandardResp.badRequest(BUSINESS_ACCOUNT_CERT, "验证码不存在或已过期，请重新获取");
+                }
+                return StandardResp.badRequest(BUSINESS_ACCOUNT_CERT, "验证码错误");
+            case USERNAME:
+                if (!$.security.digest.validate(ak + inputSk, storageSk, "SHA-512")) {
+                    return StandardResp.badRequest(BUSINESS_ACCOUNT_CERT, "密码错误");
+                }
+                return StandardResp.success(null);
+            case WECHAT_MP:
+                String accessToken = Dew.cluster.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString());
+                if (accessToken == null) {
+                    return StandardResp.badRequest(BUSINESS_ACCOUNT_IDENT, "Access Token不存在");
+                }
+                if (!accessToken.equalsIgnoreCase(inputSk)) {
+                    return StandardResp.badRequest(BUSINESS_ACCOUNT_IDENT, "Access Token错误");
+                }
+                return StandardResp.success(null);
+            default:
+                return StandardResp.success(null);
+        }
     }
 
 }

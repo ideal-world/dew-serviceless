@@ -19,13 +19,13 @@ package idealworld.dew.baas.iam.scene.common.service;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Resp;
 import group.idealworld.dew.Dew;
+import group.idealworld.dew.core.auth.dto.OptInfo;
 import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.IAMConstant;
-import idealworld.dew.baas.iam.domain.auth.QGroup;
-import idealworld.dew.baas.iam.domain.auth.QGroupNode;
-import idealworld.dew.baas.iam.domain.auth.QRole;
+import idealworld.dew.baas.iam.domain.auth.*;
 import idealworld.dew.baas.iam.domain.ident.QAccount;
 import idealworld.dew.baas.iam.domain.ident.QApp;
 import idealworld.dew.baas.iam.domain.ident.QTenant;
@@ -38,8 +38,10 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 公共函数服务.
@@ -52,7 +54,7 @@ public class CommonFunctionService extends IAMBasicService {
 
     private static final Map<String, Pattern> VALID_RULES = new ConcurrentHashMap<>();
 
-    public Resp<Long> getEnabledTenantIdByAppId(Long appId) {
+    public Resp<Long> getEnabledTenantIdByAppId(Long appId, Boolean registerAction) {
         var qApp = QApp.app;
         var tenantId = sqlBuilder.select(qApp.relTenantId)
                 .from(qApp)
@@ -63,12 +65,23 @@ public class CommonFunctionService extends IAMBasicService {
             return StandardResp.badRequest(BUSINESS_APP, "应用[" + appId + "]不存在或未启用");
         }
         var qTenant = QTenant.tenant;
-        if (sqlBuilder.select(qTenant.id)
-                .from(qTenant)
-                .where(qTenant.id.eq(tenantId))
-                .where(qTenant.status.eq(CommonStatus.ENABLED))
-                .fetchCount() == 0) {
-            return StandardResp.badRequest(BUSINESS_APP, "应用[" + appId + "]对应租户不存在或未启用");
+        if (registerAction == null) {
+            if (sqlBuilder.select(qTenant.id)
+                    .from(qTenant)
+                    .where(qTenant.id.eq(tenantId))
+                    .where(qTenant.status.eq(CommonStatus.ENABLED))
+                    .fetchCount() == 0) {
+                return StandardResp.badRequest(BUSINESS_APP, "应用[" + appId + "]对应租户不存在或未启用");
+            }
+        } else {
+            if (sqlBuilder.select(qTenant.id)
+                    .from(qTenant)
+                    .where(qTenant.id.eq(tenantId))
+                    .where(qTenant.status.eq(CommonStatus.ENABLED))
+                    .where(qTenant.allowAccountRegister.eq(true))
+                    .fetchCount() == 0) {
+                return StandardResp.badRequest(BUSINESS_APP, "应用[" + appId + "]对应租户不存在、未启用或禁止注册");
+            }
         }
         return Resp.success(tenantId);
     }
@@ -94,7 +107,7 @@ public class CommonFunctionService extends IAMBasicService {
         return Resp.success(tenantId);
     }
 
-    public Resp<String> processIdentSk(AccountIdentKind identKind, String ak, String sk, Long relTenantId) {
+    public Resp<String> processIdentSk(AccountIdentKind identKind, String ak, String sk, @Nullable Long relAppId, Long relTenantId) {
         switch (identKind) {
             case EMAIL:
             case PHONE:
@@ -111,6 +124,16 @@ public class CommonFunctionService extends IAMBasicService {
                     return StandardResp.badRequest(BUSINESS_ACCOUNT_IDENT, "密码必填");
                 }
                 return StandardResp.success($.security.digest.digest(ak + sk, "SHA-512"));
+            case WECHAT_MP:
+                // 需要关联AppId
+                String accessToken = Dew.cluster.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString());
+                if (accessToken == null) {
+                    return StandardResp.badRequest(BUSINESS_ACCOUNT_IDENT, "Access Token不存在");
+                }
+                if (!accessToken.equalsIgnoreCase(sk)) {
+                    return StandardResp.badRequest(BUSINESS_ACCOUNT_IDENT, "Access Token错误");
+                }
+                return StandardResp.success("");
             default:
                 return StandardResp.success("");
         }
@@ -196,7 +219,7 @@ public class CommonFunctionService extends IAMBasicService {
         if (sqlBuilder
                 .select(qGroupNode.id)
                 .from(qGroupNode)
-                .leftJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
+                .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
                 .where(qGroupNode.id.eq(groupNodeId))
                 .where(qGroup.relTenantId.eq(tenantId))
                 .where(qGroup.relAppId.eq(appId))
@@ -204,6 +227,55 @@ public class CommonFunctionService extends IAMBasicService {
             return StandardResp.unAuthorized(BUSINESS_GROUP_NODE, "群组节点不合法");
         }
         return Resp.success(null);
+    }
+
+    public Set<IdentOptInfo.RoleInfo> findRoleInfo(Long accountId, Long relAppId) {
+        var qAccountRole = QAccountRole.accountRole;
+        var qRole = QRole.role;
+        return sqlBuilder.select(qRole.id, qRole.name)
+                .from(qAccountRole)
+                .innerJoin(qRole)
+                .on(qRole.id.eq(qAccountRole.relRoleId)
+                        .and(qRole.relAppId.eq(relAppId)))
+                .where(qAccountRole.relAccountId.eq(accountId))
+                .fetch()
+                .stream()
+                .map(roleInfo -> {
+                    var role = new OptInfo.RoleInfo();
+                    role.setCode(roleInfo.get(0, Long.class) + "");
+                    role.setName(roleInfo.get(1, String.class));
+                    return role;
+                })
+                .collect(Collectors.toSet());
+    }
+
+    public Set<IdentOptInfo.GroupInfo> findGroupInfo(Long accountId, Long relAppId) {
+        var qAccountGroup = QAccountGroup.accountGroup;
+        var qGroup = QGroup.group;
+        var qGroupNode = QGroupNode.groupNode;
+        return sqlBuilder.select(
+                qGroupNode.relGroupId,
+                qGroup.name,
+                qGroupNode.id,
+                qGroupNode.name,
+                qGroupNode.busCode)
+                .from(qAccountGroup)
+                .innerJoin(qGroupNode).on(qGroupNode.id.eq(qAccountGroup.relGroupNodeId))
+                .innerJoin(qGroup)
+                .on(qGroup.id.eq(qGroupNode.relGroupId)
+                        .and(qGroup.relAppId.eq(relAppId)))
+                .where(qAccountGroup.relAccountId.eq(accountId))
+                .fetch()
+                .stream()
+                .map(groupInfo ->
+                        IdentOptInfo.GroupInfo.builder()
+                                .groupId(groupInfo.get(0, Long.class))
+                                .groupName(groupInfo.get(1, String.class))
+                                .groupNodeId(groupInfo.get(2, Long.class))
+                                .groupNodeName(groupInfo.get(3, String.class))
+                                .groupNodeBusCode(groupInfo.get(4, String.class))
+                                .build())
+                .collect(Collectors.toSet());
     }
 
 }

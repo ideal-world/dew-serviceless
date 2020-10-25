@@ -9,6 +9,12 @@ import idealworld.dew.baas.common.Constant;
  */
 public class IAMConstant extends Constant {
 
+    public static final String CACHE_APP_AK = "iam:app:ak:";
+    public static final String CACHE_TENANT_STATUS_ENABLE = "iam:tenant:enable:";
+    public static final String CACHE_APP_STATUS_ENABLE = "iam:app:enable:";
+
+    public static final String CACHE_ACCESS_TOKEN = "iam:oauth:access-token:";
+
     public static final String CACHE_ACCOUNT_VCODE_TMP_REL = "iam:account:vocde:tmprel:";
     public static final String CACHE_ACCOUNT_VCODE_ERROR_TIMES = "iam:account:vocde:errortimes:";
 

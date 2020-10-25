@@ -16,6 +16,8 @@
 
 package idealworld.dew.baas.iam.scene.common.service;
 
+import group.idealworld.dew.Dew;
+import group.idealworld.dew.core.cluster.ClusterElection;
 import idealworld.dew.baas.common.service.CommonService;
 import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.domain.auth.*;
@@ -32,12 +34,16 @@ import java.util.List;
  */
 public abstract class IAMBasicService extends CommonService<Long> {
 
+    protected static final ClusterElection ELECTION = Dew.cluster.election.instance("iam");
+
+    // TODO 重新整理
     protected static final String BUSINESS_PUBLIC = "PUBLIC";
     protected static final String BUSINESS_TENANT = "TENANT";
     protected static final String BUSINESS_TENANT_IDENT = "TENANT_IDENT";
     protected static final String BUSINESS_TENANT_CERT = "TENANT_CERT";
     protected static final String BUSINESS_ACCOUNT = "ACCOUNT";
     protected static final String BUSINESS_ACCOUNT_IDENT = "ACCOUNT_IDENT";
+    protected static final String BUSINESS_ACCOUNT_CERT = "ACCOUNT_CERT";
     protected static final String BUSINESS_ACCOUNT_BIND = "ACCOUNT_BIND";
     protected static final String BUSINESS_APP = "APP";
     protected static final String BUSINESS_APP_IDENT = "APP_IDENT";
@@ -48,7 +54,7 @@ public abstract class IAMBasicService extends CommonService<Long> {
     protected static final String BUSINESS_RESOURCE = "RESOURCE";
     protected static final String BUSINESS_RESOURCE_SUBJECT = "RESOURCE_SUBJECT";
     protected static final String BUSINESS_AUTH_POLICY = "AUTH_POLICY";
-
+    protected static final String BUSINESS_OAUTH = "OAUTH";
 
     private static final List<String> NOTIFY_BY_MQ_ENTITIES = new ArrayList<>() {
         {

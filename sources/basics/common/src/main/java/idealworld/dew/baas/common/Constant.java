@@ -38,10 +38,6 @@ public class Constant {
      */
     public static final String CONFIG_EVENT_NOTIFY_TOPIC_NAME = "event:notify:topic:name";
     /**
-     * 角色分隔线.
-     */
-    public static final String ROLE_SPLIT = "-";
-    /**
      * 未定义对象的标识，多用于全局Id标识.
      */
     public static final long OBJECT_UNDEFINED = 0L;

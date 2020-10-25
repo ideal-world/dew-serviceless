@@ -188,6 +188,7 @@ public class TCAccountService extends IAMBasicService {
         var processIdentSkR = commonFunctionService.processIdentSk(accountIdentAddReq.getKind(),
                 accountIdentAddReq.getAk(),
                 accountIdentAddReq.getSk(),
+                null,
                 relTenantId);
         if (!processIdentSkR.ok()) {
             return StandardResp.error(processIdentSkR);
@@ -244,6 +245,7 @@ public class TCAccountService extends IAMBasicService {
             var processIdentSkR = commonFunctionService.processIdentSk(accountIdentKind,
                     accountIdentAk,
                     accountIdentModifyReq.getSk(),
+                    null,
                     relTenantId);
             if (!processIdentSkR.ok()) {
                 return StandardResp.error(processIdentSkR);

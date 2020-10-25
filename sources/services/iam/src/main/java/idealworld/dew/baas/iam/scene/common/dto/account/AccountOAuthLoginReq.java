@@ -29,7 +29,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 登录请求.
+ * OAuth注册/登录请求.
  *
  * @author gudaoxuri
  */
@@ -37,27 +37,17 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "登录请求")
-public class AccountLoginReq implements Serializable {
+@Schema(title = "OAuth注册/登录请求")
+public class AccountOAuthLoginReq implements Serializable {
 
-    @Schema(title = "账号认证类型")
-    @Builder.Default
-    private AccountIdentKind kind = AccountIdentKind.USERNAME;
+    @NotNull
+    @Schema(title = "认证类型", description = "只能是OAuth类型的认证", required = true)
+    private AccountIdentKind kind;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "账号认证名称", required = true)
-    private String ak;
-
-    @NotNull
-    @NotBlank
-    @Size(max = 255)
-    @Schema(title = "账号认证密钥", required = true)
-    private String sk;
-
-    @NotNull
-    @Schema(title = "关联应用Id")
-    private Long relAppId;
+    @Schema(title = "授权码", required = true)
+    private String code;
 
 }

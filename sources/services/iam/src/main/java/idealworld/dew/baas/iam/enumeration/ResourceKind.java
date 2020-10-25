@@ -54,7 +54,11 @@ public enum ResourceKind {
     /**
      * 对象存储.
      */
-    OBJECT("OBJECT");
+    OBJECT("OBJECT"),
+    /**
+     * OAuth.
+     */
+    OAUTH("OAUTH");
 
     private final String code;
 

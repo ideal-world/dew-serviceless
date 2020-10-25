@@ -16,9 +16,10 @@
 
 package idealworld.dew.baas.iam.scene.common.controller;
 
+import com.ecfront.dew.common.tuple.Tuple2;
 import group.idealworld.dew.Dew;
+import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.resp.StandardResp;
-import idealworld.dew.baas.iam.scene.common.dto.IAMOptInfo;
 
 /**
  * Basic controller.
@@ -27,14 +28,9 @@ import idealworld.dew.baas.iam.scene.common.dto.IAMOptInfo;
  */
 public abstract class BasicController {
 
-    /**
-     * Gets current tenant id.
-     *
-     * @return the current tenant id
-     */
-    protected Long getCurrentTenantId() {
+    protected Tuple2<Long, Long> getCurrentAppAndTenantId() {
         return Dew.auth.getOptInfo()
-                .map(info -> ((IAMOptInfo) info).getRelTenantId())
+                .map(info -> new Tuple2<>(((IdentOptInfo) info).getAppId(), ((IdentOptInfo) info).getTenantId()))
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.unAuthorized("BASIC", "用户未登录")
                 ));
