@@ -16,11 +16,11 @@
 
 package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.iam.domain.AppBasedEntity;
-import idealworld.dew.baas.iam.enumeration.AuthActionKind;
-import idealworld.dew.baas.iam.enumeration.AuthResultKind;
-import idealworld.dew.baas.iam.enumeration.AuthSubjectKind;
-import idealworld.dew.baas.iam.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.domain.SafeEntity;
+import idealworld.dew.baas.common.enumeration.AuthActionKind;
+import idealworld.dew.baas.common.enumeration.AuthResultKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -40,8 +40,7 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "iam_auth_policy", indexes = {
-        @Index(columnList = "relSubjectKind,relSubjectIds,effectiveTime,expiredTime,relResourceId,actionKind", unique = true),
-        @Index(columnList = "relResourceId,actionKind")
+        @Index(columnList = "relResourceId,actionKind,relSubjectKind,relSubjectIds,subjectOperator,effectiveTime,expiredTime", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_auth_policy",
         comment = "权限策略")
@@ -49,7 +48,7 @@ import java.util.Date;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class AuthPolicy extends AppBasedEntity {
+public class AuthPolicy extends SafeEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(20) comment '关联权限主体类型名称'")
@@ -102,5 +101,13 @@ public class AuthPolicy extends AppBasedEntity {
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联权限主体的租户Id'")
     private Long relSubjectTenantId;
+
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联应用Id'")
+    private Long relAppId;
+
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联租户Id'")
+    private Long relTenantId;
 
 }

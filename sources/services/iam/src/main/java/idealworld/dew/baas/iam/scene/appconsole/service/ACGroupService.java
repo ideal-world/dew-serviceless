@@ -24,7 +24,7 @@ import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.domain.auth.*;
-import idealworld.dew.baas.iam.enumeration.AuthSubjectKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.iam.scene.appconsole.dto.group.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import lombok.extern.slf4j.Slf4j;

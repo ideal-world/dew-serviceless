@@ -99,8 +99,8 @@ public class AppHandlerInterceptor implements AsyncHandlerInterceptor {
                     AuthException.class.getName());
             return false;
         }
-        if (!interceptService.checkTenantStatus(tenantId) ||
-                !interceptService.checkAppStatus(appId)) {
+        if (!interceptService.isTenantLegal(tenantId) ||
+                !interceptService.isAppLegal(appId)) {
             ErrorController.error(request, response, Integer.parseInt(StandardCode.UNAUTHORIZED.toString()),
                     "租户或应用不合法",
                     AuthException.class.getName());

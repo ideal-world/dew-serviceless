@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Tag(name = "common", description = "公共操作")
 @Validated
-public class CommonController extends BasicController {
+public class CommonController extends IAMBasicController {
 
 
 }

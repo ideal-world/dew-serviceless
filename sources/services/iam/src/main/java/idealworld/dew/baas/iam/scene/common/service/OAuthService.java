@@ -27,7 +27,7 @@ import idealworld.dew.baas.iam.domain.auth.QResourceSubject;
 import idealworld.dew.baas.iam.domain.ident.QAccount;
 import idealworld.dew.baas.iam.domain.ident.QAccountIdent;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
-import idealworld.dew.baas.iam.enumeration.ResourceKind;
+import idealworld.dew.baas.common.enumeration.ResourceKind;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountLoginReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountOAuthLoginReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountRegisterReq;

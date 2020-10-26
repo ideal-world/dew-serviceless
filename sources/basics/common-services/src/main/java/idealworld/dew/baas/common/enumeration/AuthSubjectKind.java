@@ -14,63 +14,59 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.enumeration;
+package idealworld.dew.baas.common.enumeration;
 
 import idealworld.dew.baas.common.resp.StandardResp;
 
 import java.util.Arrays;
 
 /**
- * 权限主体运算类型枚举.
+ * 权限主体类型枚举.
  *
  * @author gudaoxuri
  */
-public enum AuthSubjectOperatorKind {
+public enum AuthSubjectKind {
 
     /**
-     * 等于.
+     * 租户.
      */
-    EQ("EQ"),
+    TENANT("TENANT"),
     /**
-     * 不等于.
+     * 应用.
      */
-    NEQ("NEQ"),
+    APP("APP"),
     /**
-     * 包含.
-     * <p>
-     * 可用于群组当前及祖父节点
+     * 角色.
      */
-    INCLUDE("INCLUDE"),
+    ROLE("ROLE"),
     /**
-     * 不包含.
+     * 群组节点.
      */
-    EXCLUSIVE("EXCLUSIVE"),
+    GROUP_NODE("GROUP_NODE"),
     /**
-     * LIKE.
-     * <p>
-     * 用于群组当前及子孙节点
+     * 账户.
      */
-    LIKE("LIKE");
+    ACCOUNT("ACCOUNT");
 
     private final String code;
 
-    AuthSubjectOperatorKind(String code) {
+    AuthSubjectKind(String code) {
         this.code = code;
     }
 
     /**
-     * Parse auth subject operator kind.
+     * Parse auth subject kind.
      *
      * @param code the code
-     * @return the auth subject operator kind
+     * @return the auth subject kind
      */
-    public static AuthSubjectOperatorKind parse(String code) {
-        return Arrays.stream(AuthSubjectOperatorKind.values())
+    public static AuthSubjectKind parse(String code) {
+        return Arrays.stream(AuthSubjectKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Auth Subject Operator kind {" + code + "} NOT exist.")));
+                                "Auth Subject kind {" + code + "} NOT exist.")));
     }
 
     @Override

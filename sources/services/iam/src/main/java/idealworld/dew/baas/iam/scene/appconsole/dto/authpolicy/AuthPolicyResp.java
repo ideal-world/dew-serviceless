@@ -17,10 +17,10 @@
 package idealworld.dew.baas.iam.scene.appconsole.dto.authpolicy;
 
 import idealworld.dew.baas.iam.scene.common.dto.AppBasedResp;
-import idealworld.dew.baas.iam.enumeration.AuthActionKind;
-import idealworld.dew.baas.iam.enumeration.AuthResultKind;
-import idealworld.dew.baas.iam.enumeration.AuthSubjectKind;
-import idealworld.dew.baas.iam.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.enumeration.AuthActionKind;
+import idealworld.dew.baas.common.enumeration.AuthResultKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;

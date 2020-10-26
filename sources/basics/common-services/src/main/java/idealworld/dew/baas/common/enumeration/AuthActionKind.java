@@ -14,51 +14,63 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.enumeration;
+package idealworld.dew.baas.common.enumeration;
 
 import idealworld.dew.baas.common.resp.StandardResp;
 
 import java.util.Arrays;
 
 /**
- * 权限结果类型枚举.
+ * 权限操作类型枚举.
  *
  * @author gudaoxuri
  */
-public enum AuthResultKind {
+public enum AuthActionKind {
 
     /**
-     * 接受.
+     * 所有.
      */
-    ACCEPT("ACCEPT"),
+    ALL("*"),
     /**
-     * 拒绝.
+     * 获取.
      */
-    REJECT("REJECT"),
+    FETCH("FETCH"),
     /**
-     * 修正.
+     * 创建.
      */
-    MODIFY("MODIFY");
+    CREATE("CREATE"),
+    /**
+     * 全量更新.
+     */
+    MODIFY("MODIFY"),
+    /**
+     * 局部更新.
+     */
+    PATCH("PATCH"),
+    /**
+     * 删除.
+     */
+    DELETE("DELETE");
 
     private final String code;
 
-    AuthResultKind(String code) {
+    AuthActionKind(String code) {
         this.code = code;
     }
 
     /**
-     * Parse auth result kind.
+     * Parse auth action kind.
      *
      * @param code the code
-     * @return the auth result kind
+     * @return the auth action kind
      */
-    public static AuthResultKind parse(String code) {
-        return Arrays.stream(AuthResultKind.values())
+    public static AuthActionKind parse(String code) {
+        return Arrays.stream(AuthActionKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Auth Result kind {" + code + "} NOT exist.")));
+                                "Auth Action kind {" + code + "} NOT exist.")));
     }
 
     @Override

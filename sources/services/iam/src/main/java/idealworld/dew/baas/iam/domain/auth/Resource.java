@@ -17,7 +17,7 @@
 package idealworld.dew.baas.iam.domain.auth;
 
 import idealworld.dew.baas.iam.domain.AppBasedEntity;
-import idealworld.dew.baas.iam.enumeration.ResourceKind;
+import idealworld.dew.baas.common.enumeration.ResourceKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -41,6 +41,7 @@ import javax.persistence.Table;
  * e.g.
  * <p>
  * path = admin/user
+ * path = admin/**
  * <p>
  * 当 {@link ResourceSubject} 的 {@link ResourceSubject#getUri()} = http://10.20.0.10:8080/iam 时
  * 则 资源的真正URI = http://10.20.0.10:8080/iam/admin/user

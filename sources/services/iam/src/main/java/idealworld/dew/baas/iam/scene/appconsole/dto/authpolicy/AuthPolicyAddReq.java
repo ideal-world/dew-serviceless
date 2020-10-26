@@ -17,7 +17,8 @@
 package idealworld.dew.baas.iam.scene.appconsole.dto.authpolicy;
 
 import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.iam.enumeration.*;
+import idealworld.dew.baas.common.enumeration.*;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

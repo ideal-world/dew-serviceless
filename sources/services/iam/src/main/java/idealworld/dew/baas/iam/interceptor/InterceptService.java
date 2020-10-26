@@ -41,9 +41,6 @@ import java.util.Date;
 @Slf4j
 public class InterceptService extends IAMBasicService {
 
-    /**
-     * Cache tenant and app status.
-     */
     public void cacheTenantAndAppStatus() {
         if (!ELECTION.isLeader()) {
             return;
@@ -62,57 +59,6 @@ public class InterceptService extends IAMBasicService {
                 .forEach(id -> Dew.cluster.cache.set(IAMConstant.CACHE_APP_STATUS_ENABLE + id, ""));
     }
 
-    /**
-     * Change tenant status.
-     *
-     * @param tenantId the tenant id
-     * @param status   the status
-     */
-    public void changeTenantStatus(Long tenantId, CommonStatus status) {
-        if (status == CommonStatus.ENABLED) {
-            Dew.cluster.cache.set(IAMConstant.CACHE_TENANT_STATUS_ENABLE + tenantId, "");
-        } else {
-            Dew.cluster.cache.del(IAMConstant.CACHE_TENANT_STATUS_ENABLE + tenantId);
-        }
-    }
-
-    /**
-     * Change app status.
-     *
-     * @param appId  the app id
-     * @param status the status
-     */
-    public void changeAppStatus(Long appId, CommonStatus status) {
-        if (status == CommonStatus.ENABLED) {
-            Dew.cluster.cache.set(IAMConstant.CACHE_APP_STATUS_ENABLE + appId, "");
-        } else {
-            Dew.cluster.cache.del(IAMConstant.CACHE_APP_STATUS_ENABLE + appId);
-        }
-    }
-
-    /**
-     * Check tenant status boolean.
-     *
-     * @param appId the app id
-     * @return the boolean
-     */
-    public boolean checkTenantStatus(Long appId) {
-        return Dew.cluster.cache.exists(IAMConstant.CACHE_TENANT_STATUS_ENABLE + appId);
-    }
-
-    /**
-     * Check app status boolean.
-     *
-     * @param appId the app id
-     * @return the boolean
-     */
-    public boolean checkAppStatus(Long appId) {
-        return Dew.cluster.cache.exists(IAMConstant.CACHE_APP_STATUS_ENABLE + appId);
-    }
-
-    /**
-     * Cache app idents.
-     */
     public void cacheAppIdents() {
         if (!ELECTION.isLeader()) {
             return;
@@ -146,13 +92,33 @@ public class InterceptService extends IAMBasicService {
                 });
     }
 
-    /**
-     * Change app ident.
-     *
-     * @param appIdent    the app ident
-     * @param relAppId    the rel app id
-     * @param relTenantId the rel tenant id
-     */
+    public boolean isTenantLegal(Long appId) {
+        return Dew.cluster.cache.exists(IAMConstant.CACHE_TENANT_STATUS_ENABLE + appId);
+    }
+
+    public boolean isAppLegal(Long appId) {
+        return Dew.cluster.cache.exists(IAMConstant.CACHE_APP_STATUS_ENABLE + appId);
+    }
+
+    public void changeTenantStatus(Long tenantId, CommonStatus status) {
+        if (status == CommonStatus.ENABLED) {
+            Dew.cluster.cache.set(IAMConstant.CACHE_TENANT_STATUS_ENABLE + tenantId, "");
+        } else {
+            Dew.cluster.cache.del(IAMConstant.CACHE_TENANT_STATUS_ENABLE + tenantId);
+        }
+    }
+
+    public void changeAppStatus(Long appId, CommonStatus status) {
+        if (status == CommonStatus.ENABLED) {
+            Dew.cluster.cache.set(IAMConstant.CACHE_APP_STATUS_ENABLE + appId, "");
+        } else {
+            Dew.cluster.cache.del(IAMConstant.CACHE_APP_STATUS_ENABLE + appId);
+        }
+    }
+
+
+
+
     public void changeAppIdent(AppIdent appIdent, Long relAppId, Long relTenantId) {
         Dew.cluster.cache.del(IAMConstant.CACHE_APP_AK + appIdent.getAk());
         if (appIdent.getValidTime() == null) {
@@ -163,21 +129,10 @@ public class InterceptService extends IAMBasicService {
         }
     }
 
-    /**
-     * Delete app ident.
-     *
-     * @param ak the ak
-     */
     public void deleteAppIdent(String ak) {
         Dew.cluster.cache.del(IAMConstant.CACHE_APP_AK + ak);
     }
 
-    /**
-     * Gets app ident by ak.
-     *
-     * @param ak the ak
-     * @return the app ident by ak
-     */
     public Resp<Tuple3<String, Long, Long>> getAppIdentByAk(String ak) {
         var skAndTenantAndAppId = Dew.cluster.cache.get(IAMConstant.CACHE_APP_AK + ak);
         if (skAndTenantAndAppId == null) {

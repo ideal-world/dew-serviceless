@@ -16,7 +16,9 @@
 
 package idealworld.dew.baas.common.controller;
 
+import com.ecfront.dew.common.tuple.Tuple2;
 import group.idealworld.dew.Dew;
+import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.resp.StandardResp;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
@@ -34,14 +36,9 @@ import java.nio.file.Files;
  */
 public abstract class BasicController {
 
-    /**
-     * Gets current account id.
-     *
-     * @return the current account id
-     */
-    protected String getCurrentOpenId() {
+    protected Tuple2<Long, Long> getCurrentAppAndTenantId() {
         return Dew.auth.getOptInfo()
-                .map(info -> (String) info.getAccountCode())
+                .map(info -> new Tuple2<>(((IdentOptInfo) info).getAppId(), ((IdentOptInfo) info).getTenantId()))
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.unAuthorized("BASIC", "用户未登录")
                 ));

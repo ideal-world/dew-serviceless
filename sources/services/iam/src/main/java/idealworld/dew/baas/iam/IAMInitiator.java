@@ -21,9 +21,11 @@ import com.ecfront.dew.common.$;
 import group.idealworld.dew.core.DewContext;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.dto.IdentOptInfo;
+import idealworld.dew.baas.common.enumeration.*;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.QTenant;
 import idealworld.dew.baas.iam.enumeration.*;
+import idealworld.dew.baas.iam.interceptor.InterceptService;
 import idealworld.dew.baas.iam.scene.appconsole.dto.app.AppIdentAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.authpolicy.AuthPolicyAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.resouce.ResourceAddReq;
@@ -76,8 +78,8 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
     private ACResourceService acResourceService;
     @Autowired
     private ACAuthPolicyService acAuthPolicyService;
-   /* @Autowired
-    private InterceptService interceptService;*/
+    @Autowired
+    private InterceptService interceptService;
 
     /**
      * Init.
@@ -88,8 +90,8 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         StandardResp.setServiceFlag("IAM");
         DewContext.setOptInfoClazz(IdentOptInfo.class);
         initIAMAppInfo();
-       /* interceptService.cacheTenantAndAppStatus();
-        interceptService.cacheAppIdents();*/
+        interceptService.cacheTenantAndAppStatus();
+        interceptService.cacheAppIdents();
     }
 
     private void initIAMAppInfo() {

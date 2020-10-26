@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.security.auth.message.AuthException;
 import javax.servlet.http.HttpServletRequest;
@@ -45,9 +44,10 @@ public class ConsoleHandlerInterceptor implements AsyncHandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         var identOptInfo = (IdentOptInfo) Dew.context().optInfo().get();
-        if (!interceptService.checkTenantStatus(identOptInfo.getTenantId())) {
+        if (!interceptService.isTenantLegal(identOptInfo.getTenantId())
+                || !interceptService.isAppLegal(identOptInfo.getAppId())) {
             ErrorController.error(request, response, Integer.parseInt(StandardCode.UNAUTHORIZED.toString()),
-                    "租户不合法",
+                    "租户或应用不合法",
                     AuthException.class.getName());
             return false;
         }

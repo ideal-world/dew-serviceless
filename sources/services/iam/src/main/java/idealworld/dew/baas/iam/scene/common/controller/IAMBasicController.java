@@ -18,6 +18,7 @@ package idealworld.dew.baas.iam.scene.common.controller;
 
 import com.ecfront.dew.common.tuple.Tuple2;
 import group.idealworld.dew.Dew;
+import idealworld.dew.baas.common.controller.BasicController;
 import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.resp.StandardResp;
 
@@ -26,9 +27,11 @@ import idealworld.dew.baas.common.resp.StandardResp;
  *
  * @author gudaoxuri
  */
-public abstract class BasicController {
+public abstract class IAMBasicController extends BasicController {
 
+    @Override
     protected Tuple2<Long, Long> getCurrentAppAndTenantId() {
+
         return Dew.auth.getOptInfo()
                 .map(info -> new Tuple2<>(((IdentOptInfo) info).getAppId(), ((IdentOptInfo) info).getTenantId()))
                 .orElseThrow(() -> StandardResp.e(

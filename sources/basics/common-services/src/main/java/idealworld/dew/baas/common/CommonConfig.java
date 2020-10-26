@@ -32,10 +32,13 @@ import java.util.Map;
  */
 @Component
 @Data
-public abstract class CommonConfig {
+public class CommonConfig {
 
     private Integer syncIntervalSec = 60;
     private String eventNotifyTopicName = "";
+
+    private Long authPolicyExpireCleanIntervalSec = 60 * 60 * 24L;
+    private Integer authPolicyMaxFetchCount = 1000;
 
     @Autowired
     private ConfigService configService;
@@ -51,10 +54,18 @@ public abstract class CommonConfig {
             if (config.containsKey(Constant.CONFIG_EVENT_NOTIFY_TOPIC_NAME)) {
                 eventNotifyTopicName = config.get(Constant.CONFIG_EVENT_NOTIFY_TOPIC_NAME);
             }
+            if (config.containsKey(Constant.CONFIG_AUTH_POLICY_EXPIRE_CLEAN_INTERVAL_SEC)) {
+                authPolicyExpireCleanIntervalSec = Long.parseLong(config.get(Constant.CONFIG_AUTH_POLICY_EXPIRE_CLEAN_INTERVAL_SEC));
+            }
+            if (config.containsKey(Constant.CONFIG_AUTH_POLICY_MAX_FETCH_COUNT)) {
+                authPolicyMaxFetchCount = Integer.parseInt(config.get(Constant.CONFIG_AUTH_POLICY_MAX_FETCH_COUNT));
+            }
             doSync(config);
         });
     }
 
-    protected abstract void doSync(Map<String, String> config);
+    protected void doSync(Map<String, String> config){
+
+    }
 
 }

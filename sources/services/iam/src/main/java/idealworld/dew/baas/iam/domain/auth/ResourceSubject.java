@@ -17,7 +17,7 @@
 package idealworld.dew.baas.iam.domain.auth;
 
 import idealworld.dew.baas.iam.domain.AppBasedEntity;
-import idealworld.dew.baas.iam.enumeration.ResourceKind;
+import idealworld.dew.baas.common.enumeration.ResourceKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

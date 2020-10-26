@@ -14,63 +14,71 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.enumeration;
+package idealworld.dew.baas.common.enumeration;
 
 import idealworld.dew.baas.common.resp.StandardResp;
 
 import java.util.Arrays;
 
 /**
- * 权限操作类型枚举.
+ * 资源类型枚举.
  *
  * @author gudaoxuri
  */
-public enum AuthActionKind {
+public enum ResourceKind {
 
     /**
-     * 所有.
+     * HTTP(s).
      */
-    ALL("*"),
+    API("API"),
     /**
-     * 获取.
+     * 菜单.
      */
-    FETCH("FETCH"),
+    MENU("MENU"),
     /**
-     * 创建.
+     * 页面元素.
      */
-    CREATE("CREATE"),
+    ELEMENT("ELEMENT"),
     /**
-     * 全量更新.
+     * 关系数据库.
      */
-    MODIFY("MODIFY"),
+    RELDB("RELDB"),
     /**
-     * 局部更新.
+     * 缓存.
      */
-    PATCH("PATCH"),
+    CACHE("CACHE"),
     /**
-     * 删除.
+     * MQ.
      */
-    DELETE("DELETE");
+    MQ("MQ"),
+    /**
+     * 对象存储.
+     */
+    OBJECT("OBJECT"),
+    /**
+     * OAuth.
+     */
+    OAUTH("OAUTH");
 
     private final String code;
 
-    AuthActionKind(String code) {
+    ResourceKind(String code) {
         this.code = code;
     }
 
     /**
-     * Parse auth action kind.
+     * Parse resource kind.
      *
      * @param code the code
-     * @return the auth action kind
+     * @return the resource kind
      */
-    public static AuthActionKind parse(String code) {
-        return Arrays.stream(AuthActionKind.values())
+    public static ResourceKind parse(String code) {
+        return Arrays.stream(ResourceKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Auth Action kind {" + code + "} NOT exist.")));
+                                "Resource kind {" + code + "} NOT exist.")));
     }
 
     @Override

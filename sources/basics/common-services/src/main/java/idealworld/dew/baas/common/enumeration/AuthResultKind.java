@@ -14,59 +14,51 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.enumeration;
+package idealworld.dew.baas.common.enumeration;
 
 import idealworld.dew.baas.common.resp.StandardResp;
 
 import java.util.Arrays;
 
 /**
- * 权限主体类型枚举.
+ * 权限结果类型枚举.
  *
  * @author gudaoxuri
  */
-public enum AuthSubjectKind {
+public enum AuthResultKind {
 
     /**
-     * 租户.
+     * 接受.
      */
-    TENANT("TENANT"),
+    ACCEPT("ACCEPT"),
     /**
-     * 应用.
+     * 拒绝.
      */
-    APP("APP"),
+    REJECT("REJECT"),
     /**
-     * 角色.
+     * 修正.
      */
-    ROLE("ROLE"),
-    /**
-     * 群组节点.
-     */
-    GROUP_NODE("GROUP_NODE"),
-    /**
-     * 账户.
-     */
-    ACCOUNT("ACCOUNT");
+    MODIFY("MODIFY");
 
     private final String code;
 
-    AuthSubjectKind(String code) {
+    AuthResultKind(String code) {
         this.code = code;
     }
 
     /**
-     * Parse auth subject kind.
+     * Parse auth result kind.
      *
      * @param code the code
-     * @return the auth subject kind
+     * @return the auth result kind
      */
-    public static AuthSubjectKind parse(String code) {
-        return Arrays.stream(AuthSubjectKind.values())
+    public static AuthResultKind parse(String code) {
+        return Arrays.stream(AuthResultKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Auth Subject kind {" + code + "} NOT exist.")));
+                                "Auth Result kind {" + code + "} NOT exist.")));
     }
 
     @Override

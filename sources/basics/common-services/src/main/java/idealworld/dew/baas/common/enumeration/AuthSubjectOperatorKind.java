@@ -14,71 +14,63 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.enumeration;
+package idealworld.dew.baas.common.enumeration;
 
 import idealworld.dew.baas.common.resp.StandardResp;
 
 import java.util.Arrays;
 
 /**
- * 资源类型枚举.
+ * 权限主体运算类型枚举.
  *
  * @author gudaoxuri
  */
-public enum ResourceKind {
+public enum AuthSubjectOperatorKind {
 
     /**
-     * HTTP(s).
+     * 等于.
      */
-    API("API"),
+    EQ("EQ"),
     /**
-     * 菜单.
+     * 不等于.
      */
-    MENU("MENU"),
+    NEQ("NEQ"),
     /**
-     * 页面元素.
+     * 包含.
+     * <p>
+     * 可用于群组当前及祖父节点
      */
-    ELEMENT("ELEMENT"),
+    INCLUDE("INCLUDE"),
     /**
-     * 关系数据库.
+     * 不包含.
      */
-    RELDB("RELDB"),
+    EXCLUSIVE("EXCLUSIVE"),
     /**
-     * 缓存.
+     * LIKE.
+     * <p>
+     * 用于群组当前及子孙节点
      */
-    CACHE("CACHE"),
-    /**
-     * MQ.
-     */
-    MQ("MQ"),
-    /**
-     * 对象存储.
-     */
-    OBJECT("OBJECT"),
-    /**
-     * OAuth.
-     */
-    OAUTH("OAUTH");
+    LIKE("LIKE");
 
     private final String code;
 
-    ResourceKind(String code) {
+    AuthSubjectOperatorKind(String code) {
         this.code = code;
     }
 
     /**
-     * Parse resource kind.
+     * Parse auth subject operator kind.
      *
      * @param code the code
-     * @return the resource kind
+     * @return the auth subject operator kind
      */
-    public static ResourceKind parse(String code) {
-        return Arrays.stream(ResourceKind.values())
+    public static AuthSubjectOperatorKind parse(String code) {
+        return Arrays.stream(AuthSubjectOperatorKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Resource kind {" + code + "} NOT exist.")));
+                                "Auth Subject Operator kind {" + code + "} NOT exist.")));
     }
 
     @Override
