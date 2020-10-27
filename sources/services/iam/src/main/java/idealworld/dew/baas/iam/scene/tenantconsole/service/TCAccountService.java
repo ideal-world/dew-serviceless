@@ -20,7 +20,6 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
-import group.idealworld.dew.Dew;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.resp.StandardResp;
@@ -37,7 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -160,11 +158,11 @@ public class TCAccountService extends IAMBasicService {
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addAccountIdent(AccountIdentAddReq accountIdentAddReq, Long relTenantId) {
+    public Resp<Long> addAccountIdent(AccountIdentAddReq accountIdentAddReq, Long accountId, Long relTenantId) {
         var qAccountIdent = QAccountIdent.accountIdent;
         if (sqlBuilder.select(qAccountIdent.id)
                 .from(qAccountIdent)
-                .where(qAccountIdent.id.eq(accountIdentAddReq.getRelAccountId()))
+                .where(qAccountIdent.id.eq(accountId))
                 .where(qAccountIdent.relTenantId.eq(relTenantId))
                 .fetchCount() == 0) {
             return StandardResp.unAuthorized(BUSINESS_ACCOUNT_IDENT, "关联账号不合法");
@@ -194,6 +192,7 @@ public class TCAccountService extends IAMBasicService {
             return StandardResp.error(processIdentSkR);
         }
         var accountIdent = $.bean.copyProperties(accountIdentAddReq, AccountIdent.class);
+        accountIdent.setRelAccountId(accountId);
         accountIdent.setRelTenantId(relTenantId);
         if (accountIdent.getValidStartTime() == null) {
             accountIdent.setValidStartTime(new Date());
@@ -242,7 +241,8 @@ public class TCAccountService extends IAMBasicService {
             accountIdentUpdate.set(qAccountIdent.ak, accountIdentModifyReq.getAk());
         }
         if (accountIdentModifyReq.getSk() != null) {
-            var processIdentSkR = commonFunctionService.processIdentSk(accountIdentKind,
+            var processIdentSkR = commonFunctionService.processIdentSk(
+                    accountIdentKind,
                     accountIdentAk,
                     accountIdentModifyReq.getSk(),
                     null,
@@ -261,7 +261,7 @@ public class TCAccountService extends IAMBasicService {
         return updateEntity(accountIdentUpdate);
     }
 
-    public Resp<List<AccountIdentResp>> findAccountIdents(Long relAccountId, Long relTenantId) {
+    public Resp<List<AccountIdentResp>> findAccountIdents(Long accountId, Long relTenantId) {
         var qAccountIdent = QAccountIdent.accountIdent;
         return findDTOs(sqlBuilder.select(Projections.bean(AccountIdentResp.class,
                 qAccountIdent.kind,
@@ -270,7 +270,7 @@ public class TCAccountService extends IAMBasicService {
                 qAccountIdent.validEndTime,
                 qAccountIdent.relAccountId))
                 .from(qAccountIdent)
-                .where(qAccountIdent.relAccountId.eq(relAccountId))
+                .where(qAccountIdent.relAccountId.eq(accountId))
                 .where(qAccountIdent.relTenantId.eq(relTenantId))
         );
     }
@@ -288,28 +288,35 @@ public class TCAccountService extends IAMBasicService {
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addAccountApp(Long accountId, Long relAppId, Long relTenantId) {
+    public Resp<Long> addAccountApp(Long accountId, Long appId, Long relTenantId) {
         var checkAccountMembershipR = commonFunctionService.checkAccountMembership(accountId, relTenantId);
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
         }
+        var checkAppMembershipR = commonFunctionService.checkAppMembership(appId, relTenantId);
+        if (!checkAppMembershipR.ok()) {
+            return Resp.error(checkAppMembershipR);
+        }
         return saveEntity(AccountApp.builder()
                 .relAccountId(accountId)
-                .relAppId(relAppId)
+                .relAppId(appId)
                 .build());
     }
 
     @Transactional
-    public Resp<Void> deleteAccountApp(Long accountAppId, Long relAppId, Long relTenantId) {
+    public Resp<Void> deleteAccountApp(Long accountAppId, Long relTenantId) {
         var qAccountApp = QAccountApp.accountApp;
         var accountApp = sqlBuilder
                 .selectFrom(qAccountApp)
                 .where(qAccountApp.id.eq(accountAppId))
-                .where(qAccountApp.relAppId.eq(relAppId))
                 .fetchOne();
         var checkAccountMembershipR = commonFunctionService.checkAccountMembership(accountApp.getRelAccountId(), relTenantId);
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
+        }
+        var checkAppMembershipR = commonFunctionService.checkAppMembership(accountApp.getRelAppId(), relTenantId);
+        if (!checkAppMembershipR.ok()) {
+            return Resp.error(checkAppMembershipR);
         }
         return softDelEntity(accountApp);
     }
@@ -317,12 +324,12 @@ public class TCAccountService extends IAMBasicService {
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addAccountGroup(Long accountId, Long groupNodeId, Long relAppId, Long relTenantId) {
+    public Resp<Long> addAccountGroup(Long accountId, Long groupNodeId, Long relTenantId) {
         var checkAccountMembershipR = commonFunctionService.checkAccountMembership(accountId, relTenantId);
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
         }
-        var checkGroupNodeMembership = commonFunctionService.checkGroupNodeMembership(groupNodeId, relAppId, relTenantId);
+        var checkGroupNodeMembership = commonFunctionService.checkGroupNodeMembership(groupNodeId, relTenantId);
         if (!checkGroupNodeMembership.ok()) {
             return Resp.error(checkGroupNodeMembership);
         }
@@ -333,7 +340,7 @@ public class TCAccountService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Void> deleteAccountGroup(Long accountGroupId, Long relAppId, Long relTenantId) {
+    public Resp<Void> deleteAccountGroup(Long accountGroupId, Long relTenantId) {
         var qAccountGroup = QAccountGroup.accountGroup;
         var accountGroup = sqlBuilder
                 .selectFrom(qAccountGroup)
@@ -343,7 +350,7 @@ public class TCAccountService extends IAMBasicService {
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
         }
-        var checkGroupNodeMembership = commonFunctionService.checkGroupNodeMembership(accountGroup.getRelGroupNodeId(), relAppId, relTenantId);
+        var checkGroupNodeMembership = commonFunctionService.checkGroupNodeMembership(accountGroup.getRelGroupNodeId(), relTenantId);
         if (!checkGroupNodeMembership.ok()) {
             return Resp.error(checkGroupNodeMembership);
         }
@@ -353,23 +360,23 @@ public class TCAccountService extends IAMBasicService {
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addAccountRole(Long accountId, Long RoleId, Long relAppId, Long relTenantId) {
+    public Resp<Long> addAccountRole(Long accountId, Long roleId, Long relTenantId) {
         var checkAccountMembershipR = commonFunctionService.checkAccountMembership(accountId, relTenantId);
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
         }
-        var checkRoleMembership = commonFunctionService.checkRoleMembership(RoleId, relAppId, relTenantId);
+        var checkRoleMembership = commonFunctionService.checkRoleMembership(roleId, relTenantId);
         if (!checkRoleMembership.ok()) {
             return Resp.error(checkRoleMembership);
         }
         return saveEntity(AccountRole.builder()
                 .relAccountId(accountId)
-                .relRoleId(RoleId)
+                .relRoleId(roleId)
                 .build());
     }
 
     @Transactional
-    public Resp<Void> deleteAccountRole(Long accountRoleId, Long relAppId, Long relTenantId) {
+    public Resp<Void> deleteAccountRole(Long accountRoleId, Long relTenantId) {
         var qAccountRole = QAccountRole.accountRole;
         var accountRole = sqlBuilder
                 .selectFrom(qAccountRole)
@@ -379,7 +386,7 @@ public class TCAccountService extends IAMBasicService {
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
         }
-        var checkRoleMembership = commonFunctionService.checkRoleMembership(accountRole.getRelRoleId(), relAppId, relTenantId);
+        var checkRoleMembership = commonFunctionService.checkRoleMembership(accountRole.getRelRoleId(), relTenantId);
         if (!checkRoleMembership.ok()) {
             return Resp.error(checkRoleMembership);
         }

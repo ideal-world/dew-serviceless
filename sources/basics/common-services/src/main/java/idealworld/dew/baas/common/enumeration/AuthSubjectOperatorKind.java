@@ -32,19 +32,11 @@ public enum AuthSubjectOperatorKind {
      */
     EQ("EQ"),
     /**
-     * 不等于.
-     */
-    NEQ("NEQ"),
-    /**
      * 包含.
      * <p>
      * 可用于群组当前及祖父节点
      */
     INCLUDE("INCLUDE"),
-    /**
-     * 不包含.
-     */
-    EXCLUSIVE("EXCLUSIVE"),
     /**
      * LIKE.
      * <p>

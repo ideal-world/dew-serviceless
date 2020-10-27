@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 /**
  * 租户控制台下的账号绑定服务.
  *
+ * // TODO 实现
+ *
  * @author gudaoxuri
  */
 @Service

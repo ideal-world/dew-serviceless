@@ -62,8 +62,4 @@ public class AccountIdentAddReq implements Serializable {
     @Schema(title = "账号认证有效结束时间")
     private Date validEndTime;
 
-    @NotNull
-    @Schema(title = "关联账号Id", required = true)
-    private Long relAccountId;
-
 }

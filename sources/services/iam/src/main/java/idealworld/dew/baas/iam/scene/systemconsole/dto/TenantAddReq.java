@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant;
+package idealworld.dew.baas.iam.scene.systemconsole.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

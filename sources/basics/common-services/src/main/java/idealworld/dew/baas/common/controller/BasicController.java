@@ -44,6 +44,14 @@ public abstract class BasicController {
                 ));
     }
 
+    protected Long getCurrentTenantId() {
+        return Dew.auth.getOptInfo()
+                .map(info -> ((IdentOptInfo) info).getTenantId())
+                .orElseThrow(() -> StandardResp.e(
+                        StandardResp.unAuthorized("BASIC", "用户未登录")
+                ));
+    }
+
     /**
      * Export response entity.
      *

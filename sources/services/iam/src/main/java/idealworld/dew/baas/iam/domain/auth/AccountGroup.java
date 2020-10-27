@@ -38,7 +38,7 @@ import javax.persistence.Table;
         @Index(columnList = "relGroupNodeId")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_group",
-        comment = "账号群组")
+        comment = "账号群组关联")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

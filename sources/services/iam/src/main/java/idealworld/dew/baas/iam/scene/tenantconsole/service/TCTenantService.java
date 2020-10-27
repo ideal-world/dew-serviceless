@@ -20,8 +20,6 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
-import idealworld.dew.baas.common.enumeration.CommonStatus;
-import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.*;
@@ -39,20 +37,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class TCTenantService extends IAMBasicService {
 
     @Transactional
-    public Resp<Long> addTenant(TenantAddReq tenantAddReq) {
-        var tenant = $.bean.copyProperties(tenantAddReq, Tenant.class);
-        tenant.setStatus(CommonStatus.ENABLED);
-        return saveEntity(tenant);
-    }
-
-    @Transactional
-    public Resp<Void> modifyTenant(Long tenantId, TenantModifyReq tenantModifyReq, Long relTenantId) {
-        if (tenantId.longValue() != relTenantId.longValue()) {
-            return StandardResp.unAuthorized(BUSINESS_TENANT, "租户Id不合法");
-        }
+    public Resp<Void> modifyTenant(TenantModifyReq tenantModifyReq, Long relTenantId) {
         var qTenant = QTenant.tenant;
         var tenantUpdate = sqlBuilder.update(qTenant)
-                .where(qTenant.id.eq(tenantId));
+                .where(qTenant.id.eq(relTenantId));
         if (tenantModifyReq.getName() != null) {
             tenantUpdate.set(qTenant.name, tenantModifyReq.getName());
         }
@@ -71,10 +59,7 @@ public class TCTenantService extends IAMBasicService {
         return updateEntity(tenantUpdate);
     }
 
-    public Resp<TenantResp> getTenant(Long tenantId, Long relTenantId) {
-        if (tenantId.longValue() != relTenantId.longValue()) {
-            return StandardResp.unAuthorized(BUSINESS_TENANT, "租户Id不合法");
-        }
+    public Resp<TenantResp> getTenant(Long relTenantId) {
         var qTenant = QTenant.tenant;
         return getDTO(sqlBuilder.select(Projections.bean(TenantResp.class,
                 qTenant.id,
@@ -84,18 +69,7 @@ public class TCTenantService extends IAMBasicService {
                 qTenant.parameters,
                 qTenant.status))
                 .from(qTenant)
-                .where(qTenant.id.eq(tenantId)));
-    }
-
-    @Transactional
-    public Resp<Void> deleteTenant(Long tenantId, Long relTenantId) {
-        if (tenantId.longValue() != relTenantId.longValue()) {
-            return StandardResp.unAuthorized(BUSINESS_TENANT, "租户Id不合法");
-        }
-        var qTenant = QTenant.tenant;
-        return softDelEntity(sqlBuilder
-                .selectFrom(qTenant)
-                .where(qTenant.id.eq(tenantId)));
+                .where(qTenant.id.eq(relTenantId)));
     }
 
     // --------------------------------------------------------------------
@@ -215,6 +189,15 @@ public class TCTenantService extends IAMBasicService {
                 qTenantCert.version))
                 .from(qTenantCert)
                 .where(qTenantCert.relTenantId.eq(relTenantId)), pageNumber, pageSize);
+    }
+
+    @Transactional
+    public Resp<Void> deleteTenantCert(Long tenantCertId, Long relTenantId) {
+        var qTenantCert = QTenantCert.tenantCert;
+        return softDelEntity(sqlBuilder
+                .selectFrom(qTenantCert)
+                .where(qTenantCert.id.eq(tenantCertId))
+                .where(qTenantCert.relTenantId.eq(relTenantId)));
     }
 
 }

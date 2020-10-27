@@ -200,15 +200,42 @@ public class CommonFunctionService extends IAMBasicService {
         return Resp.success(null);
     }
 
+    public Resp<Void> checkRoleMembership(Long roleId, Long tenantId) {
+        var qRole = QRole.role;
+        if (sqlBuilder.select(qRole.id)
+                .from(qRole)
+                .where(qRole.id.eq(roleId))
+                .where(qRole.relTenantId.eq(tenantId))
+                .fetchCount() == 0) {
+            return StandardResp.unAuthorized(BUSINESS_ROLE, "角色不合法");
+        }
+        return Resp.success(null);
+    }
+
     public Resp<Void> checkRoleMembership(Long roleId, Long appId, Long tenantId) {
         var qRole = QRole.role;
         if (sqlBuilder.select(qRole.id)
                 .from(qRole)
                 .where(qRole.id.eq(roleId))
                 .where(qRole.relTenantId.eq(tenantId))
-                .where(qRole.relAppId.eq(tenantId))
+                .where(qRole.relAppId.eq(appId))
                 .fetchCount() == 0) {
             return StandardResp.unAuthorized(BUSINESS_ROLE, "角色不合法");
+        }
+        return Resp.success(null);
+    }
+
+    public Resp<Void> checkGroupNodeMembership(Long groupNodeId, Long tenantId) {
+        var qGroup = QGroup.group;
+        var qGroupNode = QGroupNode.groupNode;
+        if (sqlBuilder
+                .select(qGroupNode.id)
+                .from(qGroupNode)
+                .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
+                .where(qGroupNode.id.eq(groupNodeId))
+                .where(qGroup.relTenantId.eq(tenantId))
+                .fetchCount() == 0) {
+            return StandardResp.unAuthorized(BUSINESS_GROUP_NODE, "群组节点不合法");
         }
         return Resp.success(null);
     }

@@ -64,8 +64,4 @@ public class GroupNodeAddReq implements Serializable {
     @Builder.Default
     private Long siblingId = Constant.OBJECT_UNDEFINED;
 
-    @NotNull
-    @Schema(title = "关联群组Id", required = true)
-    private Long relGroupId;
-
 }

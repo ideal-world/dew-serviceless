@@ -16,9 +16,15 @@
 
 package idealworld.dew.baas.iam.scene.systemconsole.service;
 
+import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.Resp;
+import idealworld.dew.baas.common.enumeration.CommonStatus;
+import idealworld.dew.baas.iam.domain.ident.Tenant;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
+import idealworld.dew.baas.iam.scene.systemconsole.dto.TenantAddReq;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 系统控制台下的租户服务.
@@ -29,5 +35,11 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class SCTenantService extends IAMBasicService {
 
+    @Transactional
+    public Resp<Long> addTenant(TenantAddReq tenantAddReq) {
+        var tenant = $.bean.copyProperties(tenantAddReq, Tenant.class);
+        tenant.setStatus(CommonStatus.ENABLED);
+        return saveEntity(tenant);
+    }
 
 }

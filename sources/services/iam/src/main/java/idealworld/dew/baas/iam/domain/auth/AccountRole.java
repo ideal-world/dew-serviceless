@@ -38,7 +38,7 @@ import javax.persistence.Table;
         @Index(columnList = "relRoleId")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_account_role",
-        comment = "账号角色")
+        comment = "账号角色关联")
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

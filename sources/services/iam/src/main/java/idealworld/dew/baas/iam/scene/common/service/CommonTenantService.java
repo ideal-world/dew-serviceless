@@ -22,9 +22,10 @@ import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import idealworld.dew.baas.iam.scene.common.dto.tenant.TenantRegisterReq;
+import idealworld.dew.baas.iam.scene.systemconsole.dto.TenantAddReq;
+import idealworld.dew.baas.iam.scene.systemconsole.service.SCTenantService;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.account.AccountAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.account.AccountIdentAddReq;
-import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.TenantAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.TenantCertAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.TenantIdentAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.service.TCAccountService;
@@ -48,6 +49,8 @@ public class CommonTenantService extends IAMBasicService {
     @Autowired
     private TCTenantService tcTenantService;
     @Autowired
+    private SCTenantService scTenantService;
+    @Autowired
     private TCAccountService tcAccountService;
 
     @Transactional
@@ -56,7 +59,7 @@ public class CommonTenantService extends IAMBasicService {
             return StandardResp.locked(BUSINESS_TENANT, "当前设置不允许自助注册租户");
         }
         // 初始化租户
-        var tenantId = tcTenantService.addTenant(TenantAddReq.builder()
+        var tenantId = scTenantService.addTenant(TenantAddReq.builder()
                 .name(tenantRegisterReq.getName())
                 .icon(tenantRegisterReq.getIcon())
                 .parameters(tenantRegisterReq.getParameters())
@@ -81,7 +84,7 @@ public class CommonTenantService extends IAMBasicService {
                 .kind(AccountIdentKind.USERNAME)
                 .ak(tenantRegisterReq.getAccountUserName())
                 .sk(tenantRegisterReq.getAccountPassword())
-                .relAccountId(accountId).build(), tenantId);
+                .build(), accountId, tenantId);
         // 初始化账号角色
         // TODO
         return Resp.success(tenantId);

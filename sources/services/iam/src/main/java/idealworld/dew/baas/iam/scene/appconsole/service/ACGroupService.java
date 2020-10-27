@@ -126,7 +126,7 @@ public class ACGroupService extends IAMBasicService {
                 .where(qGroup.relAppId.eq(relAppId)));
     }
 
-    public Resp<Page<GroupResp>> pageRoleDefs(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<Page<GroupResp>> pageGroups(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
         return pageDTOs(sqlBuilder.select(Projections.bean(GroupResp.class,
                 qGroup.id,
@@ -164,18 +164,19 @@ public class ACGroupService extends IAMBasicService {
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addGroupNode(GroupNodeAddReq groupNodeAddReq, Long relAppId, Long relTenantId) {
+    public Resp<Long> addGroupNode(GroupNodeAddReq groupNodeAddReq,Long groupId, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
         if (sqlBuilder.select(qGroup.id)
                 .from(qGroup)
-                .where(qGroup.id.eq(groupNodeAddReq.getRelGroupId()))
+                .where(qGroup.id.eq(groupId))
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
                 .fetchCount() == 0) {
             return StandardResp.unAuthorized(BUSINESS_GROUP_NODE, "关联群组不合法");
         }
         var groupNode = $.bean.copyProperties(groupNodeAddReq, GroupNode.class);
-        var groupNodeCode = packageGroupNodeCode(groupNodeAddReq.getRelGroupId(), groupNodeAddReq.getParentId(), groupNodeAddReq.getSiblingId());
+        var groupNodeCode = packageGroupNodeCode(groupId, groupNodeAddReq.getParentId(), groupNodeAddReq.getSiblingId());
+        groupNode.setRelGroupId(groupId);
         groupNode.setCode(groupNodeCode);
         return saveEntity(groupNode);
     }

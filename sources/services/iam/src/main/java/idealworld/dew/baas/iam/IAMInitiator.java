@@ -24,7 +24,7 @@ import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.enumeration.*;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.QTenant;
-import idealworld.dew.baas.iam.enumeration.*;
+import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import idealworld.dew.baas.iam.interceptor.InterceptService;
 import idealworld.dew.baas.iam.scene.appconsole.dto.app.AppIdentAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.authpolicy.AuthPolicyAddReq;
@@ -37,10 +37,11 @@ import idealworld.dew.baas.iam.scene.appconsole.service.ACAuthPolicyService;
 import idealworld.dew.baas.iam.scene.appconsole.service.ACResourceService;
 import idealworld.dew.baas.iam.scene.appconsole.service.ACRoleService;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
+import idealworld.dew.baas.iam.scene.systemconsole.dto.TenantAddReq;
+import idealworld.dew.baas.iam.scene.systemconsole.service.SCTenantService;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.account.AccountAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.account.AccountIdentAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.app.AppAddReq;
-import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.TenantAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.TenantCertAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.TenantIdentAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.service.TCAccountService;
@@ -64,6 +65,8 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
 
     @Autowired
     private IAMConfig iamConfig;
+    @Autowired
+    private SCTenantService scTenantService;
     @Autowired
     private TCTenantService tcTenantService;
     @Autowired
@@ -103,7 +106,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         }
         log.info("Initializing IAM app");
         // 初始化租户
-        var tenantId = tcTenantService.addTenant(TenantAddReq.builder()
+        var tenantId = scTenantService.addTenant(TenantAddReq.builder()
                 .name(iamConfig.getApp().getIamTenantName())
                 .build()).getBody();
         // 初始化租户认证
@@ -157,13 +160,13 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .kind(AccountIdentKind.USERNAME)
                 .ak(iamConfig.getApp().getIamAppName())
                 .sk(tmpPwd)
-                .relAccountId(iamAccountId).build(), tenantId);
+                .build(), iamAccountId, tenantId);
         // 初始化账号应用
         tcAccountService.addAccountApp(iamAccountId, iamAppId, tenantId);
         // 初始化账号角色
-        tcAccountService.addAccountRole(iamAccountId, systemRoleAdminId, iamAppId, tenantId);
-        tcAccountService.addAccountRole(iamAccountId, tenantRoleAdminId, iamAppId, tenantId);
-        tcAccountService.addAccountRole(iamAccountId, appRoleAdminId, iamAppId, tenantId);
+        tcAccountService.addAccountRole(iamAccountId, systemRoleAdminId, tenantId);
+        tcAccountService.addAccountRole(iamAccountId, tenantRoleAdminId, tenantId);
+        tcAccountService.addAccountRole(iamAccountId, appRoleAdminId, tenantId);
         // 初始化资源主体
         var iamAPIResourceSubjectId = acResourceService.addResourceSubject(ResourceSubjectAddReq.builder()
                 .code("")
