@@ -33,7 +33,7 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "iam_group", indexes = {
-        @Index(columnList = "relTenantId,relAppId,name", unique = true)
+        @Index(columnList = "relTenantId,relAppId,code", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_group",
         comment = "群组")
@@ -42,6 +42,10 @@ import javax.persistence.*;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class Group extends AppBasedEntity {
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(255) comment '群组编码'")
+    private String code;
 
     @Column(nullable = false,
             columnDefinition = "varchar(100) comment '群组类型名称'")

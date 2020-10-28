@@ -28,6 +28,7 @@ public class WriteableAuthPolicy extends BasicAuthPolicy {
         if (expireSec <= 0) {
             return StandardResp.badRequest(BUSINESS_AUTH, "过期时间小于当前时间");
         }
+        authPolicyAddReq.setResourceUri(formatUri(authPolicyAddReq.getResourceUri()));
         var key = Constant.CACHE_AUTH_POLICY
                 + authPolicyAddReq.getResourceKind().toString() + ":"
                 + authPolicyAddReq.getResourceUri() + ":"
@@ -62,6 +63,7 @@ public class WriteableAuthPolicy extends BasicAuthPolicy {
             AuthSubjectKind subjectKind,
             String subjectId
     ) {
+        resourceUri = formatUri(resourceUri);
         var removeR = removeLocalResource(resourceKind, resourceUri, actionKind, subjectOperatorKind, subjectKind, subjectId);
         if (!removeR.ok()) {
             return removeR;
@@ -93,6 +95,7 @@ public class WriteableAuthPolicy extends BasicAuthPolicy {
             ResourceKind resourceKind,
             String resourceUri
     ) {
+        resourceUri = formatUri(resourceUri);
         var removeR = removeLocalResource(resourceKind, resourceUri);
         if (!removeR.ok()) {
             return removeR;

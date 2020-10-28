@@ -28,18 +28,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import javax.annotation.PostConstruct;
 
 /**
- * Interceptor web auto configuration.
+ * Ident interceptor web auto configuration.
  *
  * @author gudaoxuri
  */
 @Configuration
 @ConditionalOnWebApplication
-@Order(30000)
+@Order(10)
 @Slf4j
-public class ConsoleInterceptorWebAutoConfiguration implements WebMvcConfigurer {
+public class IdentInterceptorWebAutoConfiguration implements WebMvcConfigurer {
 
     @Autowired
-    private ConsoleHandlerInterceptor consoleHandlerInterceptor;
+    private IdentHandlerInterceptor identHandlerInterceptor;
 
     /**
      * Init.
@@ -51,7 +51,7 @@ public class ConsoleInterceptorWebAutoConfiguration implements WebMvcConfigurer 
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(consoleHandlerInterceptor).addPathPatterns("/console/**");
+        registry.addInterceptor(identHandlerInterceptor).addPathPatterns("/**");
     }
 
     @Override

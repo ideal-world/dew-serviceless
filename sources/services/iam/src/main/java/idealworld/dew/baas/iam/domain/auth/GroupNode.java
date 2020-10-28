@@ -45,7 +45,7 @@ import javax.persistence.Table;
 public class GroupNode extends SafeEntity {
 
     @Column(nullable = false,
-            columnDefinition = "varchar(1000) comment '节点编码，同租户、应用下唯一'")
+            columnDefinition = "varchar(1000) comment '节点编码'")
     private String code;
 
     @Column(nullable = false,

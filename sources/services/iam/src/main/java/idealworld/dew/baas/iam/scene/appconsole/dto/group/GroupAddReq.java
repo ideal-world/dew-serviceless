@@ -43,6 +43,12 @@ import java.io.Serializable;
 public class GroupAddReq implements Serializable {
 
     @NotNull
+    @NotBlank
+    @Size(max = 255)
+    @Schema(title = "群组编码", required = true)
+    private String code;
+
+    @NotNull
     @Schema(title = "群组类型", required = true)
     private GroupKind kind;
 

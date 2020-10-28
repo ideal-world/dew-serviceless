@@ -20,7 +20,7 @@ package idealworld.dew.baas.iam;
 import com.ecfront.dew.common.$;
 import group.idealworld.dew.core.DewContext;
 import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.common.dto.IdentOptInfo;
+import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.enumeration.*;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.QTenant;
@@ -91,7 +91,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         StandardResp.setServiceFlag("IAM");
-        DewContext.setOptInfoClazz(IdentOptInfo.class);
+        DewContext.setOptInfoClazz(IdentOptCacheInfo.class);
         initIAMAppInfo();
         interceptService.cacheTenantAndAppStatus();
         interceptService.cacheAppIdents();

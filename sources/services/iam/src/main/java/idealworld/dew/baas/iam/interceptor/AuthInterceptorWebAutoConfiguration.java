@@ -28,18 +28,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import javax.annotation.PostConstruct;
 
 /**
- * Interceptor web auto configuration.
+ * Auth interceptor web auto configuration.
  *
  * @author gudaoxuri
  */
 @Configuration
 @ConditionalOnWebApplication
-@Order(10)
+@Order(100)
 @Slf4j
-public class AppInterceptorWebAutoConfiguration implements WebMvcConfigurer {
+public class AuthInterceptorWebAutoConfiguration implements WebMvcConfigurer {
 
     @Autowired
-    private AppHandlerInterceptor appHandlerInterceptor;
+    private AuthHandlerInterceptor authHandlerInterceptor;
 
     /**
      * Init.
@@ -51,7 +51,7 @@ public class AppInterceptorWebAutoConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(appHandlerInterceptor).addPathPatterns("/app/**");
+        registry.addInterceptor(authHandlerInterceptor).addPathPatterns("/**");
     }
 
     @Override

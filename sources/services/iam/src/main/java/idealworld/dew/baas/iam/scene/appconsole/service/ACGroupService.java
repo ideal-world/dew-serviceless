@@ -57,9 +57,9 @@ public class ACGroupService extends IAMBasicService {
                 .from(qGroup)
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
-                .where(qGroup.name.eq(groupAddReq.getName()))
+                .where(qGroup.code.eq(groupAddReq.getCode()))
                 .fetchCount() != 0) {
-            return StandardResp.conflict(BUSINESS_GROUP, "群组名称已存在");
+            return StandardResp.conflict(BUSINESS_GROUP, "群组编码已存在");
         }
         var group = $.bean.copyProperties(groupAddReq, Group.class);
         group.setRelTenantId(relTenantId);
@@ -70,19 +70,22 @@ public class ACGroupService extends IAMBasicService {
     @Transactional
     public Resp<Void> modifyGroup(Long groupId, GroupModifyReq groupModifyReq, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
-        if (groupModifyReq.getName() != null && sqlBuilder.select(qGroup.id)
+        if (groupModifyReq.getCode() != null && sqlBuilder.select(qGroup.id)
                 .from(qGroup)
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
-                .where(qGroup.name.eq(groupModifyReq.getName()))
+                .where(qGroup.code.eq(groupModifyReq.getCode()))
                 .where(qGroup.id.ne(groupId))
                 .fetchCount() != 0) {
-            return StandardResp.conflict(BUSINESS_GROUP, "群组名称已存在");
+            return StandardResp.conflict(BUSINESS_GROUP, "群组编码已存在");
         }
         var groupUpdate = sqlBuilder.update(qGroup)
                 .where(qGroup.id.eq(groupId))
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId));
+        if (groupModifyReq.getCode() != null) {
+            groupUpdate.set(qGroup.code, groupModifyReq.getCode());
+        }
         if (groupModifyReq.getKind() != null) {
             groupUpdate.set(qGroup.kind, groupModifyReq.getKind());
         }
@@ -111,6 +114,7 @@ public class ACGroupService extends IAMBasicService {
         var qGroup = QGroup.group;
         return getDTO(sqlBuilder.select(Projections.bean(GroupResp.class,
                 qGroup.id,
+                qGroup.code,
                 qGroup.kind,
                 qGroup.name,
                 qGroup.icon,
@@ -130,6 +134,7 @@ public class ACGroupService extends IAMBasicService {
         var qGroup = QGroup.group;
         return pageDTOs(sqlBuilder.select(Projections.bean(GroupResp.class,
                 qGroup.id,
+                qGroup.code,
                 qGroup.kind,
                 qGroup.name,
                 qGroup.icon,

@@ -281,9 +281,9 @@ public class CommonFunctionService extends IAMBasicService {
         var qGroup = QGroup.group;
         var qGroupNode = QGroupNode.groupNode;
         return sqlBuilder.select(
-                qGroupNode.relGroupId,
+                qGroup.code,
                 qGroup.name,
-                qGroupNode.id,
+                qGroupNode.code,
                 qGroupNode.name,
                 qGroupNode.busCode)
                 .from(qAccountGroup)
@@ -296,9 +296,9 @@ public class CommonFunctionService extends IAMBasicService {
                 .stream()
                 .map(groupInfo ->
                         IdentOptInfo.GroupInfo.builder()
-                                .groupId(groupInfo.get(0, Long.class))
+                                .groupCode(groupInfo.get(0, String.class))
                                 .groupName(groupInfo.get(1, String.class))
-                                .groupNodeId(groupInfo.get(2, Long.class))
+                                .groupNodeCode(groupInfo.get(2, String.class))
                                 .groupNodeName(groupInfo.get(3, String.class))
                                 .groupNodeBusCode(groupInfo.get(4, String.class))
                                 .build())

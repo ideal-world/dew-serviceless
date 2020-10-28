@@ -117,8 +117,6 @@ public class InterceptService extends IAMBasicService {
     }
 
 
-
-
     public void changeAppIdent(AppIdent appIdent, Long relAppId, Long relTenantId) {
         Dew.cluster.cache.del(IAMConstant.CACHE_APP_AK + appIdent.getAk());
         if (appIdent.getValidTime() == null) {

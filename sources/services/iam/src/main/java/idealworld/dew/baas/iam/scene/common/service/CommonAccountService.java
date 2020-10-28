@@ -20,6 +20,7 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Resp;
 import group.idealworld.dew.Dew;
 import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.resp.StandardResp;
@@ -152,15 +153,19 @@ public class CommonAccountService extends IAMBasicService {
         }
         log.info("Login Success:  [{}-{}] ak {}", tenantIdR.getBody(), accountLoginReq.getRelAppId(), accountLoginReq.getAk());
         String token = KeyHelper.generateToken();
-        var optInfo = new IdentOptInfo()
-                .setAccountCode(openId)
-                .setToken(token)
-                .setRoleInfo(commonFunctionService.findRoleInfo(accountId,accountLoginReq.getRelAppId()))
-                .setGroupInfo(commonFunctionService.findGroupInfo(accountId,accountLoginReq.getRelAppId()))
-                .setAppId(accountLoginReq.getRelAppId())
-                .setTenantId(tenantIdR.getBody());
+        var optInfo = new IdentOptCacheInfo();
+        optInfo.setAccountCode(openId);
+        optInfo.setToken(token);
+        optInfo.setRoleInfo(commonFunctionService.findRoleInfo(accountId, accountLoginReq.getRelAppId()));
+        optInfo.setGroupInfo(commonFunctionService.findGroupInfo(accountId, accountLoginReq.getRelAppId()));
+        optInfo.setAppId(accountLoginReq.getRelAppId());
+        optInfo.setTenantId(tenantIdR.getBody());
         Dew.auth.setOptInfo(optInfo);
-        return StandardResp.success(optInfo);
+        return StandardResp.success(new IdentOptInfo()
+                .setAccountCode(optInfo.getAccountCode())
+                .setToken(optInfo.getToken())
+                .setRoleInfo(optInfo.getRoleInfo())
+                .setGroupInfo(optInfo.getGroupInfo()));
     }
 
     @Transactional

@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BasicAuthPolicy {
 
+    public static final String GROUP_CODE_NODE_CODE_SPLIT = "#";
+
     protected static final String BUSINESS_AUTH = "AUTH";
 
     protected static final Map<ResourceKind, Map<AuthActionKind, List<URI>>> LOCAL_RESOURCES = new ConcurrentHashMap<>();
@@ -72,23 +74,19 @@ public class BasicAuthPolicy {
             AuthActionKind actionKind,
             Map<AuthSubjectKind, List<String>> subjectInfo
     ) {
-        URI resUri;
-        try {
-            resUri = new URI(resourceUri);
-        } catch (URISyntaxException ignore) {
-            return StandardResp.badRequest(BUSINESS_AUTH, "资源URI[%s]格式不正确", resourceUri);
+        resourceUri = formatUri(resourceUri);
+        var matchedResourceUris = matchResourceUris(resourceKind, actionKind, resourceUri);
+        if (matchedResourceUris.isEmpty()) {
+            // 资源不需要鉴权
+            return Resp.success(AuthResultKind.ACCEPT);
         }
-        AuthResultKind authResultKind = AuthResultKind.ACCEPT;
-        var authResultOpt = doAuthentication(resourceKind, resourceUri, actionKind, subjectInfo);
-        if (authResultOpt.isPresent()) {
-            if (authResultOpt.get()._1) {
-                return Resp.success(authResultOpt.get()._0);
-            }
-            authResultKind = authResultOpt.get()._0;
+        if (subjectInfo.isEmpty()) {
+            // 资源需要鉴权但没有对应的权限主体
+            return Resp.success(AuthResultKind.ACCEPT);
         }
-        var matchedResourceUris = matchResourceUris(resourceKind, actionKind, resUri);
-        for (var wildcardCharacterResourceUri : matchedResourceUris) {
-            authResultOpt = doAuthentication(resourceKind, wildcardCharacterResourceUri, actionKind, subjectInfo);
+        AuthResultKind authResultKind = AuthResultKind.REJECT;
+        for (var matchedResourceUri : matchedResourceUris) {
+            var authResultOpt = doAuthentication(resourceKind, matchedResourceUri, actionKind, subjectInfo);
             if (authResultOpt.isPresent()) {
                 if (authResultOpt.get()._1) {
                     return Resp.success(authResultOpt.get()._0);
@@ -186,18 +184,27 @@ public class BasicAuthPolicy {
         });
     }
 
-    private List<String> matchResourceUris(ResourceKind resourceKind, AuthActionKind actionKind, URI resourceUri) {
-        return LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>())
+    @SneakyThrows
+    private List<String> matchResourceUris(ResourceKind resourceKind, AuthActionKind actionKind, String resUri) {
+        var resourceUri = new URI(resUri);
+        var matchResourceUris = LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>())
                 .getOrDefault(actionKind, new ArrayList<>())
                 .stream()
                 .filter(uri ->
                         uri.getHost().equalsIgnoreCase(resourceUri.getHost())
                                 && uri.getPort() == resourceUri.getPort()
                                 && uri.getQuery().equalsIgnoreCase(resourceUri.getQuery())
+                                && !uri.getPath().equalsIgnoreCase(resourceUri.getPath())
                                 && pathMatcher.match(uri.getPath(), resourceUri.getPath())
                 )
                 .map(URI::toString)
                 .collect(Collectors.toList());
+        if (LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>())
+                .getOrDefault(actionKind, new ArrayList<>())
+                .contains(resourceUri)) {
+            matchResourceUris.add(0, resourceUri.toString());
+        }
+        return matchResourceUris;
     }
 
     public Resp<Void> addLocalResource(ResourceKind resourceKind, AuthActionKind actionKind, String resourceUri) {
@@ -238,13 +245,29 @@ public class BasicAuthPolicy {
             ResourceKind resourceKind,
             String resourceUri
     ) {
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.ALL, new ArrayList<>()).remove(new URI(resourceUri));
         LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.CREATE, new ArrayList<>()).remove(new URI(resourceUri));
         LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.DELETE, new ArrayList<>()).remove(new URI(resourceUri));
         LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.FETCH, new ArrayList<>()).remove(new URI(resourceUri));
         LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.MODIFY, new ArrayList<>()).remove(new URI(resourceUri));
         LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.PATCH, new ArrayList<>()).remove(new URI(resourceUri));
         return Resp.success(null);
+    }
+
+    @SneakyThrows
+    public String formatUri(String strUri) {
+        var uri = new URI(strUri);
+        var query = "";
+        if (uri.getQuery() != null) {
+            query = Arrays.stream(uri.getQuery().split("&"))
+                    .sorted(Comparator.comparing(u -> u.split("=")[0]))
+                    .collect(Collectors.joining("&"));
+        }
+        return uri.getScheme()
+                + "//"
+                + uri.getHost()
+                + (uri.getPort() != -1 ? ":" + uri.getPort() : "")
+                + uri.getPath()
+                + (uri.getQuery() != null ? "?" + query : "");
     }
 
 }

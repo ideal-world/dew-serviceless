@@ -16,10 +16,13 @@
 
 package idealworld.dew.baas.iam.scene.appconsole.dto.group;
 
-import idealworld.dew.baas.iam.scene.common.dto.AppBasedResp;
 import idealworld.dew.baas.iam.enumeration.GroupKind;
+import idealworld.dew.baas.iam.scene.common.dto.AppBasedResp;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
@@ -39,6 +42,12 @@ import javax.validation.constraints.Size;
 @EqualsAndHashCode(callSuper = true)
 @Schema(title = "群组响应")
 public class GroupResp extends AppBasedResp {
+
+    @NotNull
+    @NotBlank
+    @Size(max = 255)
+    @Schema(title = "群组编码", required = true)
+    private String code;
 
     @NotNull
     @Schema(title = "群组类型", required = true)

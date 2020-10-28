@@ -33,32 +33,8 @@ import java.util.Set;
 @Schema(title = "操作用户信息")
 public class IdentOptInfo extends OptInfo<IdentOptInfo> {
 
-    @Schema(title = "应用Id", required = true)
-    private Long appId;
-
-    @Schema(title = "租户Id", required = true)
-    private Long tenantId;
-
     @Schema(title = "群组列表", required = true)
     private Set<GroupInfo> groupInfo;
-
-    public Long getTenantId() {
-        return tenantId;
-    }
-
-    public IdentOptInfo setTenantId(Long tenantId) {
-        this.tenantId = tenantId;
-        return this;
-    }
-
-    public Long getAppId() {
-        return appId;
-    }
-
-    public IdentOptInfo setAppId(Long appId) {
-        this.appId = appId;
-        return this;
-    }
 
     public Set<GroupInfo> getGroupInfo() {
         return groupInfo;
@@ -74,10 +50,10 @@ public class IdentOptInfo extends OptInfo<IdentOptInfo> {
     @Schema(title = "群组信息", required = true)
     public static class GroupInfo {
 
-        @Schema(title = "群组Id", required = true)
-        private Long groupId;
-        @Schema(title = "群组节点Id", required = true)
-        private Long groupNodeId;
+        @Schema(title = "群组编码", required = true)
+        private String groupCode;
+        @Schema(title = "群组节点编码", required = true)
+        private String groupNodeCode;
         @Schema(title = "群组业务编码", required = true)
         private String groupNodeBusCode;
         @Schema(title = "群组显示名称", required = true)
