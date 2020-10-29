@@ -3,20 +3,32 @@ package idealworld.dew.baas.iam.interceptor;
 import com.ecfront.dew.common.Resp;
 import group.idealworld.dew.Dew;
 import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.common.auth.BasicAuthPolicy;
 import idealworld.dew.baas.common.enumeration.*;
 import idealworld.dew.baas.common.resp.StandardResp;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import idealworld.dew.baas.iam.IAMConfig;
+import idealworld.dew.baas.iam.IAMConstant;
+import lombok.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.net.URI;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
-public class WriteableAuthPolicy extends BasicAuthPolicy {
+public class WriteableAuthPolicy {
+
+    private static final String BUSINESS_AUTH = "AUTH";
+
+    @Autowired
+    private IAMConfig iamConfig;
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     public Resp<Void> addPolicy(AuthPolicyAddReq authPolicyAddReq) {
         if ((authPolicyAddReq.getSubjectOperator() == AuthSubjectOperatorKind.INCLUDE
@@ -29,7 +41,7 @@ public class WriteableAuthPolicy extends BasicAuthPolicy {
             return StandardResp.badRequest(BUSINESS_AUTH, "过期时间小于当前时间");
         }
         authPolicyAddReq.setResourceUri(formatUri(authPolicyAddReq.getResourceUri()));
-        var key = Constant.CACHE_AUTH_POLICY
+        var key = IAMConstant.CACHE_AUTH_POLICY
                 + authPolicyAddReq.getResourceKind().toString() + ":"
                 + authPolicyAddReq.getResourceUri() + ":"
                 + authPolicyAddReq.getActionKind().toString() + ":"
@@ -45,14 +57,14 @@ public class WriteableAuthPolicy extends BasicAuthPolicy {
                 while (groupNodeId.length() > 0) {
                     key += groupNodeId;
                     Dew.cluster.cache.setex(key, value, expireSec);
-                    groupNodeId = groupNodeId.substring(0, groupNodeId.length() - groupNodeItemLength);
+                    groupNodeId = groupNodeId.substring(0, groupNodeId.length() - iamConfig.getApp().getInitNodeCode().length());
                 }
                 break;
             default:
                 key += authPolicyAddReq.getSubjectId();
                 Dew.cluster.cache.setex(key, value, expireSec);
         }
-        return addLocalResource(authPolicyAddReq.getResourceKind(), authPolicyAddReq.getActionKind(), authPolicyAddReq.getResourceUri());
+        return Resp.success(null);
     }
 
     public Resp<Void> removePolicy(
@@ -64,10 +76,6 @@ public class WriteableAuthPolicy extends BasicAuthPolicy {
             String subjectId
     ) {
         resourceUri = formatUri(resourceUri);
-        var removeR = removeLocalResource(resourceKind, resourceUri, actionKind, subjectOperatorKind, subjectKind, subjectId);
-        if (!removeR.ok()) {
-            return removeR;
-        }
         var key = Constant.CACHE_AUTH_POLICY
                 + resourceKind.toString() + ":"
                 + resourceUri + ":"
@@ -81,7 +89,7 @@ public class WriteableAuthPolicy extends BasicAuthPolicy {
                 while (groupNodeId.length() > 0) {
                     key += groupNodeId;
                     Dew.cluster.cache.del(key);
-                    groupNodeId = groupNodeId.substring(0, groupNodeId.length() - groupNodeItemLength);
+                    groupNodeId = groupNodeId.substring(0, groupNodeId.length() - iamConfig.getApp().getInitNodeCode().length());
                 }
                 break;
             default:
@@ -96,10 +104,6 @@ public class WriteableAuthPolicy extends BasicAuthPolicy {
             String resourceUri
     ) {
         resourceUri = formatUri(resourceUri);
-        var removeR = removeLocalResource(resourceKind, resourceUri);
-        if (!removeR.ok()) {
-            return removeR;
-        }
         execRedisScan(
                 Constant.CACHE_AUTH_POLICY
                         + resourceKind.toString() + ":"
@@ -134,6 +138,34 @@ public class WriteableAuthPolicy extends BasicAuthPolicy {
 
         private Boolean exclusive;
 
+    }
+
+    private Set<String> execRedisScan(String key) {
+        return redisTemplate.execute((RedisCallback<Set<String>>) connection -> {
+            Set<String> keys = new HashSet<>();
+            Cursor<byte[]> cursor = connection.scan(new ScanOptions.ScanOptionsBuilder().match(key + "*").count(iamConfig.getSecurity().getAuthPolicyMaxFetchCount()).build());
+            while (cursor.hasNext()) {
+                keys.add(new String(cursor.next()));
+            }
+            return keys;
+        });
+    }
+
+    @SneakyThrows
+    public String formatUri(String strUri) {
+        var uri = new URI(strUri);
+        var query = "";
+        if (uri.getQuery() != null) {
+            query = Arrays.stream(uri.getQuery().split("&"))
+                    .sorted(Comparator.comparing(u -> u.split("=")[0]))
+                    .collect(Collectors.joining("&"));
+        }
+        return uri.getScheme()
+                + "//"
+                + uri.getHost()
+                + (uri.getPort() != -1 ? ":" + uri.getPort() : "")
+                + uri.getPath()
+                + (uri.getQuery() != null ? "?" + query : "");
     }
 
 }

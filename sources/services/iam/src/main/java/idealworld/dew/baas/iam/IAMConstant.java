@@ -24,6 +24,9 @@ public class IAMConstant extends Constant {
     public static final String CONFIG_APP_REQUEST_DATE_OFFSET_MS = "app.request.dateoffsetms";
     public static final String CONFIG_SERVICE_URL = "service.url";
 
+    public static final String CONFIG_AUTH_POLICY_MAX_FETCH_COUNT = "iam:auth:policy:fetchcount:max";
+    public static final String CONFIG_AUTH_POLICY_EXPIRE_CLEAN_INTERVAL_SEC = "iam:auth:policy:expire:clean:intervalsec";
+
 
 }
 

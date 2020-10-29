@@ -45,10 +45,6 @@ public class Constant {
      * 鉴权策略缓存
      */
     public static final String CACHE_AUTH_POLICY = "iam:auth:policy:";
-    public static final String CONFIG_AUTH_POLICY_MAX_FETCH_COUNT = "iam:auth:policy:fetchcount:max";
-    public static final String CONFIG_AUTH_POLICY_EXPIRE_CLEAN_INTERVAL_SEC = "iam:auth:policy:expire:clean:intervalsec";
-
-
     /**
      * 最小的时间.
      */

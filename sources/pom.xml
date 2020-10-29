@@ -45,6 +45,7 @@
     <modules>
         <module>basics/common</module>
         <module>basics/common-services</module>
+        <module>services/gateway</module>
         <module>services/iam</module>
     </modules>
 

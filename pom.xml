@@ -42,7 +42,9 @@
         <asciidoctorj.pdf.version>1.5.3</asciidoctorj.pdf.version>
 
         <!-- Services -->
+        <vertx.version>4.0.0.Beta3</vertx.version>
         <swagger.version>2.1.2</swagger.version>
+        <embedded-redis.version>0.6</embedded-redis.version>
     </properties>
 
     <developers>

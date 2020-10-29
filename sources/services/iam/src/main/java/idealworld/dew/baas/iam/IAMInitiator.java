@@ -21,7 +21,10 @@ import com.ecfront.dew.common.$;
 import group.idealworld.dew.core.DewContext;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
-import idealworld.dew.baas.common.enumeration.*;
+import idealworld.dew.baas.common.enumeration.AuthResultKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.enumeration.ResourceKind;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.QTenant;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
@@ -196,7 +199,6 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .relSubjectIds(iamAccountId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(systemResourceId)
-                .actionKind(AuthActionKind.ALL)
                 .resultKind(AuthResultKind.ACCEPT)
                 .relSubjectAppId(iamAppId)
                 .relSubjectTenantId(tenantId)
@@ -206,7 +208,6 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .relSubjectIds(iamAccountId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(tenantResourceId)
-                .actionKind(AuthActionKind.ALL)
                 .resultKind(AuthResultKind.ACCEPT)
                 .relSubjectAppId(iamAppId)
                 .relSubjectTenantId(tenantId)
@@ -216,7 +217,6 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .relSubjectIds(iamAccountId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(appResourceId)
-                .actionKind(AuthActionKind.ALL)
                 .resultKind(AuthResultKind.ACCEPT)
                 .relSubjectAppId(iamAppId)
                 .relSubjectTenantId(tenantId)

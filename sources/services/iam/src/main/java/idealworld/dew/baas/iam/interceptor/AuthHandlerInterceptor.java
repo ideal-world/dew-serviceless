@@ -30,6 +30,7 @@ import idealworld.dew.baas.common.enumeration.ResourceKind;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
 import javax.security.auth.message.AuthException;
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
 @Component
 public class AuthHandlerInterceptor implements AsyncHandlerInterceptor {
 
+    AntPathMatcher
     @Autowired
     private ReadonlyAuthPolicy readonlyAuthPolicy;
 

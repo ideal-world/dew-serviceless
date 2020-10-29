@@ -25,6 +25,7 @@ out/
 .project
 
 node_modules/
+.vertx/
 
 *-prod.yml
 *.secret

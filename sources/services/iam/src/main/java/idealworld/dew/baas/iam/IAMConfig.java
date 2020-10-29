@@ -18,6 +18,7 @@ package idealworld.dew.baas.iam;
 
 import idealworld.dew.baas.common.CommonConfig;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +33,9 @@ import java.util.Map;
 @Data
 @ConfigurationProperties(prefix = "dew.baas.iam")
 public class IAMConfig extends CommonConfig {
+
+    @Value("${spring.application.name:please-setting-this}")
+    private String applicationName;
 
     @Override
     protected void doSync(Map<String, String> config) {
@@ -50,11 +54,17 @@ public class IAMConfig extends CommonConfig {
         if (config.containsKey(IAMConstant.CONFIG_SERVICE_URL)) {
             serviceUrl = config.get(IAMConstant.CONFIG_SERVICE_URL);
         }
+        if (config.containsKey(IAMConstant.CONFIG_AUTH_POLICY_EXPIRE_CLEAN_INTERVAL_SEC)) {
+            security.authPolicyExpireCleanIntervalSec = Long.parseLong(config.get(IAMConstant.CONFIG_AUTH_POLICY_EXPIRE_CLEAN_INTERVAL_SEC));
+        }
+        if (config.containsKey(IAMConstant.CONFIG_AUTH_POLICY_MAX_FETCH_COUNT)) {
+            security.authPolicyMaxFetchCount = Integer.parseInt(config.get(IAMConstant.CONFIG_AUTH_POLICY_MAX_FETCH_COUNT));
+        }
     }
 
 
     private Boolean allowTenantRegister = false;
-    private String serviceUrl = "";
+    private String serviceUrl = "http://" + applicationName;
 
     private Security security = new Security();
     private App app = new App();
@@ -76,6 +86,9 @@ public class IAMConfig extends CommonConfig {
         private Integer accountVCodeExpireSec = 60 * 5;
         private Integer accountVCodeMaxErrorTimes = 5;
         private Integer appRequestDateOffsetMs = 5000;
+
+        private Long authPolicyExpireCleanIntervalSec = 60 * 60 * 24L;
+        private Integer authPolicyMaxFetchCount = 1000;
 
     }
 
