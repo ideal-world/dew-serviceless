@@ -131,13 +131,4 @@ public class InterceptService extends IAMBasicService {
         Dew.cluster.cache.del(IAMConstant.CACHE_APP_AK + ak);
     }
 
-    public Resp<Tuple3<String, Long, Long>> getAppIdentByAk(String ak) {
-        var skAndTenantAndAppId = Dew.cluster.cache.get(IAMConstant.CACHE_APP_AK + ak);
-        if (skAndTenantAndAppId == null) {
-            return StandardResp.notFound("INTERCEPT", "通过 ak:%s 找不到对应的应用和租户", ak);
-        }
-        var skAndAppIdSplit = skAndTenantAndAppId.split(":");
-        return StandardResp.success(new Tuple3<>(skAndAppIdSplit[0], Long.valueOf(skAndAppIdSplit[1]), Long.valueOf(skAndAppIdSplit[2])));
-    }
-
 }

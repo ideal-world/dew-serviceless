@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.common.utils;
+package idealworld.dew.baas.common.util;
 
 import java.io.*;
 import java.util.Enumeration;

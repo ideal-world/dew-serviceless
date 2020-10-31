@@ -1,12 +1,14 @@
 package idealworld.dew.baas.gateway.auth;
 
 import com.ecfront.dew.common.Resp;
+import com.ecfront.dew.common.exception.RTException;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.enumeration.*;
-import idealworld.dew.baas.common.resp.StandardResp;
+import idealworld.dew.baas.common.util.UriHelper;
+import idealworld.dew.baas.gateway.GatewayConfig;
+import idealworld.dew.baas.gateway.util.CachedRedisClient;
 import io.vertx.core.Future;
-import io.vertx.redis.client.RedisAPI;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.AntPathMatcher;
@@ -17,7 +19,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -32,42 +33,43 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ReadonlyAuthPolicy {
 
-    public static final String GROUP_CODE_NODE_CODE_SPLIT = "#";
-
-    private static final String BUSINESS_AUTH = "AUTH";
-    private static final Map<ResourceKind, Map<AuthActionKind, List<URI>>> LOCAL_RESOURCES = new ConcurrentHashMap<>();
+    // resourceKind -> actionKind -> uris
+    private static final Map<String, Map<String, List<URI>>> LOCAL_RESOURCES = new ConcurrentHashMap<>();
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private Integer groupNodeLength;
-    private RedisAPI redisClient;
+    private final GatewayConfig.Security security;
 
     @SneakyThrows
-    public void init(RedisAPI redisClient, Integer groupNodeLength) {
-        this.groupNodeLength = groupNodeLength;
-        this.redisClient = redisClient;
-        scan(Constant.CACHE_AUTH_POLICY, key -> {
+    public ReadonlyAuthPolicy(GatewayConfig.Security security) {
+        this.security = security;
+        CachedRedisClient.scan(Constant.CACHE_AUTH_POLICY, key -> {
             var keyItems = key.substring(Constant.CACHE_AUTH_POLICY.length()).split(":");
-            var resourceKind = ResourceKind.parse(keyItems[0]);
+            var resourceKind = keyItems[0];
             var resourceUri = keyItems[1];
-            var actionKind = AuthActionKind.parse(keyItems[2]);
+            var actionKind = keyItems[2];
             if (!LOCAL_RESOURCES.containsKey(resourceKind)) {
                 LOCAL_RESOURCES.put(resourceKind, new ConcurrentHashMap<>());
             }
             if (!LOCAL_RESOURCES.get(resourceKind).containsKey(actionKind)) {
                 LOCAL_RESOURCES.get(resourceKind).put(actionKind, new CopyOnWriteArrayList<>());
             }
-            LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(new URI(resourceUri));
+            try {
+                LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(new URI(resourceUri));
+            } catch (URISyntaxException e) {
+                log.error("Init Auth policy error:{}", e.getMessage(), e);
+                throw new RTException(e);
+            }
         });
     }
 
+    @SneakyThrows
     public Future<AuthResultKind> authentication(
-            ResourceKind resourceKind,
-            String resUri,
-            AuthActionKind actionKind,
+            URI resourceUri,
+            String actionKind,
             Map<AuthSubjectKind, List<String>> subjectInfo
     ) {
+        var formattedResourceUri = new URI(UriHelper.formatUri(resourceUri));
         return Future.future(promise -> {
-            var resourceUri = formatUri(resUri);
-            var matchedResourceUris = matchResourceUris(resourceKind, actionKind, resourceUri);
+            var matchedResourceUris = matchResourceUris(formattedResourceUri, actionKind);
             if (matchedResourceUris.isEmpty()) {
                 // 资源不需要鉴权
                 promise.complete(AuthResultKind.ACCEPT);
@@ -78,15 +80,15 @@ public class ReadonlyAuthPolicy {
                 promise.complete(AuthResultKind.ACCEPT);
                 return;
             }
-            doAuthentication(resourceKind, matchedResourceUris, actionKind, subjectInfo)
+            doAuthentication(formattedResourceUri.getScheme(), matchedResourceUris, actionKind, subjectInfo)
                     .onSuccess(promise::complete);
         });
     }
 
-    public Future<AuthResultKind> doAuthentication(
-            ResourceKind resourceKind,
+    private Future<AuthResultKind> doAuthentication(
+            String resourceKind,
             List<String> matchedResourceUris,
-            AuthActionKind actionKind,
+            String actionKind,
             Map<AuthSubjectKind, List<String>> subjectInfo
     ) {
         return Future.future(promise -> {
@@ -111,9 +113,9 @@ public class ReadonlyAuthPolicy {
     }
 
     private Future<Optional<Tuple2<AuthResultKind, Boolean>>> doAuthentication(
-            ResourceKind resourceKind,
+            String resourceKind,
             String resourceUri,
-            AuthActionKind actionKind,
+            String actionKind,
             Map<AuthSubjectKind, List<String>> subjectInfo
     ) {
         return Future.future(promise -> {
@@ -121,9 +123,9 @@ public class ReadonlyAuthPolicy {
             for (var subject : subjectInfo.entrySet()) {
                 for (var subjectId : subject.getValue()) {
                     var key = Constant.CACHE_AUTH_POLICY
-                            + resourceKind.toString() + ":"
+                            + resourceKind + ":"
                             + resourceUri + ":"
-                            + actionKind.toString();
+                            + actionKind;
                     matchEQ(key, subject.getKey(), subjectId)
                             .onSuccess(matchEQResultOpt -> {
                                 if (matchEQResultOpt.isPresent()) {
@@ -193,7 +195,7 @@ public class ReadonlyAuthPolicy {
                                 promise.complete(authResultOpt);
                                 return;
                             }
-                            var newGroupNodeId = groupNodeId.substring(0, groupNodeId.length() - groupNodeLength);
+                            var newGroupNodeId = groupNodeId.substring(0, groupNodeId.length() - security.getGroupNodeLength());
                             doMatchLike(keyPrefix, subjectKind, newGroupNodeId, authResultOpt.get()._0);
                         }
                     });
@@ -202,11 +204,11 @@ public class ReadonlyAuthPolicy {
 
     private Future<Optional<Tuple2<AuthResultKind, Boolean>>> parseAuth(String key) {
         return Future.future(promise ->
-                redisClient.get(key)
-                        .onSuccess(response -> {
-                            var cache = response.toString();
+                CachedRedisClient.get(key, security.getResourceCacheExpireSec())
+                        .onSuccess(cache -> {
                             if (cache == null) {
                                 promise.complete(Optional.empty());
+                                return;
                             }
                             var cacheValue = cache.split("\\|");
                             var authResultKind = AuthResultKind.parse(cacheValue[0]);
@@ -217,8 +219,8 @@ public class ReadonlyAuthPolicy {
 
 
     @SneakyThrows
-    private List<String> matchResourceUris(ResourceKind resourceKind, AuthActionKind actionKind, String resUri) {
-        var resourceUri = new URI(resUri);
+    private List<String> matchResourceUris(URI resourceUri, String actionKind) {
+        var resourceKind = resourceUri.getScheme();
         var matchResourceUris = LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>())
                 .getOrDefault(actionKind, new ArrayList<>())
                 .stream()
@@ -239,89 +241,33 @@ public class ReadonlyAuthPolicy {
         return matchResourceUris;
     }
 
-    public Resp<Void> addLocalResource(ResourceKind resourceKind, AuthActionKind actionKind, String resourceUri) {
+    public Resp<Void> addLocalResource(URI resourceUri, String actionKind) {
+        var resourceKind = resourceUri.getScheme();
         if (!LOCAL_RESOURCES.containsKey(resourceKind)) {
             LOCAL_RESOURCES.put(resourceKind, new ConcurrentHashMap<>());
         }
         if (!LOCAL_RESOURCES.get(resourceKind).containsKey(actionKind)) {
             LOCAL_RESOURCES.get(resourceKind).put(actionKind, new CopyOnWriteArrayList<>());
         }
-        try {
-            LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(new URI(resourceUri));
-        } catch (URISyntaxException ignore) {
-            return StandardResp.badRequest(BUSINESS_AUTH, "资源URI[%s]格式不正确", resourceUri);
-        }
+        LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(resourceUri);
         return Resp.success(null);
     }
 
     @SneakyThrows
-    public Resp<Void> removeLocalResource(
-            ResourceKind resourceKind,
-            String resourceUri,
-            AuthActionKind actionKind,
-            AuthSubjectOperatorKind subjectOperatorKind,
-            AuthSubjectKind subjectKind,
-            String subjectId
-    ) {
-        if ((subjectOperatorKind == AuthSubjectOperatorKind.INCLUDE
-                || subjectOperatorKind == AuthSubjectOperatorKind.LIKE)
-                && subjectKind != AuthSubjectKind.GROUP_NODE) {
-            return StandardResp.badRequest(BUSINESS_AUTH, "权限主体运算类型为INCLUDE/LIKE时权限主体只能为GROUP_NODE");
-        }
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(actionKind, new ArrayList<>()).remove(new URI(resourceUri));
+    public Resp<Void> removeLocalResource(URI resourceUri, String actionKind) {
+        LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(actionKind, new ArrayList<>()).remove(resourceUri);
         return Resp.success(null);
     }
 
     @SneakyThrows
-    public Resp<Void> removeLocalResource(
-            ResourceKind resourceKind,
-            String resourceUri
-    ) {
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.CREATE, new ArrayList<>()).remove(new URI(resourceUri));
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.DELETE, new ArrayList<>()).remove(new URI(resourceUri));
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.FETCH, new ArrayList<>()).remove(new URI(resourceUri));
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.MODIFY, new ArrayList<>()).remove(new URI(resourceUri));
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.PATCH, new ArrayList<>()).remove(new URI(resourceUri));
+    public Resp<Void> removeLocalResource(URI resourceUri) {
+        var resourceKind = resourceUri.getScheme();
+        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.CREATE.toString(), new ArrayList<>()).remove(resourceUri);
+        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.DELETE.toString(), new ArrayList<>()).remove(resourceUri);
+        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.FETCH.toString(), new ArrayList<>()).remove(resourceUri);
+        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.MODIFY.toString(), new ArrayList<>()).remove(resourceUri);
+        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.PATCH.toString(), new ArrayList<>()).remove(resourceUri);
         return Resp.success(null);
-    }
-
-    @SneakyThrows
-    public String formatUri(String strUri) {
-        var uri = new URI(strUri);
-        var query = "";
-        if (uri.getQuery() != null) {
-            query = Arrays.stream(uri.getQuery().split("&"))
-                    .sorted(Comparator.comparing(u -> u.split("=")[0]))
-                    .collect(Collectors.joining("&"));
-        }
-        return uri.getScheme()
-                + "//"
-                + uri.getHost()
-                + (uri.getPort() != -1 ? ":" + uri.getPort() : "")
-                + uri.getPath()
-                + (uri.getQuery() != null ? "?" + query : "");
-    }
-
-    private void scan(String key, Consumer<String> fun) {
-        doScan(0, key, fun);
-    }
-
-    private void doScan(Integer cursor, String key, Consumer<String> fun) {
-        redisClient.scan(new ArrayList<>() {
-            {
-                add(cursor + "");
-                add("MATCH");
-                add(key + "*");
-            }
-        }).onSuccess(response -> {
-            response.get(1).forEach(returnKey -> {
-                fun.accept(returnKey.toString());
-            });
-            var newCursor = response.get(0).toInteger();
-            if (newCursor != 0) {
-                doScan(newCursor, key, fun);
-            }
-        });
     }
 
 }

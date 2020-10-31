@@ -54,6 +54,8 @@ public class Constant {
      */
     public static Date MAX_TIME;
 
+    public static String GROUP_CODE_NODE_CODE_SPLIT = "#";
+
     static {
         try {
             MIN_TIME = $.time().yyyy_MM_dd.parse("1970-01-01");

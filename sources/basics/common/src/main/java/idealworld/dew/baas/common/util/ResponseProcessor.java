@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.common.utils;
+package idealworld.dew.baas.common.util;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;

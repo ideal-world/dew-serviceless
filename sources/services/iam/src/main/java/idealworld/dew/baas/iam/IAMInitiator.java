@@ -175,7 +175,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .code("")
                 .name("")
                 .uri(iamConfig.getServiceUrl())
-                .kind(ResourceKind.API)
+                .kind(ResourceKind.HTTP)
                 .build(), iamAppId, tenantId).getBody();
         // 初始化资源
         var systemResourceId = acResourceService.addResource(ResourceAddReq.builder()

@@ -48,9 +48,6 @@ public class IAMConfig extends CommonConfig {
         if (config.containsKey(IAMConstant.CONFIG_ACCOUNT_VCODE_EXPIRE_SEC)) {
             security.accountVCodeExpireSec = Integer.parseInt(config.get(IAMConstant.CONFIG_ACCOUNT_VCODE_EXPIRE_SEC));
         }
-        if (config.containsKey(IAMConstant.CONFIG_APP_REQUEST_DATE_OFFSET_MS)) {
-            security.appRequestDateOffsetMs = Integer.parseInt(config.get(IAMConstant.CONFIG_APP_REQUEST_DATE_OFFSET_MS));
-        }
         if (config.containsKey(IAMConstant.CONFIG_SERVICE_URL)) {
             serviceUrl = config.get(IAMConstant.CONFIG_SERVICE_URL);
         }
@@ -85,7 +82,6 @@ public class IAMConfig extends CommonConfig {
 
         private Integer accountVCodeExpireSec = 60 * 5;
         private Integer accountVCodeMaxErrorTimes = 5;
-        private Integer appRequestDateOffsetMs = 5000;
 
         private Long authPolicyExpireCleanIntervalSec = 60 * 60 * 24L;
         private Integer authPolicyMaxFetchCount = 1000;
@@ -101,7 +97,6 @@ public class IAMConfig extends CommonConfig {
         private String iamAdminName = "dew";
         private String iamTenantName = "平台租户";
         private String iamAppName = "用户权限中心";
-        private String authFieldName = "Authorization";
         private String initNodeCode = "10000";
 
     }

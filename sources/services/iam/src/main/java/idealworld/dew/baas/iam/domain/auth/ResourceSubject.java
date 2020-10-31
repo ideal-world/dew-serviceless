@@ -35,7 +35,7 @@ import javax.persistence.*;
  * {@link ResourceKind#MENU} 及 {@link ResourceKind#ELEMENT}
  * uri = <空>
  * <p>
- * {@link ResourceKind#API}:
+ * {@link ResourceKind#HTTP}:
  * uri = API路径
  * <p>
  * e.g.

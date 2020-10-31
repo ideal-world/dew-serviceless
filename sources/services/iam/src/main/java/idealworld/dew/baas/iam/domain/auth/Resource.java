@@ -35,7 +35,7 @@ import javax.persistence.Table;
  * <p>
  * <path> 为空时 表示为（整个）该资源主体
  * <p>
- * {@link ResourceKind#API}:
+ * {@link ResourceKind#HTTP}:
  * path = <API路径>
  * <p>
  * e.g.

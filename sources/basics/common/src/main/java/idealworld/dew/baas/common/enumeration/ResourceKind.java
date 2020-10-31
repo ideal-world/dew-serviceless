@@ -30,7 +30,7 @@ public enum ResourceKind {
     /**
      * HTTP(s).
      */
-    API("API"),
+    HTTP("HTTP"),
     /**
      * 菜单.
      */
