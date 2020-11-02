@@ -1,7 +1,8 @@
-package idealworld.dew.baas.gateway.auth;
+package idealworld.dew.baas.gateway.process;
 
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.gateway.GatewayConfig;
@@ -21,12 +22,12 @@ import java.util.stream.Collectors;
  * @author gudaoxuri
  */
 @Slf4j
-public class AuthHttpHandler extends GatewayHandler {
+public class AuthHandler extends GatewayHandler {
 
     private final GatewayConfig.Request request;
     private final ReadonlyAuthPolicy authPolicy;
 
-    public AuthHttpHandler(GatewayConfig.Request request, ReadonlyAuthPolicy authPolicy) {
+    public AuthHandler(GatewayConfig.Request request, ReadonlyAuthPolicy authPolicy) {
         this.request = request;
         this.authPolicy = authPolicy;
     }
@@ -35,8 +36,8 @@ public class AuthHttpHandler extends GatewayHandler {
     @Override
     public void handle(RoutingContext ctx) {
         var identOptInfo = (IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
-        var resourceUri = (String) ctx.get(request.getResourceUriKey());
-        var action = (String) ctx.get(request.getActionKey());
+        var resourceUri = (URI) ctx.get(request.getResourceUriKey());
+        var action = (AuthActionKind) ctx.get(request.getActionKey());
 
         var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
         if (identOptInfo != null) {
@@ -72,13 +73,13 @@ public class AuthHttpHandler extends GatewayHandler {
                 });
             }
         }
-        authPolicy.authentication(new URI(resourceUri), action, subjectInfo)
+        authPolicy.authentication(resourceUri, action.toString(), subjectInfo)
                 .onSuccess(authResultKind -> {
                     if (authResultKind == AuthResultKind.REJECT) {
-                        error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "鉴权错误，没有权限访问对应的资源[" + action + "|" + resourceUri + "]", ctx);
+                        error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "鉴权错误，没有权限访问对应的资源[" + action + "|" + resourceUri.toString() + "]", ctx);
                         return;
                     }
-                    // TODO 转发
+                    ctx.next();
                 })
                 .onFailure(e -> error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "鉴权错误:" + e.getMessage(), ctx, e));
     }

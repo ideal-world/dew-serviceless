@@ -31,6 +31,8 @@ import java.util.Map;
 public class GatewayConfig {
 
     private Request request = new Request();
+    private Exchange exchange = new Exchange();
+    private Distribute distribute = new Distribute();
     private RedisConfig redis = new RedisConfig();
     private Security security = new Security();
 
@@ -38,11 +40,40 @@ public class GatewayConfig {
     public static class Request {
 
         private Integer port = 9000;
-        private String path="/exec";
-        private String resourceUriKey ="res";
-        private String actionKey="act";
+        private String path = "/exec";
+        private String resourceUriKey = "res";
+        private String actionKey = "act";
+    }
+
+    @Data
+    public static class Exchange {
+
+        private String topic = "iam:exchange";
 
     }
+
+    @Data
+    public static class Distribute {
+
+        private Integer timeoutMs = 5000;
+        private String iamServiceName = "iam.service";
+        private Integer iamServicePort = 9000;
+        private String iamServicePath = "/exec";
+        private String cacheServiceName = "cache.service";
+        private Integer cacheServicePort = 9000;
+        private String cacheServicePath = "/exec";
+        private String reldbServiceName = "reldb.service";
+        private Integer reldbServicePort = 9000;
+        private String reldbServicePath = "/exec";
+        private String mqServiceName = "mq.service";
+        private Integer mqServicePort = 9000;
+        private String mqServicePath = "/exec";
+        private String objServiceName = "obj.service";
+        private Integer objServicePort = 9000;
+        private String objServicePath = "/exec";
+
+    }
+
 
     @Data
     public static class RedisConfig {
@@ -61,7 +92,7 @@ public class GatewayConfig {
         private String akSkFieldName = "Authorization";
         private Integer tokenCacheExpireSec = 60;
         private Integer akSkCacheExpireSec = 60;
-        private Integer resourceCacheExpireSec = 60*60*24;
+        private Integer resourceCacheExpireSec = 60 * 60 * 24;
         private Integer appRequestDateOffsetMs = 5000;
         private String cacheTokenInfoKey = "dew:auth:token:info:";
         private String cacheAkSkInfoKey = "dew:auth:app:ak:";

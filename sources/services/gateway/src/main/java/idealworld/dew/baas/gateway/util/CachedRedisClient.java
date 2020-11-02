@@ -8,6 +8,7 @@ import io.vertx.redis.client.RedisAPI;
 import io.vertx.redis.client.RedisOptions;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
@@ -36,8 +37,8 @@ public class CachedRedisClient {
         return FutureCacheHelper.getSetF(CACHE_KEY_PREFIX + key, cacheSec,
                 () -> Future.future(promise ->
                         redisClient.get(key)
-                                .onSuccess(resp -> promise.complete(
-                                        resp != null ? resp.toString() : null))
+                                .onSuccess(response -> promise.complete(
+                                        response != null ? response.toString(StandardCharsets.UTF_8) : null))
                                 .onFailure(e -> {
                                     log.error("Redis get [{}] error {}", key, e.getMessage(), e);
                                     promise.fail(e.getCause());
@@ -47,6 +48,16 @@ public class CachedRedisClient {
 
     public static void scan(String key, Consumer<String> fun) {
         doScan(0, key, fun);
+    }
+
+    public static void subscribe(String key, Consumer<String> fun) {
+        redisClient.subscribe(new ArrayList<>() {
+            {
+                add(key);
+            }
+        }).onSuccess(response -> {
+            fun.accept(response.toString(StandardCharsets.UTF_8));
+        }).onFailure(e -> log.error("Redis subscribe [{}] error {}", key, e.getMessage(), e));
     }
 
     private static void doScan(Integer cursor, String key, Consumer<String> fun) {
@@ -64,9 +75,7 @@ public class CachedRedisClient {
             if (newCursor != 0) {
                 doScan(newCursor, key, fun);
             }
-        }).onFailure(e -> {
-            log.error("Redis scan [{}] error {}", key, e.getMessage(), e);
-        });
+        }).onFailure(e -> log.error("Redis scan [{}] error {}", key, e.getMessage(), e));
     }
 
 }

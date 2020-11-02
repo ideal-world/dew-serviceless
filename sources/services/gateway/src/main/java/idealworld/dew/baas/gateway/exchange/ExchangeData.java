@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.gateway.auth;
+package idealworld.dew.baas.gateway.exchange;
 
 import lombok.Data;
-
-import java.util.Set;
 
 /**
  * token opt info.
@@ -26,28 +24,10 @@ import java.util.Set;
  * @author gudaoxuri
  */
 @Data
-public class IdentOptCacheInfo {
+public class ExchangeData {
 
-    private String token;
-    private Object accountCode;
-    private Set<RoleInfo> roleInfo;
-    private Set<GroupInfo> groupInfo;
-    private Long appId;
-    private Long tenantId;
-
-    @Data
-    public static class RoleInfo {
-        private String code;
-        private String name;
-    }
-
-    @Data
-    public static class GroupInfo {
-        private String groupCode;
-        private String groupNodeCode;
-        private String groupNodeBusCode;
-        private String groupName;
-        private String groupNodeName;
-    }
+    private Boolean addOpt;
+    private String resourceUri;
+    private String actionKind;
 
 }

@@ -1,17 +1,20 @@
-package idealworld.dew.baas.gateway.auth;
+package idealworld.dew.baas.gateway.process;
 
 import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.exception.RTException;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.common.enumeration.*;
-import idealworld.dew.baas.common.util.UriHelper;
+import idealworld.dew.baas.common.enumeration.AuthActionKind;
+import idealworld.dew.baas.common.enumeration.AuthResultKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.util.AntPathMatcher;
+import idealworld.dew.baas.common.util.URIHelper;
 import idealworld.dew.baas.gateway.GatewayConfig;
 import idealworld.dew.baas.gateway.util.CachedRedisClient;
 import io.vertx.core.Future;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.AntPathMatcher;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -38,7 +41,6 @@ public class ReadonlyAuthPolicy {
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final GatewayConfig.Security security;
 
-    @SneakyThrows
     public ReadonlyAuthPolicy(GatewayConfig.Security security) {
         this.security = security;
         CachedRedisClient.scan(Constant.CACHE_AUTH_POLICY, key -> {
@@ -67,7 +69,7 @@ public class ReadonlyAuthPolicy {
             String actionKind,
             Map<AuthSubjectKind, List<String>> subjectInfo
     ) {
-        var formattedResourceUri = new URI(UriHelper.formatUri(resourceUri));
+        var formattedResourceUri = new URI(URIHelper.formatUri(resourceUri));
         return Future.future(promise -> {
             var matchedResourceUris = matchResourceUris(formattedResourceUri, actionKind);
             if (matchedResourceUris.isEmpty()) {
@@ -80,7 +82,7 @@ public class ReadonlyAuthPolicy {
                 promise.complete(AuthResultKind.ACCEPT);
                 return;
             }
-            doAuthentication(formattedResourceUri.getScheme(), matchedResourceUris, actionKind, subjectInfo)
+            doAuthentication(formattedResourceUri.getScheme().toUpperCase(), matchedResourceUris, actionKind, subjectInfo)
                     .onSuccess(promise::complete);
         });
     }
@@ -217,8 +219,6 @@ public class ReadonlyAuthPolicy {
                         }));
     }
 
-
-    @SneakyThrows
     private List<String> matchResourceUris(URI resourceUri, String actionKind) {
         var resourceKind = resourceUri.getScheme();
         var matchResourceUris = LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>())
@@ -229,7 +229,7 @@ public class ReadonlyAuthPolicy {
                                 && uri.getPort() == resourceUri.getPort()
                                 && uri.getQuery().equalsIgnoreCase(resourceUri.getQuery())
                                 && !uri.getPath().equalsIgnoreCase(resourceUri.getPath())
-                                && pathMatcher.match(uri.getPath(), resourceUri.getPath())
+                                && pathMatcher.matchStart(uri.getPath(), resourceUri.getPath())
                 )
                 .map(URI::toString)
                 .collect(Collectors.toList());
@@ -253,13 +253,11 @@ public class ReadonlyAuthPolicy {
         return Resp.success(null);
     }
 
-    @SneakyThrows
     public Resp<Void> removeLocalResource(URI resourceUri, String actionKind) {
         LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(actionKind, new ArrayList<>()).remove(resourceUri);
         return Resp.success(null);
     }
 
-    @SneakyThrows
     public Resp<Void> removeLocalResource(URI resourceUri) {
         var resourceKind = resourceUri.getScheme();
         LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.CREATE.toString(), new ArrayList<>()).remove(resourceUri);

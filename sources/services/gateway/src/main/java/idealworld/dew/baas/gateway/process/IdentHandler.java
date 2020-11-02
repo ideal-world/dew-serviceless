@@ -1,7 +1,10 @@
-package idealworld.dew.baas.gateway.auth;
+package idealworld.dew.baas.gateway.process;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
+import com.ecfront.dew.common.exception.RTException;
+import idealworld.dew.baas.common.enumeration.AuthActionKind;
+import idealworld.dew.baas.common.enumeration.ResourceKind;
 import idealworld.dew.baas.gateway.GatewayConfig;
 import idealworld.dew.baas.gateway.util.CachedRedisClient;
 import io.vertx.core.http.HttpServerRequest;
@@ -9,6 +12,7 @@ import io.vertx.ext.web.RoutingContext;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -24,12 +28,12 @@ import java.util.stream.Collectors;
  * @author gudaoxuri
  */
 @Slf4j
-public class IdentHttpHandler extends GatewayHandler {
+public class IdentHandler extends GatewayHandler {
 
     private final GatewayConfig.Request request;
     private final GatewayConfig.Security security;
 
-    public IdentHttpHandler(GatewayConfig.Request request, GatewayConfig.Security security) {
+    public IdentHandler(GatewayConfig.Request request, GatewayConfig.Security security) {
         this.request = request;
         this.security = security;
     }
@@ -43,7 +47,7 @@ public class IdentHttpHandler extends GatewayHandler {
                 ctx.request().query() == null ? "" : "?" + ctx.request().query(), getIP(ctx.request()));
         // checker
         if (ctx.request().query() == null || ctx.request().query().trim().isBlank()) {
-            error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "请求格式不合法", ctx);
+            error(Integer.parseInt(StandardCode.BAD_REQUEST.toString()), "请求格式不合法，缺少query", ctx);
             return;
         }
         var queryMap = Arrays.stream(URLDecoder.decode(ctx.request().query().trim(), StandardCharsets.UTF_8).split("&"))
@@ -51,11 +55,21 @@ public class IdentHttpHandler extends GatewayHandler {
                 .collect(Collectors.toMap(item -> item[0], item -> item.length > 1 ? item[1] : ""));
         if (!queryMap.containsKey(request.getResourceUriKey())
                 || !queryMap.containsKey(request.getActionKey())) {
-            error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "请求格式不合法", ctx);
+            error(Integer.parseInt(StandardCode.BAD_REQUEST.toString()), "请求格式不合法，缺少[" + request.getResourceUriKey() + "]或[" + request.getActionKey() + "]", ctx);
             return;
         }
-        ctx.put(request.getResourceUriKey(), queryMap.get(request.getResourceUriKey()));
-        ctx.put(request.getActionKey(), queryMap.get(request.getActionKey()));
+        URI resourceUri;
+        AuthActionKind actionKind;
+        try {
+            resourceUri = new URI(queryMap.get(request.getResourceUriKey()));
+            ResourceKind.parse(resourceUri.getScheme().toLowerCase());
+            actionKind = AuthActionKind.parse(queryMap.get(request.getActionKey()).toLowerCase());
+        } catch (RTException e) {
+            error(Integer.parseInt(StandardCode.BAD_REQUEST.toString()), "请求格式不合法，资源类型或操作类型不存在", ctx);
+            return;
+        }
+        ctx.put(request.getResourceUriKey(), resourceUri);
+        ctx.put(request.getActionKey(), actionKind);
 
         var token = ctx.request().headers().contains(security.getTokenFieldName())
                 ? ctx.request().getHeader(security.getTokenFieldName()) : null;
