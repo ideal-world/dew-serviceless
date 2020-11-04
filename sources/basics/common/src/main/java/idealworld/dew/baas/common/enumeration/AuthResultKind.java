@@ -34,11 +34,7 @@ public enum AuthResultKind {
     /**
      * 拒绝.
      */
-    REJECT("REJECT"),
-    /**
-     * 修正. 仅对数据权限有效
-     */
-    MODIFY("MODIFY");
+    REJECT("REJECT");
 
     private final String code;
 

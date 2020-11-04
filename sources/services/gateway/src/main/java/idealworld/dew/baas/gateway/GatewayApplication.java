@@ -1,13 +1,14 @@
 package idealworld.dew.baas.gateway;
 
 import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.exception.RTIOException;
 import idealworld.dew.baas.gateway.exchange.ExchangeProcessor;
 import idealworld.dew.baas.gateway.process.AuthHandler;
 import idealworld.dew.baas.gateway.process.DistributeHandler;
 import idealworld.dew.baas.gateway.process.IdentHandler;
 import idealworld.dew.baas.gateway.process.ReadonlyAuthPolicy;
-import idealworld.dew.baas.gateway.util.CachedRedisClient;
 import idealworld.dew.baas.gateway.util.HttpClient;
+import idealworld.dew.baas.gateway.util.RedisClient;
 import idealworld.dew.baas.gateway.util.YamlHelper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -27,19 +28,29 @@ public class GatewayApplication extends AbstractVerticle {
     @Override
     public void start(Promise<Void> startPromise) {
         var config = loadConfig();
-        CachedRedisClient.init(vertx, config.getRedis());
+        RedisClient.init(vertx, config.getRedis());
         HttpClient.init(vertx);
-        var authPolicy = new ReadonlyAuthPolicy(config.getSecurity());
-        ExchangeProcessor.register(config.getExchange(),authPolicy);
+        var authPolicy = new ReadonlyAuthPolicy(config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
+        ExchangeProcessor.register(config.getExchange(), authPolicy);
         var identHttpHandler = new IdentHandler(config.getRequest(), config.getSecurity());
         var authHttpHandler = new AuthHandler(config.getRequest(), authPolicy);
-        var distributeHandler = new DistributeHandler(config.getRequest(),config.getDistribute());
+        var distributeHandler = new DistributeHandler(config.getRequest(), config.getDistribute());
         startServer(startPromise, config.getRequest(), identHttpHandler, authHttpHandler, distributeHandler);
     }
 
     private GatewayConfig loadConfig() {
-        var strConfig = $.file.readAllByClassPath("application-" + System.getProperty(PROFILE_KEY), StandardCharsets.UTF_8);
-        return YamlHelper.toObject(GatewayConfig.class, strConfig);
+        String config;
+        try {
+            config = $.file.readAllByClassPath("application-" + System.getProperty(PROFILE_KEY) + ".yml", StandardCharsets.UTF_8);
+        } catch (RTIOException ignore) {
+            try {
+                config = $.file.readAllByClassPath("application-" + System.getProperty(PROFILE_KEY) + ".yaml", StandardCharsets.UTF_8);
+            } catch (RTIOException e) {
+                log.error("Configuration file [{}] not found in classpath", "application-" + System.getProperty(PROFILE_KEY) + ".yml/yaml");
+                throw e;
+            }
+        }
+        return YamlHelper.toObject(GatewayConfig.class, config);
     }
 
     private void startServer(Promise<Void> startPromise, GatewayConfig.Request request,

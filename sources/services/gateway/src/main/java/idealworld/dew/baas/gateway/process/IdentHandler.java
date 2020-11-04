@@ -6,7 +6,7 @@ import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
 import idealworld.dew.baas.gateway.GatewayConfig;
-import idealworld.dew.baas.gateway.util.CachedRedisClient;
+import idealworld.dew.baas.gateway.util.RedisClient;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 import lombok.SneakyThrows;
@@ -82,7 +82,7 @@ public class IdentHandler extends GatewayHandler {
 
         // fetch token
         if (token != null) {
-            CachedRedisClient.get(security.getCacheTokenInfoKey() + token, security.getTokenCacheExpireSec())
+            RedisClient.get(security.getCacheTokenInfoKey() + token, security.getTokenCacheExpireSec())
                     .onSuccess(optInfo -> {
                         var identOptInfo = optInfo != null
                                 ? $.json.toObject(optInfo, IdentOptCacheInfo.class)
@@ -114,7 +114,7 @@ public class IdentHandler extends GatewayHandler {
         }
         var reqPath = ctx.request().path();
         var reqQuery = ctx.request().query() != null ? ctx.request().query() : "";
-        CachedRedisClient.get(security.getCacheAkSkInfoKey() + ak, security.getTokenCacheExpireSec())
+        RedisClient.get(security.getCacheAkSkInfoKey() + ak, security.getTokenCacheExpireSec())
                 .onSuccess(legalSkAndAppId -> {
                     if (legalSkAndAppId == null) {
                         error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "认证错误，请检查 HTTP Header [" + security.getAkSkFieldName() + "] 格式是否正确", ctx);

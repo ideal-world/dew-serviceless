@@ -1,8 +1,9 @@
 package idealworld.dew.baas.gateway.process;
 
+import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.exception.RTException;
-import com.ecfront.dew.common.tuple.Tuple2;
+import com.fasterxml.jackson.databind.JsonNode;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
@@ -10,18 +11,20 @@ import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
 import idealworld.dew.baas.common.util.AntPathMatcher;
 import idealworld.dew.baas.common.util.URIHelper;
-import idealworld.dew.baas.gateway.GatewayConfig;
-import idealworld.dew.baas.gateway.util.CachedRedisClient;
+import idealworld.dew.baas.gateway.util.RedisClient;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -29,7 +32,7 @@ import java.util.stream.Collectors;
  * <p>
  * Redis格式：
  * <p>
- * 资源类型:资源URI:资源操作类型:权限主体运算类型:权限主体类型:权限主体Id = 权限结果类型|是否排他|<INCLUDE时加上来源权限主体Id>
+ * 资源类型:资源URI:资源操作类型 = {权限主体运算类型:{权限主体类型:[权限主体Id]}}
  *
  * @author gudaoxuri
  */
@@ -39,14 +42,16 @@ public class ReadonlyAuthPolicy {
     // resourceKind -> actionKind -> uris
     private static final Map<String, Map<String, List<URI>>> LOCAL_RESOURCES = new ConcurrentHashMap<>();
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private final GatewayConfig.Security security;
+    private final Integer resourceCacheExpireSec;
+    private final Integer groupNodeLength;
 
-    public ReadonlyAuthPolicy(GatewayConfig.Security security) {
-        this.security = security;
-        CachedRedisClient.scan(Constant.CACHE_AUTH_POLICY, key -> {
+    public ReadonlyAuthPolicy(Integer resourceCacheExpireSec, Integer groupNodeLength) {
+        this.resourceCacheExpireSec = resourceCacheExpireSec;
+        this.groupNodeLength = groupNodeLength;
+        RedisClient.scan(Constant.CACHE_AUTH_POLICY, key -> {
             var keyItems = key.substring(Constant.CACHE_AUTH_POLICY.length()).split(":");
             var resourceKind = keyItems[0];
-            var resourceUri = keyItems[1];
+            var resourceUri = resourceKind + "://" + keyItems[1];
             var actionKind = keyItems[2];
             if (!LOCAL_RESOURCES.containsKey(resourceKind)) {
                 LOCAL_RESOURCES.put(resourceKind, new ConcurrentHashMap<>());
@@ -55,7 +60,9 @@ public class ReadonlyAuthPolicy {
                 LOCAL_RESOURCES.get(resourceKind).put(actionKind, new CopyOnWriteArrayList<>());
             }
             try {
-                LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(new URI(resourceUri));
+                if (!LOCAL_RESOURCES.get(resourceKind).get(actionKind).contains(new URI(resourceUri))) {
+                    LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(new URI(resourceUri));
+                }
             } catch (URISyntaxException e) {
                 log.error("Init Auth policy error:{}", e.getMessage(), e);
                 throw new RTException(e);
@@ -70,175 +77,181 @@ public class ReadonlyAuthPolicy {
             Map<AuthSubjectKind, List<String>> subjectInfo
     ) {
         var formattedResourceUri = new URI(URIHelper.formatUri(resourceUri));
-        return Future.future(promise -> {
-            var matchedResourceUris = matchResourceUris(formattedResourceUri, actionKind);
-            if (matchedResourceUris.isEmpty()) {
-                // 资源不需要鉴权
-                promise.complete(AuthResultKind.ACCEPT);
-                return;
-            }
-            if (subjectInfo.isEmpty()) {
-                // 资源需要鉴权但没有对应的权限主体
-                promise.complete(AuthResultKind.ACCEPT);
-                return;
-            }
-            doAuthentication(formattedResourceUri.getScheme().toUpperCase(), matchedResourceUris, actionKind, subjectInfo)
-                    .onSuccess(promise::complete);
-        });
+        var matchedResourceUris = matchResourceUris(formattedResourceUri, actionKind);
+        if (matchedResourceUris.isEmpty()) {
+            // 资源不需要鉴权
+            return Future.succeededFuture(AuthResultKind.ACCEPT);
+        }
+        if (subjectInfo.isEmpty()) {
+            // 资源需要鉴权但没有对应的权限主体
+            return Future.succeededFuture(AuthResultKind.REJECT);
+        }
+        Promise<AuthResultKind> promise = Promise.promise();
+        doAuthentication(matchedResourceUris, actionKind, subjectInfo, promise);
+        return promise.future();
     }
 
-    private Future<AuthResultKind> doAuthentication(
-            String resourceKind,
+    public void doAuthentication(
             List<String> matchedResourceUris,
             String actionKind,
-            Map<AuthSubjectKind, List<String>> subjectInfo
+            Map<AuthSubjectKind, List<String>> subjectInfo,
+            Promise<AuthResultKind> promise
     ) {
-        return Future.future(promise -> {
-            if (matchedResourceUris.isEmpty()) {
-                promise.complete(AuthResultKind.REJECT);
-            }
-            AtomicReference<AuthResultKind> authResultKind = new AtomicReference<>(AuthResultKind.REJECT);
-            var resourceUri = matchedResourceUris.remove(0);
-            doAuthentication(resourceKind, resourceUri, actionKind, subjectInfo)
-                    .onSuccess(authResultOpt -> {
-                        if (authResultOpt.isPresent()) {
-                            if (authResultOpt.get()._1) {
-                                promise.complete(authResultOpt.get()._0);
-                                return;
-                            }
-                            authResultKind.set(authResultOpt.get()._0);
-                            doAuthentication(resourceKind, matchedResourceUris, actionKind, subjectInfo)
-                                    .onSuccess(promise::complete);
-                        }
-                    });
-        });
+        if (matchedResourceUris.isEmpty()) {
+            promise.complete(AuthResultKind.REJECT);
+            return;
+        }
+        var currentProcessUri = matchedResourceUris.get(0);
+        RedisClient.get(Constant.CACHE_AUTH_POLICY
+                + currentProcessUri.replace("//", "") + ":"
+                + actionKind, resourceCacheExpireSec)
+                .onSuccess(value -> {
+                    var authInfo = $.json.toJson(value);
+                    var matchResult = matchBasic(AuthSubjectOperatorKind.EQ, authInfo, subjectInfo);
+                    if (matchResult) {
+                        promise.complete(AuthResultKind.ACCEPT);
+                        return;
+                    }
+                    matchResult = matchBasic(AuthSubjectOperatorKind.NEQ, authInfo, subjectInfo);
+                    if (matchResult) {
+                        promise.complete(AuthResultKind.REJECT);
+                        return;
+                    }
+                    matchResult = matchBasic(AuthSubjectOperatorKind.INCLUDE, authInfo, subjectInfo);
+                    if (matchResult) {
+                        promise.complete(AuthResultKind.ACCEPT);
+                        return;
+                    }
+                    matchResult = matchBasic(AuthSubjectOperatorKind.LIKE, authInfo, subjectInfo);
+                    if (matchResult) {
+                        promise.complete(AuthResultKind.ACCEPT);
+                        return;
+                    }
+                    matchedResourceUris.remove(0);
+                    doAuthentication(matchedResourceUris, actionKind, subjectInfo, promise);
+                });
     }
 
-    private Future<Optional<Tuple2<AuthResultKind, Boolean>>> doAuthentication(
-            String resourceKind,
-            String resourceUri,
-            String actionKind,
-            Map<AuthSubjectKind, List<String>> subjectInfo
-    ) {
-        return Future.future(promise -> {
-            AtomicReference<AuthResultKind> authResultKind = new AtomicReference<>(null);
-            for (var subject : subjectInfo.entrySet()) {
-                for (var subjectId : subject.getValue()) {
-                    var key = Constant.CACHE_AUTH_POLICY
-                            + resourceKind + ":"
-                            + resourceUri + ":"
-                            + actionKind;
-                    matchEQ(key, subject.getKey(), subjectId)
-                            .onSuccess(matchEQResultOpt -> {
-                                if (matchEQResultOpt.isPresent()) {
-                                    if (matchEQResultOpt.get()._1) {
-                                        promise.complete(matchEQResultOpt);
-                                        return;
-                                    }
-                                    authResultKind.set(matchEQResultOpt.get()._0);
-                                }
-                                matchInclude(key, subject.getKey(), subjectId)
-                                        .onSuccess(matchIncludeResultOpt -> {
-                                            if (matchIncludeResultOpt.isPresent()) {
-                                                if (matchIncludeResultOpt.get()._1) {
-                                                    promise.complete(matchIncludeResultOpt);
-                                                    return;
-                                                }
-                                                authResultKind.set(matchIncludeResultOpt.get()._0);
-                                            }
-                                            matchLike(key, subject.getKey(), subjectId)
-                                                    .onSuccess(matchLikeResultOpt -> {
-                                                        if (matchLikeResultOpt.isPresent()) {
-                                                            if (matchLikeResultOpt.get()._1) {
-                                                                promise.complete(matchLikeResultOpt);
-                                                                return;
-                                                            }
-                                                            authResultKind.set(matchLikeResultOpt.get()._0);
-                                                            promise.complete(
-                                                                    authResultKind.get() == null
-                                                                            ? Optional.empty()
-                                                                            : Optional.of(new Tuple2<>(authResultKind.get(), false)));
-                                                        }
-                                                    });
-                                        });
+    private Boolean matchBasic(AuthSubjectOperatorKind eqOrNeqKind, JsonNode authInfo, Map<AuthSubjectKind, List<String>> subjectInfo) {
+        if (!authInfo.has(eqOrNeqKind.toString().toLowerCase())) {
+            return false;
+        }
+        var json = authInfo.get(eqOrNeqKind.toString().toLowerCase());
+        if (subjectInfo.containsKey(AuthSubjectKind.ACCOUNT)
+                && json.has(AuthSubjectKind.ACCOUNT.toString().toLowerCase())) {
+            var subjectJson = json.get(AuthSubjectKind.ACCOUNT.toString().toLowerCase());
+            if (subjectInfo.get(AuthSubjectKind.ACCOUNT).stream()
+                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)))) {
+                return true;
+            }
+        }
+        if (subjectInfo.containsKey(AuthSubjectKind.GROUP_NODE)
+                && json.has(AuthSubjectKind.GROUP_NODE.toString().toLowerCase())) {
+            var subjectJson = json.get(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
+            if (subjectInfo.get(AuthSubjectKind.GROUP_NODE).stream()
+                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)))) {
+                return true;
+            }
+        }
+        if (subjectInfo.containsKey(AuthSubjectKind.ROLE)
+                && json.has(AuthSubjectKind.ROLE.toString().toLowerCase())) {
+            var subjectJson = json.get(AuthSubjectKind.ROLE.toString().toLowerCase());
+            if (subjectInfo.get(AuthSubjectKind.ROLE).stream()
+                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)))) {
+                return true;
+            }
+        }
+        if (subjectInfo.containsKey(AuthSubjectKind.APP)
+                && json.has(AuthSubjectKind.APP.toString().toLowerCase())) {
+            var subjectJson = json.get(AuthSubjectKind.APP.toString().toLowerCase());
+            if (subjectInfo.get(AuthSubjectKind.APP).stream()
+                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)))) {
+                return true;
+            }
+        }
+        if (subjectInfo.containsKey(AuthSubjectKind.TENANT)
+                && json.has(AuthSubjectKind.TENANT.toString().toLowerCase())) {
+            var subjectJson = json.get(AuthSubjectKind.TENANT.toString().toLowerCase());
+            return subjectInfo.get(AuthSubjectKind.TENANT).stream()
+                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)));
+        }
+        return false;
+    }
 
+    private Boolean matchInclude(JsonNode authInfo, Map<AuthSubjectKind, List<String>> subjectInfo) {
+        if (!authInfo.has(AuthSubjectOperatorKind.INCLUDE.toString().toLowerCase())) {
+            return false;
+        }
+        var json = authInfo.get(AuthSubjectOperatorKind.INCLUDE.toString().toLowerCase());
+        if (!subjectInfo.containsKey(AuthSubjectKind.GROUP_NODE)
+                || !json.has(AuthSubjectKind.GROUP_NODE.toString().toLowerCase())) {
+            return false;
+        }
+        var subjectJson = json.get(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
+        var subjectIds = subjectInfo.get(AuthSubjectKind.GROUP_NODE);
+        var jsonIterator = subjectJson.elements();
+        while (jsonIterator.hasNext()) {
+            var currentNodeCode = jsonIterator.next().asText();
+            while (currentNodeCode.length() > 0) {
+                if (subjectIds.contains(currentNodeCode)) {
+                    return true;
+                }
+                currentNodeCode = currentNodeCode.substring(0, currentNodeCode.length() - groupNodeLength);
+            }
+        }
+        return false;
+    }
 
-                            });
+    private Boolean matchLike(JsonNode authInfo, Map<AuthSubjectKind, List<String>> subjectInfo) {
+        if (!authInfo.has(AuthSubjectOperatorKind.LIKE.toString().toLowerCase())) {
+            return false;
+        }
+        var json = authInfo.get(AuthSubjectOperatorKind.LIKE.toString().toLowerCase());
+        if (!subjectInfo.containsKey(AuthSubjectKind.GROUP_NODE)
+                || !json.has(AuthSubjectKind.GROUP_NODE.toString().toLowerCase())) {
+            return false;
+        }
+        var subjectIds = subjectInfo.get(AuthSubjectKind.GROUP_NODE);
+        var subjectJson = json.get(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
+        var jsonIterator = subjectJson.elements();
+        while (jsonIterator.hasNext()) {
+            var nodeCode = jsonIterator.next().asText();
+            for (var subjectId : subjectIds) {
+                if (subjectId.startsWith(nodeCode)) {
+                    return true;
                 }
             }
-        });
-    }
-
-    private Future<Optional<Tuple2<AuthResultKind, Boolean>>> matchEQ(String keyPrefix, AuthSubjectKind subjectKind, String subjectId) {
-        return parseAuth(keyPrefix + AuthSubjectOperatorKind.EQ.toString() + ":" + subjectKind.toString() + ":" + subjectId);
-    }
-
-    private Future<Optional<Tuple2<AuthResultKind, Boolean>>> matchInclude(String keyPrefix, AuthSubjectKind subjectKind, String subjectId) {
-        // 在添加时已经为上级节点添加了key，所以这里只要发起一次查询即可
-        return parseAuth(keyPrefix + AuthSubjectOperatorKind.INCLUDE.toString() + ":" + subjectKind.toString() + ":" + subjectId);
-    }
-
-
-    private Future<Optional<Tuple2<AuthResultKind, Boolean>>> matchLike(String keyPrefix, AuthSubjectKind subjectKind, String subjectId) {
-        return doMatchLike(keyPrefix, subjectKind, subjectId, null);
-    }
-
-    private Future<Optional<Tuple2<AuthResultKind, Boolean>>> doMatchLike(String keyPrefix, AuthSubjectKind subjectKind,
-                                                                          String groupNodeId, AuthResultKind authResultKind) {
-        return Future.future(promise -> {
-            if (groupNodeId.length() <= 0) {
-                promise.complete(authResultKind == null ? Optional.empty() : Optional.of(new Tuple2<>(authResultKind, false)));
-                return;
-            }
-            parseAuth(keyPrefix + AuthSubjectOperatorKind.LIKE.toString() + ":" + subjectKind.toString() + ":" + groupNodeId)
-                    .onSuccess(authResultOpt -> {
-                        if (authResultOpt.isPresent()) {
-                            if (authResultOpt.get()._1) {
-                                promise.complete(authResultOpt);
-                                return;
-                            }
-                            var newGroupNodeId = groupNodeId.substring(0, groupNodeId.length() - security.getGroupNodeLength());
-                            doMatchLike(keyPrefix, subjectKind, newGroupNodeId, authResultOpt.get()._0);
-                        }
-                    });
-        });
-    }
-
-    private Future<Optional<Tuple2<AuthResultKind, Boolean>>> parseAuth(String key) {
-        return Future.future(promise ->
-                CachedRedisClient.get(key, security.getResourceCacheExpireSec())
-                        .onSuccess(cache -> {
-                            if (cache == null) {
-                                promise.complete(Optional.empty());
-                                return;
-                            }
-                            var cacheValue = cache.split("\\|");
-                            var authResultKind = AuthResultKind.parse(cacheValue[0]);
-                            var exclusive = Boolean.parseBoolean(cacheValue[1]);
-                            promise.complete(Optional.of(new Tuple2<>(authResultKind, exclusive)));
-                        }));
+        }
+        return false;
     }
 
     private List<String> matchResourceUris(URI resourceUri, String actionKind) {
         var resourceKind = resourceUri.getScheme();
-        var matchResourceUris = LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>())
+        if (LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>())
+                .getOrDefault(actionKind, new ArrayList<>())
+                .contains(resourceUri)) {
+            // 添加精确匹配
+            return new ArrayList<>() {
+                {
+                    add(resourceUri.toString());
+                }
+            };
+        }
+        var comparator = pathMatcher.getPatternComparator(resourceUri.getPath());
+        return LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>())
                 .getOrDefault(actionKind, new ArrayList<>())
                 .stream()
                 .filter(uri ->
                         uri.getHost().equalsIgnoreCase(resourceUri.getHost())
                                 && uri.getPort() == resourceUri.getPort()
-                                && uri.getQuery().equalsIgnoreCase(resourceUri.getQuery())
                                 && !uri.getPath().equalsIgnoreCase(resourceUri.getPath())
+                                && (uri.getQuery() == null && resourceUri.getQuery() == null
+                                || uri.getQuery().equalsIgnoreCase(resourceUri.getQuery()))
                                 && pathMatcher.matchStart(uri.getPath(), resourceUri.getPath())
                 )
+                .sorted((uri1, uri2) -> comparator.compare(uri1.getPath(), uri2.getPath()))
                 .map(URI::toString)
                 .collect(Collectors.toList());
-        if (LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>())
-                .getOrDefault(actionKind, new ArrayList<>())
-                .contains(resourceUri)) {
-            matchResourceUris.add(0, resourceUri.toString());
-        }
-        return matchResourceUris;
     }
 
     public Resp<Void> addLocalResource(URI resourceUri, String actionKind) {

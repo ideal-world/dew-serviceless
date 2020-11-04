@@ -39,18 +39,9 @@ public class AuthHandler extends GatewayHandler {
         var resourceUri = (URI) ctx.get(request.getResourceUriKey());
         var action = (AuthActionKind) ctx.get(request.getActionKey());
 
+        // 带优先级
         var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
         if (identOptInfo != null) {
-            if (identOptInfo.getRoleInfo() != null && !identOptInfo.getRoleInfo().isEmpty()) {
-                subjectInfo.put(AuthSubjectKind.ROLE, identOptInfo.getRoleInfo().stream()
-                        .map(IdentOptCacheInfo.RoleInfo::getCode)
-                        .collect(Collectors.toList()));
-            }
-            if (identOptInfo.getGroupInfo() != null && !identOptInfo.getGroupInfo().isEmpty()) {
-                subjectInfo.put(AuthSubjectKind.GROUP_NODE, identOptInfo.getGroupInfo().stream()
-                        .map(group -> group.getGroupCode() + Constant.GROUP_CODE_NODE_CODE_SPLIT + group.getGroupNodeCode())
-                        .collect(Collectors.toList()));
-            }
             if (identOptInfo.getAccountCode() != null) {
                 subjectInfo.put(AuthSubjectKind.ACCOUNT, new ArrayList<>() {
                     {
@@ -58,17 +49,27 @@ public class AuthHandler extends GatewayHandler {
                     }
                 });
             }
-            if (identOptInfo.getTenantId() != null) {
-                subjectInfo.put(AuthSubjectKind.TENANT, new ArrayList<>() {
-                    {
-                        add(identOptInfo.getTenantId().toString());
-                    }
-                });
+            if (identOptInfo.getGroupInfo() != null && !identOptInfo.getGroupInfo().isEmpty()) {
+                subjectInfo.put(AuthSubjectKind.GROUP_NODE, identOptInfo.getGroupInfo().stream()
+                        .map(group -> group.getGroupCode() + Constant.GROUP_CODE_NODE_CODE_SPLIT + group.getGroupNodeCode())
+                        .collect(Collectors.toList()));
+            }
+            if (identOptInfo.getRoleInfo() != null && !identOptInfo.getRoleInfo().isEmpty()) {
+                subjectInfo.put(AuthSubjectKind.ROLE, identOptInfo.getRoleInfo().stream()
+                        .map(IdentOptCacheInfo.RoleInfo::getCode)
+                        .collect(Collectors.toList()));
             }
             if (identOptInfo.getAppId() != null) {
                 subjectInfo.put(AuthSubjectKind.APP, new ArrayList<>() {
                     {
                         add(identOptInfo.getAppId().toString());
+                    }
+                });
+            }
+            if (identOptInfo.getTenantId() != null) {
+                subjectInfo.put(AuthSubjectKind.TENANT, new ArrayList<>() {
+                    {
+                        add(identOptInfo.getTenantId().toString());
                     }
                 });
             }

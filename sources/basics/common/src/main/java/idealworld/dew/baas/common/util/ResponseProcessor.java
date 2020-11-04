@@ -162,7 +162,7 @@ public abstract class ResponseProcessor {
      * @return the to entity
      */
     public <E> Resp<E> getToEntity(String url, Class<E> responseClazz, int cacheSec) {
-        var response = CacheHelper.getOrElse(url, cacheSec, () -> exchange("GET", url, null, new HashMap<>()));
+        var response = CacheHelper.getSet(url, cacheSec, () -> exchange("GET", url, null, new HashMap<>()));
         return Resp.generic(response, responseClazz);
     }
 
@@ -191,7 +191,7 @@ public abstract class ResponseProcessor {
      * @return the to entity
      */
     public <E> Resp<E> getToEntity(String url, Map<String, String> header, Class<E> responseClazz, int cacheSec) {
-        var response = CacheHelper.getOrElse(url + "|" + $.json.toJsonString(header),
+        var response = CacheHelper.getSet(url + "|" + $.json.toJsonString(header),
                 cacheSec, () -> exchange("GET", url, null, header));
         return Resp.generic(response, responseClazz);
     }
@@ -219,7 +219,7 @@ public abstract class ResponseProcessor {
      * @return the to list
      */
     public <E> Resp<List<E>> getToList(String url, Class<E> responseClazz, int cacheSec) {
-        var response = CacheHelper.getOrElse(url,
+        var response = CacheHelper.getSet(url,
                 cacheSec, () -> exchange("GET", url, null, new HashMap<>()));
         return Resp.genericList(response, responseClazz);
     }
@@ -262,7 +262,7 @@ public abstract class ResponseProcessor {
             url += "?pageNumber=" + pageNumber + "&pageSize=" + pageSize;
         }
         String finalUrl = url;
-        var response = CacheHelper.getOrElse(finalUrl,
+        var response = CacheHelper.getSet(finalUrl,
                 cacheSec, () -> exchange("GET", finalUrl, null, new HashMap<>()));
         return Resp.genericPage(response, responseClazz);
     }

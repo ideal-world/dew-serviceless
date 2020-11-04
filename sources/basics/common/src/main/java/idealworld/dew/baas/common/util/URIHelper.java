@@ -20,7 +20,7 @@ public class URIHelper {
                     .collect(Collectors.joining("&"));
         }
         return uri.getScheme()
-                + "//"
+                + "://"
                 + uri.getHost()
                 + (uri.getPort() != -1 ? ":" + uri.getPort() : "")
                 + uri.getPath()

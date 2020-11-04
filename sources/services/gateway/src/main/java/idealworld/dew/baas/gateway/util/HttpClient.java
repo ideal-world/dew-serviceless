@@ -25,8 +25,10 @@ public class HttpClient {
     }
 
     public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header, Integer timeout) {
-        var request = webClient.requestAbs(httpMethod, url)
-                .timeout(timeout);
+        var request = webClient.requestAbs(httpMethod, url);
+        if (timeout != null) {
+            request.timeout(timeout);
+        }
         if (header != null) {
             MultiMap headerMap = MultiMap.caseInsensitiveMultiMap();
             headerMap.addAll(header);
@@ -40,8 +42,10 @@ public class HttpClient {
 
     public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String host, Integer port, String path, String query,
                                                        Buffer body, Map<String, String> header, Integer timeout) {
-        var request = webClient.request(httpMethod, port, host, path)
-                .timeout(timeout);
+        var request = webClient.request(httpMethod, port, host, path);
+        if (timeout != null) {
+            request.timeout(timeout);
+        }
         if (query != null) {
             URIHelper.getSingleValueQuery(query)
                     .forEach(request::addQueryParam);
