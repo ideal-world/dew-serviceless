@@ -24,10 +24,10 @@ public class FutureCacheHelper extends CacheHelper {
                             promise.complete(value);
                         })
                         .onFailure(e -> {
-                            log.error("Cache getSet error {}", e.getMessage(), e.getCause());
+                            log.error("[Cache]GetSet error {}", e.getMessage(), e.getCause());
                         });
             } else {
-                log.trace("Cache hit : {}", key);
+                log.trace("[Cache]Hit [{}]", key);
                 promise.complete((E)valueInfo.get()[1]);
             }
         });

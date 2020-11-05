@@ -24,7 +24,7 @@
         <groupId>group.idealworld.dew</groupId>
         <artifactId>baas-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../parents/basic/pom.xml</relativePath>
     </parent>
 
     <artifactId>baas-docs</artifactId>
@@ -36,6 +36,11 @@
         <maven.install.skip>true</maven.install.skip>
         <maven.deploy.skip>true</maven.deploy.skip>
 
+        <asciidoctor.maven.plugin.version>2.0.0</asciidoctor.maven.plugin.version>
+        <jruby.version>9.2.13.0</jruby.version>
+        <asciidoctorj.version>2.4.0</asciidoctorj.version>
+        <asciidoctorj.diagram.version>2.0.2</asciidoctorj.diagram.version>
+        <asciidoctorj.pdf.version>1.5.3</asciidoctorj.pdf.version>
         <file.output.path>${project.basedir}/</file.output.path>
     </properties>
 

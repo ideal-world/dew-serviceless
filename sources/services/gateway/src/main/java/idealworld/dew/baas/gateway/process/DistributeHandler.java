@@ -1,5 +1,6 @@
 package idealworld.dew.baas.gateway.process;
 
+import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
@@ -14,6 +15,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 鉴权处理器
@@ -40,9 +43,6 @@ public class DistributeHandler extends GatewayHandler {
 
         HttpMethod httpMethod = HttpMethod.GET;
         Buffer body = null;
-        String host;
-        Integer port;
-        String path;
         switch (action) {
             case FETCH:
                 httpMethod = HttpMethod.GET;
@@ -64,9 +64,14 @@ public class DistributeHandler extends GatewayHandler {
                 break;
         }
         Future<HttpResponse<Buffer>> request;
+        Map<String, String> header = new HashMap<>() {
+            {
+                put(distribute.getIdentOptHeaderName(), $.json.toJsonString(identOptInfo));
+            }
+        };
         switch (ResourceKind.parse(resourceUri.getScheme().toLowerCase())) {
             case HTTP:
-                request = HttpClient.request(httpMethod, resourceUri.toString(), body, null, distribute.getTimeoutMs());
+                request = HttpClient.request(httpMethod, resourceUri.toString(), body, header, distribute.getTimeoutMs());
                 break;
             case MENU:
             case ELEMENT:
@@ -75,7 +80,7 @@ public class DistributeHandler extends GatewayHandler {
                         distribute.getIamServicePort(),
                         distribute.getIamServicePath(),
                         null,
-                        body, null, distribute.getTimeoutMs());
+                        body, header, distribute.getTimeoutMs());
                 break;
             case RELDB:
                 request = HttpClient.request(httpMethod,
@@ -83,7 +88,7 @@ public class DistributeHandler extends GatewayHandler {
                         distribute.getReldbServicePort(),
                         distribute.getReldbServicePath(),
                         null,
-                        body, null, distribute.getTimeoutMs());
+                        body, header, distribute.getTimeoutMs());
                 break;
             case CACHE:
                 request = HttpClient.request(httpMethod,
@@ -91,7 +96,7 @@ public class DistributeHandler extends GatewayHandler {
                         distribute.getCacheServicePort(),
                         distribute.getCacheServicePath(),
                         null,
-                        body, null, distribute.getTimeoutMs());
+                        body, header, distribute.getTimeoutMs());
                 break;
             case MQ:
                 request = HttpClient.request(httpMethod,
@@ -99,7 +104,7 @@ public class DistributeHandler extends GatewayHandler {
                         distribute.getMqServicePort(),
                         distribute.getMqServicePath(),
                         null,
-                        body, null, distribute.getTimeoutMs());
+                        body, header, distribute.getTimeoutMs());
                 break;
             case OBJECT:
                 request = HttpClient.request(httpMethod,
@@ -107,14 +112,14 @@ public class DistributeHandler extends GatewayHandler {
                         distribute.getObjServicePort(),
                         distribute.getObjServicePath(),
                         null,
-                        body, null, distribute.getTimeoutMs());
+                        body, header, distribute.getTimeoutMs());
                 break;
             default:
-                error(Integer.parseInt(StandardCode.NOT_FOUND.toString()), "资源类型不存在", ctx);
+                error(StandardCode.NOT_FOUND, "资源类型不存在", ctx);
                 return;
         }
         request.onSuccess(resp -> ctx.end(resp.body()))
-                .onFailure(e -> error(Integer.parseInt(StandardCode.INTERNAL_SERVER_ERROR.toString()), e.getMessage(), ctx));
+                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx));
     }
 
 }

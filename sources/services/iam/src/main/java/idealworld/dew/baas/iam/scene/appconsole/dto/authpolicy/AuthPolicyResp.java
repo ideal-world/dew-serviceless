@@ -16,7 +16,7 @@
 
 package idealworld.dew.baas.iam.scene.appconsole.dto.authpolicy;
 
-import idealworld.dew.baas.iam.scene.common.dto.AppBasedResp;
+import idealworld.dew.baas.common.dto.IdResp;
 import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
@@ -44,7 +44,7 @@ import java.util.Date;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Schema(title = "权限策略响应")
-public class AuthPolicyResp extends AppBasedResp {
+public class AuthPolicyResp extends IdResp {
 
     @NotNull
     @Schema(title = "关联权限主体类型名称", required = true)
@@ -91,5 +91,13 @@ public class AuthPolicyResp extends AppBasedResp {
     @NotNull
     @Schema(title = "关联权限主体的租户Id", required = true)
     private Long relSubjectTenantId;
+
+    @NotNull
+    @Schema(title = "所属应用Id", required = true)
+    private Long relAppId;
+
+    @NotNull
+    @Schema(title = "所属租户Id", required = true)
+    private Long relTenantId;
 
 }

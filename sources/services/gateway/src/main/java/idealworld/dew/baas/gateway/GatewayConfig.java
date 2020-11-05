@@ -82,7 +82,9 @@ public class GatewayConfig {
     public static class Distribute {
 
         @Builder.Default
-        private Integer timeoutMs = 5000;
+        private Integer timeoutMs = 10000;
+        @Builder.Default
+        private String identOptHeaderName = "Dew-Ident-Opt";
         @Builder.Default
         private String iamServiceName = "iam.service";
         @Builder.Default
@@ -123,8 +125,7 @@ public class GatewayConfig {
     public static class RedisConfig {
 
         private String uri;
-        @Builder.Default
-        private String password = "123456";
+        private String password;
         @Builder.Default
         private Integer maxPoolSize = 100;
         @Builder.Default
@@ -142,6 +143,8 @@ public class GatewayConfig {
         private String tokenFieldName = "Dew-Token";
         @Builder.Default
         private String akSkFieldName = "Authorization";
+        @Builder.Default
+        private String akSkDateFieldName = "Dew-Date";
         @Builder.Default
         private Integer tokenCacheExpireSec = 60;
         @Builder.Default

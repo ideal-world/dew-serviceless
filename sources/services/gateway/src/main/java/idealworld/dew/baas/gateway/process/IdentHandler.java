@@ -41,31 +41,38 @@ public class IdentHandler extends GatewayHandler {
     @SneakyThrows
     @Override
     public void handle(RoutingContext ctx) {
-        log.trace("[{}] {}{} from {}",
+        log.trace("[Process]Received {}:{}{} from {}",
                 ctx.request().method(),
                 ctx.request().path(),
                 ctx.request().query() == null ? "" : "?" + ctx.request().query(), getIP(ctx.request()));
         // checker
         if (ctx.request().query() == null || ctx.request().query().trim().isBlank()) {
-            error(Integer.parseInt(StandardCode.BAD_REQUEST.toString()), "请求格式不合法，缺少query", ctx);
+            error(StandardCode.BAD_REQUEST, "请求格式不合法，缺少query", ctx);
             return;
         }
         var queryMap = Arrays.stream(URLDecoder.decode(ctx.request().query().trim(), StandardCharsets.UTF_8).split("&"))
                 .map(item -> item.split("="))
                 .collect(Collectors.toMap(item -> item[0], item -> item.length > 1 ? item[1] : ""));
         if (!queryMap.containsKey(request.getResourceUriKey())
-                || !queryMap.containsKey(request.getActionKey())) {
-            error(Integer.parseInt(StandardCode.BAD_REQUEST.toString()), "请求格式不合法，缺少[" + request.getResourceUriKey() + "]或[" + request.getActionKey() + "]", ctx);
+                || queryMap.get(request.getResourceUriKey()).isBlank()
+                || !queryMap.containsKey(request.getActionKey())
+                || queryMap.get(request.getActionKey()).isBlank()
+        ) {
+            error(StandardCode.BAD_REQUEST, "请求格式不合法，缺少[" + request.getResourceUriKey() + "]或[" + request.getActionKey() + "]", ctx);
             return;
         }
         URI resourceUri;
         AuthActionKind actionKind;
         try {
             resourceUri = new URI(queryMap.get(request.getResourceUriKey()));
+            if (resourceUri.getScheme() == null || resourceUri.getHost() == null) {
+                error(StandardCode.BAD_REQUEST, "请求格式不合法，资源URI错误", ctx);
+                return;
+            }
             ResourceKind.parse(resourceUri.getScheme().toLowerCase());
             actionKind = AuthActionKind.parse(queryMap.get(request.getActionKey()).toLowerCase());
         } catch (RTException e) {
-            error(Integer.parseInt(StandardCode.BAD_REQUEST.toString()), "请求格式不合法，资源类型或操作类型不存在", ctx);
+            error(StandardCode.BAD_REQUEST, "请求格式不合法，资源类型或操作类型不存在", ctx);
             return;
         }
         ctx.put(request.getResourceUriKey(), resourceUri);
@@ -75,9 +82,10 @@ public class IdentHandler extends GatewayHandler {
                 ? ctx.request().getHeader(security.getTokenFieldName()) : null;
         var authorization = ctx.request().headers().contains(security.getAkSkFieldName())
                 ? ctx.request().getHeader(security.getAkSkFieldName()) : null;
-        if (token == null || authorization == null) {
+        if (token == null && authorization == null) {
             ctx.put(CONTEXT_INFO, null);
             ctx.next();
+            return;
         }
 
         // fetch token
@@ -88,28 +96,40 @@ public class IdentHandler extends GatewayHandler {
                                 ? $.json.toObject(optInfo, IdentOptCacheInfo.class)
                                 : null;
                         if (optInfo == null) {
-                            error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "Token不合法", ctx);
+                            error(StandardCode.UNAUTHORIZED, "认证错误，Token不合法", ctx);
                             return;
                         }
+                        identOptInfo.setToken(token);
                         ctx.put(CONTEXT_INFO, identOptInfo);
                         ctx.next();
+                    })
+                    .onFailure(e -> {
+                        log.error("[Process]Internal error: {}", e.getMessage(), e);
+                        error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e);
                     });
+            return;
         }
         // fetch ak/sk
+        if (!ctx.request().headers().contains(security.getAkSkDateFieldName())
+                || ctx.request().getHeader(security.getAkSkDateFieldName()).isBlank()) {
+            error(StandardCode.BAD_REQUEST,
+                    "请求格式不合法，HTTP Header[" + security.getAkSkDateFieldName() + "]不存在", ctx);
+            return;
+        }
         if (!authorization.contains(":")
                 || authorization.split(":").length != 2) {
-            error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()),
-                    "认证错误，请检查 HTTP Header [" + security.getTokenFieldName() + "] 格式是否正确", ctx);
+            error(StandardCode.BAD_REQUEST,
+                    "请求格式不合法，HTTP Header[" + security.getAkSkFieldName() + "]格式错误", ctx);
             return;
         }
         var ak = authorization.split(":")[0];
         var reqSignature = authorization.split(":")[1];
         var reqMethod = ctx.request().method();
-        var reqDate = ctx.request().getHeader("Dew-Date");
+        var reqDate = ctx.request().getHeader(security.getAkSkDateFieldName());
         var sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         if (sdf.parse(reqDate).getTime() + security.getAppRequestDateOffsetMs() < System.currentTimeMillis()) {
-            error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "请求时间已过期", ctx);
+            error(StandardCode.UNAUTHORIZED, "认证错误，请求时间已过期", ctx);
             return;
         }
         var reqPath = ctx.request().path();
@@ -117,7 +137,7 @@ public class IdentHandler extends GatewayHandler {
         RedisClient.get(security.getCacheAkSkInfoKey() + ak, security.getTokenCacheExpireSec())
                 .onSuccess(legalSkAndAppId -> {
                     if (legalSkAndAppId == null) {
-                        error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "认证错误，请检查 HTTP Header [" + security.getAkSkFieldName() + "] 格式是否正确", ctx);
+                        error(StandardCode.UNAUTHORIZED, "认证错误，AK不存在", ctx);
                         return;
                     }
                     var skAndAppIdSplit = legalSkAndAppId.split(":");
@@ -129,7 +149,7 @@ public class IdentHandler extends GatewayHandler {
                                     sk, "HmacSHA1"),
                             StandardCharsets.UTF_8);
                     if (!reqSignature.equalsIgnoreCase(calcSignature)) {
-                        error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "认证错误，请检查签名是否合法", ctx);
+                        error(StandardCode.UNAUTHORIZED, "认证错误，签名不合法", ctx);
                         return;
                     }
                     var identOptInfo = new IdentOptCacheInfo();
@@ -137,6 +157,10 @@ public class IdentHandler extends GatewayHandler {
                     identOptInfo.setTenantId(tenantId);
                     ctx.put(CONTEXT_INFO, identOptInfo);
                     ctx.next();
+                })
+                .onFailure(e -> {
+                    log.error("[Process]Internal error: {}", e.getMessage(), e);
+                    error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e);
                 });
     }
 

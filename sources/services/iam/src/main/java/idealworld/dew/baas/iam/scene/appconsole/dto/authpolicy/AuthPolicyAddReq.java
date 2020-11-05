@@ -89,8 +89,4 @@ public class AuthPolicyAddReq implements Serializable {
     @Schema(title = "关联权限主体的租户Id", required = true)
     private Long relSubjectTenantId;
 
-    @Schema(title = "开放等级类型")
-    @Builder.Default
-    private ExposeKind exposeKind = ExposeKind.APP;
-
 }

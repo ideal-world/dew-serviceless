@@ -16,7 +16,10 @@
 
 package idealworld.dew.baas.gateway.exchange;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * token opt info.
@@ -24,6 +27,9 @@ import lombok.Data;
  * @author gudaoxuri
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ExchangeData {
 
     private Boolean addOpt;

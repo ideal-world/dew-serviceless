@@ -22,13 +22,13 @@
 
     <parent>
         <groupId>group.idealworld.dew</groupId>
-        <artifactId>baas-sources-parent</artifactId>
+        <artifactId>baas-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../../../parents/basic/pom.xml</relativePath>
     </parent>
 
     <artifactId>baas-basics-common</artifactId>
-    <name>3.2.1 Dew BAAS Basics Common</name>
+    <name>3.0 Dew BAAS Basics Common</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
@@ -36,17 +36,13 @@
         <dependency>
             <groupId>com.ecfront.dew</groupId>
             <artifactId>common</artifactId>
+            <version>${dew-common.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.mindrot</groupId>
                     <artifactId>jbcrypt</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-integration</artifactId>
-            <version>${swagger.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

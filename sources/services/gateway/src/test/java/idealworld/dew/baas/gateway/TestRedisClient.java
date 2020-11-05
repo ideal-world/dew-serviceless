@@ -88,18 +88,19 @@ public class TestRedisClient extends BasicTest {
     @Test
     public void testPubSub(TestContext testContext) {
         Async async = testContext.async(3);
-        RedisClient.subscribe("topic:1", value -> {
-            async.countDown();
-        }).onSuccess(resp -> {
-            RedisClient.publish("topic:1", "a1");
-            RedisClient.publish("topic:1", "a2");
+        rule.vertx().setTimer(1000, h -> {
+            RedisClient.subscribe("topic:1", value -> async.countDown())
+                    .onSuccess(resp ->
+                            rule.vertx().setTimer(1000, h2 -> {
+                                RedisClient.publish("topic:1", "a1");
+                                RedisClient.publish("topic:1", "a2");
+                            }));
+            RedisClient.subscribe("topic:2", value -> {
+                async.countDown();
+            }).onSuccess(resp ->
+                    RedisClient.publish("topic:2", "b1")
+            );
         });
-        RedisClient.subscribe("topic:2", value -> {
-            async.countDown();
-        }).onSuccess(resp -> {
-            RedisClient.publish("topic:2", "b1");
-        });
-
     }
 
 }

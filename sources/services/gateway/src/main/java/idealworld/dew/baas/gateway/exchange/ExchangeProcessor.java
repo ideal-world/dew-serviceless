@@ -21,18 +21,17 @@ public class ExchangeProcessor {
     public static Future<Void> register(GatewayConfig.Exchange exchange, ReadonlyAuthPolicy policy) {
         Promise<Void> promise = Promise.promise();
         RedisClient.subscribe(exchange.getTopic(), message -> {
+            log.trace("[Exchange]Received {}", message);
             var exchangeData = $.json.toObject(message, ExchangeData.class);
             URI resourceUri;
             try {
                 resourceUri = new URI(exchangeData.getResourceUri());
             } catch (URISyntaxException e) {
-                log.error("[Exchange] URI [{}] parse error", exchangeData.getResourceUri(), e);
+                log.error("[Exchange]URI [{}] parse error", exchangeData.getResourceUri(), e);
                 throw new RTException(e);
             }
             if (exchangeData.getAddOpt()) {
                 policy.addLocalResource(resourceUri, exchangeData.getActionKind());
-            } else if (exchangeData.getActionKind() == null) {
-                policy.removeLocalResource(resourceUri);
             } else {
                 policy.removeLocalResource(resourceUri, exchangeData.getActionKind());
             }

@@ -5,7 +5,6 @@ import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.exception.RTException;
 import com.fasterxml.jackson.databind.JsonNode;
 import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
@@ -64,7 +63,7 @@ public class ReadonlyAuthPolicy {
                     LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(new URI(resourceUri));
                 }
             } catch (URISyntaxException e) {
-                log.error("Init Auth policy error:{}", e.getMessage(), e);
+                log.error("[Policy]Init Auth policy error: {}", e.getMessage(), e);
                 throw new RTException(e);
             }
         });
@@ -117,12 +116,12 @@ public class ReadonlyAuthPolicy {
                         promise.complete(AuthResultKind.REJECT);
                         return;
                     }
-                    matchResult = matchBasic(AuthSubjectOperatorKind.INCLUDE, authInfo, subjectInfo);
+                    matchResult = matchInclude(authInfo, subjectInfo);
                     if (matchResult) {
                         promise.complete(AuthResultKind.ACCEPT);
                         return;
                     }
-                    matchResult = matchBasic(AuthSubjectOperatorKind.LIKE, authInfo, subjectInfo);
+                    matchResult = matchLike(authInfo, subjectInfo);
                     if (matchResult) {
                         promise.complete(AuthResultKind.ACCEPT);
                         return;
@@ -268,16 +267,6 @@ public class ReadonlyAuthPolicy {
 
     public Resp<Void> removeLocalResource(URI resourceUri, String actionKind) {
         LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(actionKind, new ArrayList<>()).remove(resourceUri);
-        return Resp.success(null);
-    }
-
-    public Resp<Void> removeLocalResource(URI resourceUri) {
-        var resourceKind = resourceUri.getScheme();
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.CREATE.toString(), new ArrayList<>()).remove(resourceUri);
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.DELETE.toString(), new ArrayList<>()).remove(resourceUri);
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.FETCH.toString(), new ArrayList<>()).remove(resourceUri);
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.MODIFY.toString(), new ArrayList<>()).remove(resourceUri);
-        LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>()).getOrDefault(AuthActionKind.PATCH.toString(), new ArrayList<>()).remove(resourceUri);
         return Resp.success(null);
     }
 

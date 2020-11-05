@@ -20,11 +20,21 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>group.idealworld.dew</groupId>
-    <artifactId>baas-build</artifactId>
-    <name>0 Dew BAAS Build</name>
+    <parent>
+        <groupId>group.idealworld.dew</groupId>
+        <artifactId>parent-starter</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>baas-parent-spring</artifactId>
+    <name>1.1 Dew BAAS Parent Spring</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
+
+    <properties>
+        <dew-baas.version>1.0.0-SNAPSHOT</dew-baas.version>
+        <checkstyle.config.path>./checkstyle.xml</checkstyle.config.path>
+    </properties>
 
     <developers>
         <developer>
@@ -48,16 +58,15 @@
         <url>https://github.com/ideal-world/dew-baas</url>
     </scm>
 
-    <modules>
-        <module>parents/basic</module>
-        <module>parents/vertx</module>
-        <module>parents/spring</module>
-        <module>docs</module>
-        <module>sources/basics/common</module>
-        <module>sources/basics/common-services</module>
-        <module>sources/services/gateway</module>
-        <module>sources/services/iam</module>
-    </modules>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>group.idealworld.dew</groupId>
+                <artifactId>baas-basics-common-services</artifactId>
+                <version>${dew-baas.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <repositories>
         <repository>
@@ -81,5 +90,39 @@
             </snapshots>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+            <id>oss-public</id>
+            <url>https://oss.sonatype.org/content/groups/public</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>oss-snapshot</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--add-opens java.net.http/jdk.internal.net.http.common=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

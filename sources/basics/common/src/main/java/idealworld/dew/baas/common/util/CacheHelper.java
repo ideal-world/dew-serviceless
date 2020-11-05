@@ -48,7 +48,7 @@ public class CacheHelper {
             set(key, value, cacheSec);
             return value;
         }
-        log.trace("Cache hit : {}", key);
+        log.trace("[Cache]Hit [{}]", key);
         return (E) valueInfo.get()[1];
     }
 

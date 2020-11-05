@@ -39,7 +39,6 @@ public class AuthHandler extends GatewayHandler {
         var resourceUri = (URI) ctx.get(request.getResourceUriKey());
         var action = (AuthActionKind) ctx.get(request.getActionKey());
 
-        // 带优先级
         var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
         if (identOptInfo != null) {
             if (identOptInfo.getAccountCode() != null) {
@@ -77,12 +76,12 @@ public class AuthHandler extends GatewayHandler {
         authPolicy.authentication(resourceUri, action.toString(), subjectInfo)
                 .onSuccess(authResultKind -> {
                     if (authResultKind == AuthResultKind.REJECT) {
-                        error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "鉴权错误，没有权限访问对应的资源[" + action + "|" + resourceUri.toString() + "]", ctx);
+                        error(StandardCode.UNAUTHORIZED, "鉴权错误，没有权限访问对应的资源[" + action + "|" + resourceUri.toString() + "]", ctx);
                         return;
                     }
                     ctx.next();
                 })
-                .onFailure(e -> error(Integer.parseInt(StandardCode.UNAUTHORIZED.toString()), "鉴权错误:" + e.getMessage(), ctx, e));
+                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
     }
 
 

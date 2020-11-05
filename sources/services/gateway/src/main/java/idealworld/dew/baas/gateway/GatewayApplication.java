@@ -12,6 +12,7 @@ import idealworld.dew.baas.gateway.util.RedisClient;
 import idealworld.dew.baas.gateway.util.YamlHelper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -24,6 +25,10 @@ import java.nio.charset.StandardCharsets;
 public class GatewayApplication extends AbstractVerticle {
 
     private static final String PROFILE_KEY = "dew.profile";
+
+    public static void main(String[] args) {
+        Vertx.vertx().deployVerticle(new GatewayApplication());
+    }
 
     @Override
     public void start(Promise<Void> startPromise) {
@@ -46,7 +51,7 @@ public class GatewayApplication extends AbstractVerticle {
             try {
                 config = $.file.readAllByClassPath("application-" + System.getProperty(PROFILE_KEY) + ".yaml", StandardCharsets.UTF_8);
             } catch (RTIOException e) {
-                log.error("Configuration file [{}] not found in classpath", "application-" + System.getProperty(PROFILE_KEY) + ".yml/yaml");
+                log.error("[Startup]Configuration file [{}] not found in classpath", "application-" + System.getProperty(PROFILE_KEY) + ".yml/yaml");
                 throw e;
             }
         }
@@ -69,8 +74,8 @@ public class GatewayApplication extends AbstractVerticle {
                 .handler(distributeHandler)
                 .failureHandler(ctx -> {
                     int statusCode = ctx.statusCode();
-                    log.warn("Request error {}", ctx.statusCode(), ctx.failure());
-                    ctx.response().setStatusCode(statusCode).end("");
+                    log.warn("[Process]Request error [{}] {}", ctx.statusCode(), ctx.failure().getMessage(), ctx.failure());
+                    ctx.response().setStatusCode(statusCode).end("请求发生内部错误");
                 });
 
         vertx.createHttpServer()
@@ -78,7 +83,7 @@ public class GatewayApplication extends AbstractVerticle {
                 .listen(request.getPort(), http -> {
                     if (http.succeeded()) {
                         startPromise.complete();
-                        log.info("HTTP server started on port " + request.getPort());
+                        log.info("[Startup]HTTP server started on port " + request.getPort());
                     } else {
                         startPromise.fail(http.cause());
                     }

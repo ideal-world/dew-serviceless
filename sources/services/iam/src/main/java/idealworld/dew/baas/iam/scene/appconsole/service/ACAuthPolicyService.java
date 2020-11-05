@@ -125,9 +125,6 @@ public class ACAuthPolicyService extends IAMBasicService {
         if (authPolicyModifyReq.getRelSubjectTenantId() != null) {
             authPolicyUpdate.set(qAuthPolicy.relSubjectTenantId, authPolicyModifyReq.getRelSubjectTenantId());
         }
-        if (authPolicyModifyReq.getExposeKind() != null) {
-            authPolicyUpdate.set(qAuthPolicy.exposeKind, authPolicyModifyReq.getExposeKind());
-        }
         return updateEntity(authPolicyUpdate);
     }
 
@@ -145,7 +142,6 @@ public class ACAuthPolicyService extends IAMBasicService {
                 qAuthPolicy.exclusive,
                 qAuthPolicy.relSubjectAppId,
                 qAuthPolicy.relSubjectTenantId,
-                qAuthPolicy.exposeKind,
                 qAuthPolicy.relAppId,
                 qAuthPolicy.relTenantId))
                 .from(qAuthPolicy)
@@ -168,7 +164,6 @@ public class ACAuthPolicyService extends IAMBasicService {
                 qAuthPolicy.exclusive,
                 qAuthPolicy.relSubjectAppId,
                 qAuthPolicy.relSubjectTenantId,
-                qAuthPolicy.exposeKind,
                 qAuthPolicy.relAppId,
                 qAuthPolicy.relTenantId))
                 .from(qAuthPolicy)
