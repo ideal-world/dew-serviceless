@@ -1,9 +1,12 @@
-package idealworld.dew.baas.gateway;
+package idealworld.dew.baas.gateway.test;
 
 import com.ecfront.dew.common.$;
+import idealworld.dew.baas.gateway.GatewayApplication;
+import idealworld.dew.baas.gateway.GatewayConfig;
+import idealworld.dew.baas.gateway.test.helper.BasicTest;
+import idealworld.dew.baas.gateway.test.helper.RedisTestHelper;
 import idealworld.dew.baas.gateway.util.RedisClient;
 import idealworld.dew.baas.gateway.util.YamlHelper;
-import idealworld.dew.baas.helper.RedisTestHelper;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.TestContext;
 import org.junit.Before;

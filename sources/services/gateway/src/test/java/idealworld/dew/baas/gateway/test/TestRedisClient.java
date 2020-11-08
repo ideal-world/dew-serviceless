@@ -1,7 +1,9 @@
-package idealworld.dew.baas.gateway;
+package idealworld.dew.baas.gateway.test;
 
+import idealworld.dew.baas.gateway.GatewayConfig;
+import idealworld.dew.baas.gateway.test.helper.BasicTest;
+import idealworld.dew.baas.gateway.test.helper.RedisTestHelper;
 import idealworld.dew.baas.gateway.util.RedisClient;
-import idealworld.dew.baas.helper.RedisTestHelper;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.ext.unit.Async;

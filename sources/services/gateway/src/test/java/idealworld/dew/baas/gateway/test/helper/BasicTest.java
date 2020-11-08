@@ -1,4 +1,4 @@
-package idealworld.dew.baas.gateway;
+package idealworld.dew.baas.gateway.test.helper;
 
 import io.vertx.core.Future;
 import io.vertx.core.VertxOptions;

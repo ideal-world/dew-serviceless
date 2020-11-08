@@ -1,0 +1,11 @@
+{
+  "resources":[
+    {"pattern":"\\QMETA-INF/vertx/vertx-version.txt\\E"}, 
+    {"pattern":"\\Q\\E"}, 
+    {"pattern":"\\Qapplication-test.yml\\E"}, 
+    {"pattern":"\\Qlogback.xml\\E"}, 
+    {"pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"}, 
+    {"pattern":"\\Qredis-server-2.8.19\\E"}
+  ],
+  "bundles":[]
+}
