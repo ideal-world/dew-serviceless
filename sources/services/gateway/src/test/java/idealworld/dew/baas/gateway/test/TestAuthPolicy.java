@@ -7,13 +7,12 @@ import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.CommonConfig;
 import idealworld.dew.baas.gateway.GatewayConfig;
 import idealworld.dew.baas.gateway.exchange.ExchangeData;
 import idealworld.dew.baas.gateway.exchange.ExchangeProcessor;
 import idealworld.dew.baas.gateway.process.ReadonlyAuthPolicy;
-import idealworld.dew.baas.gateway.test.helper.BasicTest;
-import idealworld.dew.baas.gateway.test.helper.RedisTestHelper;
-import idealworld.dew.baas.gateway.util.RedisClient;
+import idealworld.dew.baas.common.funs.cache.RedisClient;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.ext.unit.Async;
@@ -33,7 +32,7 @@ public class TestAuthPolicy extends BasicTest {
     @Before
     public void before(TestContext testContext) {
         RedisTestHelper.start();
-        RedisClient.init(rule.vertx(), GatewayConfig.RedisConfig.builder()
+        RedisClient.init(rule.vertx(), CommonConfig.RedisConfig.builder()
                 .uri("redis://localhost:6379").build());
     }
 

@@ -35,60 +35,14 @@
     <properties>
         <maven.install.skip>true</maven.install.skip>
         <maven.deploy.skip>true</maven.deploy.skip>
-        <main.verticle>idealworld.dew.baas.gateway.GatewayApplication</main.verticle>
+        <main.verticle>idealworld.dew.baas.common.CommonApplication</main.verticle>
         <graalvm.version>20.2.0</graalvm.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
-            <artifactId>baas-basics-common</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.mindrot</groupId>
-                    <artifactId>jbcrypt</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>commons-beanutils</groupId>
-                    <artifactId>commons-beanutils</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.graalvm.sdk</groupId>
-                    <artifactId>graal-sdk</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.graalvm.truffle</groupId>
-                    <artifactId>truffle-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.graalvm.js</groupId>
-                    <artifactId>js</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.graalvm.js</groupId>
-                    <artifactId>js-scriptengine</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-micrometer-metrics</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-redis-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
+            <artifactId>baas-basics-vertx-services</artifactId>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
@@ -107,43 +61,5 @@
             <artifactId>lombok</artifactId>
         </dependency>
     </dependencies>
-
-    <profiles>
-        <profile>
-            <id>native</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <argLine>
-                                -agentlib:native-image-agent=access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/group.idealworld.dew/baas-services-gateway/agent-access-filter.json,config-output-dir=${project.basedir}/src/main/resources/META-INF/native-image/group.idealworld.dew/baas-services-gateway/
-                            </argLine>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.graalvm.nativeimage</groupId>
-                        <artifactId>native-image-maven-plugin</artifactId>
-                        <version>${graalvm.version}</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>native-image</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <skip>false</skip>
-                            <mainClass>${main.verticle}</mainClass>
-                            <imageName>${project.name}</imageName>
-                            <buildArgs>
-                            </buildArgs>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
 </project>

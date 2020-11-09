@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>baas-parent-vertx</artifactId>
-    <name>1.2 Dew BAAS Parent Vertx</name>
+    <name>1.1 Dew BAAS Parent Vertx</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
@@ -42,6 +42,11 @@
 
   <dependencyManagement>
       <dependencies>
+          <dependency>
+              <groupId>group.idealworld.dew</groupId>
+              <artifactId>baas-basics-vertx-services</artifactId>
+              <version>${dew-baas.version}</version>
+          </dependency>
           <dependency>
               <groupId>io.vertx</groupId>
               <artifactId>vertx-stack-depchain</artifactId>

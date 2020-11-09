@@ -2,9 +2,12 @@ package idealworld.dew.baas.gateway.process;
 
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
+import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
+import idealworld.dew.baas.common.CommonConfig;
 import idealworld.dew.baas.gateway.GatewayConfig;
 import io.vertx.ext.web.RoutingContext;
 import lombok.SneakyThrows;
@@ -22,7 +25,7 @@ import java.util.stream.Collectors;
  * @author gudaoxuri
  */
 @Slf4j
-public class AuthHandler extends GatewayHandler {
+public class AuthHandler extends CommonHttpHandler {
 
     private final GatewayConfig.Request request;
     private final ReadonlyAuthPolicy authPolicy;
@@ -35,7 +38,7 @@ public class AuthHandler extends GatewayHandler {
     @SneakyThrows
     @Override
     public void handle(RoutingContext ctx) {
-        var identOptInfo = (IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
+        var identOptInfo = (idealworld.dew.baas.common.dto.IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
         var resourceUri = (URI) ctx.get(request.getResourceUriKey());
         var action = (AuthActionKind) ctx.get(request.getActionKey());
 

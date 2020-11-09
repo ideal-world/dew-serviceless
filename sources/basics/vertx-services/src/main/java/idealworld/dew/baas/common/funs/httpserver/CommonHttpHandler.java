@@ -1,4 +1,4 @@
-package idealworld.dew.baas.gateway.process;
+package idealworld.dew.baas.common.funs.httpserver;
 
 import com.ecfront.dew.common.StandardCode;
 import io.vertx.core.Handler;
@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author gudaoxuri
  */
 @Slf4j
-public abstract class GatewayHandler implements Handler<RoutingContext> {
+public abstract class CommonHttpHandler implements Handler<RoutingContext> {
 
     protected static final String CONTEXT_INFO = "CONTEXT";
 

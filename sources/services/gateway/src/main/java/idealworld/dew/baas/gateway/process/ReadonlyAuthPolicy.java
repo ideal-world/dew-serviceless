@@ -10,7 +10,7 @@ import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
 import idealworld.dew.baas.common.util.AntPathMatcher;
 import idealworld.dew.baas.common.util.URIHelper;
-import idealworld.dew.baas.gateway.util.RedisClient;
+import idealworld.dew.baas.common.funs.cache.RedisClient;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import lombok.SneakyThrows;

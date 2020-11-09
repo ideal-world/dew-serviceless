@@ -1,9 +1,6 @@
-package idealworld.dew.baas.gateway.test;
+package idealworld.dew.baas.common;
 
-import idealworld.dew.baas.gateway.GatewayConfig;
-import idealworld.dew.baas.gateway.test.helper.BasicTest;
-import idealworld.dew.baas.gateway.test.helper.RedisTestHelper;
-import idealworld.dew.baas.gateway.util.RedisClient;
+import idealworld.dew.baas.common.funs.cache.RedisClient;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.ext.unit.Async;
@@ -19,7 +16,7 @@ public class TestRedisClient extends BasicTest {
     @Before
     public void before(TestContext testContext) {
         RedisTestHelper.start();
-        RedisClient.init(rule.vertx(), GatewayConfig.RedisConfig.builder()
+        RedisClient.init(rule.vertx(), CommonConfig.RedisConfig.builder()
                 .uri("redis://localhost:6379").build());
     }
 

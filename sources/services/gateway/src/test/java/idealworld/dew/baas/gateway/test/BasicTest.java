@@ -1,9 +1,8 @@
-package idealworld.dew.baas.gateway.test.helper;
+package idealworld.dew.baas.gateway.test;
 
 import io.vertx.core.Future;
 import io.vertx.core.VertxOptions;
 import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.SneakyThrows;

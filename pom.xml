@@ -54,7 +54,8 @@
         <module>parents/spring</module>
         <module>docs</module>
         <module>sources/basics/common</module>
-        <module>sources/basics/common-services</module>
+        <module>sources/basics/vertx-services</module>
+        <module>sources/basics/spring-services</module>
         <module>sources/services/gateway</module>
         <module>sources/services/iam</module>
     </modules>

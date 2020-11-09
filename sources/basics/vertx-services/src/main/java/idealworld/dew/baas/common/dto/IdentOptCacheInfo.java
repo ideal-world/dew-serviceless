@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.gateway.process;
+package idealworld.dew.baas.common.dto;
 
 import lombok.Data;
 

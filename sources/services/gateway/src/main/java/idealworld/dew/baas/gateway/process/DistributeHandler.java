@@ -2,10 +2,13 @@ package idealworld.dew.baas.gateway.process;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
+import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
+import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
+import idealworld.dew.baas.common.CommonConfig;
+import idealworld.dew.baas.common.funs.httpclient.HttpClient;
 import idealworld.dew.baas.gateway.GatewayConfig;
-import idealworld.dew.baas.gateway.util.HttpClient;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
@@ -24,7 +27,7 @@ import java.util.Map;
  * @author gudaoxuri
  */
 @Slf4j
-public class DistributeHandler extends GatewayHandler {
+public class DistributeHandler extends CommonHttpHandler {
 
     private final GatewayConfig.Request request;
     private final GatewayConfig.Distribute distribute;

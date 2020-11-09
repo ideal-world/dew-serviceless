@@ -1,7 +1,7 @@
-package idealworld.dew.baas.gateway.util;
+package idealworld.dew.baas.common.funs.cache;
 
 import com.ecfront.dew.common.exception.RTException;
-import idealworld.dew.baas.gateway.GatewayConfig;
+import idealworld.dew.baas.common.CommonConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -25,7 +25,7 @@ public class RedisClient {
     private static RedisConnection pubRedisConn;
     private static Vertx innerVertx;
 
-    public static void init(Vertx vertx, GatewayConfig.RedisConfig config) {
+    public static void init(Vertx vertx, CommonConfig.RedisConfig config) {
         innerVertx = vertx;
         var redis = Redis.createClient(
                 vertx,
@@ -130,7 +130,7 @@ public class RedisClient {
         if (cacheSec == null || cacheSec <= 0) {
             return get(key);
         }
-        return FutureCacheHelper.getSetF(CACHE_KEY_PREFIX + key + "-get", cacheSec,
+        return LocalCacheHelper.getSetF(CACHE_KEY_PREFIX + key + "-get", cacheSec,
                 () -> get(key)
         );
     }

@@ -35,7 +35,7 @@
     <dependencies>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
-            <artifactId>baas-basics-common-services</artifactId>
+            <artifactId>baas-basics-spring-services</artifactId>
         </dependency>
         <dependency>
             <groupId>group.idealworld.dew</groupId>

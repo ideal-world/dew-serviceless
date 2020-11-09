@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.gateway.test.helper;
+package idealworld.dew.baas.common;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

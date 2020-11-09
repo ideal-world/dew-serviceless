@@ -1,4 +1,4 @@
-package idealworld.dew.baas.gateway.util;
+package idealworld.dew.baas.common.funs.cache;
 
 import idealworld.dew.baas.common.util.CacheHelper;
 import io.vertx.core.Future;
@@ -10,7 +10,7 @@ import java.util.function.Supplier;
  * @author gudaoxuri
  */
 @Slf4j
-public class FutureCacheHelper extends CacheHelper {
+public class LocalCacheHelper extends idealworld.dew.baas.common.util.CacheHelper {
 
     public static <E> Future<E> getSetF(String key, Integer cacheSec, Supplier<Future<E>> elseFun) {
         var valueInfo = CACHES.getOrDefault(key, null);

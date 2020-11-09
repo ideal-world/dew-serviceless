@@ -3,10 +3,13 @@ package idealworld.dew.baas.gateway.process;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import com.ecfront.dew.common.exception.RTException;
+import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
+import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
+import idealworld.dew.baas.common.CommonConfig;
+import idealworld.dew.baas.common.funs.cache.RedisClient;
 import idealworld.dew.baas.gateway.GatewayConfig;
-import idealworld.dew.baas.gateway.util.RedisClient;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 import lombok.SneakyThrows;
@@ -28,7 +31,7 @@ import java.util.stream.Collectors;
  * @author gudaoxuri
  */
 @Slf4j
-public class IdentHandler extends GatewayHandler {
+public class IdentHandler extends CommonHttpHandler {
 
     private final GatewayConfig.Request request;
     private final GatewayConfig.Security security;
@@ -93,7 +96,7 @@ public class IdentHandler extends GatewayHandler {
             RedisClient.get(security.getCacheTokenInfoKey() + token, security.getTokenCacheExpireSec())
                     .onSuccess(optInfo -> {
                         var identOptInfo = optInfo != null
-                                ? $.json.toObject(optInfo, IdentOptCacheInfo.class)
+                                ? $.json.toObject(optInfo, idealworld.dew.baas.common.dto.IdentOptCacheInfo.class)
                                 : null;
                         if (optInfo == null) {
                             error(StandardCode.UNAUTHORIZED, "认证错误，Token不合法", ctx);

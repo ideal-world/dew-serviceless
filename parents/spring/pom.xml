@@ -27,7 +27,7 @@
     </parent>
 
     <artifactId>baas-parent-spring</artifactId>
-    <name>1.1 Dew BAAS Parent Spring</name>
+    <name>1.2 Dew BAAS Parent Spring</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
@@ -62,7 +62,7 @@
         <dependencies>
             <dependency>
                 <groupId>group.idealworld.dew</groupId>
-                <artifactId>baas-basics-common-services</artifactId>
+                <artifactId>baas-basics-spring-services</artifactId>
                 <version>${dew-baas.version}</version>
             </dependency>
         </dependencies>

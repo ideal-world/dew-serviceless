@@ -16,25 +16,26 @@
 
 package idealworld.dew.baas.gateway;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import idealworld.dew.baas.common.CommonConfig;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Gateway config.
  *
  * @author gudaoxuri
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GatewayConfig {
+public class GatewayConfig extends CommonConfig {
 
     @Builder.Default
     private Request request = new Request();
@@ -42,8 +43,6 @@ public class GatewayConfig {
     private Exchange exchange = new Exchange();
     @Builder.Default
     private Distribute distribute = new Distribute();
-    @Builder.Default
-    private RedisConfig redis = new RedisConfig();
     @Builder.Default
     private Security security = new Security();
 
@@ -53,8 +52,6 @@ public class GatewayConfig {
     @AllArgsConstructor
     public static class Request {
 
-        @Builder.Default
-        private Integer port = 9000;
         @Builder.Default
         private String path = "/exec";
         @Builder.Default
@@ -115,21 +112,6 @@ public class GatewayConfig {
         private Integer objServicePort = 9000;
         @Builder.Default
         private String objServicePath = "/exec";
-
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class RedisConfig {
-
-        private String uri;
-        private String password;
-        @Builder.Default
-        private Integer maxPoolSize = 100;
-        @Builder.Default
-        private Integer maxPoolWaiting = 1000;
 
     }
 

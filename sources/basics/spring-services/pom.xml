@@ -27,8 +27,8 @@
         <relativePath>../../../parents/spring/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-basics-common-services</artifactId>
-    <name>3.1 Dew BAAS Basics Common Services</name>
+    <artifactId>baas-basics-spring-services</artifactId>
+    <name>3.2 Dew BAAS Basics Spring Services</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 

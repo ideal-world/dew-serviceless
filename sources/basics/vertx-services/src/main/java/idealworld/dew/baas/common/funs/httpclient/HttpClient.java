@@ -1,4 +1,4 @@
-package idealworld.dew.baas.gateway.util;
+package idealworld.dew.baas.common.funs.httpclient;
 
 import idealworld.dew.baas.common.util.URIHelper;
 import io.vertx.core.Future;

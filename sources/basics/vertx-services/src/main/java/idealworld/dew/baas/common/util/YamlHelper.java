@@ -1,4 +1,4 @@
-package idealworld.dew.baas.gateway.util;
+package idealworld.dew.baas.common.util;
 
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;

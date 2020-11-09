@@ -1,7 +1,6 @@
-package idealworld.dew.baas.gateway.test;
+package idealworld.dew.baas.common;
 
-import idealworld.dew.baas.gateway.test.helper.BasicTest;
-import idealworld.dew.baas.gateway.util.HttpClient;
+import idealworld.dew.baas.common.funs.httpclient.HttpClient;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
