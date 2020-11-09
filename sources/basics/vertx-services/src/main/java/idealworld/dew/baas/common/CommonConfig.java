@@ -64,4 +64,27 @@ public abstract class CommonConfig {
 
     }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class JDBCConfig {
+
+        private String host;
+        @Builder.Default
+        private Integer port = 3306;
+        private String db;
+        private String userName;
+        private String password;
+        @Builder.Default
+        private String charset = "utf8mb4";
+        @Builder.Default
+        private String collation = "utf8mb4_general_ci";
+        @Builder.Default
+        private Integer maxPoolSize = 4;
+        @Builder.Default
+        private Integer maxPoolWaitQueueSize = -1;
+
+    }
+
 }
