@@ -93,7 +93,7 @@ public class IdentHandler extends CommonHttpHandler {
 
         // fetch token
         if (token != null) {
-            RedisClient.get(security.getCacheTokenInfoKey() + token, security.getTokenCacheExpireSec())
+            RedisClient.choose("").get(security.getCacheTokenInfoKey() + token, security.getTokenCacheExpireSec())
                     .onSuccess(optInfo -> {
                         var identOptInfo = optInfo != null
                                 ? $.json.toObject(optInfo, idealworld.dew.baas.common.dto.IdentOptCacheInfo.class)
@@ -137,7 +137,7 @@ public class IdentHandler extends CommonHttpHandler {
         }
         var reqPath = ctx.request().path();
         var reqQuery = ctx.request().query() != null ? ctx.request().query() : "";
-        RedisClient.get(security.getCacheAkSkInfoKey() + ak, security.getTokenCacheExpireSec())
+        RedisClient.choose("").get(security.getCacheAkSkInfoKey() + ak, security.getTokenCacheExpireSec())
                 .onSuccess(legalSkAndAppId -> {
                     if (legalSkAndAppId == null) {
                         error(StandardCode.UNAUTHORIZED, "认证错误，AK不存在", ctx);

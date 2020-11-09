@@ -25,7 +25,7 @@ public abstract class CommonApplication<C extends CommonConfig> extends Abstract
     protected abstract void doStart(C config, Promise<Void> startPromise);
 
     protected void initRedis(C config) {
-        RedisClient.init(vertx, config.getRedis());
+        RedisClient.init("", vertx, config.getRedis());
     }
 
     protected void initHttpClient(C config) {

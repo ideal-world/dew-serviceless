@@ -27,15 +27,15 @@
         <relativePath>../../../parents/vertx/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-services-gateway</artifactId>
-    <name>4.0 Dew BAAS Services Gateway</name>
+    <artifactId>baas-services-reldb</artifactId>
+    <name>4.2 Dew BAAS Services RelDB</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
         <maven.install.skip>true</maven.install.skip>
         <maven.deploy.skip>true</maven.deploy.skip>
-        <main.verticle>idealworld.dew.baas.gateway.GatewayApplication</main.verticle>
+        <main.verticle>idealworld.dew.baas.reldb.RelDBApplication</main.verticle>
     </properties>
 
     <dependencies>
@@ -45,7 +45,7 @@
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-web-client</artifactId>
+            <artifactId>vertx-mysql-client</artifactId>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>

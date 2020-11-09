@@ -58,6 +58,7 @@
         <module>sources/basics/spring-services</module>
         <module>sources/services/gateway</module>
         <module>sources/services/iam</module>
+        <module>sources/services/ds-db-reldb</module>
     </modules>
 
     <repositories>

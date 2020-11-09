@@ -2,17 +2,17 @@ package idealworld.dew.baas.gateway.test;
 
 import com.ecfront.dew.common.$;
 import com.google.common.collect.Lists;
+import idealworld.dew.baas.common.CommonConfig;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
-import idealworld.dew.baas.common.CommonConfig;
+import idealworld.dew.baas.common.funs.cache.RedisClient;
 import idealworld.dew.baas.gateway.GatewayConfig;
 import idealworld.dew.baas.gateway.exchange.ExchangeData;
 import idealworld.dew.baas.gateway.exchange.ExchangeProcessor;
 import idealworld.dew.baas.gateway.process.ReadonlyAuthPolicy;
-import idealworld.dew.baas.common.funs.cache.RedisClient;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.ext.unit.Async;
@@ -29,18 +29,21 @@ import java.util.Map;
 
 public class TestAuthPolicy extends BasicTest {
 
+    private RedisClient redisClient;
+
     @Before
     public void before(TestContext testContext) {
         RedisTestHelper.start();
-        RedisClient.init(rule.vertx(), CommonConfig.RedisConfig.builder()
+        RedisClient.init("", rule.vertx(), CommonConfig.RedisConfig.builder()
                 .uri("redis://localhost:6379").build());
+        redisClient = RedisClient.choose("");
     }
 
     @Test
     public void testBasic(TestContext testContext) {
         Async async = testContext.async(2);
         // 先向redis中添加一些资源
-        var addAccountAllByRole = RedisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/**:create",
+        var addAccountAllByRole = redisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/**:create",
                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.EQ.toString().toLowerCase(), new HashMap<>() {
@@ -54,7 +57,7 @@ public class TestAuthPolicy extends BasicTest {
                         });
                     }
                 }));
-        var deleteAccountAllByRole = RedisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/**:delete",
+        var deleteAccountAllByRole = redisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/**:delete",
                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.EQ.toString().toLowerCase(), new HashMap<>() {
@@ -68,7 +71,7 @@ public class TestAuthPolicy extends BasicTest {
                         });
                     }
                 }));
-        var deleteAccountIdentAllByRoleAndAccount = RedisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/ident/**:delete",
+        var deleteAccountIdentAllByRoleAndAccount = redisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/ident/**:delete",
                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.NEQ.toString().toLowerCase(), new HashMap<>() {
@@ -91,7 +94,7 @@ public class TestAuthPolicy extends BasicTest {
                         });
                     }
                 }));
-        var deleteAccountIdentItemByAccount = RedisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/ident/1:delete",
+        var deleteAccountIdentItemByAccount = redisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/ident/1:delete",
                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.NEQ.toString().toLowerCase(), new HashMap<>() {
@@ -190,7 +193,7 @@ public class TestAuthPolicy extends BasicTest {
     public void testGroup(TestContext testContext) {
         Async async = testContext.async(2);
         // 先向redis中添加一些资源
-        var addAccountAllByGroup = RedisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:create",
+        var addAccountAllByGroup = redisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:create",
                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.EQ.toString().toLowerCase(), new HashMap<>() {
@@ -204,7 +207,7 @@ public class TestAuthPolicy extends BasicTest {
                         });
                     }
                 }));
-        var deleteAccountAllByGroup = RedisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:delete",
+        var deleteAccountAllByGroup = redisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:delete",
                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.INCLUDE.toString().toLowerCase(), new HashMap<>() {
@@ -218,7 +221,7 @@ public class TestAuthPolicy extends BasicTest {
                         });
                     }
                 }));
-        var modifyAccountAllByGroup = RedisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:modify",
+        var modifyAccountAllByGroup = redisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:modify",
                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.LIKE.toString().toLowerCase(), new HashMap<>() {
@@ -232,7 +235,7 @@ public class TestAuthPolicy extends BasicTest {
                         });
                     }
                 }));
-        var patchAccountAllByGroup = RedisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:patch",
+        var patchAccountAllByGroup = redisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:patch",
                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.NEQ.toString().toLowerCase(), new HashMap<>() {
@@ -384,7 +387,7 @@ public class TestAuthPolicy extends BasicTest {
                 })
                 .compose(resp ->
                         // 添加资源
-                        RedisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create",
+                        redisClient.set(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create",
                                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
                                     {
                                         put(AuthSubjectOperatorKind.EQ.toString().toLowerCase(), new HashMap<>() {
@@ -400,7 +403,7 @@ public class TestAuthPolicy extends BasicTest {
                                 })))
                 .compose(resp -> {
                     // 通知资源变更
-                    RedisClient.publish(topic,
+                    redisClient.publish(topic,
                             $.json.toJsonString(ExchangeData.builder()
                                     .addOpt(true)
                                     .actionKind(AuthActionKind.CREATE.toString().toLowerCase())
@@ -423,10 +426,10 @@ public class TestAuthPolicy extends BasicTest {
                 })
                 .compose(resp ->
                         // 删除资源
-                        RedisClient.del(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create"))
+                        redisClient.del(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create"))
                 .compose(resp -> {
                     // 通知资源变更
-                    RedisClient.publish(topic,
+                    redisClient.publish(topic,
                             $.json.toJsonString(ExchangeData.builder()
                                     .addOpt(false)
                                     .actionKind(AuthActionKind.CREATE.toString().toLowerCase())

@@ -20,7 +20,7 @@ public class ExchangeProcessor {
 
     public static Future<Void> register(GatewayConfig.Exchange exchange, ReadonlyAuthPolicy policy) {
         Promise<Void> promise = Promise.promise();
-        RedisClient.subscribe(exchange.getTopic(), message -> {
+        RedisClient.choose("").subscribe(exchange.getTopic(), message -> {
             log.trace("[Exchange]Received {}", message);
             var exchangeData = $.json.toObject(message, ExchangeData.class);
             URI resourceUri;

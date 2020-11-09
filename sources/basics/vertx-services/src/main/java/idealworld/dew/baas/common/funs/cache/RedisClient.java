@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -20,13 +22,15 @@ import java.util.function.Consumer;
 public class RedisClient {
 
     private static final String CACHE_KEY_PREFIX = "redis:";
-    private static RedisAPI redisClient;
-    private static RedisConnection subRedisConn;
-    private static RedisConnection pubRedisConn;
-    private static Vertx innerVertx;
+    private static final Map<String, RedisClient> REDIS_CLIENTS = new HashMap<>();
+    private Vertx innerVertx;
+    private RedisAPI redisAPI;
+    private RedisConnection subRedisConn;
+    private RedisConnection pubRedisConn;
 
-    public static void init(Vertx vertx, CommonConfig.RedisConfig config) {
-        innerVertx = vertx;
+    public static void init(String code, Vertx vertx, CommonConfig.RedisConfig config) {
+        var redisClient = new RedisClient();
+        redisClient.innerVertx = vertx;
         var redis = Redis.createClient(
                 vertx,
                 new RedisOptions()
@@ -34,7 +38,7 @@ public class RedisClient {
                         .setPassword(config.getPassword())
                         .setMaxPoolSize(config.getMaxPoolSize())
                         .setMaxPoolWaiting(config.getMaxPoolWaiting()));
-        redisClient = RedisAPI.api(redis);
+        redisClient.redisAPI = RedisAPI.api(redis);
         redis.connect()
                 .onSuccess(conn -> log.info("[Redis]Connected {}", config.getUri()))
                 .onFailure(e -> {
@@ -49,7 +53,7 @@ public class RedisClient {
                 .connect(conn -> {
                     if (conn.succeeded()) {
                         log.info("[Redis]Subscribe connected {}", config.getUri());
-                        subRedisConn = conn.result();
+                        redisClient.subRedisConn = conn.result();
                         return;
                     }
                     log.error("[Redis]Subscribe connection error: {}", conn.cause().getMessage(), conn.cause());
@@ -63,7 +67,7 @@ public class RedisClient {
                 .connect(conn -> {
                     if (conn.succeeded()) {
                         log.info("[Redis]Publish connected {}", config.getUri());
-                        pubRedisConn = conn.result();
+                        redisClient.pubRedisConn = conn.result();
                         return;
                     }
                     log.error("[Redis]Publish connection error: {}", conn.cause().getMessage(), conn.cause());
@@ -74,11 +78,16 @@ public class RedisClient {
             subRedis.close();
             pubRedis.close();
         }));
+        REDIS_CLIENTS.put(code, redisClient);
     }
 
-    public static Future<Void> set(String key, String value) {
+    public static RedisClient choose(String code) {
+        return REDIS_CLIENTS.get(code);
+    }
+
+    public Future<Void> set(String key, String value) {
         return Future.future(promise ->
-                redisClient.set(new ArrayList<>() {
+                redisAPI.set(new ArrayList<>() {
                     {
                         add(key);
                         add(value);
@@ -92,9 +101,9 @@ public class RedisClient {
         );
     }
 
-    public static Future<Void> del(String... keys) {
+    public Future<Void> del(String... keys) {
         return Future.future(promise ->
-                redisClient.del(Arrays.asList(keys)).onSuccess(response ->
+                redisAPI.del(Arrays.asList(keys)).onSuccess(response ->
                         promise.complete()
                 ).onFailure(e -> {
                     log.error("[Redis]Del [{}] error: {}", String.join(",", keys), e.getMessage(), e);
@@ -103,9 +112,9 @@ public class RedisClient {
         );
     }
 
-    public static Future<Boolean> exists(String... keys) {
+    public Future<Boolean> exists(String... keys) {
         return Future.future(promise ->
-                redisClient.exists(Arrays.asList(keys))
+                redisAPI.exists(Arrays.asList(keys))
                         .onSuccess(response -> promise.complete(response.toInteger() > 0))
                         .onFailure(e -> {
                             log.error("[Redis]Exists [{}] error: {}", String.join(",", keys), e.getMessage(), e);
@@ -114,9 +123,9 @@ public class RedisClient {
         );
     }
 
-    public static Future<String> get(String key) {
+    public Future<String> get(String key) {
         return Future.future(promise ->
-                redisClient.get(key)
+                redisAPI.get(key)
                         .onSuccess(response -> promise.complete(
                                 response != null ? response.toString(StandardCharsets.UTF_8) : null))
                         .onFailure(e -> {
@@ -126,7 +135,7 @@ public class RedisClient {
         );
     }
 
-    public static Future<String> get(String key, Integer cacheSec) {
+    public Future<String> get(String key, Integer cacheSec) {
         if (cacheSec == null || cacheSec <= 0) {
             return get(key);
         }
@@ -135,11 +144,11 @@ public class RedisClient {
         );
     }
 
-    public static void scan(String key, Consumer<String> fun) {
+    public void scan(String key, Consumer<String> fun) {
         doScan(0, key, fun);
     }
 
-    public static Future<Void> publish(String key, String message) {
+    public Future<Void> publish(String key, String message) {
         return Future.future(promise ->
                 pubRedisConn.send(Request.cmd(Command.PUBLISH).arg(key).arg(message), reply -> {
                     if (reply.succeeded()) {
@@ -152,7 +161,7 @@ public class RedisClient {
         );
     }
 
-    public static Future<Void> subscribe(String key, Consumer<String> fun) {
+    public Future<Void> subscribe(String key, Consumer<String> fun) {
         return Future.future(promise ->
                 subRedisConn.send(Request.cmd(Command.SUBSCRIBE).arg(key), reply -> {
                     if (reply.succeeded()) {
@@ -168,8 +177,8 @@ public class RedisClient {
         );
     }
 
-    private static void doScan(Integer cursor, String key, Consumer<String> fun) {
-        redisClient.scan(new ArrayList<>() {
+    private void doScan(Integer cursor, String key, Consumer<String> fun) {
+        redisAPI.scan(new ArrayList<>() {
             {
                 add(cursor + "");
                 add("MATCH");

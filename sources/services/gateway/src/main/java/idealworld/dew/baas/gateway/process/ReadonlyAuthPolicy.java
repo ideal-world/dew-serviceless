@@ -47,7 +47,7 @@ public class ReadonlyAuthPolicy {
     public ReadonlyAuthPolicy(Integer resourceCacheExpireSec, Integer groupNodeLength) {
         this.resourceCacheExpireSec = resourceCacheExpireSec;
         this.groupNodeLength = groupNodeLength;
-        RedisClient.scan(Constant.CACHE_AUTH_POLICY, key -> {
+        RedisClient.choose("").scan(Constant.CACHE_AUTH_POLICY, key -> {
             var keyItems = key.substring(Constant.CACHE_AUTH_POLICY.length()).split(":");
             var resourceKind = keyItems[0];
             var resourceUri = resourceKind + "://" + keyItems[1];
@@ -101,7 +101,7 @@ public class ReadonlyAuthPolicy {
             return;
         }
         var currentProcessUri = matchedResourceUris.get(0);
-        RedisClient.get(Constant.CACHE_AUTH_POLICY
+        RedisClient.choose("").get(Constant.CACHE_AUTH_POLICY
                 + currentProcessUri.replace("//", "") + ":"
                 + actionKind, resourceCacheExpireSec)
                 .onSuccess(value -> {

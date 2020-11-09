@@ -84,7 +84,7 @@ public class TestFlow extends BasicTest {
                 });
         testContext.assertEquals("认证错误，Token不合法", errorResult.result);
 
-        RedisClient.set(gatewayConfig.getSecurity().getCacheTokenInfoKey() + "tokenxxx", "{\"accountCode\":\"testCode\"}");
+        RedisClient.choose("").set(gatewayConfig.getSecurity().getCacheTokenInfoKey() + "tokenxxx", "{\"accountCode\":\"testCode\"}");
         rule.vertx().setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
                             "?" + gatewayConfig.getRequest().getResourceUriKey() +
@@ -150,7 +150,7 @@ public class TestFlow extends BasicTest {
                 });
         testContext.assertEquals("认证错误，AK不存在", errorResult.result);
 
-        RedisClient.set(gatewayConfig.getSecurity().getCacheAkSkInfoKey() + "xx", "skxx:1123456:789");
+        RedisClient.choose("").set(gatewayConfig.getSecurity().getCacheAkSkInfoKey() + "xx", "skxx:1123456:789");
         rule.vertx().setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
                             "?" + gatewayConfig.getRequest().getResourceUriKey() +

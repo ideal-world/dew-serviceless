@@ -13,18 +13,21 @@ import java.util.stream.IntStream;
 
 public class TestRedisClient extends BasicTest {
 
+    private RedisClient redisClient;
+
     @Before
     public void before(TestContext testContext) {
         RedisTestHelper.start();
-        RedisClient.init(rule.vertx(), CommonConfig.RedisConfig.builder()
+        RedisClient.init("", rule.vertx(), CommonConfig.RedisConfig.builder()
                 .uri("redis://localhost:6379").build());
+        redisClient = RedisClient.choose("");
     }
 
     @Test
     public void testGetSet(TestContext testContext) {
         Async async = testContext.async();
-        RedisClient.set("a:b", "a1")
-                .compose(resp -> RedisClient.get("a:b", 0))
+        redisClient.set("a:b", "a1")
+                .compose(resp -> redisClient.get("a:b", 0))
                 .onSuccess(value -> {
                     testContext.assertEquals("a1", value);
                     async.complete();
@@ -35,23 +38,23 @@ public class TestRedisClient extends BasicTest {
     public void testGetSetWithCache(TestContext testContext) {
         Async async = testContext.async();
         // 设置为 a1
-        RedisClient.set("a:b", "a1")
+        redisClient.set("a:b", "a1")
                 // 第一次带缓存获取
-                .compose(resp -> RedisClient.get("a:b", 1))
+                .compose(resp -> redisClient.get("a:b", 1))
                 .compose(resp -> {
                     testContext.assertEquals("a1", resp);
                     return Future.succeededFuture();
                 })
                 // 修改为 a2
-                .compose(resp -> RedisClient.set("a:b", "a2"))
+                .compose(resp -> redisClient.set("a:b", "a2"))
                 // 不带缓存获取，拿到 a2
-                .compose(resp -> RedisClient.get("a:b"))
+                .compose(resp -> redisClient.get("a:b"))
                 .compose(resp -> {
                     testContext.assertEquals("a2", resp);
                     return Future.succeededFuture();
                 })
                 // 带缓存获取，拿到a1
-                .compose(resp -> RedisClient.get("a:b", 1))
+                .compose(resp -> redisClient.get("a:b", 1))
                 .compose(resp -> {
                     testContext.assertEquals("a1", resp);
                     return Future.succeededFuture();
@@ -65,7 +68,7 @@ public class TestRedisClient extends BasicTest {
                     return Future.succeededFuture();
                 })
                 // 带缓存获取，拿到 a2
-                .compose(resp -> RedisClient.get("a:b", 1))
+                .compose(resp -> redisClient.get("a:b", 1))
                 .onSuccess(resp -> {
                     testContext.assertEquals("a2", resp);
                     async.complete();
@@ -75,10 +78,10 @@ public class TestRedisClient extends BasicTest {
     @Test
     public void testScan(TestContext testContext) {
         Async async = testContext.async(1000);
-        var sets = IntStream.range(0, async.count()).mapToObj(i -> (Future) RedisClient.set("a:" + i, "a" + i)).collect(Collectors.toList());
+        var sets = IntStream.range(0, async.count()).mapToObj(i -> (Future) redisClient.set("a:" + i, "a" + i)).collect(Collectors.toList());
         CompositeFuture.all(sets)
                 .onSuccess(resp -> {
-                    RedisClient.scan("a:", key -> {
+                    redisClient.scan("a:", key -> {
                         async.countDown();
                     });
                 });
@@ -88,16 +91,16 @@ public class TestRedisClient extends BasicTest {
     public void testPubSub(TestContext testContext) {
         Async async = testContext.async(3);
         rule.vertx().setTimer(1000, h -> {
-            RedisClient.subscribe("topic:1", value -> async.countDown())
+            redisClient.subscribe("topic:1", value -> async.countDown())
                     .onSuccess(resp ->
                             rule.vertx().setTimer(1000, h2 -> {
-                                RedisClient.publish("topic:1", "a1");
-                                RedisClient.publish("topic:1", "a2");
+                                redisClient.publish("topic:1", "a1");
+                                redisClient.publish("topic:1", "a2");
                             }));
-            RedisClient.subscribe("topic:2", value -> {
+            redisClient.subscribe("topic:2", value -> {
                 async.countDown();
             }).onSuccess(resp ->
-                    RedisClient.publish("topic:2", "b1")
+                    redisClient.publish("topic:2", "b1")
             );
         });
     }
