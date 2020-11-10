@@ -16,8 +16,10 @@
 
 package idealworld.dew.baas.iam.scene.appconsole.dto.authpolicy;
 
-import idealworld.dew.baas.common.enumeration.*;
-import idealworld.dew.baas.iam.enumeration.ExposeKind;
+import idealworld.dew.baas.common.enumeration.AuthResultKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.enumeration.OptActionKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -60,7 +62,7 @@ public class AuthPolicyModifyReq implements Serializable {
     private Long relResourceId;
 
     @Schema(title = "操作类型")
-    private AuthActionKind actionKind;
+    private OptActionKind actionKind;
 
     @Schema(title = "操作结果")
     private AuthResultKind resultKind;

@@ -20,11 +20,9 @@ import idealworld.dew.baas.common.CommonConfig;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.security.Security;
-
 
 /**
- * Gateway config.
+ * RelDB config.
  *
  * @author gudaoxuri
  */
@@ -37,6 +35,8 @@ public class RelDBConfig extends CommonConfig {
 
     @Builder.Default
     private Request request = new Request();
+    @Builder.Default
+    private Security security = new Security();
 
     @Data
     @Builder
@@ -49,6 +49,17 @@ public class RelDBConfig extends CommonConfig {
 
         @Builder.Default
         private String identOptHeaderName = "Dew-Ident-Opt";
+
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Security {
+
+        @Builder.Default
+        private Integer sqlCacheExpireSec = 60;
 
     }
 

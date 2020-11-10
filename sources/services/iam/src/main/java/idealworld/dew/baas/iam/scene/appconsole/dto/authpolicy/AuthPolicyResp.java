@@ -17,10 +17,10 @@
 package idealworld.dew.baas.iam.scene.appconsole.dto.authpolicy;
 
 import idealworld.dew.baas.common.dto.IdResp;
-import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.enumeration.OptActionKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -74,7 +74,7 @@ public class AuthPolicyResp extends IdResp {
 
     @NotNull
     @Schema(title = "操作类型名称", required = true)
-    private AuthActionKind actionKind;
+    private OptActionKind actionKind;
 
     @NotNull
     @Schema(title = "操作结果名称", required = true)

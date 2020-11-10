@@ -3,12 +3,11 @@ package idealworld.dew.baas.gateway.process;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import com.ecfront.dew.common.exception.RTException;
-import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
-import idealworld.dew.baas.common.enumeration.AuthActionKind;
+import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
-import idealworld.dew.baas.common.CommonConfig;
 import idealworld.dew.baas.common.funs.cache.RedisClient;
+import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
 import idealworld.dew.baas.gateway.GatewayConfig;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
@@ -65,7 +64,7 @@ public class IdentHandler extends CommonHttpHandler {
             return;
         }
         URI resourceUri;
-        AuthActionKind actionKind;
+        OptActionKind actionKind;
         try {
             resourceUri = new URI(queryMap.get(request.getResourceUriKey()));
             if (resourceUri.getScheme() == null || resourceUri.getHost() == null) {
@@ -73,7 +72,7 @@ public class IdentHandler extends CommonHttpHandler {
                 return;
             }
             ResourceKind.parse(resourceUri.getScheme().toLowerCase());
-            actionKind = AuthActionKind.parse(queryMap.get(request.getActionKey()).toLowerCase());
+            actionKind = OptActionKind.parse(queryMap.get(request.getActionKey()).toLowerCase());
         } catch (RTException e) {
             error(StandardCode.BAD_REQUEST, "请求格式不合法，资源类型或操作类型不存在", ctx);
             return;

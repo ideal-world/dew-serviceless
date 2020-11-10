@@ -2,12 +2,11 @@ package idealworld.dew.baas.gateway.process;
 
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
-import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
-import idealworld.dew.baas.common.CommonConfig;
+import idealworld.dew.baas.common.enumeration.OptActionKind;
+import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
 import idealworld.dew.baas.gateway.GatewayConfig;
 import io.vertx.ext.web.RoutingContext;
 import lombok.SneakyThrows;
@@ -40,7 +39,7 @@ public class AuthHandler extends CommonHttpHandler {
     public void handle(RoutingContext ctx) {
         var identOptInfo = (idealworld.dew.baas.common.dto.IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
         var resourceUri = (URI) ctx.get(request.getResourceUriKey());
-        var action = (AuthActionKind) ctx.get(request.getActionKey());
+        var action = (OptActionKind) ctx.get(request.getActionKey());
 
         var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
         if (identOptInfo != null) {

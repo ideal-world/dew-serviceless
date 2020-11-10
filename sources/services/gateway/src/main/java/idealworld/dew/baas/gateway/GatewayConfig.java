@@ -40,8 +40,6 @@ public class GatewayConfig extends CommonConfig {
     @Builder.Default
     private Request request = new Request();
     @Builder.Default
-    private Exchange exchange = new Exchange();
-    @Builder.Default
     private Distribute distribute = new Distribute();
     @Builder.Default
     private Security security = new Security();
@@ -58,17 +56,6 @@ public class GatewayConfig extends CommonConfig {
         private String resourceUriKey = "res";
         @Builder.Default
         private String actionKey = "act";
-
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Exchange {
-
-        @Builder.Default
-        private String topic = "iam:exchange";
 
     }
 

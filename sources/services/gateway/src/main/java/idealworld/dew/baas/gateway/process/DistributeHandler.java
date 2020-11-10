@@ -2,12 +2,11 @@ package idealworld.dew.baas.gateway.process;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
-import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
-import idealworld.dew.baas.common.enumeration.AuthActionKind;
+import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
-import idealworld.dew.baas.common.CommonConfig;
 import idealworld.dew.baas.common.funs.httpclient.HttpClient;
+import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
 import idealworld.dew.baas.gateway.GatewayConfig;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
@@ -42,7 +41,7 @@ public class DistributeHandler extends CommonHttpHandler {
     public void handle(RoutingContext ctx) {
         var identOptInfo = (IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
         var resourceUri = (URI) ctx.get(request.getResourceUriKey());
-        var action = (AuthActionKind) ctx.get(request.getActionKey());
+        var action = (OptActionKind) ctx.get(request.getActionKey());
 
         HttpMethod httpMethod = HttpMethod.GET;
         Buffer body = null;

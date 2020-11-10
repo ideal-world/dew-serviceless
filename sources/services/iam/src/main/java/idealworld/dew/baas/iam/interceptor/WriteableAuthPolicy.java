@@ -70,7 +70,7 @@ public class WriteableAuthPolicy {
     public Resp<Void> removePolicy(
             ResourceKind resourceKind,
             String resourceUri,
-            AuthActionKind actionKind,
+            OptActionKind actionKind,
             AuthSubjectOperatorKind subjectOperatorKind,
             AuthSubjectKind subjectKind,
             String subjectId
@@ -124,7 +124,7 @@ public class WriteableAuthPolicy {
 
         private String resourceUri;
 
-        private AuthActionKind actionKind;
+        private OptActionKind actionKind;
 
         private AuthSubjectKind subjectKind;
 

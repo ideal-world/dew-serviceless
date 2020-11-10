@@ -4,13 +4,12 @@ import com.ecfront.dew.common.$;
 import com.google.common.collect.Lists;
 import idealworld.dew.baas.common.CommonConfig;
 import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.common.enumeration.AuthActionKind;
+import idealworld.dew.baas.common.dto.ExchangeData;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.funs.cache.RedisClient;
-import idealworld.dew.baas.gateway.GatewayConfig;
-import idealworld.dew.baas.gateway.exchange.ExchangeData;
 import idealworld.dew.baas.gateway.exchange.ExchangeProcessor;
 import idealworld.dew.baas.gateway.process.ReadonlyAuthPolicy;
 import io.vertx.core.CompositeFuture;
@@ -368,17 +367,14 @@ public class TestAuthPolicy extends BasicTest {
                 });
             }
         };
-        var topic = new GatewayConfig.Exchange().getTopic();
         var authPolicy = new ReadonlyAuthPolicy(60, 5);
         Future.succeededFuture()
                 .compose(resp ->
-                        Future.future(promise -> {
-                            rule.vertx().setTimer(1000, h -> {
-                                promise.complete();
-                            });
-                        })
+                        Future.future(promise -> rule.vertx().setTimer(1000, h -> {
+                            promise.complete();
+                        }))
                 )
-                .compose(resp -> ExchangeProcessor.register(GatewayConfig.Exchange.builder().build(), authPolicy))
+                .compose(resp -> ExchangeProcessor.init(authPolicy))
                 // 资源不存在
                 .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/app/ident"), "create", subjectInfo))
                 .compose(result -> {
@@ -403,11 +399,17 @@ public class TestAuthPolicy extends BasicTest {
                                 })))
                 .compose(resp -> {
                     // 通知资源变更
-                    redisClient.publish(topic,
-                            $.json.toJsonString(ExchangeData.builder()
-                                    .addOpt(true)
-                                    .actionKind(AuthActionKind.CREATE.toString().toLowerCase())
-                                    .resourceUri("http://iam.service/console/app/ident/**")
+                    redisClient.publish(Constant.CONFIG_EVENT_NOTIFY_TOPIC_BY_IAM,
+                            "resource#" + $.json.toJsonString(ExchangeData.builder()
+                                    .actionKind(OptActionKind.CREATE)
+                                    .subjectCategory("resource")
+                                    .subjectId("xxxx")
+                                    .detailData(new HashMap<>() {
+                                        {
+                                            put("resourceUri", "http://iam.service/console/app/ident/**");
+                                            put("resourceActionKind", OptActionKind.CREATE.toString().toLowerCase());
+                                        }
+                                    })
                                     .build()));
                     return Future.succeededFuture();
                 })
@@ -429,11 +431,17 @@ public class TestAuthPolicy extends BasicTest {
                         redisClient.del(Constant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create"))
                 .compose(resp -> {
                     // 通知资源变更
-                    redisClient.publish(topic,
-                            $.json.toJsonString(ExchangeData.builder()
-                                    .addOpt(false)
-                                    .actionKind(AuthActionKind.CREATE.toString().toLowerCase())
-                                    .resourceUri("http://iam.service/console/app/ident/**")
+                    redisClient.publish(Constant.CONFIG_EVENT_NOTIFY_TOPIC_BY_IAM,
+                            "resource#" + $.json.toJsonString(ExchangeData.builder()
+                                    .actionKind(OptActionKind.DELETE)
+                                    .subjectCategory("resource")
+                                    .subjectId("xxxx")
+                                    .detailData(new HashMap<>() {
+                                        {
+                                            put("resourceUri", "http://iam.service/console/app/ident/**");
+                                            put("resourceActionKind", OptActionKind.CREATE.toString().toLowerCase());
+                                        }
+                                    })
                                     .build()));
                     return Future.succeededFuture();
                 })

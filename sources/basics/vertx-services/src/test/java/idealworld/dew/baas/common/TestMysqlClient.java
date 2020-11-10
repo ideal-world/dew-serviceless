@@ -30,6 +30,9 @@ public class TestMysqlClient extends BasicTest {
         Async async = testContext.async();
         Future.succeededFuture()
                 .compose(resp ->
+                        mysqlClient.exec("drop table iam_account")
+                )
+                .compose(resp ->
                         mysqlClient.exec("create table if not exists iam_account\n" +
                                 "(\n" +
                                 "\tid bigint auto_increment primary key,\n" +

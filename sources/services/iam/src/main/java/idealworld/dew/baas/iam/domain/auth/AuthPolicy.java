@@ -17,10 +17,10 @@
 package idealworld.dew.baas.iam.domain.auth;
 
 import idealworld.dew.baas.common.domain.SafeEntity;
-import idealworld.dew.baas.common.enumeration.AuthActionKind;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.enumeration.OptActionKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -78,7 +78,7 @@ public class AuthPolicy extends SafeEntity {
     @Column(nullable = false,
             columnDefinition = "varchar(100) comment '操作类型名称'")
     @Enumerated(EnumType.STRING)
-    private AuthActionKind actionKind;
+    private OptActionKind optActionKind;
 
     @Column(nullable = false,
             columnDefinition = "varchar(100) comment '操作结果名称'")

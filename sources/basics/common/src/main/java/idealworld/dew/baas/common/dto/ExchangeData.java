@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.gateway.exchange;
+package idealworld.dew.baas.common.dto;
 
+import idealworld.dew.baas.common.enumeration.OptActionKind;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
- * token opt info.
- *
  * @author gudaoxuri
  */
 @Data
@@ -32,8 +33,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ExchangeData {
 
-    private Boolean addOpt;
-    private String resourceUri;
-    private String actionKind;
+    private OptActionKind actionKind;
+    private String subjectCategory;
+    private String subjectId;
+    private String fetchUrl;
+    private Map<String, Object> detailData;
 
 }

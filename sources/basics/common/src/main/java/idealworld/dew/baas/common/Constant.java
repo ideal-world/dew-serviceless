@@ -36,7 +36,7 @@ public class Constant {
     /**
      * 事件通知Topic名称.
      */
-    public static final String CONFIG_EVENT_NOTIFY_TOPIC_NAME = "event:notify:topic:name";
+    public static final String CONFIG_EVENT_NOTIFY_TOPIC_BY_IAM = "event:notify:iam";
     /**
      * 未定义对象的标识，多用于全局Id标识.
      */

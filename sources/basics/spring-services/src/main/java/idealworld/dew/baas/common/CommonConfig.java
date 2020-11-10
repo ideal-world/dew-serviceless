@@ -35,7 +35,6 @@ import java.util.Map;
 public class CommonConfig {
 
     private Integer syncIntervalSec = 60;
-    private String eventNotifyTopicName = "";
 
     @Autowired
     private ConfigService configService;
@@ -47,9 +46,6 @@ public class CommonConfig {
             var config = configService.findAll();
             if (config.containsKey(Constant.CONFIG_EVENT_CONFIG_SYNC_INTERVAL_SEC)) {
                 syncIntervalSec = Integer.parseInt(config.get(Constant.CONFIG_EVENT_CONFIG_SYNC_INTERVAL_SEC));
-            }
-            if (config.containsKey(Constant.CONFIG_EVENT_NOTIFY_TOPIC_NAME)) {
-                eventNotifyTopicName = config.get(Constant.CONFIG_EVENT_NOTIFY_TOPIC_NAME);
             }
             doSync(config);
         });

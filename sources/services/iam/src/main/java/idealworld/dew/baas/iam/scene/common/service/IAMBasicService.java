@@ -18,6 +18,7 @@ package idealworld.dew.baas.iam.scene.common.service;
 
 import group.idealworld.dew.Dew;
 import group.idealworld.dew.core.cluster.ClusterElection;
+import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.service.CommonService;
 import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.domain.auth.*;
@@ -82,7 +83,7 @@ public abstract class IAMBasicService extends CommonService<Long> {
 
     @Override
     public String topicName() {
-        return iamConfig.getEventNotifyTopicName();
+        return Constant.CONFIG_EVENT_NOTIFY_TOPIC_BY_IAM;
     }
 
     @Override

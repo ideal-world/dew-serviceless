@@ -21,7 +21,7 @@ public class GatewayApplication extends CommonApplication<GatewayConfig> {
         initRedis(config);
         initHttpClient(config);
         var authPolicy = new ReadonlyAuthPolicy(config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
-        ExchangeProcessor.register(config.getExchange(), authPolicy);
+        ExchangeProcessor.init(authPolicy);
         var identHttpHandler = new IdentHandler(config.getRequest(), config.getSecurity());
         var authHttpHandler = new AuthHandler(config.getRequest(), authPolicy);
         var distributeHandler = new DistributeHandler(config.getRequest(), config.getDistribute());

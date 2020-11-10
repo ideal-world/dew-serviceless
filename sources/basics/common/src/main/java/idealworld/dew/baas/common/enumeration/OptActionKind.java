@@ -21,11 +21,11 @@ import idealworld.dew.baas.common.resp.StandardResp;
 import java.util.Arrays;
 
 /**
- * 权限操作类型枚举.
+ * 操作类型枚举.
  *
  * @author gudaoxuri
  */
-public enum AuthActionKind {
+public enum OptActionKind {
 
     /**
      * 获取.
@@ -36,11 +36,11 @@ public enum AuthActionKind {
      */
     CREATE("CREATE"),
     /**
-     * 全量更新.
+     * 更新.
      */
     MODIFY("MODIFY"),
     /**
-     * 局部更新.
+     * 局部更新（仅HTTP）.
      */
     PATCH("PATCH"),
     /**
@@ -50,23 +50,23 @@ public enum AuthActionKind {
 
     private final String code;
 
-    AuthActionKind(String code) {
+    OptActionKind(String code) {
         this.code = code;
     }
 
     /**
-     * Parse auth action kind.
+     * Parse opt action kind.
      *
      * @param code the code
      * @return the auth action kind
      */
-    public static AuthActionKind parse(String code) {
-        return Arrays.stream(AuthActionKind.values())
+    public static OptActionKind parse(String code) {
+        return Arrays.stream(OptActionKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.badRequest("BASIC",
-                                "Auth Action kind {" + code + "} NOT exist.")));
+                                "Operation Action kind {" + code + "} NOT exist.")));
     }
 
     @Override

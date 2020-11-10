@@ -1,16 +1,14 @@
 package idealworld.dew.baas.gateway.exchange;
 
-import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.exception.RTException;
-import idealworld.dew.baas.common.funs.cache.RedisClient;
-import idealworld.dew.baas.gateway.GatewayConfig;
+import idealworld.dew.baas.common.funs.exchange.ExchangeHelper;
 import idealworld.dew.baas.gateway.process.ReadonlyAuthPolicy;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 
 /**
  * @author gudaoxuri
@@ -18,25 +16,34 @@ import java.net.URISyntaxException;
 @Slf4j
 public class ExchangeProcessor {
 
-    public static Future<Void> register(GatewayConfig.Exchange exchange, ReadonlyAuthPolicy policy) {
-        Promise<Void> promise = Promise.promise();
-        RedisClient.choose("").subscribe(exchange.getTopic(), message -> {
-            log.trace("[Exchange]Received {}", message);
-            var exchangeData = $.json.toObject(message, ExchangeData.class);
+    public static Future<Void> init(ReadonlyAuthPolicy policy) {
+        return ExchangeHelper.register(new HashSet<>() {
+            {
+                add("resource");
+            }
+        }, exchangeData -> {
             URI resourceUri;
+            var resUri = exchangeData.getDetailData().get("resourceUri").toString();
+            var resourceActionKind = exchangeData.getDetailData().get("resourceActionKind").toString();
             try {
-                resourceUri = new URI(exchangeData.getResourceUri());
+                resourceUri = new URI(resUri);
             } catch (URISyntaxException e) {
-                log.error("[Exchange]URI [{}] parse error", exchangeData.getResourceUri(), e);
+                log.error("[Exchange]URI [{}] parse error", resUri, e);
                 throw new RTException(e);
             }
-            if (exchangeData.getAddOpt()) {
-                policy.addLocalResource(resourceUri, exchangeData.getActionKind());
-            } else {
-                policy.removeLocalResource(resourceUri, exchangeData.getActionKind());
+            switch (exchangeData.getActionKind()) {
+                case CREATE:
+                    policy.addLocalResource(resourceUri, resourceActionKind);
+                    break;
+                case MODIFY:
+                    policy.removeLocalResource(resourceUri, resourceActionKind);
+                    policy.addLocalResource(resourceUri, resourceActionKind);
+                    break;
+                case DELETE:
+                    policy.removeLocalResource(resourceUri, resourceActionKind);
+                    break;
             }
-        }).onSuccess(response -> promise.complete());
-        return promise.future();
+        });
     }
 
 }
