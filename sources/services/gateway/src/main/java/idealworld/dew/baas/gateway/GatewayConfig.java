@@ -52,10 +52,6 @@ public class GatewayConfig extends CommonConfig {
 
         @Builder.Default
         private String path = "/exec";
-        @Builder.Default
-        private String resourceUriKey = "res";
-        @Builder.Default
-        private String actionKey = "act";
 
     }
 

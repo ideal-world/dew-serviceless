@@ -1,5 +1,7 @@
 package idealworld.dew.baas.common.util;
 
+import lombok.SneakyThrows;
+
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -27,6 +29,12 @@ public class URIHelper {
                 + (uri.getQuery() != null ? "?" + query : "");
     }
 
+    @SneakyThrows
+    public static String formatUri(String strUri) {
+        var uri = new URI(strUri);
+        return formatUri(uri);
+    }
+
     public static Map<String, String> getSingleValueQuery(String query) {
         if (query == null) {
             return new HashMap<>();
@@ -36,4 +44,8 @@ public class URIHelper {
                 .collect(Collectors.toMap(i -> i[0], i -> i.length > 1 ? i[1] : ""));
     }
 
+    @SneakyThrows
+    public static URI newURI(String strUri) {
+        return new URI(strUri);
+    }
 }

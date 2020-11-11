@@ -9,6 +9,7 @@ import idealworld.dew.baas.common.util.YamlHelper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.ParameterizedType;
@@ -18,6 +19,7 @@ import java.util.Arrays;
 @Slf4j
 public abstract class CommonApplication<C extends CommonConfig> extends AbstractVerticle {
 
+    public static Vertx VERTX;
     private static final String PROFILE_KEY = "dew.profile";
 
     private Class<C> configClazz = (Class<C>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
@@ -38,6 +40,7 @@ public abstract class CommonApplication<C extends CommonConfig> extends Abstract
 
     @Override
     final public void start(Promise<Void> startPromise) {
+        VERTX = vertx;
         var config = loadConfig();
         doStart(config, startPromise);
     }

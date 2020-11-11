@@ -2,7 +2,7 @@ package idealworld.dew.baas.gateway.exchange;
 
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.baas.common.funs.exchange.ExchangeHelper;
-import idealworld.dew.baas.gateway.process.ReadonlyAuthPolicy;
+import idealworld.dew.baas.gateway.process.GatewayAuthPolicy;
 import io.vertx.core.Future;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,7 +16,7 @@ import java.util.HashSet;
 @Slf4j
 public class ExchangeProcessor {
 
-    public static Future<Void> init(ReadonlyAuthPolicy policy) {
+    public static Future<Void> init(GatewayAuthPolicy policy) {
         return ExchangeHelper.register(new HashSet<>() {
             {
                 add("resource");

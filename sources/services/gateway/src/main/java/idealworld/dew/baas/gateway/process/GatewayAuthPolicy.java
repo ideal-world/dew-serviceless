@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * @author gudaoxuri
  */
 @Slf4j
-public class ReadonlyAuthPolicy {
+public class GatewayAuthPolicy {
 
     // resourceKind -> actionKind -> uris
     private static final Map<String, Map<String, List<URI>>> LOCAL_RESOURCES = new ConcurrentHashMap<>();
@@ -44,7 +44,7 @@ public class ReadonlyAuthPolicy {
     private final Integer resourceCacheExpireSec;
     private final Integer groupNodeLength;
 
-    public ReadonlyAuthPolicy(Integer resourceCacheExpireSec, Integer groupNodeLength) {
+    public GatewayAuthPolicy(Integer resourceCacheExpireSec, Integer groupNodeLength) {
         this.resourceCacheExpireSec = resourceCacheExpireSec;
         this.groupNodeLength = groupNodeLength;
         RedisClient.choose("").scan(Constant.CACHE_AUTH_POLICY, key -> {

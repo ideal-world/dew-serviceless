@@ -5,9 +5,13 @@ import group.idealworld.dew.Dew;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.enumeration.*;
 import idealworld.dew.baas.common.resp.StandardResp;
+import idealworld.dew.baas.common.util.URIHelper;
 import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.IAMConstant;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
@@ -16,9 +20,9 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
-import java.net.URI;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
 public class WriteableAuthPolicy {
@@ -40,7 +44,7 @@ public class WriteableAuthPolicy {
         if (expireSec <= 0) {
             return StandardResp.badRequest(BUSINESS_AUTH, "过期时间小于当前时间");
         }
-        authPolicyAddReq.setResourceUri(formatUri(authPolicyAddReq.getResourceUri()));
+        authPolicyAddReq.setResourceUri(URIHelper.formatUri(authPolicyAddReq.getResourceUri()));
         var key = IAMConstant.CACHE_AUTH_POLICY
                 + authPolicyAddReq.getResourceKind().toString() + ":"
                 + authPolicyAddReq.getResourceUri() + ":"
@@ -75,7 +79,7 @@ public class WriteableAuthPolicy {
             AuthSubjectKind subjectKind,
             String subjectId
     ) {
-        resourceUri = formatUri(resourceUri);
+        resourceUri = URIHelper.formatUri(resourceUri);
         var key = Constant.CACHE_AUTH_POLICY
                 + resourceKind.toString() + ":"
                 + resourceUri + ":"
@@ -103,7 +107,7 @@ public class WriteableAuthPolicy {
             ResourceKind resourceKind,
             String resourceUri
     ) {
-        resourceUri = formatUri(resourceUri);
+        resourceUri = URIHelper.formatUri(resourceUri);
         execRedisScan(
                 Constant.CACHE_AUTH_POLICY
                         + resourceKind.toString() + ":"
@@ -151,22 +155,6 @@ public class WriteableAuthPolicy {
         });
     }
 
-    @SneakyThrows
-    public String formatUri(String strUri) {
-        var uri = new URI(strUri);
-        var query = "";
-        if (uri.getQuery() != null) {
-            query = Arrays.stream(uri.getQuery().split("&"))
-                    .sorted(Comparator.comparing(u -> u.split("=")[0]))
-                    .collect(Collectors.joining("&"));
-        }
-        return uri.getScheme()
-                + "//"
-                + uri.getHost()
-                + (uri.getPort() != -1 ? ":" + uri.getPort() : "")
-                + uri.getPath()
-                + (uri.getQuery() != null ? "?" + query : "");
-    }
 
 }
 

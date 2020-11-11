@@ -2,6 +2,7 @@ package idealworld.dew.baas.gateway.process;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
+import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
@@ -40,8 +41,8 @@ public class DistributeHandler extends CommonHttpHandler {
     @Override
     public void handle(RoutingContext ctx) {
         var identOptInfo = (IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
-        var resourceUri = (URI) ctx.get(request.getResourceUriKey());
-        var action = (OptActionKind) ctx.get(request.getActionKey());
+        var resourceUri = (URI) ctx.get(Constant.CONFIG_RESOURCE_URI_FLAG);
+        var action = (OptActionKind) ctx.get(Constant.CONFIG_RESOURCE_ACTION_FLAG);
 
         HttpMethod httpMethod = HttpMethod.GET;
         Buffer body = null;
@@ -69,6 +70,8 @@ public class DistributeHandler extends CommonHttpHandler {
         Map<String, String> header = new HashMap<>() {
             {
                 put(distribute.getIdentOptHeaderName(), $.json.toJsonString(identOptInfo));
+                put(Constant.CONFIG_RESOURCE_URI_FLAG, resourceUri.toString());
+                put(Constant.CONFIG_RESOURCE_ACTION_FLAG, action.toString());
             }
         };
         switch (ResourceKind.parse(resourceUri.getScheme().toLowerCase())) {

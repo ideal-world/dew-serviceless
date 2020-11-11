@@ -27,9 +27,9 @@ import java.util.stream.Collectors;
 public class AuthHandler extends CommonHttpHandler {
 
     private final GatewayConfig.Request request;
-    private final ReadonlyAuthPolicy authPolicy;
+    private final GatewayAuthPolicy authPolicy;
 
-    public AuthHandler(GatewayConfig.Request request, ReadonlyAuthPolicy authPolicy) {
+    public AuthHandler(GatewayConfig.Request request, GatewayAuthPolicy authPolicy) {
         this.request = request;
         this.authPolicy = authPolicy;
     }
@@ -38,8 +38,8 @@ public class AuthHandler extends CommonHttpHandler {
     @Override
     public void handle(RoutingContext ctx) {
         var identOptInfo = (idealworld.dew.baas.common.dto.IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
-        var resourceUri = (URI) ctx.get(request.getResourceUriKey());
-        var action = (OptActionKind) ctx.get(request.getActionKey());
+        var resourceUri = (URI) ctx.get(Constant.CONFIG_RESOURCE_URI_FLAG);
+        var action = (OptActionKind) ctx.get(Constant.CONFIG_RESOURCE_ACTION_FLAG);
 
         var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
         if (identOptInfo != null) {

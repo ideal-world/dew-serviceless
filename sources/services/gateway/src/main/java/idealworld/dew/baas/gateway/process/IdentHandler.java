@@ -3,6 +3,7 @@ package idealworld.dew.baas.gateway.process;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import com.ecfront.dew.common.exception.RTException;
+import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
@@ -55,30 +56,30 @@ public class IdentHandler extends CommonHttpHandler {
         var queryMap = Arrays.stream(URLDecoder.decode(ctx.request().query().trim(), StandardCharsets.UTF_8).split("&"))
                 .map(item -> item.split("="))
                 .collect(Collectors.toMap(item -> item[0], item -> item.length > 1 ? item[1] : ""));
-        if (!queryMap.containsKey(request.getResourceUriKey())
-                || queryMap.get(request.getResourceUriKey()).isBlank()
-                || !queryMap.containsKey(request.getActionKey())
-                || queryMap.get(request.getActionKey()).isBlank()
+        if (!queryMap.containsKey(Constant.CONFIG_RESOURCE_URI_FLAG)
+                || queryMap.get(Constant.CONFIG_RESOURCE_URI_FLAG).isBlank()
+                || !queryMap.containsKey(Constant.CONFIG_RESOURCE_ACTION_FLAG)
+                || queryMap.get(Constant.CONFIG_RESOURCE_ACTION_FLAG).isBlank()
         ) {
-            error(StandardCode.BAD_REQUEST, "请求格式不合法，缺少[" + request.getResourceUriKey() + "]或[" + request.getActionKey() + "]", ctx);
+            error(StandardCode.BAD_REQUEST, "请求格式不合法，缺少[" + Constant.CONFIG_RESOURCE_URI_FLAG + "]或[" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "]", ctx);
             return;
         }
         URI resourceUri;
         OptActionKind actionKind;
         try {
-            resourceUri = new URI(queryMap.get(request.getResourceUriKey()));
+            resourceUri = new URI(queryMap.get(Constant.CONFIG_RESOURCE_URI_FLAG));
             if (resourceUri.getScheme() == null || resourceUri.getHost() == null) {
                 error(StandardCode.BAD_REQUEST, "请求格式不合法，资源URI错误", ctx);
                 return;
             }
             ResourceKind.parse(resourceUri.getScheme().toLowerCase());
-            actionKind = OptActionKind.parse(queryMap.get(request.getActionKey()).toLowerCase());
+            actionKind = OptActionKind.parse(queryMap.get(Constant.CONFIG_RESOURCE_ACTION_FLAG).toLowerCase());
         } catch (RTException e) {
             error(StandardCode.BAD_REQUEST, "请求格式不合法，资源类型或操作类型不存在", ctx);
             return;
         }
-        ctx.put(request.getResourceUriKey(), resourceUri);
-        ctx.put(request.getActionKey(), actionKind);
+        ctx.put(Constant.CONFIG_RESOURCE_URI_FLAG, resourceUri);
+        ctx.put(Constant.CONFIG_RESOURCE_ACTION_FLAG, actionKind);
 
         var token = ctx.request().headers().contains(security.getTokenFieldName())
                 ? ctx.request().getHeader(security.getTokenFieldName()) : null;

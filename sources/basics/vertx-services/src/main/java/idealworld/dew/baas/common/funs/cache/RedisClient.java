@@ -85,6 +85,10 @@ public class RedisClient {
         return REDIS_CLIENTS.get(code);
     }
 
+    public static void remove(String code) {
+        REDIS_CLIENTS.remove(code);
+    }
+
     public Future<Void> set(String key, String value) {
         return Future.future(promise ->
                 redisAPI.set(new ArrayList<>() {

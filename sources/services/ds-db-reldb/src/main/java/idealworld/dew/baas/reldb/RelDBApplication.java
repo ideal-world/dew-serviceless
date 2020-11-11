@@ -1,6 +1,7 @@
 package idealworld.dew.baas.reldb;
 
 import idealworld.dew.baas.common.CommonApplication;
+import idealworld.dew.baas.common.funs.httpclient.HttpClient;
 import idealworld.dew.baas.common.funs.httpserver.HttpServer;
 import idealworld.dew.baas.reldb.exchange.ExchangeProcessor;
 import idealworld.dew.baas.reldb.process.AuthHandler;

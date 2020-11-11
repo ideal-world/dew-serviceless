@@ -1,6 +1,7 @@
 package idealworld.dew.baas.gateway.test;
 
 import com.ecfront.dew.common.$;
+import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.funs.cache.RedisClient;
 import idealworld.dew.baas.common.util.YamlHelper;
 import idealworld.dew.baas.gateway.GatewayApplication;
@@ -38,22 +39,22 @@ public class TestFlow extends BasicTest {
         result = $.http.post("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath(), "");
         testContext.assertEquals("请求格式不合法，缺少query", result);
         result = $.http.post("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey(),
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG,
                 "");
         testContext.assertTrue(result.contains("请求格式不合法，缺少"));
         result = $.http.post("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                        "=&" + gatewayConfig.getRequest().getActionKey() + "=",
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                        "=&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=",
                 "");
         testContext.assertTrue(result.contains("请求格式不合法，缺少"));
         result = $.http.post("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                        "=" + URLEncoder.encode("http//iam.service/console/tenant/account", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create",
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                        "=" + URLEncoder.encode("http//iam.service/console/tenant/account", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create",
                 "");
         testContext.assertTrue(result.contains("资源URI错误"));
         result = $.http.post("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                        "=" + URLEncoder.encode("http://iam.service/console/tenant/account", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=createx",
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                        "=" + URLEncoder.encode("http://iam.service/console/tenant/account", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=createx",
                 "");
         testContext.assertTrue(result.contains("资源类型或操作类型不存在"));
     }
@@ -62,8 +63,8 @@ public class TestFlow extends BasicTest {
     @Test
     public void testPublic(TestContext testContext) {
         var result = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create",
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容");
         testContext.assertEquals(200, result.statusCode);
         var data = $.json.toJson(result.result);
@@ -75,8 +76,8 @@ public class TestFlow extends BasicTest {
     public void testToken(TestContext testContext) {
         var async = testContext.async();
         var errorResult = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create",
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
                         put(gatewayConfig.getSecurity().getTokenFieldName(), "tokenxxx");
@@ -87,8 +88,8 @@ public class TestFlow extends BasicTest {
         RedisClient.choose("").set(gatewayConfig.getSecurity().getCacheTokenInfoKey() + "tokenxxx", "{\"accountCode\":\"testCode\"}");
         rule.vertx().setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                            "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                            "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create",
+                            "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                            "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create",
                     "测试内容", new HashMap<>() {
                         {
                             put(gatewayConfig.getSecurity().getTokenFieldName(), "tokenxxx");
@@ -107,8 +108,8 @@ public class TestFlow extends BasicTest {
     public void testAksk(TestContext testContext) {
         var async = testContext.async();
         var errorResult = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create",
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
                         put(gatewayConfig.getSecurity().getAkSkFieldName(), "xx");
@@ -120,8 +121,8 @@ public class TestFlow extends BasicTest {
         var date = new Date();
         date.setTime(System.currentTimeMillis() - 6000);
         errorResult = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create",
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
                         put(gatewayConfig.getSecurity().getAkSkFieldName(), "xxxx");
@@ -130,8 +131,8 @@ public class TestFlow extends BasicTest {
                 });
         testContext.assertEquals("请求格式不合法，HTTP Header[" + gatewayConfig.getSecurity().getAkSkFieldName() + "]格式错误", errorResult.result);
         errorResult = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create",
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
                         put(gatewayConfig.getSecurity().getAkSkFieldName(), "xx:xxx");
@@ -140,8 +141,8 @@ public class TestFlow extends BasicTest {
                 });
         testContext.assertEquals("认证错误，请求时间已过期", errorResult.result);
         errorResult = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                        "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create",
+                        "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
                         put(gatewayConfig.getSecurity().getAkSkFieldName(), "xx:xxx");
@@ -153,8 +154,8 @@ public class TestFlow extends BasicTest {
         RedisClient.choose("").set(gatewayConfig.getSecurity().getCacheAkSkInfoKey() + "xx", "skxx:1123456:789");
         rule.vertx().setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + gatewayConfig.getRequest().getPath() +
-                            "?" + gatewayConfig.getRequest().getResourceUriKey() +
-                            "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create",
+                            "?" + Constant.CONFIG_RESOURCE_URI_FLAG +
+                            "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create",
                     "测试内容", new HashMap<>() {
                         {
                             put(gatewayConfig.getSecurity().getAkSkFieldName(), "xx:xxx");
@@ -164,8 +165,8 @@ public class TestFlow extends BasicTest {
             testContext.assertEquals("认证错误，签名不合法", result.result);
 
             var d = sdf.format(new Date());
-            var query = gatewayConfig.getRequest().getResourceUriKey() +
-                    "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + gatewayConfig.getRequest().getActionKey() + "=create";
+            var query = Constant.CONFIG_RESOURCE_URI_FLAG +
+                    "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + Constant.CONFIG_RESOURCE_ACTION_FLAG + "=create";
             var signature = $.security.encodeStringToBase64(
                     $.security.digest.digest(("post\n" + d + "\n" + gatewayConfig.getRequest().getPath() + "\n" + query).toLowerCase(),
                             "skxx", "HmacSHA1"), StandardCharsets.UTF_8);

@@ -49,6 +49,10 @@ public class MysqlClient {
         return MYSQL_CLIENTS.get(code);
     }
 
+    public static void remove(String code) {
+        MYSQL_CLIENTS.remove(code);
+    }
+
     public Future<JsonArray> exec(String sql, Object... parameters) {
         if (parameters.length == 0) {
             return exec(sql, new ArrayList<>());

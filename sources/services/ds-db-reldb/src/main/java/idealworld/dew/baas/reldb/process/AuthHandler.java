@@ -2,9 +2,12 @@ package idealworld.dew.baas.reldb.process;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
+import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.funs.cache.RedisClient;
 import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
+import idealworld.dew.baas.common.funs.mysql.MysqlClient;
+import idealworld.dew.baas.common.util.URIHelper;
 import idealworld.dew.baas.reldb.RelDBConfig;
 import io.vertx.ext.web.RoutingContext;
 import lombok.SneakyThrows;
@@ -35,17 +38,23 @@ public class AuthHandler extends CommonHttpHandler {
         }
         var sqlInfo = ctx.getBodyAsString().split("\\|");
         var sqlKey = sqlInfo[0];
-        var sqlParameters = $.json.toList(sqlInfo[1], Object.class);
         RedisClient.choose("").get(sqlKey, security.getSqlCacheExpireSec())
                 .onSuccess(sql -> {
+                    var sqlAst = SqlParser.parse(sql);
+                    var strIdentOpt = ctx.request().getHeader(request.getIdentOptHeaderName());
+                    var strResourceUri = ctx.request().getHeader(Constant.CONFIG_RESOURCE_URI_FLAG);
+                    var strAction = ctx.request().getHeader(Constant.CONFIG_RESOURCE_ACTION_FLAG);
+                    var resourceUri = URIHelper.newURI(strResourceUri);
+                    var identOpt = $.json.toObject(strIdentOpt, IdentOptCacheInfo.class);
+                    // TODO
 
+                    var sqlParameters = $.json.toList(sqlInfo[1], Object.class);
+                    MysqlClient.choose(resourceUri.getHost()).exec(sql, sqlParameters)
+                            .onSuccess(result -> ctx.end(result.toBuffer()))
+                            .onFailure(e -> error(StandardCode.BAD_REQUEST, "数据查询错误", ctx, e));
                 })
-                .onFailure(e -> {
-                    error(StandardCode.BAD_REQUEST, "请求的SQL Key [" + sqlKey + "]不存在", ctx);
-                });
+                .onFailure(e -> error(StandardCode.BAD_REQUEST, "请求的SQL Key [" + sqlKey + "]不存在", ctx));
 
-        var strIdentOpt = ctx.request().getHeader(request.getIdentOptHeaderName());
-        var identOpt = $.json.toObject(strIdentOpt, IdentOptCacheInfo.class);
 
     }
 

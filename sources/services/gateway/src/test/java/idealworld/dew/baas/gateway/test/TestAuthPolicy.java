@@ -11,7 +11,7 @@ import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
 import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.funs.cache.RedisClient;
 import idealworld.dew.baas.gateway.exchange.ExchangeProcessor;
-import idealworld.dew.baas.gateway.process.ReadonlyAuthPolicy;
+import idealworld.dew.baas.gateway.process.GatewayAuthPolicy;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.ext.unit.Async;
@@ -110,7 +110,7 @@ public class TestAuthPolicy extends BasicTest {
         CompositeFuture.all(Lists.newArrayList(addAccountAllByRole, deleteAccountAllByRole, deleteAccountIdentAllByRoleAndAccount, deleteAccountIdentItemByAccount))
                 .onSuccess(resp -> async.countDown());
 
-        var authPolicy = new ReadonlyAuthPolicy(60, 5);
+        var authPolicy = new GatewayAuthPolicy(60, 5);
         rule.vertx().setTimer(1000, h -> {
             Map<AuthSubjectKind, List<String>> subjectInfo = new HashMap<>() {
                 {
@@ -251,7 +251,7 @@ public class TestAuthPolicy extends BasicTest {
         CompositeFuture.all(Lists.newArrayList(addAccountAllByGroup, deleteAccountAllByGroup, modifyAccountAllByGroup, patchAccountAllByGroup))
                 .onSuccess(resp -> async.countDown());
 
-        var authPolicy = new ReadonlyAuthPolicy(60, 5);
+        var authPolicy = new GatewayAuthPolicy(60, 5);
         rule.vertx().setTimer(1000, h -> {
             Map<AuthSubjectKind, List<String>> subjectInfo = new HashMap<>() {
                 {
@@ -367,7 +367,7 @@ public class TestAuthPolicy extends BasicTest {
                 });
             }
         };
-        var authPolicy = new ReadonlyAuthPolicy(60, 5);
+        var authPolicy = new GatewayAuthPolicy(60, 5);
         Future.succeededFuture()
                 .compose(resp ->
                         Future.future(promise -> rule.vertx().setTimer(1000, h -> {
