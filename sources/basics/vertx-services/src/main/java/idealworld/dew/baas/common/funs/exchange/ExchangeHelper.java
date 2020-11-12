@@ -2,7 +2,7 @@ package idealworld.dew.baas.common.funs.exchange;
 
 import com.ecfront.dew.common.$;
 import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.common.dto.ExchangeData;
+import idealworld.dew.baas.common.dto.exchange.ExchangeData;
 import idealworld.dew.baas.common.funs.cache.RedisClient;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -24,7 +24,7 @@ public class ExchangeHelper {
         RedisClient.choose("").subscribe(Constant.CONFIG_EVENT_NOTIFY_TOPIC_BY_IAM, message -> {
             var quickCheckSplit = message.split(QUICK_CHECK_SPLIT);
             var subjectCategory = quickCheckSplit[0];
-            if (!subjectCategories.contains(subjectCategory)) {
+            if (subjectCategories.stream().noneMatch(subjectCategory::startsWith)) {
                 return;
             }
             log.trace("[Exchange]Received {}", message);

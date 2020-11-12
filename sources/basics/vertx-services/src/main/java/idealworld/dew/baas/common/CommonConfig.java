@@ -70,6 +70,7 @@ public abstract class CommonConfig {
     @AllArgsConstructor
     public static class JDBCConfig {
 
+        private String url;
         private String host;
         @Builder.Default
         private Integer port = 3306;

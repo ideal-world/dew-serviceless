@@ -14,56 +14,64 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.scene.appconsole.dto.resouce;
+package idealworld.dew.baas.iam.scene.appconsole.dto.resource;
 
-import idealworld.dew.baas.iam.enumeration.ExposeKind;
+import idealworld.dew.baas.iam.scene.common.dto.AppBasedResp;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 
 /**
- * 修改资源请求.
+ * 资源响应.
  *
  * @author gudaoxuri
  */
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改资源请求")
-public class ResourceModifyReq implements Serializable {
+@EqualsAndHashCode(callSuper = true)
+@Schema(title = "资源响应")
+public class ResourceResp extends AppBasedResp {
 
+    @NotNull
+    @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源名称")
+    @Schema(title = "资源名称", required = true)
     private String name;
 
+    @NotNull
+    @NotBlank
     @Size(max = 5000)
-    @Schema(title = "资源URI")
+    @Schema(title = "资源URI", required = true)
     private String uri;
 
     @Size(max = 1000)
-    @Schema(title = "资源图标（路径）")
+    @Schema(title = "资源图标（路径）", required = true)
     private String icon;
 
     @Size(max = 1000)
-    @Schema(title = "触发后的操作，多用于菜单链接")
+    @Schema(title = "触发后的操作，多用于菜单链接", required = true)
     private String action;
 
-    @Schema(title = "资源显示排序，asc")
+    @Schema(title = "资源显示排序，asc", required = true)
     private Integer sort;
 
-    @Schema(title = "是否是资源组")
+    @Schema(title = "是否是资源组", required = true)
     private Boolean group;
 
-    @Schema(title = "资源所属组Id")
+    @Schema(title = "资源所属组Id", required = true)
     private Long parentId;
 
-    @Schema(title = "开放等级类型")
-    private ExposeKind exposeKind;
+    @NotNull
+    @Schema(title = "关联资源主体Id", required = true)
+    private Long relResourceSubjectId;
 
 }

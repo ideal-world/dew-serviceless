@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.scene.appconsole.dto.resouce;
+package idealworld.dew.baas.iam.scene.appconsole.dto.resource;
 
-import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -24,13 +23,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 添加资源请求.
+ * 修改资源请求.
  *
  * @author gudaoxuri
  */
@@ -38,49 +35,35 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加资源请求")
-public class ResourceAddReq implements Serializable {
+@Schema(title = "修改资源请求")
+public class ResourceModifyReq implements Serializable {
 
-    @NotNull
-    @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源名称", required = true)
+    @Schema(title = "资源名称")
     private String name;
 
-    @NotNull
-    @NotBlank
     @Size(max = 5000)
-    @Schema(title = "资源URI", required = true)
+    @Schema(title = "资源URI")
     private String uri;
 
     @Size(max = 1000)
     @Schema(title = "资源图标（路径）")
-    @Builder.Default
-    private String icon = "";
+    private String icon;
 
     @Size(max = 1000)
     @Schema(title = "触发后的操作，多用于菜单链接")
-    @Builder.Default
-    private String action = "";
+    private String action;
 
     @Schema(title = "资源显示排序，asc")
-    @Builder.Default
-    private Integer sort = 0;
+    private Integer sort;
 
     @Schema(title = "是否是资源组")
-    @Builder.Default
-    private Boolean group = false;
+    private Boolean group;
 
     @Schema(title = "资源所属组Id")
-    @Builder.Default
-    private Long parentId = Constant.OBJECT_UNDEFINED;
-
-    @NotNull
-    @Schema(title = "关联资源主体Id", required = true)
-    private Long relResourceSubjectId;
+    private Long parentId;
 
     @Schema(title = "开放等级类型")
-    @Builder.Default
-    private ExposeKind exposeKind = ExposeKind.APP;
+    private ExposeKind exposeKind;
 
 }

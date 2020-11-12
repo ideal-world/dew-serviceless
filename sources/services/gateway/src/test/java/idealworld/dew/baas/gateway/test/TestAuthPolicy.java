@@ -4,7 +4,7 @@ import com.ecfront.dew.common.$;
 import com.google.common.collect.Lists;
 import idealworld.dew.baas.common.CommonConfig;
 import idealworld.dew.baas.common.Constant;
-import idealworld.dew.baas.common.dto.ExchangeData;
+import idealworld.dew.baas.common.dto.exchange.ExchangeData;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;

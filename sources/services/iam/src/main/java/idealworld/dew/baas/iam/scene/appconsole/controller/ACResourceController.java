@@ -18,7 +18,7 @@ package idealworld.dew.baas.iam.scene.appconsole.controller;
 
 import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
-import idealworld.dew.baas.iam.scene.appconsole.dto.resouce.*;
+import idealworld.dew.baas.iam.scene.appconsole.dto.resource.*;
 import idealworld.dew.baas.iam.scene.appconsole.service.ACResourceService;
 import idealworld.dew.baas.iam.scene.common.controller.IAMBasicController;
 import io.swagger.v3.oas.annotations.Operation;

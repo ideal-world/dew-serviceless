@@ -60,6 +60,10 @@ public class RelDBConfig extends CommonConfig {
 
         @Builder.Default
         private Integer sqlCacheExpireSec = 60;
+        @Builder.Default
+        private Integer resourceCacheExpireSec = 60 * 60 * 24;
+        @Builder.Default
+        private Integer groupNodeLength = 5;
 
     }
 

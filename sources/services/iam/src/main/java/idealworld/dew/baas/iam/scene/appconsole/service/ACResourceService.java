@@ -23,7 +23,7 @@ import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.auth.*;
-import idealworld.dew.baas.iam.scene.appconsole.dto.resouce.*;
+import idealworld.dew.baas.iam.scene.appconsole.dto.resource.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.common.dto;
+package idealworld.dew.baas.common.dto.exchange;
 
 import idealworld.dew.baas.common.enumeration.OptActionKind;
 import lombok.AllArgsConstructor;

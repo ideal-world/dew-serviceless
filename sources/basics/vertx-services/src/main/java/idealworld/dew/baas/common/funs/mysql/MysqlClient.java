@@ -29,18 +29,22 @@ public class MysqlClient {
     public static Future<Void> init(String code, Vertx vertx, CommonConfig.JDBCConfig config) {
         Promise<Void> promise = Promise.promise();
         var mysqlClient = new MysqlClient();
-        var connectOptions = new MySQLConnectOptions()
-                .setPort(config.getPort())
-                .setHost(config.getHost())
-                .setDatabase(config.getDb())
-                .setUser(config.getUserName())
-                .setPassword(config.getPassword())
-                .setCharset(config.getCharset())
-                .setCollation(config.getCollation());
         var poolOptions = new PoolOptions()
                 .setMaxSize(config.getMaxPoolSize())
                 .setMaxWaitQueueSize(config.getMaxPoolWaitQueueSize());
-        mysqlClient.client = MySQLPool.pool(vertx, connectOptions, poolOptions);
+        if (config.getUrl() != null && !config.getUrl().isBlank()) {
+            mysqlClient.client = MySQLPool.pool(vertx, config.getUrl().trim(), poolOptions);
+        } else {
+            var connectOptions = new MySQLConnectOptions()
+                    .setPort(config.getPort())
+                    .setHost(config.getHost())
+                    .setDatabase(config.getDb())
+                    .setUser(config.getUserName())
+                    .setPassword(config.getPassword())
+                    .setCharset(config.getCharset())
+                    .setCollation(config.getCollation());
+            mysqlClient.client = MySQLPool.pool(vertx, connectOptions, poolOptions);
+        }
         MYSQL_CLIENTS.put(code, mysqlClient);
         return promise.future();
     }

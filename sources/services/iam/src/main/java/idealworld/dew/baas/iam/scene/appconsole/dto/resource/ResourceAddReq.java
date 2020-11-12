@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.scene.appconsole.dto.resouce;
+package idealworld.dew.baas.iam.scene.appconsole.dto.resource;
 
-import idealworld.dew.baas.iam.scene.common.dto.AppBasedResp;
+import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
- * 资源响应.
+ * 添加资源请求.
  *
  * @author gudaoxuri
  */
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@Schema(title = "资源响应")
-public class ResourceResp extends AppBasedResp {
+@Schema(title = "添加资源请求")
+public class ResourceAddReq implements Serializable {
 
     @NotNull
     @NotBlank
@@ -54,24 +54,33 @@ public class ResourceResp extends AppBasedResp {
     private String uri;
 
     @Size(max = 1000)
-    @Schema(title = "资源图标（路径）", required = true)
-    private String icon;
+    @Schema(title = "资源图标（路径）")
+    @Builder.Default
+    private String icon = "";
 
     @Size(max = 1000)
-    @Schema(title = "触发后的操作，多用于菜单链接", required = true)
-    private String action;
+    @Schema(title = "触发后的操作，多用于菜单链接")
+    @Builder.Default
+    private String action = "";
 
-    @Schema(title = "资源显示排序，asc", required = true)
-    private Integer sort;
+    @Schema(title = "资源显示排序，asc")
+    @Builder.Default
+    private Integer sort = 0;
 
-    @Schema(title = "是否是资源组", required = true)
-    private Boolean group;
+    @Schema(title = "是否是资源组")
+    @Builder.Default
+    private Boolean group = false;
 
-    @Schema(title = "资源所属组Id", required = true)
-    private Long parentId;
+    @Schema(title = "资源所属组Id")
+    @Builder.Default
+    private Long parentId = Constant.OBJECT_UNDEFINED;
 
     @NotNull
     @Schema(title = "关联资源主体Id", required = true)
     private Long relResourceSubjectId;
+
+    @Schema(title = "开放等级类型")
+    @Builder.Default
+    private ExposeKind exposeKind = ExposeKind.APP;
 
 }

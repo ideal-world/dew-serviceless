@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam.scene.appconsole.dto.resouce;
+package idealworld.dew.baas.iam.scene.appconsole.dto.resource;
 
 import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
@@ -24,11 +24,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 修改资源主体请求.
+ * 添加资源主体请求.
  *
  * @author gudaoxuri
  */
@@ -36,47 +38,61 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改资源主体请求")
-public class ResourceSubjectModifyReq implements Serializable {
+@Schema(title = "添加资源主体请求")
+public class ResourceSubjectAddReq implements Serializable {
 
+    @NotNull
+    @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源主体编码")
+    @Schema(title = "资源主体编码", required = true)
     private String code;
 
+    @NotNull
+    @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源主体名称")
+    @Schema(title = "资源主体名称", required = true)
     private String name;
 
     @Schema(title = "资源主体显示排序，asc")
-    private Integer sort;
+    @Builder.Default
+    private Integer sort = 0;
 
     @Schema(title = "是否默认")
-    private Boolean defaultByApp;
+    @Builder.Default
+    private Boolean defaultByApp = false;
 
-    @Schema(title = "资源类型")
+    @NotNull
+    @Schema(title = "资源类型", required = true)
     private ResourceKind kind;
 
+    @NotNull
+    @NotBlank
     @Size(max = 5000)
-    @Schema(title = "资源主体连接URI")
+    @Schema(title = "资源主体连接URI", required = true)
     private String uri;
 
     @Size(max = 1000)
     @Schema(title = "AK，部分类型支持写到URI中")
-    private String ak;
+    @Builder.Default
+    private String ak = "";
 
     @Size(max = 1000)
     @Schema(title = "SK，部分类型支持写到URI中")
-    private String sk;
+    @Builder.Default
+    private String sk = "";
 
     @Size(max = 1000)
     @Schema(title = "第三方平台账号名")
-    private String platformAccount;
+    @Builder.Default
+    private String platformAccount = "";
 
     @Size(max = 1000)
     @Schema(title = "第三方平台项目名，如华为云的ProjectId")
-    private String platformProjectId;
+    @Builder.Default
+    private String platformProjectId = "";
 
     @Schema(title = "开放等级类型")
-    private ExposeKind exposeKind;
+    @Builder.Default
+    private ExposeKind exposeKind=ExposeKind.APP;
 
 }
