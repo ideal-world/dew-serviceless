@@ -32,7 +32,6 @@ public class ExchangeProcessor {
             }
         }, exchangeData -> {
             if (exchangeData.getSubjectCategory().equalsIgnoreCase("resourceSubject")) {
-
                 if (exchangeData.getActionKind() == OptActionKind.CREATE
                         || exchangeData.getActionKind() == OptActionKind.MODIFY) {
                     HttpClient.request(HttpMethod.GET, exchangeData.getFetchUrl(), null, null, null)

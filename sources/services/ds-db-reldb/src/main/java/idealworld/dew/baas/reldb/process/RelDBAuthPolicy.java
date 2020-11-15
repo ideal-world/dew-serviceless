@@ -41,11 +41,6 @@ public class RelDBAuthPolicy {
             Map<AuthSubjectKind, List<String>> subjectInfo,
             Promise<AuthResultKind> promise
     ) {
-
-        if (resourceInfo.isEmpty()) {
-            promise.complete(AuthResultKind.REJECT);
-            return;
-        }
         var currentProcessInfo = resourceInfo.entrySet().iterator().next();
         AuthenticationProcessor.authentication(currentProcessInfo.getKey(), currentProcessInfo.getValue(), subjectInfo)
                 .onSuccess(authResultKind -> {
@@ -54,7 +49,11 @@ public class RelDBAuthPolicy {
                         return;
                     }
                     resourceInfo.remove(currentProcessInfo.getKey());
-                    authentication(resourceInfo, subjectInfo, promise);
+                    if (!resourceInfo.isEmpty()) {
+                        authentication(resourceInfo, subjectInfo, promise);
+                        return;
+                    }
+                    promise.complete(authResultKind);
                 })
                 .onFailure(e -> {
                     log.error("[Auth]Resource fetch error: {}", e.getMessage(), e.getCause());

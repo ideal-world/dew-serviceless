@@ -3,12 +3,14 @@ package idealworld.dew.baas.reldb.process;
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
+import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlDeleteStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlInsertStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlSelectQueryBlock;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlUpdateStatement;
+import com.alibaba.druid.sql.parser.ParserException;
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.baas.common.enumeration.OptActionKind;
 import lombok.Builder;
@@ -26,7 +28,13 @@ public class SqlParser {
 
 
     public static List<SqlAst> parse(String sql) {
-        var sqlStatements = SQLUtils.parseStatements(sql, DbType.mysql);
+        List<SQLStatement> sqlStatements;
+        try {
+            sqlStatements = SQLUtils.parseStatements(sql, DbType.mysql);
+        } catch (ParserException e) {
+            log.warn("[SqlParser]Parse sql error: {}", sql, e);
+            return null;
+        }
         for (var sqlStatement : sqlStatements) {
             if (sqlStatement instanceof MySqlInsertStatement) {
                 return parseInsert((MySqlInsertStatement) sqlStatement);

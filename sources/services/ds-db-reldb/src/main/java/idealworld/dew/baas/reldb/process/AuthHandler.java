@@ -15,6 +15,7 @@ import io.vertx.ext.web.RoutingContext;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,27 +40,30 @@ public class AuthHandler extends CommonHttpHandler {
     @SneakyThrows
     @Override
     public void handle(RoutingContext ctx) {
-        if (!ctx.request().headers().contains(request.getIdentOptHeaderName())) {
+        if (!ctx.request().headers().contains(request.getIdentOptHeaderName())
+                || !ctx.request().headers().contains(Constant.CONFIG_RESOURCE_URI_FLAG)) {
             error(StandardCode.BAD_REQUEST, "请求格式不合法", ctx);
+            return;
+        }
+        var strResourceUriWithoutPath = ctx.request().getHeader(Constant.CONFIG_RESOURCE_URI_FLAG);
+        var resourceSubjectCode = URIHelper.newURI(strResourceUriWithoutPath).getHost();
+        if (!MysqlClient.contains(resourceSubjectCode)) {
+            error(StandardCode.BAD_REQUEST, "请求的资源主题不存在", ctx);
             return;
         }
         var sqlInfo = ctx.getBodyAsString().split("\\|");
         var sqlKey = sqlInfo[0];
-        RedisClient.choose("").get(sqlKey, security.getSqlCacheExpireSec())
+        RedisClient.choose("").get(Constant.CACHE_RELDB_SQL_MAPPING + sqlKey, security.getSqlCacheExpireSec())
                 .onSuccess(sql -> {
-                    List<SqlParser.SqlAst> sqlAsts;
-                    try {
-                        sqlAsts = SqlParser.parse(sql);
-                        if (sqlAsts == null) {
-                            error(StandardCode.BAD_REQUEST, "请求的SQL解析错误", ctx);
-                            return;
-                        }
-                    } catch (Exception e) {
-                        error(StandardCode.BAD_REQUEST, "请求的SQL解析错误", ctx, e);
+                    if (sql == null) {
+                        error(StandardCode.BAD_REQUEST, "请求的SQL不存在", ctx);
                         return;
-
                     }
-                    var strResourceUriWithoutPath = ctx.request().getHeader(Constant.CONFIG_RESOURCE_URI_FLAG);
+                    List<SqlParser.SqlAst> sqlAsts = SqlParser.parse(sql);
+                    if (sqlAsts == null) {
+                        error(StandardCode.BAD_REQUEST, "请求的SQL解析错误", ctx);
+                        return;
+                    }
                     var resources = sqlAsts.stream()
                             .flatMap(sqlAst -> {
                                 var actionKind = sqlAst.getActionKind().toString().toLowerCase();
@@ -80,14 +84,16 @@ public class AuthHandler extends CommonHttpHandler {
                                     error(StandardCode.UNAUTHORIZED, "鉴权错误，没有权限访问对应的资源", ctx);
                                     return;
                                 }
-                                var sqlParameters = $.json.toList(sqlInfo[1], Object.class);
+                                var sqlParameters = sqlInfo.length == 1 ? new ArrayList<>() : $.json.toList(sqlInfo[1], Object.class);
                                 MysqlClient.choose(URIHelper.newURI(strResourceUriWithoutPath).getHost()).exec(sql, sqlParameters)
-                                        .onSuccess(result -> ctx.end(result.toBuffer()))
+                                        .onSuccess(result -> {
+                                            ctx.end(result.toBuffer());
+                                        })
                                         .onFailure(e -> error(StandardCode.BAD_REQUEST, "数据查询错误", ctx, e));
                             })
                             .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
                 })
-                .onFailure(e -> error(StandardCode.BAD_REQUEST, "请求的SQL Key [" + sqlKey + "]不存在", ctx));
+                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e.getCause()));
 
 
     }

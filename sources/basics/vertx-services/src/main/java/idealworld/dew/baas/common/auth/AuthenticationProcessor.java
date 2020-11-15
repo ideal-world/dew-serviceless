@@ -83,10 +83,6 @@ public class AuthenticationProcessor {
             Map<AuthSubjectKind, List<String>> subjectInfo,
             Promise<AuthResultKind> promise
     ) {
-        if (matchedResourceUris.isEmpty()) {
-            promise.complete(AuthResultKind.REJECT);
-            return;
-        }
         var currentProcessUri = matchedResourceUris.get(0);
         RedisClient.choose("").get(Constant.CACHE_AUTH_POLICY
                 + currentProcessUri.replace("//", "") + ":"
@@ -114,7 +110,11 @@ public class AuthenticationProcessor {
                         return;
                     }
                     matchedResourceUris.remove(0);
-                    doAuthentication(matchedResourceUris, actionKind, subjectInfo, promise);
+                    if (!matchedResourceUris.isEmpty()) {
+                        doAuthentication(matchedResourceUris, actionKind, subjectInfo, promise);
+                        return;
+                    }
+                    promise.complete(AuthResultKind.REJECT);
                 })
                 .onFailure(e -> {
                     log.error("[Auth]Resource fetch error: {}", e.getMessage(), e.getCause());

@@ -1,5 +1,4 @@
 redis:
   uri: redis://localhost:6379
 security:
-  tokenCacheExpireSec: 0
-  akSkCacheExpireSec: 0
+  sqlCacheExpireSec: 0

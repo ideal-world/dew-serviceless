@@ -10,6 +10,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -24,16 +25,32 @@ public class HttpClient {
         webClient = WebClient.create(vertx);
     }
 
+    public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url) {
+        return request(httpMethod, url, null, null, null);
+    }
+
+    public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body) {
+        return request(httpMethod, url, body, null, null);
+    }
+
+    public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header) {
+        return request(httpMethod, url, body, header, null);
+    }
+
     public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header, Integer timeout) {
         var request = webClient.requestAbs(httpMethod, url);
         if (timeout != null) {
             request.timeout(timeout);
         }
-        if (header != null) {
-            MultiMap headerMap = MultiMap.caseInsensitiveMultiMap();
-            headerMap.addAll(header);
-            request.putHeaders(headerMap);
+        if (header == null) {
+            header = new HashMap<>();
         }
+        if (!header.containsKey("Content-Type")) {
+            header.put("Content-Type", "application/json; charset=utf-8");
+        }
+        MultiMap headerMap = MultiMap.caseInsensitiveMultiMap();
+        headerMap.addAll(header);
+        request.putHeaders(headerMap);
         if (body != null) {
             return request.sendBuffer(body);
         }
@@ -50,11 +67,15 @@ public class HttpClient {
             URIHelper.getSingleValueQuery(query)
                     .forEach(request::addQueryParam);
         }
-        if (header != null) {
-            MultiMap headerMap = MultiMap.caseInsensitiveMultiMap();
-            headerMap.addAll(header);
-            request.putHeaders(headerMap);
+        if (header == null) {
+            header = new HashMap<>();
         }
+        if (!header.containsKey("Content-Type")) {
+            header.put("Content-Type", "application/json; charset=utf-8");
+        }
+        MultiMap headerMap = MultiMap.caseInsensitiveMultiMap();
+        headerMap.addAll(header);
+        request.putHeaders(headerMap);
         if (body != null) {
             return request.sendBuffer(body);
         }

@@ -47,6 +47,7 @@ public class Constant {
      * 鉴权策略缓存
      */
     public static final String CACHE_AUTH_POLICY = "iam:auth:policy:";
+    public static final String CACHE_RELDB_SQL_MAPPING = "reldb:sql:mapping:";
     /**
      * 最小的时间.
      */

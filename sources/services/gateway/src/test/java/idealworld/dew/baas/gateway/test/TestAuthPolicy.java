@@ -10,17 +10,16 @@ import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
 import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.funs.cache.RedisClient;
+import idealworld.dew.baas.common.util.URIHelper;
 import idealworld.dew.baas.gateway.exchange.ExchangeProcessor;
 import idealworld.dew.baas.gateway.process.GatewayAuthPolicy;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -128,19 +127,19 @@ public class TestAuthPolicy extends BasicTest {
             };
             Future.succeededFuture()
                     // 资源不需要认证
-                    .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/public"), "create", subjectInfo))
+                    .compose(resp -> authPolicy.authentication("create", URIHelper.newURI("http://iam.service/console/public"), subjectInfo))
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.ACCEPT, result);
                         return Future.succeededFuture();
                     })
                     // 资源需要认证，但没有权限主体
-                    .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/tenant/account"), "create", new HashMap<>()))
+                    .compose(resp -> authPolicy.authentication("create", URIHelper.newURI("http://iam.service/console/tenant/account"), new HashMap<>()))
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.REJECT, result);
                         return Future.succeededFuture();
                     })
                     // 资源需要认证，但没有匹配到权限主体
-                    .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/tenant/account"), "create", subjectInfo))
+                    .compose(resp -> authPolicy.authentication("create", URIHelper.newURI("http://iam.service/console/tenant/account"), subjectInfo))
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.REJECT, result);
                         return Future.succeededFuture();
@@ -148,20 +147,20 @@ public class TestAuthPolicy extends BasicTest {
                     // 资源需要认证，且匹配到权限主体：角色r01
                     .compose(resp -> {
                         subjectInfo.get(AuthSubjectKind.ROLE).add("r01");
-                        return authPolicy.authentication(uri("http://iam.service/console/tenant/account"), "create", subjectInfo);
+                        return authPolicy.authentication("create", URIHelper.newURI("http://iam.service/console/tenant/account"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.ACCEPT, result);
                         return Future.succeededFuture();
                     })
                     // 资源需要认证，且匹配到权限主体：角色r01
-                    .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/tenant/account/ident/1"), "create", subjectInfo))
+                    .compose(resp -> authPolicy.authentication("create", URIHelper.newURI("http://iam.service/console/tenant/account/ident/1"), subjectInfo))
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.ACCEPT, result);
                         return Future.succeededFuture();
                     })
                     // 资源需要认证，没有匹配到权限主体
-                    .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/tenant/account/ident/001"), "delete", subjectInfo))
+                    .compose(resp -> authPolicy.authentication("delete", URIHelper.newURI("http://iam.service/console/tenant/account/ident/001"), subjectInfo))
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.REJECT, result);
                         return Future.succeededFuture();
@@ -170,7 +169,7 @@ public class TestAuthPolicy extends BasicTest {
                     .compose(resp -> {
                         subjectInfo.get(AuthSubjectKind.ACCOUNT).clear();
                         subjectInfo.get(AuthSubjectKind.ACCOUNT).add("a01");
-                        return authPolicy.authentication(uri("http://iam.service/console/tenant/account/ident/1"), "delete", subjectInfo);
+                        return authPolicy.authentication("delete", URIHelper.newURI("http://iam.service/console/tenant/account/ident/1"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.REJECT, result);
@@ -178,7 +177,7 @@ public class TestAuthPolicy extends BasicTest {
                     })
                     // 资源需要认证，且匹配到权限主体：账号a01
                     .compose(resp -> {
-                        return authPolicy.authentication(uri("http://iam.service/console/tenant/account/ident/2"), "delete", subjectInfo);
+                        return authPolicy.authentication("delete", URIHelper.newURI("http://iam.service/console/tenant/account/ident/2"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.ACCEPT, result);
@@ -264,19 +263,19 @@ public class TestAuthPolicy extends BasicTest {
             };
             Future.succeededFuture()
                     // NEQ
-                    .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/app/group"), "patch", subjectInfo))
+                    .compose(resp -> authPolicy.authentication("patch", URIHelper.newURI("http://iam.service/console/app/group"), subjectInfo))
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.REJECT, result);
                         return Future.succeededFuture();
                     })
                     // EQ
-                    .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/app/group"), "create", subjectInfo))
+                    .compose(resp -> authPolicy.authentication("create", URIHelper.newURI("http://iam.service/console/app/group"), subjectInfo))
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.ACCEPT, result);
                         return Future.succeededFuture();
                     })
                     // INCLUDE, 当前级
-                    .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/app/group/ident/1"), "delete", subjectInfo))
+                    .compose(resp -> authPolicy.authentication("delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo))
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.ACCEPT, result);
                         return Future.succeededFuture();
@@ -285,7 +284,7 @@ public class TestAuthPolicy extends BasicTest {
                     .compose(resp -> {
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("100001000010000");
-                        return authPolicy.authentication(uri("http://iam.service/console/app/group/ident/1"), "delete", subjectInfo);
+                        return authPolicy.authentication("delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.REJECT, result);
@@ -295,7 +294,7 @@ public class TestAuthPolicy extends BasicTest {
                     .compose(resp -> {
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("10000");
-                        return authPolicy.authentication(uri("http://iam.service/console/app/group/ident/1"), "delete", subjectInfo);
+                        return authPolicy.authentication("delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.ACCEPT, result);
@@ -305,7 +304,7 @@ public class TestAuthPolicy extends BasicTest {
                     .compose(resp -> {
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("10001");
-                        return authPolicy.authentication(uri("http://iam.service/console/app/group/ident/1"), "delete", subjectInfo);
+                        return authPolicy.authentication("delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.REJECT, result);
@@ -315,7 +314,7 @@ public class TestAuthPolicy extends BasicTest {
                     .compose(resp -> {
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("1000010000");
-                        return authPolicy.authentication(uri("http://iam.service/console/app/group/ident/1"), "modify", subjectInfo);
+                        return authPolicy.authentication("modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.ACCEPT, result);
@@ -325,7 +324,7 @@ public class TestAuthPolicy extends BasicTest {
                     .compose(resp -> {
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("100001000010000");
-                        return authPolicy.authentication(uri("http://iam.service/console/app/group/ident/1"), "modify", subjectInfo);
+                        return authPolicy.authentication("modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.ACCEPT, result);
@@ -335,7 +334,7 @@ public class TestAuthPolicy extends BasicTest {
                     .compose(resp -> {
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("100001000110000");
-                        return authPolicy.authentication(uri("http://iam.service/console/app/group/ident/1"), "modify", subjectInfo);
+                        return authPolicy.authentication("modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.REJECT, result);
@@ -345,7 +344,7 @@ public class TestAuthPolicy extends BasicTest {
                     .compose(resp -> {
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
                         subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("10000");
-                        return authPolicy.authentication(uri("http://iam.service/console/app/group/ident/1"), "modify", subjectInfo);
+                        return authPolicy.authentication("modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo);
                     })
                     .compose(result -> {
                         testContext.assertEquals(AuthResultKind.REJECT, result);
@@ -374,9 +373,9 @@ public class TestAuthPolicy extends BasicTest {
                             promise.complete();
                         }))
                 )
-                .compose(resp -> ExchangeProcessor.init(authPolicy))
+                .compose(resp -> ExchangeProcessor.init())
                 // 资源不存在
-                .compose(resp -> authPolicy.authentication(uri("http://iam.service/console/app/ident"), "create", subjectInfo))
+                .compose(resp -> authPolicy.authentication("create", URIHelper.newURI("http://iam.service/console/app/ident"), subjectInfo))
                 .compose(result -> {
                     testContext.assertEquals(AuthResultKind.ACCEPT, result);
                     return Future.succeededFuture();
@@ -417,7 +416,7 @@ public class TestAuthPolicy extends BasicTest {
                 .compose(resp ->
                         Future.future(promise ->
                                 rule.vertx().setTimer(2000, h ->
-                                        authPolicy.authentication(uri("http://iam.service/console/app/ident"), "create", subjectInfo)
+                                        authPolicy.authentication("create", URIHelper.newURI("http://iam.service/console/app/ident"), subjectInfo)
                                                 .onSuccess(promise::complete)
                                 )
                         )
@@ -449,7 +448,7 @@ public class TestAuthPolicy extends BasicTest {
                 .compose(resp ->
                         Future.future(promise ->
                                 rule.vertx().setTimer(2000, h ->
-                                        authPolicy.authentication(uri("http://iam.service/console/app/ident"), "create", subjectInfo)
+                                        authPolicy.authentication("create", URIHelper.newURI("http://iam.service/console/app/ident"), subjectInfo)
                                                 .onSuccess(promise::complete)
                                 )
                         )
@@ -459,11 +458,6 @@ public class TestAuthPolicy extends BasicTest {
                     return Future.succeededFuture();
                 })
                 .onSuccess(resp -> async.complete());
-    }
-
-    @SneakyThrows
-    private URI uri(String uri) {
-        return new URI(uri);
     }
 
 }

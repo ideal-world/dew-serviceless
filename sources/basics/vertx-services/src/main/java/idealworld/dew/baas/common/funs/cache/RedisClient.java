@@ -85,6 +85,10 @@ public class RedisClient {
         return REDIS_CLIENTS.get(code);
     }
 
+    public static Boolean contains(String code) {
+        return REDIS_CLIENTS.containsKey(code);
+    }
+
     public static void remove(String code) {
         REDIS_CLIENTS.remove(code);
     }

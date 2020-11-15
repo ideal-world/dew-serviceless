@@ -30,7 +30,7 @@ public class TestMysqlClient extends BasicTest {
         Async async = testContext.async();
         Future.succeededFuture()
                 .compose(resp ->
-                        mysqlClient.exec("drop table iam_account")
+                        mysqlClient.exec("drop table if exists iam_account")
                 )
                 .compose(resp ->
                         mysqlClient.exec("create table if not exists iam_account\n" +
@@ -46,7 +46,7 @@ public class TestMysqlClient extends BasicTest {
                         mysqlClient.exec("insert into iam_account(name, open_id, status) values (?, ?, ?)", "孤岛旭日1", "xxxx", "ENABLED")
                 )
                 .compose(resp ->
-                        mysqlClient.exec("insert into iam_account(name, open_id, status) values (?, ?, ?)", new ArrayList<>() {
+                        mysqlClient.execBatch("insert into iam_account(name, open_id, status) values (?, ?, ?)", new ArrayList<>() {
                             {
                                 add(new ArrayList<>() {
                                     {

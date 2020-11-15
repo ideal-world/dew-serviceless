@@ -106,10 +106,7 @@ public class IdentHandler extends CommonHttpHandler {
                         ctx.put(CONTEXT_INFO, identOptInfo);
                         ctx.next();
                     })
-                    .onFailure(e -> {
-                        log.error("[Process]Internal error: {}", e.getMessage(), e);
-                        error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e);
-                    });
+                    .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
             return;
         }
         // fetch ak/sk
@@ -161,10 +158,7 @@ public class IdentHandler extends CommonHttpHandler {
                     ctx.put(CONTEXT_INFO, identOptInfo);
                     ctx.next();
                 })
-                .onFailure(e -> {
-                    log.error("[Process]Internal error: {}", e.getMessage(), e);
-                    error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e);
-                });
+                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
     }
 
     private String getIP(HttpServerRequest request) {

@@ -16,8 +16,12 @@
 
 package idealworld.dew.baas.common.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -26,22 +30,33 @@ import java.util.Set;
  * @author gudaoxuri
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class IdentOptCacheInfo {
 
     private String token;
     private Object accountCode;
-    private Set<RoleInfo> roleInfo;
-    private Set<GroupInfo> groupInfo;
+    @Builder.Default
+    private Set<RoleInfo> roleInfo = new HashSet<>();
+    @Builder.Default
+    private Set<GroupInfo> groupInfo = new HashSet<>();
     private Long appId;
     private Long tenantId;
 
     @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class RoleInfo {
         private String code;
         private String name;
     }
 
     @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class GroupInfo {
         private String groupCode;
         private String groupNodeCode;

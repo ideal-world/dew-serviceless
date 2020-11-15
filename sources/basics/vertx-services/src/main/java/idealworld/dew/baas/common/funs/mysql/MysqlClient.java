@@ -27,7 +27,6 @@ public class MysqlClient {
     private MySQLPool client;
 
     public static Future<Void> init(String code, Vertx vertx, CommonConfig.JDBCConfig config) {
-        Promise<Void> promise = Promise.promise();
         var mysqlClient = new MysqlClient();
         var poolOptions = new PoolOptions()
                 .setMaxSize(config.getMaxPoolSize())
@@ -46,11 +45,15 @@ public class MysqlClient {
             mysqlClient.client = MySQLPool.pool(vertx, connectOptions, poolOptions);
         }
         MYSQL_CLIENTS.put(code, mysqlClient);
-        return promise.future();
+        return Future.succeededFuture();
     }
 
     public static MysqlClient choose(String code) {
         return MYSQL_CLIENTS.get(code);
+    }
+
+    public static Boolean contains(String code) {
+        return MYSQL_CLIENTS.containsKey(code);
     }
 
     public static void remove(String code) {
@@ -59,16 +62,27 @@ public class MysqlClient {
 
     public Future<JsonArray> exec(String sql, Object... parameters) {
         if (parameters.length == 0) {
-            return exec(sql, new ArrayList<>());
+            return execBatch(sql, new ArrayList<>());
         }
-        return exec(sql, new ArrayList<>() {
+        return execBatch(sql, new ArrayList<>() {
             {
                 add(Arrays.asList(parameters));
             }
         });
     }
 
-    public Future<JsonArray> exec(String sql, List<List<Object>> parameters) {
+    public Future<JsonArray> exec(String sql, List<Object> parameters) {
+        if (parameters.size() == 0) {
+            return execBatch(sql, new ArrayList<>());
+        }
+        return execBatch(sql, new ArrayList<>() {
+            {
+                add(Collections.singletonList(parameters));
+            }
+        });
+    }
+
+    public Future<JsonArray> execBatch(String sql, List<List<Object>> parameters) {
         var params = parameters.stream()
                 .map(Tuple::tuple)
                 .collect(Collectors.toList());
