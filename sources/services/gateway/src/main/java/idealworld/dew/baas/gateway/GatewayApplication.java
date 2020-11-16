@@ -1,6 +1,7 @@
 package idealworld.dew.baas.gateway;
 
 import idealworld.dew.baas.common.CommonApplication;
+import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.funs.httpserver.HttpServer;
 import idealworld.dew.baas.gateway.exchange.ExchangeProcessor;
 import idealworld.dew.baas.gateway.process.AuthHandler;
@@ -17,17 +18,17 @@ import java.util.Arrays;
 public class GatewayApplication extends CommonApplication<GatewayConfig> {
 
     @Override
-    protected void doStart(GatewayConfig config, Promise startPromise) {
+    protected void doStart(GatewayConfig config, Promise<Void> startPromise) {
         initRedis(config);
         initHttpClient(config);
         var authPolicy = new GatewayAuthPolicy(config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
         ExchangeProcessor.init();
-        var identHttpHandler = new IdentHandler(config.getRequest(), config.getSecurity());
-        var authHttpHandler = new AuthHandler(config.getRequest(), authPolicy);
-        var distributeHandler = new DistributeHandler(config.getRequest(), config.getDistribute());
+        var identHttpHandler = new IdentHandler(config.getSecurity());
+        var authHttpHandler = new AuthHandler(authPolicy);
+        var distributeHandler = new DistributeHandler(config.getDistribute());
         initHttpServer(config, HttpServer.Route.builder()
                 .method(HttpMethod.POST)
-                .path(config.getRequest().getPath())
+                .path(Constant.REQUEST_PATH_FLAG)
                 .parseBody(true)
                 .handlers(Arrays.asList(identHttpHandler, authHttpHandler, distributeHandler))
                 .build())

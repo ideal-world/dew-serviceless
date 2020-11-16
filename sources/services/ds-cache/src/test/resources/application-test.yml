@@ -1,0 +1,4 @@
+redis:
+  uri: redis://localhost:6379
+security:
+  sqlCacheExpireSec: 0

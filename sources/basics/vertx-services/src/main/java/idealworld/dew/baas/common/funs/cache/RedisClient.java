@@ -93,6 +93,20 @@ public class RedisClient {
         REDIS_CLIENTS.remove(code);
     }
 
+    // ---------------------------- String ----------------------------
+
+    public Future<Void> expire(String key, Long expireSec) {
+        return Future.future(promise ->
+                redisAPI.expire(key, String.valueOf(expireSec)).onSuccess(response ->
+                        promise.complete()
+                ).onFailure(e -> {
+                    log.error("[Redis]Expire [{}] error: {}", key, e.getMessage(), e);
+                    promise.fail(e.getCause());
+                })
+        );
+    }
+
+
     public Future<Void> set(String key, String value) {
         return Future.future(promise ->
                 redisAPI.set(new ArrayList<>() {
@@ -109,25 +123,14 @@ public class RedisClient {
         );
     }
 
-    public Future<Void> del(String... keys) {
+    public Future<Void> setex(String key, String value, Long expireSec) {
         return Future.future(promise ->
-                redisAPI.del(Arrays.asList(keys)).onSuccess(response ->
+                redisAPI.setex(key, String.valueOf(expireSec), value).onSuccess(response ->
                         promise.complete()
                 ).onFailure(e -> {
-                    log.error("[Redis]Del [{}] error: {}", String.join(",", keys), e.getMessage(), e);
+                    log.error("[Redis]Setex [{}:{}] error: {}", key, value, e.getMessage(), e);
                     promise.fail(e.getCause());
                 })
-        );
-    }
-
-    public Future<Boolean> exists(String... keys) {
-        return Future.future(promise ->
-                redisAPI.exists(Arrays.asList(keys))
-                        .onSuccess(response -> promise.complete(response.toInteger() > 0))
-                        .onFailure(e -> {
-                            log.error("[Redis]Exists [{}] error: {}", String.join(",", keys), e.getMessage(), e);
-                            promise.fail(e.getCause());
-                        })
         );
     }
 
@@ -152,6 +155,130 @@ public class RedisClient {
         );
     }
 
+    public Future<Boolean> exists(String... keys) {
+        return Future.future(promise ->
+                redisAPI.exists(Arrays.asList(keys))
+                        .onSuccess(response -> promise.complete(response.toInteger() > 0))
+                        .onFailure(e -> {
+                            log.error("[Redis]Exists [{}] error: {}", String.join(",", keys), e.getMessage(), e);
+                            promise.fail(e.getCause());
+                        })
+        );
+    }
+
+
+    public Future<Void> del(String... keys) {
+        return Future.future(promise ->
+                redisAPI.del(Arrays.asList(keys)).onSuccess(response ->
+                        promise.complete()
+                ).onFailure(e -> {
+                    log.error("[Redis]Del [{}] error: {}", String.join(",", keys), e.getMessage(), e);
+                    promise.fail(e.getCause());
+                })
+        );
+    }
+
+    public Future<Long> incrby(String key, Integer step) {
+        return Future.future(promise ->
+                redisAPI.incrby(key, String.valueOf(step))
+                        .onSuccess(response -> promise.complete(
+                                response != null ? response.toLong() : null))
+                        .onFailure(e -> {
+                            log.error("[Redis]Incrby [{}] error: {}", key, e.getMessage(), e);
+                            promise.fail(e.getCause());
+                        })
+        );
+    }
+
+    // ---------------------------- Hash ----------------------------
+
+    public Future<Void> hset(String key, String fieldKey, String value) {
+        return Future.future(promise ->
+                redisAPI.hset(new ArrayList<>() {
+                    {
+                        add(key);
+                        add(fieldKey);
+                        add(value);
+                    }
+                })
+                        .onSuccess(response -> promise.complete(null))
+                        .onFailure(e -> {
+                            log.error("[Redis]Hset [{}-{}] error: {}", key, fieldKey, e.getMessage(), e);
+                            promise.fail(e.getCause());
+                        })
+        );
+    }
+
+    public Future<String> hget(String key, String fieldKey) {
+        return Future.future(promise ->
+                redisAPI.hget(key, fieldKey)
+                        .onSuccess(response -> promise.complete(
+                                response != null ? response.toString(StandardCharsets.UTF_8) : null))
+                        .onFailure(e -> {
+                            log.error("[Redis]Hget [{}-{}] error: {}", key, fieldKey, e.getMessage(), e);
+                            promise.fail(e.getCause());
+                        })
+        );
+    }
+
+    public Future<Map<String, String>> hgetall(String key) {
+        return Future.future(promise ->
+                redisAPI.hgetall(key)
+                        .onSuccess(response -> {
+                            var result = new HashMap<String, String>();
+                            var it = response.stream().iterator();
+                            while (it.hasNext()) {
+                                result.put(it.next().toString(StandardCharsets.UTF_8), it.next().toString(StandardCharsets.UTF_8));
+                            }
+                            promise.complete(result);
+                        })
+                        .onFailure(e -> {
+                            log.error("[Redis]Hgetall [{}] error: {}", key, e.getMessage(), e);
+                            promise.fail(e.getCause());
+                        })
+        );
+    }
+
+    public Future<Boolean> hexists(String key, String fieldKey) {
+        return Future.future(promise ->
+                redisAPI.hexists(key, fieldKey)
+                        .onSuccess(response -> promise.complete(response.toInteger() > 0))
+                        .onFailure(e -> {
+                            log.error("[Redis]Hexists [{}-{}] error: {}", key, fieldKey, e.getMessage(), e);
+                            promise.fail(e.getCause());
+                        })
+        );
+    }
+
+    public Future<Void> hdel(String key, String... fieldKeys) {
+        var args = new ArrayList<String>();
+        args.add(key);
+        args.addAll(Arrays.asList(fieldKeys));
+        return Future.future(promise ->
+                redisAPI.hdel(args)
+                        .onSuccess(response -> promise.complete(null))
+                        .onFailure(e -> {
+                            log.error("[Redis]Hdel [{}-{}] error: {}", key, String.join(",", fieldKeys), e.getMessage(), e);
+                            promise.fail(e.getCause());
+                        })
+        );
+    }
+
+    public Future<Long> hincrby(String key, String fieldKey, Integer step) {
+        return Future.future(promise ->
+                redisAPI.hincrby(key, fieldKey, String.valueOf(step))
+                        .onSuccess(response -> promise.complete(
+                                response != null ? response.toLong() : null))
+                        .onFailure(e -> {
+                            log.error("[Redis]Hincrby [{}-{}] error: {}", key, fieldKey, e.getMessage(), e);
+                            promise.fail(e.getCause());
+                        })
+        );
+    }
+
+    // ---------------------------- Others ----------------------------
+
+
     public void scan(String key, Consumer<String> fun) {
         doScan(0, key, fun);
     }
@@ -173,9 +300,8 @@ public class RedisClient {
         return Future.future(promise ->
                 subRedisConn.send(Request.cmd(Command.SUBSCRIBE).arg(key), reply -> {
                     if (reply.succeeded()) {
-                        innerVertx.eventBus().consumer("io.vertx.redis." + key, msg -> {
-                            fun.accept(((JsonObject) msg.body()).getJsonObject("value").getString("message"));
-                        });
+                        innerVertx.eventBus().consumer("io.vertx.redis." + key, msg ->
+                                fun.accept(((JsonObject) msg.body()).getJsonObject("value").getString("message")));
                         promise.complete();
                         return;
                     }
@@ -193,7 +319,7 @@ public class RedisClient {
                 add(key + "*");
             }
         }).onSuccess(response -> {
-            response.get(1).forEach(returnKey -> fun.accept(returnKey.toString()));
+            response.get(1).forEach(returnKey -> fun.accept(returnKey.toString(StandardCharsets.UTF_8)));
             var newCursor = response.get(0).toInteger();
             if (newCursor != 0) {
                 doScan(newCursor, key, fun);

@@ -37,20 +37,20 @@ public class ExchangeProcessor {
                     HttpClient.request(HttpMethod.GET, exchangeData.getFetchUrl(), null, null, null)
                             .onSuccess(resp -> {
                                 var resourceSubjectExchange = $.json.toObject(exchangeData.getDetailData(), ResourceSubjectExchange.class);
-                                MysqlClient.remove(exchangeData.getSubjectId());
-                                MysqlClient.init(exchangeData.getSubjectId(), CommonApplication.VERTX,
+                                MysqlClient.remove(exchangeData.getSubjectCode());
+                                MysqlClient.init(exchangeData.getSubjectCode(), CommonApplication.VERTX,
                                         CommonConfig.JDBCConfig.builder()
-                                                .url(resourceSubjectExchange.getUri())
+                                                .uri(resourceSubjectExchange.getUri())
                                                 .build());
-                                log.info("[Exchange]Updated [resourceSubject.id={}] data", exchangeData.getSubjectId());
+                                log.info("[Exchange]Updated [resourceSubject.id={}] data", exchangeData.getSubjectCode());
                             })
                             .onFailure(e -> {
-                                log.error("[Exchange]Update [resourceSubject.id={}] error: {}", exchangeData.getSubjectId(), e.getMessage(), e.getCause());
+                                log.error("[Exchange]Update [resourceSubject.id={}] error: {}", exchangeData.getSubjectCode(), e.getMessage(), e.getCause());
                             });
 
                 } else if (exchangeData.getActionKind() == OptActionKind.DELETE) {
-                    MysqlClient.remove(exchangeData.getSubjectId());
-                    log.error("[Exchange]Removed [resourceSubject.id={}]", exchangeData.getSubjectId());
+                    MysqlClient.remove(exchangeData.getSubjectCode());
+                    log.error("[Exchange]Removed [resourceSubject.id={}]", exchangeData.getSubjectCode());
                 }
             } else {
                 var resourceExchange = $.json.toObject(exchangeData.getDetailData(), ResourceExchange.class);

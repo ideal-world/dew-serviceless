@@ -21,7 +21,7 @@ public class ExchangeHelper {
 
     public static Future<Void> register(Set<String> subjectCategories, Consumer<ExchangeData> fun) {
         Promise<Void> promise = Promise.promise();
-        RedisClient.choose("").subscribe(Constant.CONFIG_EVENT_NOTIFY_TOPIC_BY_IAM, message -> {
+        RedisClient.choose("").subscribe(Constant.EVENT_NOTIFY_TOPIC_BY_IAM, message -> {
             var quickCheckSplit = message.split(QUICK_CHECK_SPLIT);
             var subjectCategory = quickCheckSplit[0];
             if (subjectCategories.stream().noneMatch(subjectCategory::startsWith)) {

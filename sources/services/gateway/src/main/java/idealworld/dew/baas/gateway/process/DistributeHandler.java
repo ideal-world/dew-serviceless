@@ -14,7 +14,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.HttpResponse;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
@@ -29,20 +28,17 @@ import java.util.Map;
 @Slf4j
 public class DistributeHandler extends CommonHttpHandler {
 
-    private final GatewayConfig.Request request;
     private final GatewayConfig.Distribute distribute;
 
-    public DistributeHandler(GatewayConfig.Request request, GatewayConfig.Distribute distribute) {
-        this.request = request;
+    public DistributeHandler(GatewayConfig.Distribute distribute) {
         this.distribute = distribute;
     }
 
-    @SneakyThrows
     @Override
     public void handle(RoutingContext ctx) {
         var identOptInfo = (IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
-        var resourceUri = (URI) ctx.get(Constant.CONFIG_RESOURCE_URI_FLAG);
-        var action = (OptActionKind) ctx.get(Constant.CONFIG_RESOURCE_ACTION_FLAG);
+        var resourceUri = (URI) ctx.get(Constant.REQUEST_RESOURCE_URI_FLAG);
+        var action = (OptActionKind) ctx.get(Constant.REQUEST_RESOURCE_ACTION_FLAG);
 
         HttpMethod httpMethod = HttpMethod.GET;
         Buffer body = null;
@@ -70,8 +66,8 @@ public class DistributeHandler extends CommonHttpHandler {
         Map<String, String> header = new HashMap<>() {
             {
                 put(distribute.getIdentOptHeaderName(), $.json.toJsonString(identOptInfo));
-                put(Constant.CONFIG_RESOURCE_URI_FLAG, resourceUri.toString());
-                put(Constant.CONFIG_RESOURCE_ACTION_FLAG, action.toString());
+                put(Constant.REQUEST_RESOURCE_URI_FLAG, resourceUri.toString());
+                put(Constant.REQUEST_RESOURCE_ACTION_FLAG, action.toString());
             }
         };
         switch (ResourceKind.parse(resourceUri.getScheme().toLowerCase())) {

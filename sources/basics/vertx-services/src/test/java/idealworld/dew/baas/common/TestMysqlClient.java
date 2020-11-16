@@ -2,32 +2,33 @@ package idealworld.dew.baas.common;
 
 import idealworld.dew.baas.common.funs.mysql.MysqlClient;
 import io.vertx.core.Future;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import org.junit.Before;
-import org.junit.Test;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
 public class TestMysqlClient extends BasicTest {
 
-    private MysqlClient mysqlClient;
+    private static MysqlClient mysqlClient;
 
-    @Before
-    public void before(TestContext testContext) {
+    @BeforeAll
+    public static void before(Vertx vertx, VertxTestContext testContext) {
         RedisTestHelper.start();
-        MysqlClient.init("", rule.vertx(), CommonConfig.JDBCConfig.builder()
+        MysqlClient.init("", vertx, CommonConfig.JDBCConfig.builder()
                 .host("127.0.0.1")
                 .db("test")
                 .userName("root")
                 .password("123456")
                 .build());
         mysqlClient = MysqlClient.choose("");
+        testContext.completeNow();
     }
 
     @Test
-    public void testExec(TestContext testContext) {
-        Async async = testContext.async();
+    public void testExec(Vertx vertx, VertxTestContext testContext) {
         Future.succeededFuture()
                 .compose(resp ->
                         mysqlClient.exec("drop table if exists iam_account")
@@ -69,9 +70,9 @@ public class TestMysqlClient extends BasicTest {
                         mysqlClient.exec("select * from iam_account")
                 )
                 .onSuccess(resp -> {
-                    testContext.assertEquals(3, resp.size());
-                    testContext.assertEquals("孤岛旭日1", resp.getJsonObject(0).getString("name"));
-                    async.complete();
+                    Assertions.assertEquals(3, resp.size());
+                    Assertions.assertEquals("孤岛旭日1", resp.getJsonObject(0).getString("name"));
+                    testContext.completeNow();
                 });
 
     }

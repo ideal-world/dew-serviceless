@@ -12,7 +12,6 @@ import idealworld.dew.baas.common.funs.mysql.MysqlClient;
 import idealworld.dew.baas.common.util.URIHelper;
 import idealworld.dew.baas.reldb.RelDBConfig;
 import io.vertx.ext.web.RoutingContext;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -27,25 +26,22 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AuthHandler extends CommonHttpHandler {
 
-    private final RelDBConfig.Request request;
     private final RelDBConfig.Security security;
     private final RelDBAuthPolicy authPolicy;
 
-    public AuthHandler(RelDBConfig.Request request, RelDBConfig.Security security, RelDBAuthPolicy authPolicy) {
-        this.request = request;
+    public AuthHandler(RelDBConfig.Security security, RelDBAuthPolicy authPolicy) {
         this.security = security;
         this.authPolicy = authPolicy;
     }
 
-    @SneakyThrows
     @Override
     public void handle(RoutingContext ctx) {
-        if (!ctx.request().headers().contains(request.getIdentOptHeaderName())
-                || !ctx.request().headers().contains(Constant.CONFIG_RESOURCE_URI_FLAG)) {
+        if (!ctx.request().headers().contains(Constant.REQUEST_IDENT_OPT_FLAG)
+                || !ctx.request().headers().contains(Constant.REQUEST_RESOURCE_URI_FLAG)) {
             error(StandardCode.BAD_REQUEST, "请求格式不合法", ctx);
             return;
         }
-        var strResourceUriWithoutPath = ctx.request().getHeader(Constant.CONFIG_RESOURCE_URI_FLAG);
+        var strResourceUriWithoutPath = ctx.request().getHeader(Constant.REQUEST_RESOURCE_URI_FLAG);
         var resourceSubjectCode = URIHelper.newURI(strResourceUriWithoutPath).getHost();
         if (!MysqlClient.contains(resourceSubjectCode)) {
             error(StandardCode.BAD_REQUEST, "请求的资源主题不存在", ctx);
@@ -75,7 +71,7 @@ public class AuthHandler extends CommonHttpHandler {
                                 );
                             })
                             .collect(Collectors.groupingBy(item -> item._1, Collectors.mapping(item -> item._0, Collectors.toList())));
-                    var strIdentOpt = ctx.request().getHeader(request.getIdentOptHeaderName());
+                    var strIdentOpt = ctx.request().getHeader(Constant.REQUEST_IDENT_OPT_FLAG);
                     var identOpt = $.json.toObject(strIdentOpt, IdentOptCacheInfo.class);
                     var subjectInfo = packageSubjectInfo(identOpt);
                     authPolicy.authentication(resources, subjectInfo)

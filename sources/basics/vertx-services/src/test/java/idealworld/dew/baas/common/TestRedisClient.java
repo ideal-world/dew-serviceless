@@ -3,11 +3,14 @@ package idealworld.dew.baas.common;
 import idealworld.dew.baas.common.funs.cache.RedisClient;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import org.junit.Before;
-import org.junit.Test;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxTestContext;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -15,34 +18,34 @@ public class TestRedisClient extends BasicTest {
 
     private RedisClient redisClient;
 
-    @Before
-    public void before(TestContext testContext) {
+    @BeforeEach
+    public void before(Vertx vertx, VertxTestContext testContext) {
         RedisTestHelper.start();
-        RedisClient.init("", rule.vertx(), CommonConfig.RedisConfig.builder()
+        RedisClient.init("", vertx, CommonConfig.RedisConfig.builder()
                 .uri("redis://localhost:6379").build());
         redisClient = RedisClient.choose("");
+        testContext.completeNow();
     }
 
     @Test
-    public void testGetSet(TestContext testContext) {
-        Async async = testContext.async();
+    public void testGetSet(Vertx vertx, VertxTestContext testContext) {
         redisClient.set("a:b", "a1")
                 .compose(resp -> redisClient.get("a:b", 0))
                 .onSuccess(value -> {
-                    testContext.assertEquals("a1", value);
-                    async.complete();
+                    Assertions.assertEquals("a1", value);
+                    testContext.completeNow();
                 });
     }
 
     @Test
-    public void testGetSetWithCache(TestContext testContext) {
-        Async async = testContext.async();
-        // 设置为 a1
-        redisClient.set("a:b", "a1")
+    public void testGetSetWithCache(Vertx vertx, VertxTestContext testContext) {
+        Future.succeededFuture()
+                // 设置为 a1
+                .compose(resp -> redisClient.set("a:b", "a1"))
                 // 第一次带缓存获取
                 .compose(resp -> redisClient.get("a:b", 1))
                 .compose(resp -> {
-                    testContext.assertEquals("a1", resp);
+                    Assertions.assertEquals("a1", resp);
                     return Future.succeededFuture();
                 })
                 // 修改为 a2
@@ -50,13 +53,13 @@ public class TestRedisClient extends BasicTest {
                 // 不带缓存获取，拿到 a2
                 .compose(resp -> redisClient.get("a:b"))
                 .compose(resp -> {
-                    testContext.assertEquals("a2", resp);
+                    Assertions.assertEquals("a2", resp);
                     return Future.succeededFuture();
                 })
                 // 带缓存获取，拿到a1
                 .compose(resp -> redisClient.get("a:b", 1))
                 .compose(resp -> {
-                    testContext.assertEquals("a1", resp);
+                    Assertions.assertEquals("a1", resp);
                     return Future.succeededFuture();
                 })
                 // 延时 1s
@@ -69,40 +72,161 @@ public class TestRedisClient extends BasicTest {
                 })
                 // 带缓存获取，拿到 a2
                 .compose(resp -> redisClient.get("a:b", 1))
-                .onSuccess(resp -> {
-                    testContext.assertEquals("a2", resp);
-                    async.complete();
-                });
+                .compose(resp -> {
+                    Assertions.assertEquals("a2", resp);
+                    return Future.succeededFuture();
+                })
+                // 是否存在
+                .compose(resp -> redisClient.exists("a:b"))
+                .compose(resp -> {
+                    Assertions.assertEquals(true, resp);
+                    return Future.succeededFuture();
+                })
+                // 删除
+                .compose(resp -> redisClient.del("a:b"))
+                .compose(resp -> redisClient.exists("a:b"))
+                .compose(resp -> {
+                    Assertions.assertEquals(false, resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp -> redisClient.get("a:b"))
+                .compose(resp -> {
+                    Assertions.assertNull(resp);
+                    return Future.succeededFuture();
+                })
+                // 递增
+                .compose(resp -> redisClient.del("incr"))
+                .compose(resp -> redisClient.incrby("incr", 1))
+                .compose(resp -> {
+                    Assertions.assertEquals(1L, resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp -> redisClient.incrby("incr", 10))
+                .compose(resp -> {
+                    Assertions.assertEquals(11L, resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp -> redisClient.incrby("incr", -1))
+                .compose(resp -> {
+                    Assertions.assertEquals(10L, resp);
+                    return Future.succeededFuture();
+                })
+                .onSuccess(resp -> testContext.completeNow());
     }
 
+    @SneakyThrows
     @Test
-    public void testScan(TestContext testContext) {
-        Async async = testContext.async(1000);
-        var sets = IntStream.range(0, async.count()).mapToObj(i -> (Future) redisClient.set("a:" + i, "a" + i)).collect(Collectors.toList());
+    public void testScan(Vertx vertx, VertxTestContext testContext) {
+        var count = new CountDownLatch(1000);
+        var sets = IntStream.range(0, 1000).mapToObj(i -> (Future) redisClient.set("a:" + i, "a" + i)).collect(Collectors.toList());
         CompositeFuture.all(sets)
                 .onSuccess(resp -> {
-                    redisClient.scan("a:", key -> {
-                        async.countDown();
-                    });
+                    redisClient.scan("a:", key -> count.countDown());
                 });
+        count.await();
+        testContext.completeNow();
     }
 
+    @SneakyThrows
     @Test
-    public void testPubSub(TestContext testContext) {
-        Async async = testContext.async(3);
-        rule.vertx().setTimer(1000, h -> {
-            redisClient.subscribe("topic:1", value -> async.countDown())
+    public void testPubSub(Vertx vertx, VertxTestContext testContext) {
+        var count = new CountDownLatch(3);
+        vertx.setTimer(1000, h -> {
+            redisClient.subscribe("topic:1", value -> count.countDown())
                     .onSuccess(resp ->
-                            rule.vertx().setTimer(1000, h2 -> {
+                            vertx.setTimer(1000, h2 -> {
                                 redisClient.publish("topic:1", "a1");
                                 redisClient.publish("topic:1", "a2");
                             }));
-            redisClient.subscribe("topic:2", value -> {
-                async.countDown();
-            }).onSuccess(resp ->
+            redisClient.subscribe("topic:2", value -> count.countDown()).onSuccess(resp ->
                     redisClient.publish("topic:2", "b1")
             );
         });
+        count.await();
+        testContext.completeNow();
+    }
+
+    @Test
+    public void testExpire(Vertx vertx, VertxTestContext testContext) {
+        Future.succeededFuture()
+                .compose(resp -> redisClient.setex("a:b", "风雨逐梦", 1L))
+                .compose(resp -> redisClient.get("a:b"))
+                .compose(resp -> {
+                    Assertions.assertEquals("风雨逐梦", resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        Future.future(promise -> vertx.setTimer(1000, h -> promise.complete()))
+                )
+                .compose(resp -> redisClient.get("a:b"))
+                .compose(resp -> {
+                    Assertions.assertNull(resp);
+                    return Future.succeededFuture();
+                })
+
+                .compose(resp -> redisClient.set("a:b", "风雨逐梦"))
+                .compose(resp -> redisClient.expire("a:b", 1L))
+                .compose(resp -> redisClient.get("a:b"))
+                .compose(resp -> {
+                    Assertions.assertEquals("风雨逐梦", resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        Future.future(promise -> vertx.setTimer(1000, h -> promise.complete()))
+                )
+                .compose(resp -> redisClient.get("a:b"))
+                .compose(resp -> {
+                    Assertions.assertNull(resp);
+                    return Future.succeededFuture();
+                })
+                .onSuccess(resp -> testContext.completeNow());
+    }
+
+    @Test
+    public void testHash(Vertx vertx, VertxTestContext testContext) {
+        Future.succeededFuture()
+                // 设置
+                .compose(resp -> redisClient.hset("a:b", "f1", "孤岛旭日"))
+                .compose(resp -> {
+                    Assertions.assertNull(resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp -> redisClient.hset("a:b", "f2", "风雨逐梦"))
+                .compose(resp -> redisClient.hget("a:b", "f2"))
+                .compose(resp -> {
+                    Assertions.assertEquals("风雨逐梦", resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp -> redisClient.hgetall("a:b"))
+                .compose(resp -> {
+                    Assertions.assertEquals("孤岛旭日", resp.get("f1"));
+                    Assertions.assertEquals("风雨逐梦", resp.get("f2"));
+                    return Future.succeededFuture();
+                })
+                .compose(resp -> redisClient.hexists("a:b", "f1"))
+                .compose(resp -> {
+                    Assertions.assertEquals(true, resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp -> redisClient.hexists("a:b", "f0"))
+                .compose(resp -> {
+                    Assertions.assertEquals(false, resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp -> redisClient.hdel("a:b", "f1"))
+                .compose(resp -> redisClient.hexists("a:b", "f1"))
+                .compose(resp -> {
+                    Assertions.assertEquals(false, resp);
+                    return Future.succeededFuture();
+                })
+                .compose(resp -> redisClient.hset("a:b", "incr", "0"))
+                .compose(resp -> redisClient.hincrby("a:b", "incr", 1))
+                .compose(resp -> redisClient.hincrby("a:b", "incr", 10))
+                .compose(resp -> {
+                    Assertions.assertEquals(11L, resp);
+                    return Future.succeededFuture();
+                })
+                .onSuccess(resp -> testContext.completeNow());
     }
 
 }

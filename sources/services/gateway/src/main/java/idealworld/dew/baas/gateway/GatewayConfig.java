@@ -38,22 +38,9 @@ import java.util.Map;
 public class GatewayConfig extends CommonConfig {
 
     @Builder.Default
-    private Request request = new Request();
-    @Builder.Default
     private Distribute distribute = new Distribute();
     @Builder.Default
     private Security security = new Security();
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Request {
-
-        @Builder.Default
-        private String path = "/exec";
-
-    }
 
     @Data
     @Builder

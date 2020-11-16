@@ -59,6 +59,7 @@
         <module>sources/services/gateway</module>
         <module>sources/services/iam</module>
         <module>sources/services/ds-db-reldb</module>
+        <module>sources/services/ds-cache</module>
     </modules>
 
     <repositories>

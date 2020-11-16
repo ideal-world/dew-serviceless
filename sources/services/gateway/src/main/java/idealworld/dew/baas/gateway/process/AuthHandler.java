@@ -5,9 +5,7 @@ import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
-import idealworld.dew.baas.gateway.GatewayConfig;
 import io.vertx.ext.web.RoutingContext;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
@@ -20,19 +18,16 @@ import java.net.URI;
 @Slf4j
 public class AuthHandler extends CommonHttpHandler {
 
-    private final GatewayConfig.Request request;
     private final GatewayAuthPolicy authPolicy;
 
-    public AuthHandler(GatewayConfig.Request request, GatewayAuthPolicy authPolicy) {
-        this.request = request;
+    public AuthHandler(GatewayAuthPolicy authPolicy) {
         this.authPolicy = authPolicy;
     }
 
-    @SneakyThrows
     @Override
     public void handle(RoutingContext ctx) {
-        var resourceUri = (URI) ctx.get(Constant.CONFIG_RESOURCE_URI_FLAG);
-        var action = (OptActionKind) ctx.get(Constant.CONFIG_RESOURCE_ACTION_FLAG);
+        var resourceUri = (URI) ctx.get(Constant.REQUEST_RESOURCE_URI_FLAG);
+        var action = (OptActionKind) ctx.get(Constant.REQUEST_RESOURCE_ACTION_FLAG);
         var identOptInfo = (idealworld.dew.baas.common.dto.IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
         var subjectInfo = packageSubjectInfo(identOptInfo);
         authPolicy.authentication(action.toString(), resourceUri, subjectInfo)

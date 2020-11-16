@@ -18,6 +18,7 @@ package idealworld.dew.baas.common;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.exception.RTException;
+import lombok.Builder;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -36,9 +37,14 @@ public class Constant {
     /**
      * 事件通知Topic名称.
      */
-    public static final String CONFIG_EVENT_NOTIFY_TOPIC_BY_IAM = "event:notify:iam";
-    public static final String CONFIG_RESOURCE_URI_FLAG = "Dew-Resource-Uri";
-    public static final String CONFIG_RESOURCE_ACTION_FLAG = "Dew-Resource-Action";
+    public static final String EVENT_NOTIFY_TOPIC_BY_IAM = "event:notify:iam";
+
+
+    public static final String REQUEST_PATH_FLAG = "/exec";
+    public static final String REQUEST_IDENT_OPT_FLAG = "Dew-Ident-Opt";
+    public static final String REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri";
+    public static final String REQUEST_RESOURCE_ACTION_FLAG = "Dew-Resource-Action";
+
     /**
      * 未定义对象的标识，多用于全局Id标识.
      */

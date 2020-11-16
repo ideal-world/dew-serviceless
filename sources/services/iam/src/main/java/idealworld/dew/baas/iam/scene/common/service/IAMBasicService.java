@@ -83,7 +83,7 @@ public abstract class IAMBasicService extends CommonService<Long> {
 
     @Override
     public String topicName() {
-        return Constant.CONFIG_EVENT_NOTIFY_TOPIC_BY_IAM;
+        return Constant.EVENT_NOTIFY_TOPIC_BY_IAM;
     }
 
     @Override

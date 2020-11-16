@@ -41,7 +41,7 @@ public class URIHelper {
         }
         return Arrays.stream(query.split("&"))
                 .map(i -> i.split("="))
-                .collect(Collectors.toMap(i -> i[0], i -> i.length > 1 ? i[1] : ""));
+                .collect(Collectors.toMap(i -> i[0].toLowerCase(), i -> i.length > 1 ? i[1] : ""));
     }
 
     @SneakyThrows

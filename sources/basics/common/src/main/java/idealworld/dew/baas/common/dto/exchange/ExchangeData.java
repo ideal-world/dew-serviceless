@@ -35,7 +35,7 @@ public class ExchangeData {
 
     private OptActionKind actionKind;
     private String subjectCategory;
-    private String subjectId;
+    private String subjectCode;
     private String fetchUrl;
     private Map<String, Object> detailData;
 

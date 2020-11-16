@@ -28,6 +28,10 @@ import java.util.Arrays;
 public enum OptActionKind {
 
     /**
+     * 是否存在.
+     */
+    EXISTS("EXISTS"),
+    /**
      * 获取.
      */
     FETCH("FETCH"),

@@ -34,23 +34,7 @@ import lombok.experimental.SuperBuilder;
 public class RelDBConfig extends CommonConfig {
 
     @Builder.Default
-    private Request request = new Request();
-    @Builder.Default
     private Security security = new Security();
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Request {
-
-        @Builder.Default
-        private String path = "/exec";
-
-        @Builder.Default
-        private String identOptHeaderName = "Dew-Ident-Opt";
-
-    }
 
     @Data
     @Builder

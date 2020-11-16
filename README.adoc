@@ -2,15 +2,3 @@
 
 Building……
 
-TODO
-
-. 功能构建，group node 删除、account bind
-. 事件通知
-. 单元测试
-. APP访问
-. reldb
-. redis
-. mq
-. oss
-. 前端
-. 文件上传

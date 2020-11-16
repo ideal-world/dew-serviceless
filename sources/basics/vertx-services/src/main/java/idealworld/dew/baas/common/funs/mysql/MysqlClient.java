@@ -31,8 +31,8 @@ public class MysqlClient {
         var poolOptions = new PoolOptions()
                 .setMaxSize(config.getMaxPoolSize())
                 .setMaxWaitQueueSize(config.getMaxPoolWaitQueueSize());
-        if (config.getUrl() != null && !config.getUrl().isBlank()) {
-            mysqlClient.client = MySQLPool.pool(vertx, config.getUrl().trim(), poolOptions);
+        if (config.getUri() != null && !config.getUri().isBlank()) {
+            mysqlClient.client = MySQLPool.pool(vertx, config.getUri().trim(), poolOptions);
         } else {
             var connectOptions = new MySQLConnectOptions()
                     .setPort(config.getPort())
