@@ -20,6 +20,7 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
+import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.*;
@@ -76,6 +77,14 @@ public class TCTenantService extends IAMBasicService {
 
     @Transactional
     public Resp<Long> addTenantIdent(TenantIdentAddReq tenantIdentAddReq, Long relTenantId) {
+        var qTenantIdent = QTenantIdent.tenantIdent;
+        if (sqlBuilder.select(qTenantIdent.id)
+                .from(qTenantIdent)
+                .where(qTenantIdent.kind.eq(tenantIdentAddReq.getKind()))
+                .where(qTenantIdent.relTenantId.eq(relTenantId))
+                .fetchCount() != 0) {
+            return StandardResp.conflict(BUSINESS_TENANT_IDENT, "租户认证类型已存在");
+        }
         var tenantIdent = $.bean.copyProperties(tenantIdentAddReq, TenantIdent.class);
         tenantIdent.setRelTenantId(relTenantId);
         return saveEntity(tenantIdent);
@@ -87,9 +96,6 @@ public class TCTenantService extends IAMBasicService {
         var tenantIdentUpdate = sqlBuilder.update(qTenantIdent)
                 .where(qTenantIdent.id.eq(tenantIdentId))
                 .where(qTenantIdent.relTenantId.eq(relTenantId));
-        if (tenantIdentModifyReq.getKind() != null) {
-            tenantIdentUpdate.set(qTenantIdent.kind, tenantIdentModifyReq.getKind());
-        }
         if (tenantIdentModifyReq.getValidAKRule() != null) {
             tenantIdentUpdate.set(qTenantIdent.validAKRule, tenantIdentModifyReq.getValidAKRule());
         }
@@ -150,6 +156,15 @@ public class TCTenantService extends IAMBasicService {
 
     @Transactional
     public Resp<Long> addTenantCert(TenantCertAddReq tenantCertAddReq, Long relTenantId) {
+        var qTenantCert = QTenantCert.tenantCert;
+        tenantCertAddReq.setCategory(tenantCertAddReq.getCategory().toLowerCase());
+        if (sqlBuilder.select(qTenantCert.id)
+                .from(qTenantCert)
+                .where(qTenantCert.category.eq(tenantCertAddReq.getCategory()))
+                .where(qTenantCert.relTenantId.eq(relTenantId))
+                .fetchCount() != 0) {
+            return StandardResp.conflict(BUSINESS_TENANT_CERT, "租户凭证类型已存在");
+        }
         var tenantCert = $.bean.copyProperties(tenantCertAddReq, TenantCert.class);
         tenantCert.setRelTenantId(relTenantId);
         return saveEntity(tenantCert);
@@ -158,6 +173,17 @@ public class TCTenantService extends IAMBasicService {
     @Transactional
     public Resp<Void> modifyTenantCert(Long tenantCertId, TenantCertModifyReq tenantCertModifyReq, Long relTenantId) {
         var qTenantCert = QTenantCert.tenantCert;
+        if (tenantCertModifyReq.getCategory() != null) {
+            tenantCertModifyReq.setCategory(tenantCertModifyReq.getCategory().toLowerCase());
+        }
+        if (tenantCertModifyReq.getCategory() != null && sqlBuilder.select(qTenantCert.id)
+                .from(qTenantCert)
+                .where(qTenantCert.category.eq(tenantCertModifyReq.getCategory()))
+                .where(qTenantCert.relTenantId.eq(relTenantId))
+                .where(qTenantCert.id.ne(tenantCertId))
+                .fetchCount() != 0) {
+            return StandardResp.conflict(BUSINESS_TENANT_CERT, "租户凭证类型已存在");
+        }
         var tenantCertUpdate = sqlBuilder.update(qTenantCert)
                 .where(qTenantCert.id.eq(tenantCertId))
                 .where(qTenantCert.relTenantId.eq(relTenantId));

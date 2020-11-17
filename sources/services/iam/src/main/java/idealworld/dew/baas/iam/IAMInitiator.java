@@ -17,28 +17,24 @@
 package idealworld.dew.baas.iam;
 
 
-import com.ecfront.dew.common.$;
 import group.idealworld.dew.core.DewContext;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
-import idealworld.dew.baas.common.enumeration.AuthResultKind;
-import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
-import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
-import idealworld.dew.baas.common.enumeration.ResourceKind;
+import idealworld.dew.baas.common.enumeration.*;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.QTenant;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
+import idealworld.dew.baas.iam.enumeration.GroupKind;
 import idealworld.dew.baas.iam.interceptor.InterceptService;
 import idealworld.dew.baas.iam.scene.appconsole.dto.app.AppIdentAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.authpolicy.AuthPolicyAddReq;
+import idealworld.dew.baas.iam.scene.appconsole.dto.group.GroupAddReq;
+import idealworld.dew.baas.iam.scene.appconsole.dto.group.GroupNodeAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.resource.ResourceAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.resource.ResourceSubjectAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.role.RoleAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.role.RoleDefAddReq;
-import idealworld.dew.baas.iam.scene.appconsole.service.ACAppService;
-import idealworld.dew.baas.iam.scene.appconsole.service.ACAuthPolicyService;
-import idealworld.dew.baas.iam.scene.appconsole.service.ACResourceService;
-import idealworld.dew.baas.iam.scene.appconsole.service.ACRoleService;
+import idealworld.dew.baas.iam.scene.appconsole.service.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import idealworld.dew.baas.iam.scene.systemconsole.dto.TenantAddReq;
 import idealworld.dew.baas.iam.scene.systemconsole.service.SCTenantService;
@@ -79,6 +75,8 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
     @Autowired
     private ACRoleService acRoleService;
     @Autowired
+    private ACGroupService acGroupService;
+    @Autowired
     private TCAccountService tcAccountService;
     @Autowired
     private ACResourceService acResourceService;
@@ -107,7 +105,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .fetchCount() != 0) {
             return;
         }
-        log.info("Initializing IAM app");
+        log.info("[Startup]Initializing IAM application");
         // 初始化租户
         var tenantId = scTenantService.addTenant(TenantAddReq.builder()
                 .name(iamConfig.getApp().getIamTenantName())
@@ -115,6 +113,10 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         // 初始化租户认证
         tcTenantService.addTenantIdent(TenantIdentAddReq.builder()
                 .kind(AccountIdentKind.USERNAME)
+                .validAKRuleNote("用户名校验规则")
+                .validAKRule("^[a-zA-Z\\d\\.]{3,20}$")
+                .validSKRuleNote("密码校验规则，8-20位字母+数字")
+                .validSKRule("^(?![0-9]+$)(?![a-zA-Z]+$)\\S{8,20}$")
                 .validTimeSec(Constant.OBJECT_UNDEFINED)
                 .build(), tenantId);
         // 初始化租户凭证
@@ -153,16 +155,24 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         var appRoleAdminId = acRoleService.addRole(RoleAddReq.builder()
                 .relRoleDefId(appRoleDefAdminId)
                 .build(), iamAppId, tenantId).getBody();
+        // 初始化群组
+        var groupId = acGroupService.addGroup(GroupAddReq.builder()
+                .code("default")
+                .kind(GroupKind.ADMINISTRATION)
+                .name("默认")
+                .build(), iamAppId, tenantId).getBody();
+        acGroupService.addGroupNode(GroupNodeAddReq.builder()
+                .name("默认节点")
+                .build(), groupId, iamAppId, tenantId);
         // 初始化账号
         var iamAccountId = tcAccountService.addAccount(AccountAddReq.builder()
                 .name(iamConfig.getApp().getIamAppName())
                 .build(), tenantId).getBody();
         // 初始化账号认证
-        var tmpPwd = $.field.createShortUUID();
         tcAccountService.addAccountIdent(AccountIdentAddReq.builder()
                 .kind(AccountIdentKind.USERNAME)
-                .ak(iamConfig.getApp().getIamAppName())
-                .sk(tmpPwd)
+                .ak(iamConfig.getApp().getIamAdminName())
+                .sk(iamConfig.getApp().getIamAdminPwd())
                 .build(), iamAccountId, tenantId);
         // 初始化账号应用
         tcAccountService.addAccountApp(iamAccountId, iamAppId, tenantId);
@@ -180,22 +190,23 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         // 初始化资源
         var systemResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("系统控制台资源")
-                .uri("/system/**")
+                .uri("/console/system/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .build(), iamAppId, tenantId).getBody();
         var tenantResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("租户控制台资源")
-                .uri("/tenant/**")
+                .uri("/console/tenant/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .build(), iamAppId, tenantId).getBody();
         var appResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("应用控制台资源")
-                .uri("/app/**")
+                .uri("/console/app/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .build(), iamAppId, tenantId).getBody();
         // 初始化权限策略
         acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ROLE)
+                .actionKind(OptActionKind.CREATE)
                 .relSubjectIds(iamAccountId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(systemResourceId)
@@ -205,6 +216,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .build(), iamAppId, tenantId);
         acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ROLE)
+                .actionKind(OptActionKind.CREATE)
                 .relSubjectIds(iamAccountId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(tenantResourceId)
@@ -214,6 +226,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .build(), iamAppId, tenantId);
         acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ROLE)
+                .actionKind(OptActionKind.CREATE)
                 .relSubjectIds(iamAccountId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(appResourceId)
@@ -221,7 +234,15 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .relSubjectAppId(iamAppId)
                 .relSubjectTenantId(tenantId)
                 .build(), iamAppId, tenantId);
-        log.info("Initialized IAM app. \r\n >> appId = {} \r\n >> username = {} \r\n >> temporary password = {}", iamAppId, iamConfig.getApp().getIamAdminName(), tmpPwd);
+        log.info("[Startup]Initialization complete.\n" +
+                        "##################################\n" +
+                        " System administrator information:\n" +
+                        " appId = {}\n" +
+                        " username = {}\n" +
+                        " temporary password= {}\n" +
+                        " please change it in time.\n" +
+                        "##################################",
+                iamAppId, iamConfig.getApp().getIamAdminName(), iamConfig.getApp().getIamAdminPwd());
     }
 
 }

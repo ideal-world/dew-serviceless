@@ -38,8 +38,7 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "iam_tenant_ident", indexes = {
-        @Index(columnList = "relTenantId,kind", unique = true),
-        @Index(columnList = "status")
+        @Index(columnList = "relTenantId,kind", unique = true)
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_tenant_ident",
         comment = "租户认证配置")

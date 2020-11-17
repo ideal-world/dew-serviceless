@@ -38,9 +38,6 @@ import java.io.Serializable;
 @Schema(title = "修改租户认证配置请求")
 public class TenantIdentModifyReq implements Serializable {
 
-    @Schema(title = "租户认证类型名称")
-    private AccountIdentKind kind;
-
     @Size(max = 2000)
     @Schema(title = "认证AK校验正则规则说明")
     private String validAKRuleNote;

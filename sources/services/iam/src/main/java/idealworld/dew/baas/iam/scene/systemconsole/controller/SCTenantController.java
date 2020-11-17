@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -44,7 +45,7 @@ public class SCTenantController extends IAMBasicController {
 
     @PostMapping(value = "")
     @Operation(summary = "添加租户")
-    public Resp<Long> addTenant(TenantAddReq tenantAddReq) {
+    public Resp<Long> addTenant(@Validated @RequestBody TenantAddReq tenantAddReq) {
         return scTenantService.addTenant(tenantAddReq);
     }
 

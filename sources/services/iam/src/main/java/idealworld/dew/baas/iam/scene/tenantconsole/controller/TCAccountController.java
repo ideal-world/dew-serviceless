@@ -107,9 +107,9 @@ public class TCAccountController extends IAMBasicController {
 
     // --------------------------------------------------------------------
 
-    @PostMapping(value = "{accountId}/app")
+    @PostMapping(value = "{accountId}/app/{appId}")
     @Operation(summary = "添加当前租户某个账号的关联应用")
-    public Resp<Long> addAccountApp(@PathVariable Long accountId, @RequestParam Long appId) {
+    public Resp<Long> addAccountApp(@PathVariable Long accountId, @PathVariable Long appId) {
         return tcAccountService.addAccountApp(accountId, appId, getCurrentTenantId());
     }
 
@@ -121,9 +121,9 @@ public class TCAccountController extends IAMBasicController {
 
     // --------------------------------------------------------------------
 
-    @PostMapping(value = "{accountId}/group")
+    @PostMapping(value = "{accountId}/group/{groupNodeId}")
     @Operation(summary = "添加当前租户某个账号的关联群组")
-    public Resp<Long> addAccountGroup(@PathVariable Long accountId, @RequestParam Long groupNodeId) {
+    public Resp<Long> addAccountGroup(@PathVariable Long accountId, @PathVariable Long groupNodeId) {
         return tcAccountService.addAccountGroup(accountId, groupNodeId, getCurrentTenantId());
     }
 
@@ -135,9 +135,9 @@ public class TCAccountController extends IAMBasicController {
 
     // --------------------------------------------------------------------
 
-    @PostMapping(value = "{accountId}/role")
+    @PostMapping(value = "{accountId}/role/{roleId}")
     @Operation(summary = "添加当前租户某个账号的关联角色")
-    public Resp<Long> addAccountRole(@PathVariable Long accountId, @RequestParam Long roleId) {
+    public Resp<Long> addAccountRole(@PathVariable Long accountId, @PathVariable Long roleId) {
         return tcAccountService.addAccountRole(accountId, roleId, getCurrentTenantId());
     }
 

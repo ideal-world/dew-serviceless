@@ -57,7 +57,7 @@ public class AccountLoginReq implements Serializable {
     private String sk;
 
     @NotNull
-    @Schema(title = "关联应用Id")
+    @Schema(title = "关联应用Id", required = true)
     private Long relAppId;
 
 }

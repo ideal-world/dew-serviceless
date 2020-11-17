@@ -99,9 +99,9 @@ public class ACGroupController extends IAMBasicController {
 
     @GetMapping(value = "{groupId}/node")
     @Operation(summary = "获取当前应用某个群组的节点列表信息")
-    public Resp<List<GroupNodeResp>> findRoleNodes(@PathVariable Long groupId) {
+    public Resp<List<GroupNodeResp>> findGroupNodes(@PathVariable Long groupId) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acGroupService.findRoleNodes(groupId, currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return acGroupService.findGroupNodes(groupId, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "{groupId}/node/{groupNodeId}")

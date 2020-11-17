@@ -33,6 +33,7 @@ import idealworld.dew.baas.iam.domain.ident.QTenantIdent;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Nullable;
@@ -65,7 +66,7 @@ public class CommonFunctionService extends IAMBasicService {
             return StandardResp.badRequest(BUSINESS_APP, "应用[" + appId + "]不存在或未启用");
         }
         var qTenant = QTenant.tenant;
-        if (registerAction == null) {
+        if (registerAction == null || !registerAction) {
             if (sqlBuilder.select(qTenant.id)
                     .from(qTenant)
                     .where(qTenant.id.eq(tenantId))
@@ -86,15 +87,15 @@ public class CommonFunctionService extends IAMBasicService {
         return Resp.success(tenantId);
     }
 
-    public Resp<Long> getEnabledTenantIdByAccountId(Long accountId) {
+    public Resp<Long> getEnabledTenantIdByOpenId(String openId) {
         var qAccount = QAccount.account;
         var tenantId = sqlBuilder.select(qAccount.relTenantId)
                 .from(qAccount)
-                .where(qAccount.id.eq(accountId))
+                .where(qAccount.openId.eq(openId))
                 .where(qAccount.status.eq(CommonStatus.ENABLED))
                 .fetchOne();
         if (tenantId == null) {
-            return StandardResp.badRequest(BUSINESS_APP, "账号[" + accountId + "]不存在或未启用");
+            return StandardResp.badRequest(BUSINESS_APP, "账号[" + openId + "]不存在或未启用");
         }
         var qTenant = QTenant.tenant;
         if (sqlBuilder.select(qTenant.id)
@@ -102,7 +103,7 @@ public class CommonFunctionService extends IAMBasicService {
                 .where(qTenant.id.eq(tenantId))
                 .where(qTenant.status.eq(CommonStatus.ENABLED))
                 .fetchCount() == 0) {
-            return StandardResp.badRequest(BUSINESS_APP, "账号[" + accountId + "]对应租户不存在或未启用");
+            return StandardResp.badRequest(BUSINESS_APP, "账号[" + openId + "]对应租户不存在或未启用");
         }
         return Resp.success(tenantId);
     }
@@ -120,7 +121,7 @@ public class CommonFunctionService extends IAMBasicService {
                 }
                 return StandardResp.success("");
             case USERNAME:
-                if (StringUtils.isEmpty(sk)) {
+                if (ObjectUtils.isEmpty(sk)) {
                     return StandardResp.badRequest(BUSINESS_ACCOUNT_IDENT, "密码必填");
                 }
                 return StandardResp.success($.security.digest.digest(ak + sk, "SHA-512"));
@@ -155,7 +156,7 @@ public class CommonFunctionService extends IAMBasicService {
         var validAkRule = tenantIdent.get(0, String.class);
         var validSkRule = tenantIdent.get(1, String.class);
         var validTimeSec = tenantIdent.get(2, Long.class);
-        if (ak != null && !StringUtils.isEmpty(validAkRule)) {
+        if (ak != null && !ObjectUtils.isEmpty(validAkRule)) {
             if (!VALID_RULES.containsKey(validAkRule)) {
                 VALID_RULES.put(validAkRule, Pattern.compile(validAkRule));
             }
@@ -163,7 +164,7 @@ public class CommonFunctionService extends IAMBasicService {
                 return StandardResp.badRequest(BUSINESS_TENANT_CERT, "认证名规则不合法");
             }
         }
-        if (sk != null && !StringUtils.isEmpty(validSkRule)) {
+        if (sk != null && !ObjectUtils.isEmpty(validSkRule)) {
             if (!VALID_RULES.containsKey(validSkRule)) {
                 VALID_RULES.put(validSkRule, Pattern.compile(validSkRule));
             }

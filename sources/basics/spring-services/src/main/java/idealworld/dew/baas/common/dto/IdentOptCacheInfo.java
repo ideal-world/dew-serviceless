@@ -34,6 +34,7 @@ public class IdentOptCacheInfo extends IdentOptInfo {
     @Schema(title = "租户Id", required = true)
     private Long tenantId;
 
+
     public Long getTenantId() {
         return tenantId;
     }

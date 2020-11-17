@@ -159,11 +159,12 @@ public class TCAccountService extends IAMBasicService {
 
     @Transactional
     public Resp<Long> addAccountIdent(AccountIdentAddReq accountIdentAddReq, Long accountId, Long relTenantId) {
+        var qAccount = QAccount.account;
         var qAccountIdent = QAccountIdent.accountIdent;
-        if (sqlBuilder.select(qAccountIdent.id)
-                .from(qAccountIdent)
-                .where(qAccountIdent.id.eq(accountId))
-                .where(qAccountIdent.relTenantId.eq(relTenantId))
+        if (sqlBuilder.select(qAccount.id)
+                .from(qAccount)
+                .where(qAccount.id.eq(accountId))
+                .where(qAccount.relTenantId.eq(relTenantId))
                 .fetchCount() == 0) {
             return StandardResp.unAuthorized(BUSINESS_ACCOUNT_IDENT, "关联账号不合法");
         }

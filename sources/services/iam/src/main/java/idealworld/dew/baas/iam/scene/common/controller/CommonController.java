@@ -16,9 +16,18 @@
 
 package idealworld.dew.baas.iam.scene.common.controller;
 
+import com.ecfront.dew.common.Resp;
+import idealworld.dew.baas.common.dto.IdentOptInfo;
+import idealworld.dew.baas.iam.scene.common.dto.account.AccountChangeReq;
+import idealworld.dew.baas.iam.scene.common.dto.account.AccountIdentChangeReq;
+import idealworld.dew.baas.iam.scene.common.dto.account.AccountLoginReq;
+import idealworld.dew.baas.iam.scene.common.dto.account.AccountRegisterReq;
+import idealworld.dew.baas.iam.scene.common.service.CommonAccountService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 公共操作.
@@ -26,9 +35,48 @@ import org.springframework.web.bind.annotation.RestController;
  * @author gudaoxuri
  */
 @RestController
-@Tag(name = "common", description = "公共操作")
+@Tag(name = "Common", description = "公共操作")
+@RequestMapping(value = "/common")
 @Validated
 public class CommonController extends IAMBasicController {
 
+    @Autowired
+    private CommonAccountService commonAccountService;
+
+    @PostMapping(value = "account")
+    @Operation(summary = "注册账号")
+    public Resp<IdentOptInfo> register(@Validated @RequestBody AccountRegisterReq accountRegisterReq) {
+        return commonAccountService.register(accountRegisterReq);
+    }
+
+    @PostMapping(value = "login")
+    @Operation(summary = "登录")
+    public Resp<IdentOptInfo> login(@Validated @RequestBody AccountLoginReq accountLoginReq) {
+        return commonAccountService.login(accountLoginReq);
+    }
+
+    @PostMapping(value = "logout")
+    @Operation(summary = "退出登录")
+    public Resp<Void> login(@Validated @RequestBody String token) {
+        return commonAccountService.logout(token, getCurrentOpenId());
+    }
+
+    @PatchMapping(value = "account")
+    @Operation(summary = "修改账号")
+    public Resp<Void> changeInfo(@Validated @RequestBody AccountChangeReq accountChangeReq) {
+        return commonAccountService.changeInfo(accountChangeReq, getCurrentOpenId());
+    }
+
+    @PatchMapping(value = "account/ident")
+    @Operation(summary = "修改账号认证")
+    public Resp<Void> changeIdent(@Validated @RequestBody AccountIdentChangeReq accountIdentChangeReq) {
+        return commonAccountService.changeIdent(accountIdentChangeReq, getCurrentOpenId(), getCurrentAppAndTenantId()._0);
+    }
+
+    @DeleteMapping(value = "account")
+    @Operation(summary = "注销账号")
+    public Resp<Void> unRegister() {
+        return commonAccountService.unRegister(getCurrentOpenId());
+    }
 
 }

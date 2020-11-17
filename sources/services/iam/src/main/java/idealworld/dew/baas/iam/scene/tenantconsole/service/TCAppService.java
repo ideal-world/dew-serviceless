@@ -49,6 +49,7 @@ public class TCAppService extends IAMBasicService {
     @Transactional
     public Resp<Long> addApp(AppAddReq appAddReq, Long relTenantId) {
         var qApp = QApp.app;
+        appAddReq.setName(appAddReq.getName().toLowerCase());
         if (sqlBuilder.select(qApp.id)
                 .from(qApp)
                 .where(qApp.relTenantId.eq(relTenantId))
@@ -67,6 +68,9 @@ public class TCAppService extends IAMBasicService {
         var qApp = QApp.app;
         if (!commonFunctionService.checkAppMembership(appId, relTenantId).ok()) {
             return StandardResp.unAuthorized(BUSINESS_APP, "应用Id不合法");
+        }
+        if (appModifyReq.getName() != null) {
+            appModifyReq.setName(appModifyReq.getName().toLowerCase());
         }
         if (appModifyReq.getName() != null && sqlBuilder.select(qApp.id)
                 .from(qApp)

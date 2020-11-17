@@ -20,9 +20,10 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
+import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.auth.*;
-import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.iam.scene.appconsole.dto.role.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import lombok.extern.slf4j.Slf4j;
@@ -145,6 +146,37 @@ public class ACRoleService extends IAMBasicService {
                 .where(qRole.relGroupNodeId.eq(roleAddReq.getRelGroupNodeId()))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_ROLE, "角色已存在");
+        }
+        var qRoleDef = QRoleDef.roleDef;
+        var roleDefName = sqlBuilder.select(qRoleDef.name)
+                .from(qRoleDef)
+                .where(qRoleDef.id.eq(roleAddReq.getRelRoleDefId()))
+                .where(qRoleDef.relTenantId.eq(relTenantId))
+                .where(qRoleDef.relAppId.eq(relAppId))
+                .fetchOne();
+        if (roleDefName == null) {
+            return StandardResp.unAuthorized(BUSINESS_ROLE, "对应的角色定义不合法");
+        }
+        if (roleAddReq.getName() == null) {
+            if (roleAddReq.getRelGroupNodeId() != Constant.OBJECT_UNDEFINED) {
+                var qGroup = QGroup.group;
+                var qGroupNode = QGroupNode.groupNode;
+                var groupNodeName = sqlBuilder
+                        .select(qGroupNode.name)
+                        .from(qGroupNode)
+                        .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
+                        .where(qGroupNode.id.eq(roleAddReq.getRelGroupNodeId()))
+                        .where(qGroup.relTenantId.eq(relTenantId))
+                        .where(qGroup.relAppId.eq(relAppId))
+                        .fetchOne();
+                if (groupNodeName == null) {
+                    return StandardResp.unAuthorized(BUSINESS_ROLE, "对应的群组节点不合法");
+                }
+                roleAddReq.setName(groupNodeName);
+            }else{
+                roleAddReq.setName("");
+            }
+            roleAddReq.setName(roleAddReq.getName() + " " + roleDefName);
         }
         var role = $.bean.copyProperties(roleAddReq, Role.class);
         role.setRelTenantId(relTenantId);

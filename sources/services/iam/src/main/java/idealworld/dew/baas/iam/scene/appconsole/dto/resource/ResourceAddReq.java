@@ -69,7 +69,7 @@ public class ResourceAddReq implements Serializable {
 
     @Schema(title = "是否是资源组")
     @Builder.Default
-    private Boolean group = false;
+    private Boolean resGroup = false;
 
     @Schema(title = "资源所属组Id")
     @Builder.Default

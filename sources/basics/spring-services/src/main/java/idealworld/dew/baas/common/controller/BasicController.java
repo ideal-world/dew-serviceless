@@ -52,6 +52,14 @@ public abstract class BasicController {
                 ));
     }
 
+    protected String getCurrentOpenId() {
+        return Dew.auth.getOptInfo()
+                .map(info -> (String) info.getAccountCode())
+                .orElseThrow(() -> StandardResp.e(
+                        StandardResp.unAuthorized("BASIC", "用户未登录")
+                ));
+    }
+
     /**
      * Export response entity.
      *

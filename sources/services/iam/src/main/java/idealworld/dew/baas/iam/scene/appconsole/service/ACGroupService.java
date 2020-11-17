@@ -21,10 +21,10 @@ import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.domain.auth.*;
-import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.iam.scene.appconsole.dto.group.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import lombok.extern.slf4j.Slf4j;
@@ -169,7 +169,7 @@ public class ACGroupService extends IAMBasicService {
     // --------------------------------------------------------------------
 
     @Transactional
-    public Resp<Long> addGroupNode(GroupNodeAddReq groupNodeAddReq,Long groupId, Long relAppId, Long relTenantId) {
+    public Resp<Long> addGroupNode(GroupNodeAddReq groupNodeAddReq, Long groupId, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
         if (sqlBuilder.select(qGroup.id)
                 .from(qGroup)
@@ -218,7 +218,7 @@ public class ACGroupService extends IAMBasicService {
         return updateEntity(groupNodeUpdate);
     }
 
-    private String packageGroupNodeCode(Long relGroupId, Long parentId, Long siblingId) {
+    private String packageGroupNodeCode(Long groupId, Long parentId, Long siblingId) {
         if (parentId == Constant.OBJECT_UNDEFINED && siblingId == Constant.OBJECT_UNDEFINED) {
             return iamConfig.getApp().getInitNodeCode();
         }
@@ -226,7 +226,7 @@ public class ACGroupService extends IAMBasicService {
         if (siblingId == Constant.OBJECT_UNDEFINED) {
             var parentCode = sqlBuilder.select(qGroupNode.code)
                     .from(qGroupNode)
-                    .where(qGroupNode.relGroupId.eq(relGroupId))
+                    .where(qGroupNode.relGroupId.eq(groupId))
                     .where(qGroupNode.id.eq(parentId))
                     .fetchOne();
             return parentCode + iamConfig.getApp().getInitNodeCode();
@@ -242,7 +242,7 @@ public class ACGroupService extends IAMBasicService {
         var currentNodeCode = parentCode + (currentLevelCode + 1);
         sqlBuilder
                 .selectFrom(qGroupNode)
-                .where(qGroupNode.relGroupId.eq(relGroupId))
+                .where(qGroupNode.relGroupId.eq(groupId))
                 .where(qGroupNode.code.like(parentCode + "%"))
                 .where(qGroupNode.code.goe(siblingCode))
                 .fetch()
@@ -257,26 +257,26 @@ public class ACGroupService extends IAMBasicService {
         return currentNodeCode;
     }
 
-    public Resp<List<GroupNodeResp>> findRoleNodes(Long relGroupId, Long relAppId, Long relTenantId) {
+    public Resp<List<GroupNodeResp>> findGroupNodes(Long groupId, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
         var qGroupNode = QGroupNode.groupNode;
-        var roleNodes = sqlBuilder
+        var groupNodes = sqlBuilder
                 .selectFrom(qGroupNode)
                 .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
-                .where(qGroupNode.relGroupId.eq(relGroupId))
+                .where(qGroupNode.relGroupId.eq(groupId))
                 .fetch()
                 .stream()
                 .sorted(Comparator.comparing(GroupNode::getCode))
                 .collect(Collectors.toList());
         var nodeLength = iamConfig.getApp().getInitNodeCode().length();
-        List<GroupNodeResp> roleNodeRespList = roleNodes.stream()
+        List<GroupNodeResp> roleNodeRespList = groupNodes.stream()
                 .map(node -> {
                     var parentCode = node.getCode().substring(0, node.getCode().length() - nodeLength);
                     var parentId = parentCode.isEmpty()
                             ? Constant.OBJECT_UNDEFINED
-                            : roleNodes.stream().filter(n -> n.getCode().equals(parentCode)).findAny().get().getId();
+                            : groupNodes.stream().filter(n -> n.getCode().equals(parentCode)).findAny().get().getId();
                     return GroupNodeResp.builder()
                             .id(node.getId())
                             .busCode(node.getBusCode())

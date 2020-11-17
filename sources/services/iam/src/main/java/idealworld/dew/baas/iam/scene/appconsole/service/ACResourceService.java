@@ -256,8 +256,8 @@ public class ACResourceService extends IAMBasicService {
         if (resourceModifyReq.getSort() != null) {
             resourceUpdate.set(qResource.sort, resourceModifyReq.getSort());
         }
-        if (resourceModifyReq.getGroup() != null) {
-            resourceUpdate.set(qResource.resGroup, resourceModifyReq.getGroup());
+        if (resourceModifyReq.getResGroup() != null) {
+            resourceUpdate.set(qResource.resGroup, resourceModifyReq.getResGroup());
         }
         if (resourceModifyReq.getParentId() != null) {
             resourceUpdate.set(qResource.parentId, resourceModifyReq.getParentId());
@@ -368,7 +368,7 @@ public class ACResourceService extends IAMBasicService {
                 .fetch()
                 .stream()
                 .flatMap(res -> {
-                    if (res.getGroup()) {
+                    if (res.getResGroup()) {
                         return findResourceByGroups(res.getId(), relAppId, relTenantId).stream();
                     } else {
                         return new ArrayList<ResourceResp>() {

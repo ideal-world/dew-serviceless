@@ -85,7 +85,7 @@ public class IdentHandler extends CommonHttpHandler {
         var authorization = ctx.request().headers().contains(security.getAkSkFieldName())
                 ? ctx.request().getHeader(security.getAkSkFieldName()) : null;
         if (token == null && authorization == null) {
-            ctx.put(CONTEXT_INFO, null);
+            ctx.put(CONTEXT_INFO, new IdentOptCacheInfo());
             ctx.next();
             return;
         }
@@ -95,7 +95,7 @@ public class IdentHandler extends CommonHttpHandler {
             RedisClient.choose("").get(security.getCacheTokenInfoKey() + token, security.getTokenCacheExpireSec())
                     .onSuccess(optInfo -> {
                         var identOptInfo = optInfo != null
-                                ? $.json.toObject(optInfo, idealworld.dew.baas.common.dto.IdentOptCacheInfo.class)
+                                ? $.json.toObject(optInfo, IdentOptCacheInfo.class)
                                 : null;
                         if (optInfo == null) {
                             error(StandardCode.UNAUTHORIZED, "认证错误，Token不合法", ctx);

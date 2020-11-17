@@ -19,6 +19,7 @@ public class IAMConstant extends Constant {
     public static final String CONFIG_TENANT_REGISTER_ALLOW = "tenant:register:allow";
     public static final String CONFIG_ACCOUNT_VCODE_EXPIRE_SEC = "account:vcode:expiresec";
     public static final String CONFIG_ACCOUNT_VCODE_ERROR_TIMES = "account:vcode:errortimes";
+    // TODO
     public static final String CONFIG_APP_REQUEST_DATE_OFFSET_MS = "app.request.dateoffsetms";
     public static final String CONFIG_SERVICE_URL = "service.url";
 

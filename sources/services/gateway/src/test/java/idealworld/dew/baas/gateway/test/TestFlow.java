@@ -69,7 +69,7 @@ public class TestFlow extends BasicTest {
                 "测试内容");
         Assertions.assertEquals(200, result.statusCode);
         var data = $.json.toJson(result.result);
-        Assertions.assertTrue(data.get("headers").has(gatewayConfig.getDistribute().getIdentOptHeaderName()));
+        Assertions.assertTrue(data.get("headers").has(Constant.REQUEST_IDENT_OPT_FLAG));
         Assertions.assertEquals("测试内容", data.get("data").asText());
         testContext.completeNow();
     }
@@ -98,8 +98,8 @@ public class TestFlow extends BasicTest {
                     });
             Assertions.assertEquals(200, result.statusCode);
             var data = $.json.toJson(result.result);
-            Assertions.assertTrue(data.get("headers").has(gatewayConfig.getDistribute().getIdentOptHeaderName()));
-            Assertions.assertTrue(data.get("headers").get(gatewayConfig.getDistribute().getIdentOptHeaderName()).asText().contains("testCode"));
+            Assertions.assertTrue(data.get("headers").has(Constant.REQUEST_IDENT_OPT_FLAG));
+            Assertions.assertTrue($.security.decodeBase64ToString(data.get("headers").get(Constant.REQUEST_IDENT_OPT_FLAG).asText(), StandardCharsets.UTF_8).contains("testCode"));
             Assertions.assertEquals("测试内容", data.get("data").asText());
             testContext.completeNow();
         });
@@ -179,8 +179,8 @@ public class TestFlow extends BasicTest {
                     });
             Assertions.assertEquals(200, result.statusCode);
             var data = $.json.toJson(result.result);
-            Assertions.assertTrue(data.get("headers").has(gatewayConfig.getDistribute().getIdentOptHeaderName()));
-            Assertions.assertTrue(data.get("headers").get(gatewayConfig.getDistribute().getIdentOptHeaderName()).asText().contains("1123456"));
+            Assertions.assertTrue(data.get("headers").has(Constant.REQUEST_IDENT_OPT_FLAG));
+            Assertions.assertTrue($.security.decodeBase64ToString(data.get("headers").get(Constant.REQUEST_IDENT_OPT_FLAG).asText(), StandardCharsets.UTF_8).contains("testCode"));
             Assertions.assertEquals("测试内容", data.get("data").asText());
             testContext.completeNow();
         });

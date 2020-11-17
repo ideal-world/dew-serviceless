@@ -16,6 +16,7 @@
 
 package idealworld.dew.baas.iam;
 
+import com.ecfront.dew.common.$;
 import idealworld.dew.baas.common.CommonConfig;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
@@ -94,9 +95,10 @@ public class IAMConfig extends CommonConfig {
     @Data
     public static class App {
 
-        private String iamAdminName = "dew";
         private String iamTenantName = "平台租户";
         private String iamAppName = "用户权限中心";
+        private String iamAdminName = "dew";
+        private String iamAdminPwd = $.field.createShortUUID();
         private String initNodeCode = "10000";
 
     }

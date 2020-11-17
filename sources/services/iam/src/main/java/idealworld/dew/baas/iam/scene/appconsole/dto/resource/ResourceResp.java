@@ -65,7 +65,7 @@ public class ResourceResp extends AppBasedResp {
     private Integer sort;
 
     @Schema(title = "是否是资源组", required = true)
-    private Boolean group;
+    private Boolean resGroup;
 
     @Schema(title = "资源所属组Id", required = true)
     private Long parentId;

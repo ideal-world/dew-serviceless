@@ -51,8 +51,6 @@ public class GatewayConfig extends CommonConfig {
         @Builder.Default
         private Integer timeoutMs = 10000;
         @Builder.Default
-        private String identOptHeaderName = "Dew-Ident-Opt";
-        @Builder.Default
         private String iamServiceName = "iam.service";
         @Builder.Default
         private Integer iamServicePort = 9000;

@@ -14,6 +14,7 @@ import idealworld.dew.baas.reldb.RelDBConfig;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -71,7 +72,7 @@ public class AuthHandler extends CommonHttpHandler {
                                 );
                             })
                             .collect(Collectors.groupingBy(item -> item._1, Collectors.mapping(item -> item._0, Collectors.toList())));
-                    var strIdentOpt = ctx.request().getHeader(Constant.REQUEST_IDENT_OPT_FLAG);
+                    var strIdentOpt = $.security.decodeBase64ToString(ctx.request().getHeader(Constant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8);
                     var identOpt = $.json.toObject(strIdentOpt, IdentOptCacheInfo.class);
                     var subjectInfo = packageSubjectInfo(identOpt);
                     authPolicy.authentication(resources, subjectInfo)

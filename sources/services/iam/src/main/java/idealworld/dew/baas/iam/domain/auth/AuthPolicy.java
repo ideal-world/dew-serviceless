@@ -78,17 +78,12 @@ public class AuthPolicy extends SafeEntity {
     @Column(nullable = false,
             columnDefinition = "varchar(100) comment '操作类型名称'")
     @Enumerated(EnumType.STRING)
-    private OptActionKind optActionKind;
+    private OptActionKind actionKind;
 
     @Column(nullable = false,
             columnDefinition = "varchar(100) comment '操作结果名称'")
     @Enumerated(EnumType.STRING)
     private AuthResultKind resultKind;
-
-    // TODO
-    @Column(nullable = false,
-            columnDefinition = "varchar(5000) comment '操作结果为修正时的内容'")
-    private String resultModifyContent;
 
     @Column(nullable = false,
             columnDefinition = "tinyint(1) comment '是否排他'")

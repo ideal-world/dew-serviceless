@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package idealworld.dew.baas.iam;
+package idealworld.dew.baas.iam.test;
 
 import idealworld.dew.baas.DewBAASApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

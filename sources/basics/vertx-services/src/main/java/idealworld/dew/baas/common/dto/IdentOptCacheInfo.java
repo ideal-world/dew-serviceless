@@ -35,6 +35,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class IdentOptCacheInfo {
 
+    private String tokenKind;
     private String token;
     private Object accountCode;
     @Builder.Default

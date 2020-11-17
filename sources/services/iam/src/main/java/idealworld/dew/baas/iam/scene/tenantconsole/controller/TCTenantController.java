@@ -57,7 +57,7 @@ public class TCTenantController extends IAMBasicController {
 
     @PostMapping(value = "ident")
     @Operation(summary = "添加当前租户的认证")
-    public Resp<Long> addTenantIdent(TenantIdentAddReq tenantIdentAddReq) {
+    public Resp<Long> addTenantIdent(@Validated @RequestBody TenantIdentAddReq tenantIdentAddReq) {
         return tcTenantService.addTenantIdent(tenantIdentAddReq, getCurrentTenantId());
     }
 
@@ -68,7 +68,7 @@ public class TCTenantController extends IAMBasicController {
         return tcTenantService.modifyTenantIdent(tenantIdentId, tenantIdentModifyReq, getCurrentTenantId());
     }
 
-    @GetMapping(value = "ident/{tenantIdentId")
+    @GetMapping(value = "ident/{tenantIdentId}")
     @Operation(summary = "获取当前租户的某个认证信息")
     public Resp<TenantIdentResp> getTenantIdent(@PathVariable Long tenantIdentId) {
         return tcTenantService.getTenantIdent(tenantIdentId, getCurrentTenantId());
@@ -90,7 +90,7 @@ public class TCTenantController extends IAMBasicController {
 
     @PostMapping(value = "cert")
     @Operation(summary = "添加当前租户的凭证")
-    public Resp<Long> addTenantCert(TenantCertAddReq tenantCertAddReq) {
+    public Resp<Long> addTenantCert(@Validated @RequestBody TenantCertAddReq tenantCertAddReq) {
         return tcTenantService.addTenantCert(tenantCertAddReq, getCurrentTenantId());
     }
 
@@ -101,7 +101,7 @@ public class TCTenantController extends IAMBasicController {
         return tcTenantService.modifyTenantCert(tenantCertId, tenantCertModifyReq, getCurrentTenantId());
     }
 
-    @GetMapping(value = "cert/{tenantCertId")
+    @GetMapping(value = "cert/{tenantCertId}")
     @Operation(summary = "获取当前租户的某个凭证信息")
     public Resp<TenantCertResp> getTenantCert(@PathVariable Long tenantCertId) {
         return tcTenantService.getTenantCert(tenantCertId, getCurrentTenantId());
@@ -109,7 +109,7 @@ public class TCTenantController extends IAMBasicController {
 
 
     @GetMapping(value = "cert")
-    @Operation(summary = "获取当前租户的认证凭证信息")
+    @Operation(summary = "获取当前租户的凭证列表信息")
     public Resp<Page<TenantCertResp>> pageTenantCerts(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
         return tcTenantService.pageTenantCerts(pageNumber, pageSize, getCurrentTenantId());
     }

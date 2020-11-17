@@ -58,7 +58,7 @@ public class ResourceModifyReq implements Serializable {
     private Integer sort;
 
     @Schema(title = "是否是资源组")
-    private Boolean group;
+    private Boolean resGroup;
 
     @Schema(title = "资源所属组Id")
     private Long parentId;

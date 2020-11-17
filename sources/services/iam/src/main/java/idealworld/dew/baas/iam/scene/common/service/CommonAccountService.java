@@ -119,7 +119,7 @@ public class CommonAccountService extends IAMBasicService {
         if (!tenantIdR.ok()) {
             return Resp.error(tenantIdR);
         }
-        log.info("login : [{}-{}] {}", tenantIdR.getBody(), accountLoginReq.getRelAppId(), $.json.toJsonString(accountLoginReq));
+        log.info("login : [{}-{}] kind = {}, ak = {}", tenantIdR.getBody(), accountLoginReq.getRelAppId(), accountLoginReq.getKind(), accountLoginReq.getAk());
         var qAccount = QAccount.account;
         var qAccountApp = QAccountApp.accountApp;
         var qAccountIdent = QAccountIdent.accountIdent;
@@ -156,6 +156,8 @@ public class CommonAccountService extends IAMBasicService {
         var optInfo = new IdentOptCacheInfo();
         optInfo.setAccountCode(openId);
         optInfo.setToken(token);
+        // TODO
+        optInfo.setTokenKind(IdentOptCacheInfo.DEFAULT_TOKEN_KIND_FLAG);
         optInfo.setRoleInfo(commonFunctionService.findRoleInfo(accountId, accountLoginReq.getRelAppId()));
         optInfo.setGroupInfo(commonFunctionService.findGroupInfo(accountId, accountLoginReq.getRelAppId()));
         optInfo.setAppId(accountLoginReq.getRelAppId());
@@ -176,8 +178,8 @@ public class CommonAccountService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Void> changeIdent(AccountIdentChangeReq accountIdentChangeReq, Long relAccountId, Long relAppId) {
-        var tenantIdR = commonFunctionService.getEnabledTenantIdByAccountId(relAccountId);
+    public Resp<Void> changeIdent(AccountIdentChangeReq accountIdentChangeReq, String relOpenId, Long relAppId) {
+        var tenantIdR = commonFunctionService.getEnabledTenantIdByOpenId(relOpenId);
         if (!tenantIdR.ok()) {
             return Resp.error(tenantIdR);
         }
@@ -207,10 +209,10 @@ public class CommonAccountService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Void> changeInfo(AccountChangeReq accountChangeReq, Long relAccountId) {
+    public Resp<Void> changeInfo(AccountChangeReq accountChangeReq, String relOpenId) {
         var qAccount = QAccount.account;
         var accountUpdate = sqlBuilder.update(qAccount)
-                .where(qAccount.id.eq(relAccountId));
+                .where(qAccount.openId.eq(relOpenId));
         if (accountChangeReq.getName() != null) {
             accountUpdate.set(qAccount.name, accountChangeReq.getName());
         }
@@ -224,11 +226,11 @@ public class CommonAccountService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Void> unRegister(Long relAccountId) {
+    public Resp<Void> unRegister(String relOpenId) {
         var qAccount = QAccount.account;
         var accountUpdate = sqlBuilder.update(qAccount)
                 .set(qAccount.status, CommonStatus.DISABLED)
-                .where(qAccount.id.eq(relAccountId));
+                .where(qAccount.openId.eq(relOpenId));
         return updateEntity(accountUpdate);
     }
 

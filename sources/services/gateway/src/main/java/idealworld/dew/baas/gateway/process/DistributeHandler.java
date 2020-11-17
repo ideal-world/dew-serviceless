@@ -17,6 +17,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,7 +66,7 @@ public class DistributeHandler extends CommonHttpHandler {
         Future<HttpResponse<Buffer>> request;
         Map<String, String> header = new HashMap<>() {
             {
-                put(distribute.getIdentOptHeaderName(), $.json.toJsonString(identOptInfo));
+                put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64($.json.toJsonString(identOptInfo), StandardCharsets.UTF_8));
                 put(Constant.REQUEST_RESOURCE_URI_FLAG, resourceUri.toString());
                 put(Constant.REQUEST_RESOURCE_ACTION_FLAG, action.toString());
             }

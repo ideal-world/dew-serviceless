@@ -54,7 +54,7 @@ public class AccountIdentAddReq implements Serializable {
     @Size(max = 255)
     @Schema(title = "账号认证密钥")
     @Builder.Default
-    private String sk="";
+    private String sk = "";
 
     @Schema(title = "账号认证有效开始时间")
     private Date validStartTime;
