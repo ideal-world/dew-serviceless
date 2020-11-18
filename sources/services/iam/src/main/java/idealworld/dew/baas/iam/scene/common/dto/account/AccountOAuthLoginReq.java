@@ -50,4 +50,8 @@ public class AccountOAuthLoginReq implements Serializable {
     @Schema(title = "授权码", required = true)
     private String code;
 
+    @NotNull
+    @Schema(title = "关联应用Id", required = true)
+    private Long relAppId;
+
 }

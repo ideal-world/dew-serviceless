@@ -16,7 +16,7 @@ public class URIHelper {
 
     public static String formatUri(URI uri) {
         var query = "";
-        if (uri.getQuery() != null) {
+        if (uri.getQuery() != null && !uri.getQuery().isBlank()) {
             query = Arrays.stream(uri.getQuery().split("&"))
                     .sorted(Comparator.comparing(u -> u.split("=")[0]))
                     .collect(Collectors.joining("&"));
@@ -25,7 +25,7 @@ public class URIHelper {
                 + "://"
                 + uri.getHost()
                 + (uri.getPort() != -1 ? ":" + uri.getPort() : "")
-                + uri.getPath()
+                + (uri.getPath().isBlank() ? "/" : uri.getPath())
                 + (uri.getQuery() != null ? "?" + query : "");
     }
 

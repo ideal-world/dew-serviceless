@@ -60,6 +60,14 @@ public abstract class BasicController {
                 ));
     }
 
+    protected String getCurrentToken() {
+        return Dew.auth.getOptInfo()
+                .map(info -> info.getToken())
+                .orElseThrow(() -> StandardResp.e(
+                        StandardResp.unAuthorized("BASIC", "用户未登录")
+                ));
+    }
+
     /**
      * Export response entity.
      *

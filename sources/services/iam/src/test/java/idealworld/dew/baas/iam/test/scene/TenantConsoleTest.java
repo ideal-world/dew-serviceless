@@ -25,10 +25,9 @@ import idealworld.dew.baas.iam.scene.tenantconsole.dto.app.AppModifyReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.app.AppResp;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.*;
 import idealworld.dew.baas.iam.test.BasicTest;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TenantConsoleTest extends BasicTest {
 
     @BeforeEach
@@ -40,6 +39,7 @@ public class TenantConsoleTest extends BasicTest {
                 .build(), Long.class).getBody();
     }
 
+    @Order(1)
     @Test
     public void testTenant() {
         // 修改当前租户
@@ -131,6 +131,7 @@ public class TenantConsoleTest extends BasicTest {
 
     }
 
+    @Order(2)
     @Test
     public void testApp() {
         // 添加当前租户的应用
@@ -166,6 +167,7 @@ public class TenantConsoleTest extends BasicTest {
 
     }
 
+    @Order(3)
     @Test
     public void testAccount() {
         // 添加当前租户的账号

@@ -16,6 +16,7 @@
 
 package idealworld.dew.baas.iam.scene.appconsole.dto.group;
 
+import idealworld.dew.baas.common.Constant;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,9 +51,11 @@ public class GroupNodeModifyReq implements Serializable {
     private String parameters;
 
     @Schema(title = "上级节点Id")
-    private Long parentId;
+    @Builder.Default
+    private Long parentId = Constant.OBJECT_UNDEFINED;
 
     @Schema(title = "同级上一个节点Id")
-    private Long siblingId;
+    @Builder.Default
+    private Long siblingId = Constant.OBJECT_UNDEFINED;
 
 }

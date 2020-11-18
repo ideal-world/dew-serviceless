@@ -22,6 +22,7 @@ import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.resp.StandardResp;
+import idealworld.dew.baas.common.util.URIHelper;
 import idealworld.dew.baas.iam.domain.auth.*;
 import idealworld.dew.baas.iam.scene.appconsole.dto.resource.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
@@ -45,6 +46,7 @@ public class ACResourceService extends IAMBasicService {
     @Transactional
     public Resp<Long> addResourceSubject(ResourceSubjectAddReq resourceSubjectAddReq, Long relAppId, Long relTenantId) {
         var qResourceSubject = QResourceSubject.resourceSubject;
+        resourceSubjectAddReq.setUri(URIHelper.formatUri(resourceSubjectAddReq.getUri()));
         if (sqlBuilder.select(qResourceSubject.id)
                 .from(qResourceSubject)
                 .where(qResourceSubject.relTenantId.eq(relTenantId))
@@ -79,6 +81,9 @@ public class ACResourceService extends IAMBasicService {
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_RESOURCE_SUBJECT, "资源主体编码已存在");
         }
+        if (resourceSubjectModifyReq.getUri() != null) {
+            resourceSubjectModifyReq.setUri(URIHelper.formatUri(resourceSubjectModifyReq.getUri()));
+        }
         if (resourceSubjectModifyReq.getUri() != null && sqlBuilder.select(qResourceSubject.id)
                 .from(qResourceSubject)
                 .where(qResourceSubject.relTenantId.eq(relTenantId))
@@ -98,9 +103,6 @@ public class ACResourceService extends IAMBasicService {
         if (resourceSubjectModifyReq.getName() != null) {
             resourceSubjectUpdate.set(qResourceSubject.name, resourceSubjectModifyReq.getName());
         }
-        if (resourceSubjectModifyReq.getName() != null) {
-            resourceSubjectUpdate.set(qResourceSubject.name, resourceSubjectModifyReq.getName());
-        }
         if (resourceSubjectModifyReq.getSort() != null) {
             resourceSubjectUpdate.set(qResourceSubject.sort, resourceSubjectModifyReq.getSort());
         }
@@ -109,6 +111,9 @@ public class ACResourceService extends IAMBasicService {
         }
         if (resourceSubjectModifyReq.getKind() != null) {
             resourceSubjectUpdate.set(qResourceSubject.kind, resourceSubjectModifyReq.getKind());
+        }
+        if (resourceSubjectModifyReq.getUri() != null) {
+            resourceSubjectUpdate.set(qResourceSubject.uri, resourceSubjectModifyReq.getUri());
         }
         if (resourceSubjectModifyReq.getAk() != null) {
             resourceSubjectUpdate.set(qResourceSubject.ak, resourceSubjectModifyReq.getAk());
@@ -170,7 +175,8 @@ public class ACResourceService extends IAMBasicService {
                 qResourceSubject.relTenantId))
                 .from(qResourceSubject)
                 .where(qResourceSubject.relTenantId.eq(relTenantId))
-                .where(qResourceSubject.relAppId.eq(relAppId)), pageNumber, pageSize);
+                .where(qResourceSubject.relAppId.eq(relAppId))
+                .orderBy(qResourceSubject.sort.asc()), pageNumber, pageSize);
     }
 
     @Transactional
@@ -195,6 +201,7 @@ public class ACResourceService extends IAMBasicService {
     @Transactional
     public Resp<Long> addResource(ResourceAddReq resourceAddReq, Long relAppId, Long relTenantId) {
         var qResource = QResource.resource;
+        resourceAddReq.setUri(URIHelper.formatUri(resourceAddReq.getUri()));
         if (sqlBuilder.select(qResource.id)
                 .from(qResource)
                 .where(qResource.relTenantId.eq(relTenantId))
@@ -220,6 +227,9 @@ public class ACResourceService extends IAMBasicService {
     @Transactional
     public Resp<Void> modifyResource(Long resourceId, ResourceModifyReq resourceModifyReq, Long relAppId, Long relTenantId) {
         var qResource = QResource.resource;
+        if (resourceModifyReq.getUri() != null) {
+            resourceModifyReq.setUri(URIHelper.formatUri(resourceModifyReq.getUri()));
+        }
         if (resourceModifyReq.getUri() != null && sqlBuilder.select(qResource.id)
                 .from(qResource)
                 .where(qResource.relTenantId.eq(relTenantId))
@@ -275,7 +285,6 @@ public class ACResourceService extends IAMBasicService {
                 qResource.name,
                 qResource.uri,
                 qResource.icon,
-                qResource.name,
                 qResource.action,
                 qResource.sort,
                 qResource.resGroup,
@@ -297,7 +306,6 @@ public class ACResourceService extends IAMBasicService {
                 qResource.name,
                 qResource.uri,
                 qResource.icon,
-                qResource.name,
                 qResource.action,
                 qResource.sort,
                 qResource.resGroup,
@@ -308,7 +316,8 @@ public class ACResourceService extends IAMBasicService {
                 qResource.relTenantId))
                 .from(qResource)
                 .where(qResource.relTenantId.eq(relTenantId))
-                .where(qResource.relAppId.eq(relAppId)), pageNumber, pageSize);
+                .where(qResource.relAppId.eq(relAppId))
+                .orderBy(qResource.sort.asc()), pageNumber, pageSize);
     }
 
     @Transactional

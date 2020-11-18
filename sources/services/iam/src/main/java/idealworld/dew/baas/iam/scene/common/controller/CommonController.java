@@ -18,11 +18,9 @@ package idealworld.dew.baas.iam.scene.common.controller;
 
 import com.ecfront.dew.common.Resp;
 import idealworld.dew.baas.common.dto.IdentOptInfo;
-import idealworld.dew.baas.iam.scene.common.dto.account.AccountChangeReq;
-import idealworld.dew.baas.iam.scene.common.dto.account.AccountIdentChangeReq;
-import idealworld.dew.baas.iam.scene.common.dto.account.AccountLoginReq;
-import idealworld.dew.baas.iam.scene.common.dto.account.AccountRegisterReq;
+import idealworld.dew.baas.iam.scene.common.dto.account.*;
 import idealworld.dew.baas.iam.scene.common.service.CommonAccountService;
+import idealworld.dew.baas.iam.scene.common.service.OAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +40,8 @@ public class CommonController extends IAMBasicController {
 
     @Autowired
     private CommonAccountService commonAccountService;
+    @Autowired
+    private OAuthService oAuthService;
 
     @PostMapping(value = "account")
     @Operation(summary = "注册账号")
@@ -55,10 +55,16 @@ public class CommonController extends IAMBasicController {
         return commonAccountService.login(accountLoginReq);
     }
 
+    @PostMapping(value = "oauth/login")
+    @Operation(summary = "OAuth登录")
+    public Resp<IdentOptInfo> oauthLogin(@Validated @RequestBody AccountOAuthLoginReq accountOAuthLoginReq) {
+        return oAuthService.login(accountOAuthLoginReq);
+    }
+
     @PostMapping(value = "logout")
     @Operation(summary = "退出登录")
-    public Resp<Void> login(@Validated @RequestBody String token) {
-        return commonAccountService.logout(token, getCurrentOpenId());
+    public Resp<Void> login() {
+        return commonAccountService.logout(getCurrentToken(), getCurrentOpenId());
     }
 
     @PatchMapping(value = "account")
@@ -69,6 +75,7 @@ public class CommonController extends IAMBasicController {
 
     @PatchMapping(value = "account/ident")
     @Operation(summary = "修改账号认证")
+    // TODO 目前只能修改sk
     public Resp<Void> changeIdent(@Validated @RequestBody AccountIdentChangeReq accountIdentChangeReq) {
         return commonAccountService.changeIdent(accountIdentChangeReq, getCurrentOpenId(), getCurrentAppAndTenantId()._0);
     }

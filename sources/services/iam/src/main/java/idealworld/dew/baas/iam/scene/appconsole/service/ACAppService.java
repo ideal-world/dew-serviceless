@@ -76,20 +76,20 @@ public class ACAppService extends IAMBasicService {
     }
 
     @Transactional
-    public Resp<Void> deleteAppIdent(Long appIdent, Long relAppId) {
+    public Resp<Void> deleteAppIdent(Long appIdentId, Long relAppId) {
         var qAppIdent = QAppIdent.appIdent;
         return softDelEntity(sqlBuilder
                 .selectFrom(qAppIdent)
-                .where(qAppIdent.id.eq(appIdent))
+                .where(qAppIdent.id.eq(appIdentId))
                 .where(qAppIdent.relAppId.eq(relAppId)));
     }
 
-    public Resp<String> showSk(String ak, Long relAppId) {
+    public Resp<String> showSk(Long appIdentId, Long relAppId) {
         var qAppIdent = QAppIdent.appIdent;
         return Resp.success(sqlBuilder
                 .select(qAppIdent.sk)
                 .from(qAppIdent)
-                .where(qAppIdent.ak.eq(ak))
+                .where(qAppIdent.id.eq(appIdentId))
                 .where(qAppIdent.relAppId.eq(relAppId))
                 .fetchOne());
     }

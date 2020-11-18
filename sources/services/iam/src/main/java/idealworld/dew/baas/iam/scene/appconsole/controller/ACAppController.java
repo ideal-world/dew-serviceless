@@ -72,11 +72,11 @@ public class ACAppController extends IAMBasicController {
         return acAppService.deleteAppIdent(appIdentId, currentAppAndTenantId._0);
     }
 
-    @GetMapping(value = "ident/sk")
+    @GetMapping(value = "ident/{appIdentId}/sk")
     @Operation(summary = "获取当前应用的某个认证SK")
-    public Resp<String> showSk(@RequestParam String ak) {
+    public Resp<String> showSk(@PathVariable Long appIdentId) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acAppService.showSk(ak, currentAppAndTenantId._0);
+        return acAppService.showSk(appIdentId, currentAppAndTenantId._0);
     }
 
 }

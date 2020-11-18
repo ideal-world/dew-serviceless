@@ -52,7 +52,6 @@ public abstract class BasicTest extends ResponseProcessor {
 
     private String token;
 
-
     protected void loginBySystemAdmin() {
         var qApp = QApp.app;
         token = postToEntity("/common/login", AccountLoginReq.builder()
@@ -60,6 +59,14 @@ public abstract class BasicTest extends ResponseProcessor {
                 .sk(iamConfig.getApp().getIamAdminPwd())
                 .relAppId(1L)
                 .build(), IdentOptInfo.class).getBody().getToken();
+    }
+
+    protected void setToken(String token) {
+        this.token = token;
+    }
+
+    protected void removeToken() {
+        token = null;
     }
 
     @Override

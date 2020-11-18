@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Map;
 
 /**
@@ -62,10 +63,15 @@ public class IAMConfig extends CommonConfig {
 
 
     private Boolean allowTenantRegister = false;
-    private String serviceUrl = "http://" + applicationName;
+    private String serviceUrl;
 
     private Security security = new Security();
     private App app = new App();
+
+    @PostConstruct
+    private void init() {
+        serviceUrl = "http://" + applicationName;
+    }
 
 
     /**
@@ -98,7 +104,7 @@ public class IAMConfig extends CommonConfig {
         private String iamTenantName = "平台租户";
         private String iamAppName = "用户权限中心";
         private String iamAdminName = "dew";
-        private String iamAdminPwd = $.field.createShortUUID();
+        private String iamAdminPwd = $.field.createShortUUID() + "1A";
         private String initNodeCode = "10000";
 
     }

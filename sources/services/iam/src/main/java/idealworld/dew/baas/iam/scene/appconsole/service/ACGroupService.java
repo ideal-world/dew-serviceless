@@ -21,6 +21,7 @@ import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.domain.IdEntity;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.IAMConfig;
@@ -32,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -146,7 +148,8 @@ public class ACGroupService extends IAMBasicService {
                 qGroup.relTenantId))
                 .from(qGroup)
                 .where(qGroup.relTenantId.eq(relTenantId))
-                .where(qGroup.relAppId.eq(relAppId)), pageNumber, pageSize);
+                .where(qGroup.relAppId.eq(relAppId))
+                .orderBy(qGroup.sort.asc()), pageNumber, pageSize);
     }
 
     @Transactional
@@ -171,6 +174,7 @@ public class ACGroupService extends IAMBasicService {
     @Transactional
     public Resp<Long> addGroupNode(GroupNodeAddReq groupNodeAddReq, Long groupId, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
+        var qGroupNode = QGroupNode.groupNode;
         if (sqlBuilder.select(qGroup.id)
                 .from(qGroup)
                 .where(qGroup.id.eq(groupId))
@@ -180,7 +184,14 @@ public class ACGroupService extends IAMBasicService {
             return StandardResp.unAuthorized(BUSINESS_GROUP_NODE, "关联群组不合法");
         }
         var groupNode = $.bean.copyProperties(groupNodeAddReq, GroupNode.class);
-        var groupNodeCode = packageGroupNodeCode(groupId, groupNodeAddReq.getParentId(), groupNodeAddReq.getSiblingId());
+        var groupNodeCode = packageGroupNodeCode(groupId, groupNodeAddReq.getParentId(), groupNodeAddReq.getSiblingId(), null);
+        if (sqlBuilder.select(qGroupNode.id)
+                .from(qGroupNode)
+                .where(qGroupNode.relGroupId.eq(groupId))
+                .where(qGroupNode.code.eq(groupNodeCode))
+                .fetchCount() != 0) {
+            return StandardResp.conflict(BUSINESS_GROUP_NODE, "群组节点编码已存在");
+        }
         groupNode.setRelGroupId(groupId);
         groupNode.setCode(groupNodeCode);
         return saveEntity(groupNode);
@@ -190,14 +201,14 @@ public class ACGroupService extends IAMBasicService {
     public Resp<Void> modifyGroupNode(Long groupNodeId, GroupNodeModifyReq groupNodeModifyReq, Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
         var qGroupNode = QGroupNode.groupNode;
-        var relGroupId = sqlBuilder.select(qGroupNode.relGroupId)
-                .from(qGroupNode)
+        var persistentGroupNode = sqlBuilder
+                .selectFrom(qGroupNode)
                 .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
                 .where(qGroupNode.id.eq(groupNodeId))
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
                 .fetchOne();
-        if (relGroupId == null) {
+        if (persistentGroupNode == null) {
             return StandardResp.unAuthorized(BUSINESS_GROUP_NODE, "关联群组不合法");
         }
         var groupNodeUpdate = sqlBuilder.update(qGroupNode)
@@ -211,50 +222,20 @@ public class ACGroupService extends IAMBasicService {
         if (groupNodeModifyReq.getParameters() != null) {
             groupNodeUpdate.set(qGroupNode.parameters, groupNodeModifyReq.getParameters());
         }
-        if (groupNodeModifyReq.getParentId() != null || groupNodeModifyReq.getSiblingId() != null) {
-            var groupNodeCode = packageGroupNodeCode(relGroupId, groupNodeModifyReq.getParentId(), groupNodeModifyReq.getSiblingId());
+        if (groupNodeModifyReq.getParentId() != Constant.OBJECT_UNDEFINED || groupNodeModifyReq.getSiblingId() != Constant.OBJECT_UNDEFINED) {
+            var groupNodeCode = packageGroupNodeCode(persistentGroupNode.getRelGroupId(), groupNodeModifyReq.getParentId(),
+                    groupNodeModifyReq.getSiblingId(), persistentGroupNode.getCode());
+            if (sqlBuilder.select(qGroupNode.id)
+                    .from(qGroupNode)
+                    .where(qGroupNode.relGroupId.eq(persistentGroupNode.getRelGroupId()))
+                    .where(qGroupNode.code.eq(groupNodeCode))
+                    .where(qGroupNode.id.ne(groupNodeId))
+                    .fetchCount() != 0) {
+                return StandardResp.conflict(BUSINESS_GROUP_NODE, "群组节点编码已存在");
+            }
             groupNodeUpdate.set(qGroupNode.code, groupNodeCode);
         }
         return updateEntity(groupNodeUpdate);
-    }
-
-    private String packageGroupNodeCode(Long groupId, Long parentId, Long siblingId) {
-        if (parentId == Constant.OBJECT_UNDEFINED && siblingId == Constant.OBJECT_UNDEFINED) {
-            return iamConfig.getApp().getInitNodeCode();
-        }
-        var qGroupNode = QGroupNode.groupNode;
-        if (siblingId == Constant.OBJECT_UNDEFINED) {
-            var parentCode = sqlBuilder.select(qGroupNode.code)
-                    .from(qGroupNode)
-                    .where(qGroupNode.relGroupId.eq(groupId))
-                    .where(qGroupNode.id.eq(parentId))
-                    .fetchOne();
-            return parentCode + iamConfig.getApp().getInitNodeCode();
-        }
-        var siblingCode = sqlBuilder.select(qGroupNode.code)
-                .from(qGroupNode)
-                .where(qGroupNode.id.eq(siblingId))
-                .fetchOne();
-        var currentNodeLength = siblingCode.length();
-        var parentLength = currentNodeLength - iamConfig.getApp().getInitNodeCode().length();
-        var parentCode = siblingCode.substring(0, parentLength);
-        var currentLevelCode = Long.parseLong(siblingCode.substring(parentLength));
-        var currentNodeCode = parentCode + (currentLevelCode + 1);
-        sqlBuilder
-                .selectFrom(qGroupNode)
-                .where(qGroupNode.relGroupId.eq(groupId))
-                .where(qGroupNode.code.like(parentCode + "%"))
-                .where(qGroupNode.code.goe(siblingCode))
-                .fetch()
-                .forEach(node -> {
-                    // 当前节点+1
-                    var code = node.getCode();
-                    var currNodeCode = Long.parseLong(code.substring(parentLength, currentNodeLength));
-                    var childNodeCode = code.substring(currentNodeLength);
-                    node.setCode(parentCode + (currNodeCode + 1) + childNodeCode);
-                    updateEntity(node);
-                });
-        return currentNodeCode;
     }
 
     public Resp<List<GroupNodeResp>> findGroupNodes(Long groupId, Long relAppId, Long relTenantId) {
@@ -309,12 +290,94 @@ public class ACGroupService extends IAMBasicService {
         }
         var qGroup = QGroup.group;
         var qGroupNode = QGroupNode.groupNode;
-        return softDelEntity(sqlBuilder
+        var groupNode = sqlBuilder
                 .selectFrom(qGroupNode)
                 .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
                 .where(qGroupNode.id.eq(groupNodeId))
                 .where(qGroup.relTenantId.eq(relTenantId))
-                .where(qGroup.relAppId.eq(relAppId)));
+                .where(qGroup.relAppId.eq(relAppId))
+                .fetchOne();
+        softDelEntity(groupNode);
+        updateOtherGroupNodeCode(groupNode.getRelGroupId(), groupNode.getCode(), true, null);
+        return Resp.success(null);
+    }
+
+    private String packageGroupNodeCode(Long groupId, Long parentId, Long siblingId, String originalGroupNodeCode) {
+        if (parentId == Constant.OBJECT_UNDEFINED && siblingId == Constant.OBJECT_UNDEFINED) {
+            var currentNodeCode = iamConfig.getApp().getInitNodeCode();
+            updateOtherGroupNodeCode(groupId, currentNodeCode, false, originalGroupNodeCode);
+            return currentNodeCode;
+        }
+        var qGroupNode = QGroupNode.groupNode;
+        if (siblingId == Constant.OBJECT_UNDEFINED) {
+            var parentCode = sqlBuilder.select(qGroupNode.code)
+                    .from(qGroupNode)
+                    .where(qGroupNode.relGroupId.eq(groupId))
+                    .where(qGroupNode.id.eq(parentId))
+                    .fetchOne();
+            var currentNodeCode = parentCode + iamConfig.getApp().getInitNodeCode();
+            updateOtherGroupNodeCode(groupId, currentNodeCode, false, originalGroupNodeCode);
+            return currentNodeCode;
+        }
+        var siblingCode = sqlBuilder.select(qGroupNode.code)
+                .from(qGroupNode)
+                .where(qGroupNode.id.eq(siblingId))
+                .fetchOne();
+        var currentNodeLength = siblingCode.length();
+        var parentLength = currentNodeLength - iamConfig.getApp().getInitNodeCode().length();
+        var parentCode = siblingCode.substring(0, parentLength);
+        var currentLevelCode = Long.parseLong(siblingCode.substring(parentLength));
+        var currentNodeCode = parentCode + (currentLevelCode + 1);
+        updateOtherGroupNodeCode(groupId, currentNodeCode, false, originalGroupNodeCode);
+        return currentNodeCode;
+    }
+
+    private void updateOtherGroupNodeCode(Long groupId, String currentGroupNodeCode, Boolean deleteOpt, String originalGroupNodeCode) {
+        var qGroupNode = QGroupNode.groupNode;
+        var currentNodeLength = currentGroupNodeCode.length();
+        var parentLength = currentNodeLength - iamConfig.getApp().getInitNodeCode().length();
+        var parentNodeCode = currentGroupNodeCode.substring(0, parentLength);
+        List<GroupNode> originalGroupNodes = new ArrayList<>();
+        if (originalGroupNodeCode != null) {
+            var originalParentLength = originalGroupNodeCode.length() - iamConfig.getApp().getInitNodeCode().length();
+            var originalParentNodeCode = originalGroupNodeCode.substring(0, originalParentLength);
+            originalGroupNodes = sqlBuilder
+                    .selectFrom(qGroupNode)
+                    .where(qGroupNode.relGroupId.eq(groupId))
+                    .where(qGroupNode.code.like(originalParentNodeCode + "%"))
+                    .where(qGroupNode.code.goe(originalGroupNodeCode))
+                    .fetch();
+        }
+        var offset = deleteOpt ? -1 : 1;
+        var update = sqlBuilder
+                .selectFrom(qGroupNode)
+                .where(qGroupNode.relGroupId.eq(groupId))
+                .where(qGroupNode.code.like(parentNodeCode + "%"))
+                .where(qGroupNode.code.goe(currentGroupNodeCode));
+        if (!originalGroupNodes.isEmpty()) {
+            update.where(qGroupNode.id.notIn(originalGroupNodes.stream().map(IdEntity::getId).collect(Collectors.toList())));
+        }
+        // 排序，避免索引重复
+        if (deleteOpt) {
+            update.orderBy(qGroupNode.code.asc());
+        } else {
+            update.orderBy(qGroupNode.code.desc());
+        }
+        update.fetch()
+                .forEach(node -> {
+                    var code = node.getCode();
+                    var currNodeCode = Long.parseLong(code.substring(parentLength, currentNodeLength));
+                    var childNodeCode = code.substring(currentNodeLength);
+                    node.setCode(parentNodeCode + (currNodeCode + offset) + childNodeCode);
+                    updateEntity(node);
+                });
+        if (originalGroupNodeCode != null) {
+            originalGroupNodes.forEach(node -> {
+                var code = node.getCode();
+                node.setCode(parentNodeCode + code.substring(parentLength));
+                updateEntity(node);
+            });
+        }
     }
 
 }

@@ -42,6 +42,7 @@ public class ACRoleService extends IAMBasicService {
     @Transactional
     public Resp<Long> addRoleDef(RoleDefAddReq roleDefAddReq, Long relAppId, Long relTenantId) {
         var qRoleDef = QRoleDef.roleDef;
+        roleDefAddReq.setCode(roleDefAddReq.getCode().toLowerCase());
         if (sqlBuilder.select(qRoleDef.id)
                 .from(qRoleDef)
                 .where(qRoleDef.relTenantId.eq(relTenantId))
@@ -59,6 +60,9 @@ public class ACRoleService extends IAMBasicService {
     @Transactional
     public Resp<Void> modifyRoleDef(Long roleDefId, RoleDefModifyReq roleDefModifyReq, Long relAppId, Long relTenantId) {
         var qRoleDef = QRoleDef.roleDef;
+        if (roleDefModifyReq.getCode() != null) {
+            roleDefModifyReq.setCode(roleDefModifyReq.getCode().toLowerCase());
+        }
         if (roleDefModifyReq.getCode() != null && sqlBuilder.select(qRoleDef.id)
                 .from(qRoleDef)
                 .where(qRoleDef.relTenantId.eq(relTenantId))
@@ -115,7 +119,8 @@ public class ACRoleService extends IAMBasicService {
                 qRoleDef.relTenantId))
                 .from(qRoleDef)
                 .where(qRoleDef.relTenantId.eq(relTenantId))
-                .where(qRoleDef.relAppId.eq(relAppId)), pageNumber, pageSize);
+                .where(qRoleDef.relAppId.eq(relAppId))
+                .orderBy(qRoleDef.sort.asc()), pageNumber, pageSize);
     }
 
     @Transactional
@@ -172,11 +177,11 @@ public class ACRoleService extends IAMBasicService {
                 if (groupNodeName == null) {
                     return StandardResp.unAuthorized(BUSINESS_ROLE, "对应的群组节点不合法");
                 }
-                roleAddReq.setName(groupNodeName);
-            }else{
+                roleAddReq.setName(groupNodeName + " ");
+            } else {
                 roleAddReq.setName("");
             }
-            roleAddReq.setName(roleAddReq.getName() + " " + roleDefName);
+            roleAddReq.setName(roleAddReq.getName() + roleDefName);
         }
         var role = $.bean.copyProperties(roleAddReq, Role.class);
         role.setRelTenantId(relTenantId);
@@ -233,7 +238,8 @@ public class ACRoleService extends IAMBasicService {
                 qRole.relTenantId))
                 .from(qRole)
                 .where(qRole.relTenantId.eq(relTenantId))
-                .where(qRole.relAppId.eq(relAppId)), pageNumber, pageSize);
+                .where(qRole.relAppId.eq(relAppId))
+                .orderBy(qRole.sort.asc()), pageNumber, pageSize);
     }
 
     @Transactional

@@ -22,6 +22,8 @@ import java.util.Arrays;
 
 /**
  * 账号认证类型枚举.
+ * <p>
+ * 编码属性URI的Host部分，不能带下划线
  *
  * @author gudaoxuri
  */
@@ -34,7 +36,7 @@ public enum AccountIdentKind {
     /**
      * 租户间授权认证.
      */
-    AUTH_IDENT("AUTH_IDENT"),
+    AUTH_IDENT("AUTH-IDENT"),
     /**
      * 手机号 + 验证码.
      */
@@ -46,7 +48,7 @@ public enum AccountIdentKind {
     /**
      * 微信公从号OAuth.
      */
-    WECHAT_MP("WECHAT_MP");
+    WECHAT_MP("WECHAT-MP");
 
     private final String code;
 

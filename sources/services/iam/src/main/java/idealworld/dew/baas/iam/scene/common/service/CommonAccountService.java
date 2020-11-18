@@ -69,7 +69,7 @@ public class CommonAccountService extends IAMBasicService {
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_ACCOUNT_IDENT, "账号凭证[" + accountRegisterReq.getAk() + "]已存在");
         }
-        var accountIdR = saveEntity(Account.builder()
+        var account = Account.builder()
                 .name(accountRegisterReq.getName())
                 .avatar(accountRegisterReq.getAvatar())
                 .parameters(accountRegisterReq.getParameters())
@@ -77,7 +77,8 @@ public class CommonAccountService extends IAMBasicService {
                 .parentId(Constant.OBJECT_UNDEFINED)
                 .status(CommonStatus.ENABLED)
                 .relTenantId(tenantIdR.getBody())
-                .build());
+                .build();
+        var accountIdR = saveEntity(account);
         if (!accountIdR.ok()) {
             return Resp.error(accountIdR);
         }
@@ -106,11 +107,11 @@ public class CommonAccountService extends IAMBasicService {
                 .relAccountId(accountIdR.getBody())
                 .relTenantId(tenantIdR.getBody())
                 .build());
-        return login(AccountLoginReq.builder()
-                .ak(accountRegisterReq.getAk())
-                .sk(accountRegisterReq.getSk())
+        saveEntity(AccountApp.builder()
+                .relAccountId(account.getId())
                 .relAppId(accountRegisterReq.getRelAppId())
                 .build());
+        return loginWithoutAuth(account.getId(), account.getOpenId(), accountRegisterReq.getAk(), accountRegisterReq.getRelAppId(), tenantIdR.getBody());
     }
 
     @Transactional
@@ -141,27 +142,35 @@ public class CommonAccountService extends IAMBasicService {
                 .fetchOne();
         if (accountInfo == null) {
             log.warn("Login Fail: [{}-{}] AK {} doesn't exist or has expired or account doesn't exist", tenantIdR.getBody(), accountLoginReq.getRelAppId(), accountLoginReq.getAk());
-            return StandardResp.notFound(BUSINESS_ACCOUNT, "登录认证 %s 不存在或已过期或是（应用关联）账号不存在", accountLoginReq.getAk());
+            return StandardResp.notFound(BUSINESS_ACCOUNT, "登录认证[%s]不存在或已过期或是（应用关联）账号不存在", accountLoginReq.getAk());
         }
         var identSk = accountInfo.get(0, String.class);
         var accountId = accountInfo.get(1, Long.class);
         var openId = accountInfo.get(2, String.class);
-        var validateR = validateSK(accountLoginReq.getKind(), accountLoginReq.getAk(), accountLoginReq.getSk(), identSk, accountLoginReq.getRelAppId(), tenantIdR.getBody());
+        return login(accountId, openId, accountLoginReq.getKind(), accountLoginReq.getAk(), accountLoginReq.getSk(), identSk, accountLoginReq.getRelAppId(), tenantIdR.getBody());
+    }
+
+    public Resp<IdentOptInfo> login(Long accountId, String openId, AccountIdentKind kind, String ak, String inputSk, String persistedSk, Long appId, Long tenantId) {
+        var validateR = validateSK(kind, ak, inputSk, persistedSk, appId, tenantId);
         if (!validateR.ok()) {
-            log.warn("Login Fail: [{}-{}] SK {} error", tenantIdR.getBody(), accountLoginReq.getRelAppId(), accountLoginReq.getAk());
+            log.warn("Login Fail: [{}-{}] SK {} error", tenantId, appId, ak);
             return StandardResp.error(validateR);
         }
-        log.info("Login Success:  [{}-{}] ak {}", tenantIdR.getBody(), accountLoginReq.getRelAppId(), accountLoginReq.getAk());
+        return loginWithoutAuth(accountId, openId, ak, appId, tenantId);
+    }
+
+    private Resp<IdentOptInfo> loginWithoutAuth(Long accountId, String openId, String ak, Long appId, Long tenantId) {
+        log.info("Login Success:  [{}-{}] ak {}", tenantId, appId, ak);
         String token = KeyHelper.generateToken();
         var optInfo = new IdentOptCacheInfo();
         optInfo.setAccountCode(openId);
         optInfo.setToken(token);
         // TODO
         optInfo.setTokenKind(IdentOptCacheInfo.DEFAULT_TOKEN_KIND_FLAG);
-        optInfo.setRoleInfo(commonFunctionService.findRoleInfo(accountId, accountLoginReq.getRelAppId()));
-        optInfo.setGroupInfo(commonFunctionService.findGroupInfo(accountId, accountLoginReq.getRelAppId()));
-        optInfo.setAppId(accountLoginReq.getRelAppId());
-        optInfo.setTenantId(tenantIdR.getBody());
+        optInfo.setRoleInfo(commonFunctionService.findRoleInfo(accountId, appId));
+        optInfo.setGroupInfo(commonFunctionService.findGroupInfo(accountId, appId));
+        optInfo.setAppId(appId);
+        optInfo.setTenantId(tenantId);
         Dew.auth.setOptInfo(optInfo);
         return StandardResp.success(new IdentOptInfo()
                 .setAccountCode(optInfo.getAccountCode())
@@ -203,7 +212,6 @@ public class CommonAccountService extends IAMBasicService {
         return updateEntity(sqlBuilder.update(qAccountIdent)
                 .set(qAccountIdent.sk, processIdentSkR.getBody())
                 .where(qAccountIdent.relTenantId.eq(tenantIdR.getBody()))
-                .where(qAccountIdent.kind.eq(accountIdentChangeReq.getKind()))
                 .where(qAccountIdent.ak.eq(accountIdentChangeReq.getAk())));
 
     }

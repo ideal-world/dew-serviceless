@@ -22,12 +22,12 @@ import com.ecfront.dew.common.tuple.Tuple2;
 import com.ecfront.dew.common.tuple.Tuple3;
 import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.enumeration.CommonStatus;
+import idealworld.dew.baas.common.enumeration.ResourceKind;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.auth.QResourceSubject;
 import idealworld.dew.baas.iam.domain.ident.QAccount;
 import idealworld.dew.baas.iam.domain.ident.QAccountIdent;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
-import idealworld.dew.baas.common.enumeration.ResourceKind;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountLoginReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountOAuthLoginReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountRegisterReq;
@@ -53,20 +53,23 @@ import org.springframework.transaction.annotation.Transactional;
 public class OAuthService extends IAMBasicService {
 
     @Autowired
+    private CommonFunctionService commonFunctionService;
+    @Autowired
     private CommonAccountService commonAccountService;
     @Autowired
     private WechatMPAPI wechatService;
 
     @Transactional
-    public Resp<IdentOptInfo> login(AccountOAuthLoginReq accountOAuthLoginReq, Long relAppId, Long relTenantId) {
-        var checkAndGetAKSKR = checkAndGetAKSK(accountOAuthLoginReq.getKind(), relAppId, relTenantId);
+    public Resp<IdentOptInfo> login(AccountOAuthLoginReq accountOAuthLoginReq) {
+        var tenantIdR = commonFunctionService.getEnabledTenantIdByAppId(accountOAuthLoginReq.getRelAppId(), false);
+        var checkAndGetAKSKR = checkAndGetAKSK(accountOAuthLoginReq.getKind(), accountOAuthLoginReq.getRelAppId(), tenantIdR.getBody());
         if (!checkAndGetAKSKR.ok()) {
             return Resp.error(checkAndGetAKSKR);
         }
         PlatformAPI platformAPI = checkAndGetAKSKR.getBody()._0;
         var oauthAk = checkAndGetAKSKR.getBody()._1;
         var oauthSk = checkAndGetAKSKR.getBody()._2;
-        Resp<Tuple2<String, OAuthUserInfo>> oauthUserInfoR = platformAPI.getUserInfo(accountOAuthLoginReq.getCode(), oauthAk, oauthSk, relAppId);
+        Resp<Tuple2<String, OAuthUserInfo>> oauthUserInfoR = platformAPI.getUserInfo(accountOAuthLoginReq.getCode(), oauthAk, oauthSk, accountOAuthLoginReq.getRelAppId());
         if (!oauthUserInfoR.ok()) {
             return StandardResp.error(oauthUserInfoR);
         }
@@ -79,40 +82,42 @@ public class OAuthService extends IAMBasicService {
                 .innerJoin(qAccount).on(qAccount.id.eq(qAccountIdent.relAccountId))
                 .where(qAccountIdent.kind.eq(accountOAuthLoginReq.getKind()))
                 .where(qAccountIdent.ak.eq(userInfo.getOpenid()))
-                .where(qAccountIdent.relTenantId.eq(relTenantId))
+                .where(qAccountIdent.relTenantId.eq(tenantIdR.getBody()))
                 .fetchOne();
-        var accountId = accountInfo.get(0, Long.class);
-        var accountStatus = accountInfo.get(1, CommonStatus.class);
-        if (accountStatus == CommonStatus.DISABLED) {
-            return StandardResp.badRequest(BUSINESS_OAUTH, "用户状态异常");
+        Long accountId = null;
+        if (accountInfo != null) {
+            accountId = accountInfo.get(0, Long.class);
+            if (accountInfo.get(1, CommonStatus.class) == CommonStatus.DISABLED) {
+                return StandardResp.badRequest(BUSINESS_OAUTH, "用户状态异常");
+            }
         }
         if (accountId == null) {
-            log.info("OAuth Register : [{}-{}] {}", relTenantId, relAppId, $.json.toJsonString(accountOAuthLoginReq));
+            log.info("OAuth Register : [{}-{}] {}", tenantIdR.getBody(), accountOAuthLoginReq.getRelAppId(), $.json.toJsonString(accountOAuthLoginReq));
             try {
                 return commonAccountService.register(AccountRegisterReq.builder()
                         .name("")
                         .kind(accountOAuthLoginReq.getKind())
                         .ak(userInfo.getOpenid())
                         .sk(accessToken)
-                        .relAppId(relAppId)
+                        .relAppId(accountOAuthLoginReq.getRelAppId())
                         .build());
             } catch (NonUniqueObjectException e) {
                 // TODO 确定异常
-                log.info("OAuth Login : [{}-{}] {}", relTenantId, relAppId, $.json.toJsonString(accountOAuthLoginReq));
+                log.info("OAuth Login : [{}-{}] {}", tenantIdR.getBody(), accountOAuthLoginReq.getRelAppId(), $.json.toJsonString(accountOAuthLoginReq));
                 return commonAccountService.login(AccountLoginReq.builder()
                         .kind(accountOAuthLoginReq.getKind())
                         .ak(userInfo.getOpenid())
                         .sk(accessToken)
-                        .relAppId(relAppId)
+                        .relAppId(accountOAuthLoginReq.getRelAppId())
                         .build());
             }
         } else {
-            log.info("OAuth Login : [{}-{}] {}", relTenantId, relAppId, $.json.toJsonString(accountOAuthLoginReq));
+            log.info("OAuth Login : [{}-{}] {}", tenantIdR.getBody(), accountOAuthLoginReq.getRelAppId(), $.json.toJsonString(accountOAuthLoginReq));
             return commonAccountService.login(AccountLoginReq.builder()
                     .kind(accountOAuthLoginReq.getKind())
                     .ak(userInfo.getOpenid())
                     .sk(accessToken)
-                    .relAppId(relAppId)
+                    .relAppId(accountOAuthLoginReq.getRelAppId())
                     .build());
         }
     }
@@ -148,8 +153,8 @@ public class OAuthService extends IAMBasicService {
         if (oauthResourceSubject == null) {
             return StandardResp.notFound(BUSINESS_OAUTH, "对应的OAuth资源主体不存在");
         }
-        var oauthAk = oauthResourceSubject.get(1, String.class);
-        var oauthSk = oauthResourceSubject.get(2, String.class);
+        var oauthAk = oauthResourceSubject.get(0, String.class);
+        var oauthSk = oauthResourceSubject.get(1, String.class);
         return Resp.success(new Tuple3<>(platformAPI, oauthAk, oauthSk));
     }
 

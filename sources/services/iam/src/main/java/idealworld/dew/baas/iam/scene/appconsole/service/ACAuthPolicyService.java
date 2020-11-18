@@ -85,10 +85,10 @@ public class ACAuthPolicyService extends IAMBasicService {
             return StandardResp.unAuthorized(BUSINESS_AUTH_POLICY, "权限策略对应的资源不合法");
         }
         var qAuthPolicy = QAuthPolicy.authPolicy;
-        var authPolicyUpdate = sqlBuilder.update(qResource)
-                .where(qResource.id.eq(authPolicyId))
-                .where(qResource.relTenantId.eq(relTenantId))
-                .where(qResource.relAppId.eq(relAppId));
+        var authPolicyUpdate = sqlBuilder.update(qAuthPolicy)
+                .where(qAuthPolicy.id.eq(authPolicyId))
+                .where(qAuthPolicy.relTenantId.eq(relTenantId))
+                .where(qAuthPolicy.relAppId.eq(relAppId));
         if (authPolicyModifyReq.getRelSubjectKind() != null) {
             authPolicyUpdate.set(qAuthPolicy.relSubjectKind, authPolicyModifyReq.getRelSubjectKind());
         }

@@ -182,25 +182,25 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         tcAccountService.addAccountRole(iamAccountId, appRoleAdminId, tenantId);
         // 初始化资源主体
         var iamAPIResourceSubjectId = acResourceService.addResourceSubject(ResourceSubjectAddReq.builder()
-                .code("")
-                .name("")
+                .code("iam")
+                .name("用户权限中心")
                 .uri(iamConfig.getServiceUrl())
                 .kind(ResourceKind.HTTP)
                 .build(), iamAppId, tenantId).getBody();
         // 初始化资源
         var systemResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("系统控制台资源")
-                .uri("/console/system/**")
+                .uri("http://iam/console/system/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .build(), iamAppId, tenantId).getBody();
         var tenantResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("租户控制台资源")
-                .uri("/console/tenant/**")
+                .uri("http://iam/console/tenant/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .build(), iamAppId, tenantId).getBody();
         var appResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("应用控制台资源")
-                .uri("/console/app/**")
+                .uri("http://iam/console/app/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .build(), iamAppId, tenantId).getBody();
         // 初始化权限策略

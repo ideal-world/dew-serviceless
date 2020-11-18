@@ -83,7 +83,8 @@ public class ACGroupController extends IAMBasicController {
 
     @PostMapping(value = "{groupId}/node")
     @Operation(summary = "添加当前应用某个群组的节点")
-    public Resp<Long> addGroupNode(@PathVariable Long groupId, @Validated @RequestBody GroupNodeAddReq groupNodeAddReq) {
+    public Resp<Long> addGroupNode(@PathVariable Long groupId,
+                                   @Validated @RequestBody GroupNodeAddReq groupNodeAddReq) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
         return acGroupService.addGroupNode(groupNodeAddReq, groupId, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
