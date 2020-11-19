@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.iam.scene.appconsole.dto.role;
 
-import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,8 +47,5 @@ public class RoleDefModifyReq implements Serializable {
 
     @Schema(title = "显示排序，asc")
     private Integer sort;
-
-    @Schema(title = "开放等级类型")
-    private ExposeKind exposeKind;
 
 }

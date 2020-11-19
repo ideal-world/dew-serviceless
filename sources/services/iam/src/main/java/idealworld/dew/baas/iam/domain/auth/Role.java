@@ -34,7 +34,8 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "iam_role", indexes = {
-        @Index(columnList = "relRoleDefId,relGroupNodeId", unique = true)
+        @Index(columnList = "relRoleDefId,relGroupNodeId", unique = true),
+        @Index(columnList = "exposeKind"),
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_role",
         comment = "角色")

@@ -43,7 +43,7 @@ public class TenantRegisterReq implements Serializable {
     @NotBlank
     @Size(max = 255)
     @Schema(title = "租户名称", required = true)
-    private String name;
+    private String tenantName;
 
     @Size(max = 1000)
     @Schema(title = "租户图标（路径）")
@@ -58,6 +58,12 @@ public class TenantRegisterReq implements Serializable {
     @Schema(title = "租户扩展信息，Json格式")
     @Builder.Default
     private String parameters = "{}";
+
+    @NotNull
+    @NotBlank
+    @Size(max = 255)
+    @Schema(title = "应用名称", required = true)
+    private String appName;
 
     @NotNull
     @NotBlank

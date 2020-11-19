@@ -46,9 +46,9 @@ public enum AccountIdentKind {
      */
     EMAIL("EMAIL"),
     /**
-     * 微信公从号OAuth.
+     * 微信小程序OAuth.
      */
-    WECHAT_MP("WECHAT-MP");
+    WECHAT_XCX("WECHAT-XCX");
 
     private final String code;
 

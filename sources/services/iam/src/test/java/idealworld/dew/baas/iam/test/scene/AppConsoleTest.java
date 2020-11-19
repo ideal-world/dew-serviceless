@@ -137,10 +137,9 @@ public class AppConsoleTest extends BasicTest {
         Assertions.assertEquals("reldb://mysql/", resourceResp.getUri());
 
         // 获取当前应用的资源列表信息
-        var resourceResps = getToPage("/console/app/resource", 1L, 10, ResourceResp.class).getBody();
-        Assertions.assertEquals(4, resourceResps.getRecordTotal());
-        Assertions.assertEquals(1, resourceResps.getPageTotal());
-        Assertions.assertEquals("MYSQL IAM DB", resourceResps.getObjects().get(3).getName());
+        var resourceResps = getToList("/console/app/resource", ResourceResp.class).getBody();
+        Assertions.assertEquals(4, resourceResps.size());
+        Assertions.assertEquals("MYSQL IAM DB", resourceResps.get(3).getName());
 
         // 删除当前应用的某个角色定义
         Assertions.assertTrue(delete("/console/app/resource/" + resourceId).ok());
@@ -180,10 +179,9 @@ public class AppConsoleTest extends BasicTest {
         Assertions.assertEquals("测试群组", groupResp.getName());
 
         // 获取当前应用的群组列表信息
-        var groupResps = getToPage("/console/app/group", 1L, 10, GroupResp.class).getBody();
-        Assertions.assertEquals(2, groupResps.getRecordTotal());
-        Assertions.assertEquals(1, groupResps.getPageTotal());
-        Assertions.assertEquals("测试群组", groupResps.getObjects().get(1).getName());
+        var groupResps = getToList("/console/app/group", GroupResp.class).getBody();
+        Assertions.assertEquals(2, groupResps.size());
+        Assertions.assertEquals("测试群组", groupResps.get(1).getName());
 
         // 添加当前应用某个群组的节点
         var roleNodeId = postToEntity("/console/app/group/" + groupId + "/node", GroupNodeAddReq.builder()
@@ -310,10 +308,9 @@ public class AppConsoleTest extends BasicTest {
         Assertions.assertEquals("管理员", roleDefResp.getName());
 
         // 获取当前应用的角色定义列表信息
-        var roleDefResps = getToPage("/console/app/role/def", 1L, 10, RoleDefResp.class).getBody();
-        Assertions.assertEquals(4, roleDefResps.getRecordTotal());
-        Assertions.assertEquals(1, roleDefResps.getPageTotal());
-        Assertions.assertEquals("管理员", roleDefResps.getObjects().get(3).getName());
+        var roleDefResps = getToList("/console/app/role/def", RoleDefResp.class).getBody();
+        Assertions.assertEquals(4, roleDefResps.size());
+        Assertions.assertEquals("管理员", roleDefResps.get(3).getName());
 
         // --------------------------------------------------------------------
 
@@ -340,10 +337,9 @@ public class AppConsoleTest extends BasicTest {
                 .build(), Void.class).ok());
 
         // 获取当前应用的角色列表信息
-        var roleResps = getToPage("/console/app/role", 1L, 10, RoleResp.class).getBody();
-        Assertions.assertEquals(4, roleResps.getRecordTotal());
-        Assertions.assertEquals(1, roleResps.getPageTotal());
-        Assertions.assertEquals("测试管理员", roleResps.getObjects().get(3).getName());
+        var roleResps = getToList("/console/app/role", RoleResp.class).getBody();
+        Assertions.assertEquals(4, roleResps.size());
+        Assertions.assertEquals("测试管理员", roleResps.get(3).getName());
 
         // 删除当前应用的某个角色
         Assertions.assertTrue(delete("/console/app/role/" + roleId).ok());
@@ -360,35 +356,29 @@ public class AppConsoleTest extends BasicTest {
     @Test
     public void testAuthPolicy() {
         // 添加当前应用的权限策略
-        var authPolicyId = postToEntity("/console/app/authpolicy", AuthPolicyAddReq.builder()
+        var authPolicyId = postToList("/console/app/authpolicy", AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ACCOUNT)
                 .relSubjectIds("1, ")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(1L)
                 .actionKind(OptActionKind.CREATE)
                 .resultKind(AuthResultKind.ACCEPT)
-                .relSubjectAppId(1L)
-                .relSubjectTenantId(1L)
-                .build(), Long.class).getBody();
-        Assertions.assertEquals("权限策略对应的资源不合法", postToEntity("/console/app/authpolicy", AuthPolicyAddReq.builder()
+                .build(), Long.class).getBody().get(0);
+        Assertions.assertEquals("权限策略对应的资源不合法", postToList("/console/app/authpolicy", AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ACCOUNT)
                 .relSubjectIds("1")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(10L)
                 .actionKind(OptActionKind.CREATE)
                 .resultKind(AuthResultKind.ACCEPT)
-                .relSubjectAppId(1L)
-                .relSubjectTenantId(1L)
                 .build(), Long.class).getMessage());
-        Assertions.assertEquals("权限策略已存在", postToEntity("/console/app/authpolicy", AuthPolicyAddReq.builder()
+        Assertions.assertEquals("权限策略已存在", postToList("/console/app/authpolicy", AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ACCOUNT)
                 .relSubjectIds("1")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(1L)
                 .actionKind(OptActionKind.CREATE)
                 .resultKind(AuthResultKind.ACCEPT)
-                .relSubjectAppId(1L)
-                .relSubjectTenantId(1L)
                 .build(), Long.class).getMessage());
 
         // 修改当前应用的某个权限策略
@@ -403,10 +393,10 @@ public class AppConsoleTest extends BasicTest {
         Assertions.assertEquals(expiredTime, authPolicyResp.getExpiredTime());
 
         // 获取当前应用的权限策略列表信息
-        var authPolicyResps = getToPage("/console/app/authpolicy", 1L, 10, AuthPolicyResp.class).getBody();
-        Assertions.assertEquals(4, authPolicyResps.getRecordTotal());
+        var authPolicyResps = getToPage("/console/app/authpolicy", 1L, 100, AuthPolicyResp.class).getBody();
+        Assertions.assertEquals(19, authPolicyResps.getRecordTotal());
         Assertions.assertEquals(1, authPolicyResps.getPageTotal());
-        Assertions.assertEquals(1, authPolicyResps.getObjects().get(3).getRelResourceId());
+        Assertions.assertEquals(1, authPolicyResps.getObjects().get(18).getRelResourceId());
 
         // 删除当前应用的某个权限策略
         Assertions.assertTrue(delete("/console/app/authpolicy/" + authPolicyId).ok());

@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.iam.scene.appconsole.controller;
 
-import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import idealworld.dew.baas.iam.scene.appconsole.dto.group.*;
 import idealworld.dew.baas.iam.scene.appconsole.service.ACGroupService;
@@ -67,9 +66,9 @@ public class ACGroupController extends IAMBasicController {
 
     @GetMapping(value = "")
     @Operation(summary = "获取当前应用的群组列表信息")
-    public Resp<Page<GroupResp>> pageGroups(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
+    public Resp<List<GroupResp>> findGroups() {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acGroupService.pageGroups(pageNumber, pageSize, currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return acGroupService.findGroups(currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "{groupId}")

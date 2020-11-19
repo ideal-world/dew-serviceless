@@ -54,12 +54,25 @@ public class TCAccountService extends IAMBasicService {
 
     @Transactional
     public Resp<Long> addAccount(AccountAddReq accountAddReq, Long relTenantId) {
+        var addAccountR = innerAddAccount(accountAddReq, relTenantId);
+        if (addAccountR.ok()) {
+            return Resp.success(addAccountR.getBody().getId());
+        } else {
+            return Resp.error(addAccountR);
+        }
+    }
+
+    public Resp<Account> innerAddAccount(AccountAddReq accountAddReq, Long relTenantId) {
         var account = $.bean.copyProperties(accountAddReq, Account.class);
         account.setOpenId($.field.createUUID());
         account.setParentId(Constant.OBJECT_UNDEFINED);
         account.setRelTenantId(relTenantId);
         account.setStatus(CommonStatus.ENABLED);
-        return saveEntity(account);
+        var saveR = saveEntity(account);
+        if (saveR.ok()) {
+            return Resp.success(account);
+        }
+        return Resp.error(saveR);
     }
 
     @Transactional
@@ -311,6 +324,9 @@ public class TCAccountService extends IAMBasicService {
                 .selectFrom(qAccountApp)
                 .where(qAccountApp.id.eq(accountAppId))
                 .fetchOne();
+        if (accountApp == null) {
+            return StandardResp.badRequest(BUSINESS_ACCOUNT_APP, "账号应用关联不合法");
+        }
         var checkAccountMembershipR = commonFunctionService.checkAccountMembership(accountApp.getRelAccountId(), relTenantId);
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
@@ -347,13 +363,12 @@ public class TCAccountService extends IAMBasicService {
                 .selectFrom(qAccountGroup)
                 .where(qAccountGroup.id.eq(accountGroupId))
                 .fetchOne();
+        if (accountGroup == null) {
+            return StandardResp.badRequest(BUSINESS_ACCOUNT_GROUP, "账号群组关联不合法");
+        }
         var checkAccountMembershipR = commonFunctionService.checkAccountMembership(accountGroup.getRelAccountId(), relTenantId);
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
-        }
-        var checkGroupNodeMembership = commonFunctionService.checkGroupNodeMembership(accountGroup.getRelGroupNodeId(), relTenantId);
-        if (!checkGroupNodeMembership.ok()) {
-            return Resp.error(checkGroupNodeMembership);
         }
         return softDelEntity(accountGroup);
     }
@@ -383,13 +398,12 @@ public class TCAccountService extends IAMBasicService {
                 .selectFrom(qAccountRole)
                 .where(qAccountRole.id.eq(accountRoleId))
                 .fetchOne();
+        if (accountRole == null) {
+            return StandardResp.badRequest(BUSINESS_ACCOUNT_ROLE, "账号角色关联不合法");
+        }
         var checkAccountMembershipR = commonFunctionService.checkAccountMembership(accountRole.getRelAccountId(), relTenantId);
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
-        }
-        var checkRoleMembership = commonFunctionService.checkRoleMembership(accountRole.getRelRoleId(), relTenantId);
-        if (!checkRoleMembership.ok()) {
-            return Resp.error(checkRoleMembership);
         }
         return softDelEntity(accountRole);
     }

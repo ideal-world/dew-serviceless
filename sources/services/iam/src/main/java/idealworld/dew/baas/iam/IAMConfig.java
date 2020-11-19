@@ -62,7 +62,7 @@ public class IAMConfig extends CommonConfig {
     }
 
 
-    private Boolean allowTenantRegister = false;
+    private Boolean allowTenantRegister = true;
     private String serviceUrl;
 
     private Security security = new Security();
@@ -86,6 +86,11 @@ public class IAMConfig extends CommonConfig {
         private String tenantAdminRoleDefName = "租户管理员";
         private String appAdminRoleDefCode = "APP_ADMIN";
         private String appAdminRoleDefName = "应用管理员";
+
+        private String defaultValidAKRuleNote = "用户名校验规则";
+        private String defaultValidAKRule = "^[a-zA-Z\\d\\.]{3,20}$";
+        private String defaultValidSKRuleNote = "密码校验规则，8-20位字母+数字";
+        private String defaultValidSKRule = "^(?![0-9]+$)(?![a-zA-Z]+$)\\S{8,20}$";
 
         private Integer accountVCodeExpireSec = 60 * 5;
         private Integer accountVCodeMaxErrorTimes = 5;

@@ -19,7 +19,9 @@ package idealworld.dew.baas.iam.scene.common.controller;
 import com.ecfront.dew.common.Resp;
 import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.iam.scene.common.dto.account.*;
+import idealworld.dew.baas.iam.scene.common.dto.tenant.TenantRegisterReq;
 import idealworld.dew.baas.iam.scene.common.service.CommonAccountService;
+import idealworld.dew.baas.iam.scene.common.service.CommonTenantService;
 import idealworld.dew.baas.iam.scene.common.service.OAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,13 +41,21 @@ import org.springframework.web.bind.annotation.*;
 public class CommonController extends IAMBasicController {
 
     @Autowired
+    private CommonTenantService commonTenantService;
+    @Autowired
     private CommonAccountService commonAccountService;
     @Autowired
     private OAuthService oAuthService;
 
+    @PostMapping(value = "tenant")
+    @Operation(summary = "注册租户")
+    public Resp<IdentOptInfo> registerTenant(@Validated @RequestBody TenantRegisterReq tenantRegisterReq) {
+        return commonTenantService.register(tenantRegisterReq);
+    }
+
     @PostMapping(value = "account")
     @Operation(summary = "注册账号")
-    public Resp<IdentOptInfo> register(@Validated @RequestBody AccountRegisterReq accountRegisterReq) {
+    public Resp<IdentOptInfo> registerAccount(@Validated @RequestBody AccountRegisterReq accountRegisterReq) {
         return commonAccountService.register(accountRegisterReq);
     }
 

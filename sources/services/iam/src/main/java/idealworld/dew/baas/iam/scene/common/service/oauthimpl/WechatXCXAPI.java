@@ -35,11 +35,11 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
-public class WechatMPAPI extends IAMBasicService implements PlatformAPI {
+public class WechatXCXAPI extends IAMBasicService implements PlatformAPI {
 
     @Override
     public String getPlatformFlag() {
-        return AccountIdentKind.WECHAT_MP.toString();
+        return AccountIdentKind.WECHAT_XCX.toString();
     }
 
     @Override

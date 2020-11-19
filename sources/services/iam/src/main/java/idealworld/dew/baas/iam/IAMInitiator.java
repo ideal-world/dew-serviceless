@@ -20,10 +20,14 @@ package idealworld.dew.baas.iam;
 import group.idealworld.dew.core.DewContext;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
-import idealworld.dew.baas.common.enumeration.*;
+import idealworld.dew.baas.common.enumeration.AuthResultKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
+import idealworld.dew.baas.common.enumeration.AuthSubjectOperatorKind;
+import idealworld.dew.baas.common.enumeration.ResourceKind;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.QTenant;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import idealworld.dew.baas.iam.enumeration.GroupKind;
 import idealworld.dew.baas.iam.interceptor.InterceptService;
 import idealworld.dew.baas.iam.scene.appconsole.dto.app.AppIdentAddReq;
@@ -113,10 +117,10 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         // 初始化租户认证
         tcTenantService.addTenantIdent(TenantIdentAddReq.builder()
                 .kind(AccountIdentKind.USERNAME)
-                .validAKRuleNote("用户名校验规则")
-                .validAKRule("^[a-zA-Z\\d\\.]{3,20}$")
-                .validSKRuleNote("密码校验规则，8-20位字母+数字")
-                .validSKRule("^(?![0-9]+$)(?![a-zA-Z]+$)\\S{8,20}$")
+                .validAKRuleNote(iamConfig.getSecurity().getDefaultValidAKRuleNote())
+                .validAKRule(iamConfig.getSecurity().getDefaultValidAKRule())
+                .validSKRuleNote(iamConfig.getSecurity().getDefaultValidSKRuleNote())
+                .validSKRule(iamConfig.getSecurity().getDefaultValidSKRule())
                 .validTimeSec(Constant.OBJECT_UNDEFINED)
                 .build(), tenantId);
         // 初始化租户凭证
@@ -151,9 +155,11 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .build(), iamAppId, tenantId).getBody();
         var tenantRoleAdminId = acRoleService.addRole(RoleAddReq.builder()
                 .relRoleDefId(tenantRoleDefAdminId)
+                .exposeKind(ExposeKind.GLOBAL)
                 .build(), iamAppId, tenantId).getBody();
         var appRoleAdminId = acRoleService.addRole(RoleAddReq.builder()
                 .relRoleDefId(appRoleDefAdminId)
+                .exposeKind(ExposeKind.GLOBAL)
                 .build(), iamAppId, tenantId).getBody();
         // 初始化群组
         var groupId = acGroupService.addGroup(GroupAddReq.builder()
@@ -166,7 +172,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
                 .build(), groupId, iamAppId, tenantId);
         // 初始化账号
         var iamAccountId = tcAccountService.addAccount(AccountAddReq.builder()
-                .name(iamConfig.getApp().getIamAppName())
+                .name(iamConfig.getApp().getIamAdminName())
                 .build(), tenantId).getBody();
         // 初始化账号认证
         tcAccountService.addAccountIdent(AccountIdentAddReq.builder()
@@ -183,56 +189,49 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         // 初始化资源主体
         var iamAPIResourceSubjectId = acResourceService.addResourceSubject(ResourceSubjectAddReq.builder()
                 .code("iam")
-                .name("用户权限中心")
+                .name(iamConfig.getApp().getIamAppName())
                 .uri(iamConfig.getServiceUrl())
                 .kind(ResourceKind.HTTP)
                 .build(), iamAppId, tenantId).getBody();
         // 初始化资源
         var systemResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("系统控制台资源")
-                .uri("http://iam/console/system/**")
+                .uri(iamConfig.getServiceUrl() + "/console/system/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .build(), iamAppId, tenantId).getBody();
         var tenantResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("租户控制台资源")
-                .uri("http://iam/console/tenant/**")
+                .uri(iamConfig.getServiceUrl() + "/console/tenant/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
+                .exposeKind(ExposeKind.GLOBAL)
                 .build(), iamAppId, tenantId).getBody();
         var appResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("应用控制台资源")
-                .uri("http://iam/console/app/**")
+                .uri(iamConfig.getServiceUrl() + "/console/app/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
+                .exposeKind(ExposeKind.GLOBAL)
                 .build(), iamAppId, tenantId).getBody();
         // 初始化权限策略
         acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ROLE)
-                .actionKind(OptActionKind.CREATE)
-                .relSubjectIds(iamAccountId + ",")
+                .relSubjectIds(systemRoleAdminId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(systemResourceId)
                 .resultKind(AuthResultKind.ACCEPT)
-                .relSubjectAppId(iamAppId)
-                .relSubjectTenantId(tenantId)
                 .build(), iamAppId, tenantId);
         acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ROLE)
-                .actionKind(OptActionKind.CREATE)
-                .relSubjectIds(iamAccountId + ",")
+                .relSubjectIds(tenantRoleAdminId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(tenantResourceId)
                 .resultKind(AuthResultKind.ACCEPT)
-                .relSubjectAppId(iamAppId)
-                .relSubjectTenantId(tenantId)
                 .build(), iamAppId, tenantId);
         acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ROLE)
-                .actionKind(OptActionKind.CREATE)
-                .relSubjectIds(iamAccountId + ",")
+                .relSubjectIds(appRoleAdminId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
                 .relResourceId(appResourceId)
                 .resultKind(AuthResultKind.ACCEPT)
-                .relSubjectAppId(iamAppId)
-                .relSubjectTenantId(tenantId)
                 .build(), iamAppId, tenantId);
         log.info("[Startup]Initialization complete.\n" +
                         "##################################\n" +

@@ -17,7 +17,6 @@
 package idealworld.dew.baas.iam.scene.appconsole.service;
 
 import com.ecfront.dew.common.$;
-import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.common.Constant;
@@ -26,6 +25,7 @@ import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.domain.auth.*;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import idealworld.dew.baas.iam.scene.appconsole.dto.group.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import lombok.extern.slf4j.Slf4j;
@@ -132,9 +132,9 @@ public class ACGroupService extends IAMBasicService {
                 .where(qGroup.relAppId.eq(relAppId)));
     }
 
-    public Resp<Page<GroupResp>> pageGroups(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<List<GroupResp>> findGroups(Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
-        return pageDTOs(sqlBuilder.select(Projections.bean(GroupResp.class,
+        return findDTOs(sqlBuilder.select(Projections.bean(GroupResp.class,
                 qGroup.id,
                 qGroup.code,
                 qGroup.kind,
@@ -149,7 +149,28 @@ public class ACGroupService extends IAMBasicService {
                 .from(qGroup)
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
-                .orderBy(qGroup.sort.asc()), pageNumber, pageSize);
+                .orderBy(qGroup.sort.asc()));
+    }
+
+    public Resp<List<GroupResp>> findExposeGroups(Long relAppId, Long relTenantId) {
+        var qGroup = QGroup.group;
+        return findDTOs(sqlBuilder.select(Projections.bean(GroupResp.class,
+                qGroup.id,
+                qGroup.code,
+                qGroup.kind,
+                qGroup.name,
+                qGroup.icon,
+                qGroup.sort,
+                qGroup.relGroupId,
+                qGroup.relGroupNodeId,
+                qGroup.exposeKind,
+                qGroup.relAppId,
+                qGroup.relTenantId))
+                .from(qGroup)
+                .where((qGroup.exposeKind.eq(ExposeKind.TENANT).and(qGroup.relTenantId.eq(relTenantId)))
+                        .or(qGroup.exposeKind.eq(ExposeKind.GLOBAL)))
+                .where(qGroup.relAppId.ne(relAppId))
+                .orderBy(qGroup.sort.asc()));
     }
 
     @Transactional

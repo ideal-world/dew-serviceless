@@ -45,6 +45,9 @@ public abstract class IAMBasicService extends CommonService<Long> {
     protected static final String BUSINESS_ACCOUNT = "ACCOUNT";
     protected static final String BUSINESS_ACCOUNT_IDENT = "ACCOUNT_IDENT";
     protected static final String BUSINESS_ACCOUNT_CERT = "ACCOUNT_CERT";
+    protected static final String BUSINESS_ACCOUNT_APP = "ACCOUNT_APP";
+    protected static final String BUSINESS_ACCOUNT_ROLE = "ACCOUNT_ROLE";
+    protected static final String BUSINESS_ACCOUNT_GROUP = "ACCOUNT_GROUP";
     protected static final String BUSINESS_ACCOUNT_BIND = "ACCOUNT_BIND";
     protected static final String BUSINESS_APP = "APP";
     protected static final String BUSINESS_APP_IDENT = "APP_IDENT";

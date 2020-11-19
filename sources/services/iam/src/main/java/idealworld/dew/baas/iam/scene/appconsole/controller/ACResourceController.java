@@ -27,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 应用控制台下的资源控制器.
  *
@@ -103,9 +105,11 @@ public class ACResourceController extends IAMBasicController {
 
     @GetMapping(value = "")
     @Operation(summary = "获取当前应用的资源列表信息")
-    public Resp<Page<ResourceResp>> pageResources(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
+    public Resp<List<ResourceResp>> findResources(@RequestParam(required = false, defaultValue = "false") Boolean expose) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acResourceService.pageResources(pageNumber, pageSize, currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return !expose
+                ? acResourceService.findResources(currentAppAndTenantId._0, currentAppAndTenantId._1)
+                : acResourceService.findExposeResources(currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "{resourceId}")

@@ -17,18 +17,22 @@
 package idealworld.dew.baas.iam.scene.appconsole.service;
 
 import com.ecfront.dew.common.$;
-import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.enumeration.AuthSubjectKind;
 import idealworld.dew.baas.common.resp.StandardResp;
+import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.domain.auth.*;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import idealworld.dew.baas.iam.scene.appconsole.dto.role.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * 应用控制台下的角色服务.
@@ -38,6 +42,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Slf4j
 public class ACRoleService extends IAMBasicService {
+
+    @Autowired
+    private IAMConfig iamConfig;
 
     @Transactional
     public Resp<Long> addRoleDef(RoleDefAddReq roleDefAddReq, Long relAppId, Long relTenantId) {
@@ -85,9 +92,6 @@ public class ACRoleService extends IAMBasicService {
         if (roleDefModifyReq.getSort() != null) {
             roleDefUpdate.set(qRoleDef.sort, roleDefModifyReq.getSort());
         }
-        if (roleDefModifyReq.getExposeKind() != null) {
-            roleDefUpdate.set(qRoleDef.exposeKind, roleDefModifyReq.getExposeKind());
-        }
         return updateEntity(roleDefUpdate);
     }
 
@@ -98,7 +102,6 @@ public class ACRoleService extends IAMBasicService {
                 qRoleDef.code,
                 qRoleDef.name,
                 qRoleDef.sort,
-                qRoleDef.exposeKind,
                 qRoleDef.relAppId,
                 qRoleDef.relTenantId))
                 .from(qRoleDef)
@@ -107,20 +110,19 @@ public class ACRoleService extends IAMBasicService {
                 .where(qRoleDef.relAppId.eq(relAppId)));
     }
 
-    public Resp<Page<RoleDefResp>> pageRoleDef(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<List<RoleDefResp>> findRoleDef(Long relAppId, Long relTenantId) {
         var qRoleDef = QRoleDef.roleDef;
-        return pageDTOs(sqlBuilder.select(Projections.bean(RoleDefResp.class,
+        return findDTOs(sqlBuilder.select(Projections.bean(RoleDefResp.class,
                 qRoleDef.id,
                 qRoleDef.code,
                 qRoleDef.name,
                 qRoleDef.sort,
-                qRoleDef.exposeKind,
                 qRoleDef.relAppId,
                 qRoleDef.relTenantId))
                 .from(qRoleDef)
                 .where(qRoleDef.relTenantId.eq(relTenantId))
                 .where(qRoleDef.relAppId.eq(relAppId))
-                .orderBy(qRoleDef.sort.asc()), pageNumber, pageSize);
+                .orderBy(qRoleDef.sort.asc()));
     }
 
     @Transactional
@@ -225,9 +227,9 @@ public class ACRoleService extends IAMBasicService {
                 .where(qRole.relAppId.eq(relAppId)));
     }
 
-    public Resp<Page<RoleResp>> pageRoles(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<List<RoleResp>> findRoles(Long relAppId, Long relTenantId) {
         var qRole = QRole.role;
-        return pageDTOs(sqlBuilder.select(Projections.bean(RoleResp.class,
+        return findDTOs(sqlBuilder.select(Projections.bean(RoleResp.class,
                 qRole.id,
                 qRole.relRoleDefId,
                 qRole.relGroupNodeId,
@@ -239,7 +241,25 @@ public class ACRoleService extends IAMBasicService {
                 .from(qRole)
                 .where(qRole.relTenantId.eq(relTenantId))
                 .where(qRole.relAppId.eq(relAppId))
-                .orderBy(qRole.sort.asc()), pageNumber, pageSize);
+                .orderBy(qRole.sort.asc()));
+    }
+
+    public Resp<List<RoleResp>> findExposeRoles(Long relAppId, Long relTenantId) {
+        var qRole = QRole.role;
+        return findDTOs(sqlBuilder.select(Projections.bean(RoleResp.class,
+                qRole.id,
+                qRole.relRoleDefId,
+                qRole.relGroupNodeId,
+                qRole.name,
+                qRole.sort,
+                qRole.exposeKind,
+                qRole.relAppId,
+                qRole.relTenantId))
+                .from(qRole)
+                .where((qRole.exposeKind.eq(ExposeKind.TENANT).and(qRole.relTenantId.eq(relTenantId)))
+                        .or(qRole.exposeKind.eq(ExposeKind.GLOBAL)))
+                .where(qRole.relAppId.ne(relAppId))
+                .orderBy(qRole.sort.asc()));
     }
 
     @Transactional
@@ -265,6 +285,28 @@ public class ACRoleService extends IAMBasicService {
                 .where(qRole.id.eq(roleId))
                 .where(qRole.relTenantId.eq(relTenantId))
                 .where(qRole.relAppId.eq(relAppId)));
+    }
+
+    public Resp<Long> getTenantAdminRoleId() {
+        var qRole = QRole.role;
+        var qRoleDef = QRoleDef.roleDef;
+        return Resp.success(sqlBuilder.select(qRole.id)
+                .from(qRole)
+                .innerJoin(qRoleDef).on(qRoleDef.id.eq(qRole.relRoleDefId))
+                .where(qRoleDef.code.eq(iamConfig.getSecurity().getTenantAdminRoleDefCode().toLowerCase()))
+                .orderBy(qRoleDef.createTime.asc())
+                .fetchOne());
+    }
+
+    public Resp<Long> getAppAdminRoleId() {
+        var qRole = QRole.role;
+        var qRoleDef = QRoleDef.roleDef;
+        return Resp.success(sqlBuilder.select(qRole.id)
+                .from(qRole)
+                .innerJoin(qRoleDef).on(qRoleDef.id.eq(qRole.relRoleDefId))
+                .where(qRoleDef.code.eq(iamConfig.getSecurity().getAppAdminRoleDefCode().toLowerCase()))
+                .orderBy(qRoleDef.createTime.asc())
+                .fetchOne());
     }
 
 }

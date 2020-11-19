@@ -70,10 +70,4 @@ public class AuthPolicyModifyReq implements Serializable {
     @Schema(title = "是否排他")
     private Boolean exclusive;
 
-    @Schema(title = "关联权限主体的应用Id")
-    private Long relSubjectAppId;
-
-    @Schema(title = "关联权限主体的租户Id")
-    private Long relSubjectTenantId;
-
 }

@@ -16,7 +16,7 @@
 
 package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.iam.domain.AppBasedEntity;
+import idealworld.dew.baas.common.domain.SafeEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -42,7 +42,7 @@ import javax.persistence.Table;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class RoleDef extends AppBasedEntity {
+public class RoleDef extends SafeEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(255) comment '角色定义编码'")
@@ -55,5 +55,13 @@ public class RoleDef extends AppBasedEntity {
     @Column(nullable = false,
             columnDefinition = "int comment '显示排序，asc'")
     private Integer sort;
+
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联应用Id'")
+    private Long relAppId;
+
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联租户Id'")
+    private Long relTenantId;
 
 }

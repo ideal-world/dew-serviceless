@@ -26,20 +26,15 @@ import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.IAMConstant;
 import idealworld.dew.baas.iam.domain.auth.*;
-import idealworld.dew.baas.iam.domain.ident.QAccount;
-import idealworld.dew.baas.iam.domain.ident.QApp;
-import idealworld.dew.baas.iam.domain.ident.QTenant;
-import idealworld.dew.baas.iam.domain.ident.QTenantIdent;
+import idealworld.dew.baas.iam.domain.ident.*;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Nullable;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -125,7 +120,7 @@ public class CommonFunctionService extends IAMBasicService {
                     return StandardResp.badRequest(BUSINESS_ACCOUNT_IDENT, "密码必填");
                 }
                 return StandardResp.success($.security.digest.digest(ak + sk, "SHA-512"));
-            case WECHAT_MP:
+            case WECHAT_XCX:
                 // 需要关联AppId
                 String accessToken = Dew.cluster.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString());
                 if (accessToken == null) {
@@ -189,6 +184,21 @@ public class CommonFunctionService extends IAMBasicService {
         return Resp.success(null);
     }
 
+    public Resp<Void> checkAccountMembership(List<Long> accountIds, Long appId, Long tenantId) {
+        var qAccount = QAccount.account;
+        var qAccountApp = QAccountApp.accountApp;
+        if (sqlBuilder.select(qAccount.id)
+                .from(qAccount)
+                .innerJoin(qAccountApp).on(qAccountApp.relAccountId.eq(qAccount.id))
+                .where(qAccount.id.in(accountIds))
+                .where(qAccountApp.relAppId.eq(appId))
+                .where(qAccount.relTenantId.eq(tenantId))
+                .fetchCount() == 0) {
+            return StandardResp.unAuthorized(BUSINESS_ACCOUNT, "账号不合法");
+        }
+        return Resp.success(null);
+    }
+
     public Resp<Void> checkAppMembership(Long appId, Long tenantId) {
         var qApp = QApp.app;
         if (sqlBuilder.select(qApp.id)
@@ -201,70 +211,104 @@ public class CommonFunctionService extends IAMBasicService {
         return Resp.success(null);
     }
 
-    public Resp<Void> checkRoleMembership(Long roleId, Long tenantId) {
-        var qRole = QRole.role;
-        if (sqlBuilder.select(qRole.id)
-                .from(qRole)
-                .where(qRole.id.eq(roleId))
-                .where(qRole.relTenantId.eq(tenantId))
+    public Resp<Void> checkAppMembership(List<Long> appIds, Long tenantId) {
+        var qApp = QApp.app;
+        if (sqlBuilder.select(qApp.id)
+                .from(qApp)
+                .where(qApp.id.in(appIds))
+                .where(qApp.relTenantId.eq(tenantId))
                 .fetchCount() == 0) {
-            return StandardResp.unAuthorized(BUSINESS_ROLE, "角色不合法");
+            return StandardResp.unAuthorized(BUSINESS_APP, "应用不合法");
         }
         return Resp.success(null);
     }
 
+    public Resp<Void> checkRoleMembership(Long roleId, Long tenantId) {
+        return checkRoleMembership(new ArrayList<>() {
+            {
+                add(roleId);
+            }
+        }, Constant.OBJECT_UNDEFINED, tenantId);
+    }
+
     public Resp<Void> checkRoleMembership(Long roleId, Long appId, Long tenantId) {
+        return checkRoleMembership(new ArrayList<>() {
+            {
+                add(roleId);
+            }
+        }, appId, tenantId);
+    }
+
+    public Resp<Void> checkRoleMembership(List<Long> roleIds, Long appId, Long tenantId) {
         var qRole = QRole.role;
-        if (sqlBuilder.select(qRole.id)
+        var checkQuery = appId == Constant.OBJECT_UNDEFINED
+                ? sqlBuilder.select(qRole.id)
                 .from(qRole)
-                .where(qRole.id.eq(roleId))
-                .where(qRole.relTenantId.eq(tenantId))
-                .where(qRole.relAppId.eq(appId))
-                .fetchCount() == 0) {
+                .where(qRole.id.in(roleIds))
+                .where(qRole.relTenantId.eq(tenantId)
+                        .or(qRole.exposeKind.eq(ExposeKind.TENANT).and(qRole.relTenantId.eq(tenantId)))
+                        .or(qRole.exposeKind.eq(ExposeKind.GLOBAL)))
+                : sqlBuilder.select(qRole.id)
+                .from(qRole)
+                .where(qRole.id.in(roleIds))
+                .where((qRole.relAppId.eq(appId).and(qRole.relTenantId.eq(tenantId)))
+                        .or(qRole.exposeKind.eq(ExposeKind.TENANT).and(qRole.relTenantId.eq(tenantId)))
+                        .or(qRole.exposeKind.eq(ExposeKind.GLOBAL)));
+        if (checkQuery.fetchCount() == 0) {
             return StandardResp.unAuthorized(BUSINESS_ROLE, "角色不合法");
         }
         return Resp.success(null);
     }
 
     public Resp<Void> checkGroupNodeMembership(Long groupNodeId, Long tenantId) {
-        var qGroup = QGroup.group;
-        var qGroupNode = QGroupNode.groupNode;
-        if (sqlBuilder
-                .select(qGroupNode.id)
-                .from(qGroupNode)
-                .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
-                .where(qGroupNode.id.eq(groupNodeId))
-                .where(qGroup.relTenantId.eq(tenantId))
-                .fetchCount() == 0) {
-            return StandardResp.unAuthorized(BUSINESS_GROUP_NODE, "群组节点不合法");
-        }
-        return Resp.success(null);
+        return checkGroupNodeMembership(new ArrayList<>() {
+            {
+                add(groupNodeId);
+            }
+        }, Constant.OBJECT_UNDEFINED, tenantId);
     }
 
     public Resp<Void> checkGroupNodeMembership(Long groupNodeId, Long appId, Long tenantId) {
+        return checkGroupNodeMembership(new ArrayList<>() {
+            {
+                add(groupNodeId);
+            }
+        }, appId, tenantId);
+    }
+
+    public Resp<Void> checkGroupNodeMembership(List<Long> groupNodeIds, Long appId, Long tenantId) {
         var qGroup = QGroup.group;
         var qGroupNode = QGroupNode.groupNode;
-        if (sqlBuilder
+        var checkQuery = appId == Constant.OBJECT_UNDEFINED
+                ? sqlBuilder
                 .select(qGroupNode.id)
                 .from(qGroupNode)
                 .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
-                .where(qGroupNode.id.eq(groupNodeId))
-                .where(qGroup.relTenantId.eq(tenantId))
-                .where(qGroup.relAppId.eq(appId))
-                .fetchCount() == 0) {
+                .where(qGroupNode.id.in(groupNodeIds))
+                .where(qGroup.relTenantId.eq(tenantId)
+                        .or(qGroup.exposeKind.eq(ExposeKind.TENANT).and(qGroup.relTenantId.eq(tenantId)))
+                        .or(qGroup.exposeKind.eq(ExposeKind.GLOBAL)))
+                : sqlBuilder
+                .select(qGroupNode.id)
+                .from(qGroupNode)
+                .innerJoin(qGroup).on(qGroup.id.eq(qGroupNode.relGroupId))
+                .where(qGroupNode.id.in(groupNodeIds))
+                .where((qGroup.relAppId.eq(appId).and(qGroup.relTenantId.eq(tenantId)))
+                        .or(qGroup.exposeKind.eq(ExposeKind.TENANT).and(qGroup.relTenantId.eq(tenantId)))
+                        .or(qGroup.exposeKind.eq(ExposeKind.GLOBAL)));
+        if (checkQuery.fetchCount() == 0) {
             return StandardResp.unAuthorized(BUSINESS_GROUP_NODE, "群组节点不合法");
         }
         return Resp.success(null);
     }
 
-    public Set<IdentOptInfo.RoleInfo> findRoleInfo(Long accountId, Long relAppId) {
+    public Set<IdentOptInfo.RoleInfo> findRoleInfo(Long accountId) {
         var qAccountRole = QAccountRole.accountRole;
         var qRole = QRole.role;
         return sqlBuilder.select(qRole.id, qRole.name)
                 .from(qAccountRole)
                 .innerJoin(qRole)
-                .on(qRole.id.eq(qAccountRole.relRoleId)
-                        .and(qRole.relAppId.eq(relAppId)))
+                .on(qRole.id.eq(qAccountRole.relRoleId))
                 .where(qAccountRole.relAccountId.eq(accountId))
                 .fetch()
                 .stream()
@@ -277,7 +321,7 @@ public class CommonFunctionService extends IAMBasicService {
                 .collect(Collectors.toSet());
     }
 
-    public Set<IdentOptInfo.GroupInfo> findGroupInfo(Long accountId, Long relAppId) {
+    public Set<IdentOptInfo.GroupInfo> findGroupInfo(Long accountId) {
         var qAccountGroup = QAccountGroup.accountGroup;
         var qGroup = QGroup.group;
         var qGroupNode = QGroupNode.groupNode;
@@ -290,8 +334,7 @@ public class CommonFunctionService extends IAMBasicService {
                 .from(qAccountGroup)
                 .innerJoin(qGroupNode).on(qGroupNode.id.eq(qAccountGroup.relGroupNodeId))
                 .innerJoin(qGroup)
-                .on(qGroup.id.eq(qGroupNode.relGroupId)
-                        .and(qGroup.relAppId.eq(relAppId)))
+                .on(qGroup.id.eq(qGroupNode.relGroupId))
                 .where(qAccountGroup.relAccountId.eq(accountId))
                 .fetch()
                 .stream()

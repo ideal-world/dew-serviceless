@@ -90,14 +90,6 @@ public class AuthPolicy extends SafeEntity {
     private Boolean exclusive;
 
     @Column(nullable = false,
-            columnDefinition = "bigint comment '关联权限主体的应用Id'")
-    private Long relSubjectAppId;
-
-    @Column(nullable = false,
-            columnDefinition = "bigint comment '关联权限主体的租户Id'")
-    private Long relSubjectTenantId;
-
-    @Column(nullable = false,
             columnDefinition = "bigint comment '关联应用Id'")
     private Long relAppId;
 

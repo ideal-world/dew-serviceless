@@ -16,7 +16,7 @@
 
 package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.iam.domain.AppBasedEntity;
+import idealworld.dew.baas.common.domain.SafeEntity;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -87,7 +87,7 @@ import javax.persistence.*;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class ResourceSubject extends AppBasedEntity {
+public class ResourceSubject extends SafeEntity {
 
     @Column(nullable = false,
             columnDefinition = "varchar(255) comment '资源主体编码'")
@@ -129,5 +129,13 @@ public class ResourceSubject extends AppBasedEntity {
     @Column(nullable = false,
             columnDefinition = "varchar(1000) comment '第三方平台项目名，如华为云的ProjectId'")
     private String platformProjectId;
+
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联应用Id'")
+    private Long relAppId;
+
+    @Column(nullable = false,
+            columnDefinition = "bigint comment '关联租户Id'")
+    private Long relTenantId;
 
 }

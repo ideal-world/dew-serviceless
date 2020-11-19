@@ -24,7 +24,6 @@ import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.util.ResponseProcessor;
 import idealworld.dew.baas.iam.IAMConfig;
-import idealworld.dew.baas.iam.domain.ident.QApp;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountLoginReq;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,11 +52,14 @@ public abstract class BasicTest extends ResponseProcessor {
     private String token;
 
     protected void loginBySystemAdmin() {
-        var qApp = QApp.app;
+        loginBySystemAdmin(1L);
+    }
+
+    protected void loginBySystemAdmin(Long appId) {
         token = postToEntity("/common/login", AccountLoginReq.builder()
                 .ak(iamConfig.getApp().getIamAdminName())
                 .sk(iamConfig.getApp().getIamAdminPwd())
-                .relAppId(1L)
+                .relAppId(appId)
                 .build(), IdentOptInfo.class).getBody().getToken();
     }
 

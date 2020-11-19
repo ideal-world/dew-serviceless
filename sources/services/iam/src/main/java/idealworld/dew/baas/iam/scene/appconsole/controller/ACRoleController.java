@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.iam.scene.appconsole.controller;
 
-import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import idealworld.dew.baas.iam.scene.appconsole.dto.role.*;
 import idealworld.dew.baas.iam.scene.appconsole.service.ACRoleService;
@@ -26,6 +25,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 应用控制台下的角色控制器.
@@ -65,9 +66,9 @@ public class ACRoleController extends IAMBasicController {
 
     @GetMapping(value = "def")
     @Operation(summary = "获取当前应用的角色定义列表信息")
-    public Resp<Page<RoleDefResp>> pageRoleDef(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
+    public Resp<List<RoleDefResp>> findRoleDef() {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acRoleService.pageRoleDef(pageNumber, pageSize, currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return acRoleService.findRoleDef(currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "def/{roleDefId}")
@@ -103,9 +104,11 @@ public class ACRoleController extends IAMBasicController {
 
     @GetMapping(value = "")
     @Operation(summary = "获取当前应用的角色列表信息")
-    public Resp<Page<RoleResp>> pageRoles(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
+    public Resp<List<RoleResp>> findRoles(@RequestParam(required = false, defaultValue = "false") Boolean expose) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acRoleService.pageRoles(pageNumber, pageSize, currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return !expose
+                ? acRoleService.findRoles(currentAppAndTenantId._0, currentAppAndTenantId._1)
+                : acRoleService.findExposeRoles(currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "{roleId}")

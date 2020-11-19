@@ -23,14 +23,16 @@ import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.common.util.URIHelper;
+import idealworld.dew.baas.iam.IAMConfig;
 import idealworld.dew.baas.iam.domain.auth.*;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import idealworld.dew.baas.iam.scene.appconsole.dto.resource.*;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,6 +44,9 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class ACResourceService extends IAMBasicService {
+
+    @Autowired
+    private IAMConfig iamConfig;
 
     @Transactional
     public Resp<Long> addResourceSubject(ResourceSubjectAddReq resourceSubjectAddReq, Long relAppId, Long relTenantId) {
@@ -127,9 +132,6 @@ public class ACResourceService extends IAMBasicService {
         if (resourceSubjectModifyReq.getPlatformProjectId() != null) {
             resourceSubjectUpdate.set(qResourceSubject.platformProjectId, resourceSubjectModifyReq.getPlatformProjectId());
         }
-        if (resourceSubjectModifyReq.getExposeKind() != null) {
-            resourceSubjectUpdate.set(qResourceSubject.exposeKind, resourceSubjectModifyReq.getExposeKind());
-        }
         return updateEntity(resourceSubjectUpdate);
     }
 
@@ -147,7 +149,6 @@ public class ACResourceService extends IAMBasicService {
                 qResourceSubject.sk,
                 qResourceSubject.platformAccount,
                 qResourceSubject.platformProjectId,
-                qResourceSubject.exposeKind,
                 qResourceSubject.relAppId,
                 qResourceSubject.relTenantId))
                 .from(qResourceSubject)
@@ -170,7 +171,6 @@ public class ACResourceService extends IAMBasicService {
                 qResourceSubject.sk,
                 qResourceSubject.platformAccount,
                 qResourceSubject.platformProjectId,
-                qResourceSubject.exposeKind,
                 qResourceSubject.relAppId,
                 qResourceSubject.relTenantId))
                 .from(qResourceSubject)
@@ -299,9 +299,9 @@ public class ACResourceService extends IAMBasicService {
                 .where(qResource.relAppId.eq(relAppId)));
     }
 
-    public Resp<Page<ResourceResp>> pageResources(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<List<ResourceResp>> findResources(Long relAppId, Long relTenantId) {
         var qResource = QResource.resource;
-        return pageDTOs(sqlBuilder.select(Projections.bean(ResourceResp.class,
+        return findDTOs(sqlBuilder.select(Projections.bean(ResourceResp.class,
                 qResource.id,
                 qResource.name,
                 qResource.uri,
@@ -317,7 +317,29 @@ public class ACResourceService extends IAMBasicService {
                 .from(qResource)
                 .where(qResource.relTenantId.eq(relTenantId))
                 .where(qResource.relAppId.eq(relAppId))
-                .orderBy(qResource.sort.asc()), pageNumber, pageSize);
+                .orderBy(qResource.sort.asc()));
+    }
+
+    public Resp<List<ResourceResp>> findExposeResources(Long relAppId, Long relTenantId) {
+        var qResource = QResource.resource;
+        return findDTOs(sqlBuilder.select(Projections.bean(ResourceResp.class,
+                qResource.id,
+                qResource.name,
+                qResource.uri,
+                qResource.icon,
+                qResource.action,
+                qResource.sort,
+                qResource.resGroup,
+                qResource.parentId,
+                qResource.relResourceSubjectId,
+                qResource.exposeKind,
+                qResource.relAppId,
+                qResource.relTenantId))
+                .from(qResource)
+                .where((qResource.exposeKind.eq(ExposeKind.TENANT).and(qResource.relTenantId.eq(relTenantId)))
+                        .or(qResource.exposeKind.eq(ExposeKind.GLOBAL)))
+                .where(qResource.relAppId.ne(relAppId))
+                .orderBy(qResource.sort.asc()));
     }
 
     @Transactional
@@ -353,41 +375,22 @@ public class ACResourceService extends IAMBasicService {
                 .collect(Collectors.toList());
     }
 
-    protected List<ResourceResp> findResourceByGroups(Long resourceGroupId, Long relAppId, Long relTenantId) {
+    public Resp<Long> getTenantAdminRoleResourceId() {
         var qResource = QResource.resource;
-        return sqlBuilder
-                .select(Projections.bean(ResourceResp.class,
-                        qResource.id,
-                        qResource.name,
-                        qResource.uri,
-                        qResource.icon,
-                        qResource.name,
-                        qResource.action,
-                        qResource.sort,
-                        qResource.resGroup,
-                        qResource.parentId,
-                        qResource.relResourceSubjectId,
-                        qResource.exposeKind,
-                        qResource.relAppId,
-                        qResource.relTenantId))
+        return Resp.success(sqlBuilder.select(qResource.id)
                 .from(qResource)
-                .where(qResource.parentId.eq(resourceGroupId))
-                .where(qResource.relTenantId.eq(relTenantId))
-                .where(qResource.relAppId.eq(relAppId))
-                .fetch()
-                .stream()
-                .flatMap(res -> {
-                    if (res.getResGroup()) {
-                        return findResourceByGroups(res.getId(), relAppId, relTenantId).stream();
-                    } else {
-                        return new ArrayList<ResourceResp>() {
-                            {
-                                add(res);
-                            }
-                        }.stream();
-                    }
-                })
-                .collect(Collectors.toList());
+                .where(qResource.uri.eq(iamConfig.getServiceUrl() + "/console/tenant/**"))
+                .orderBy(qResource.createTime.asc())
+                .fetchOne());
+    }
+
+    public Resp<Long> getAppAdminRoleResourceId() {
+        var qResource = QResource.resource;
+        return Resp.success(sqlBuilder.select(qResource.id)
+                .from(qResource)
+                .where(qResource.uri.eq(iamConfig.getServiceUrl() + "/console/app/**"))
+                .orderBy(qResource.createTime.asc())
+                .fetchOne());
     }
 
 }

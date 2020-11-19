@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.iam.domain.auth;
 
-import idealworld.dew.baas.common.domain.SafeEntity;
 import idealworld.dew.baas.iam.domain.AppBasedEntity;
 import idealworld.dew.baas.iam.enumeration.GroupKind;
 import lombok.Data;
@@ -33,7 +32,8 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "iam_group", indexes = {
-        @Index(columnList = "relTenantId,relAppId,code", unique = true)
+        @Index(columnList = "relTenantId,relAppId,code", unique = true),
+        @Index(columnList = "exposeKind"),
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_group",
         comment = "群组")

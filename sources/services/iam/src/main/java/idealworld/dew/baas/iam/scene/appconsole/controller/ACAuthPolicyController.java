@@ -29,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 应用控制台下的权限策略控制器.
  *
@@ -45,7 +47,7 @@ public class ACAuthPolicyController extends IAMBasicController {
 
     @PostMapping(value = "")
     @Operation(summary = "添加当前应用的权限策略")
-    public Resp<Long> addAuthPolicy(@Validated @RequestBody AuthPolicyAddReq authPolicyAddReq) {
+    public Resp<List<Long>> addAuthPolicy(@Validated @RequestBody AuthPolicyAddReq authPolicyAddReq) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
         return acAuthPolicyService.addAuthPolicy(authPolicyAddReq, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }

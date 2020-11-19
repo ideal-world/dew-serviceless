@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.iam.scene.appconsole.dto.resource;
 
-import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -75,8 +74,5 @@ public class ResourceSubjectModifyReq implements Serializable {
     @Size(max = 1000)
     @Schema(title = "第三方平台项目名，如华为云的ProjectId")
     private String platformProjectId;
-
-    @Schema(title = "开放等级类型")
-    private ExposeKind exposeKind;
 
 }

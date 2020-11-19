@@ -101,7 +101,8 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "iam_resource", indexes = {
         @Index(columnList = "relTenantId,relAppId,uri", unique = true),
-        @Index(columnList = "parentId")
+        @Index(columnList = "parentId"),
+        @Index(columnList = "exposeKind"),
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_resource",
         comment = "资源")

@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import javax.persistence.EntityManager;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,6 +61,20 @@ public interface StorageService<P extends Serializable> {
         entityManager().persist(pkEntity);
         postSaveEntity(pkEntity);
         return StandardResp.success(pkEntity.getId());
+    }
+
+    default Resp<List<P>> saveEntities(PkEntity<P>... pkEntities) {
+        var ids = new ArrayList<P>();
+        for(var entity: pkEntities) {
+            var preSaveEntityR = preSaveEntity(entity);
+            if (!preSaveEntityR.ok()) {
+                return Resp.error(preSaveEntityR);
+            }
+            entityManager().persist(entity);
+            ids.add(entity.getId());
+            postSaveEntity(entity);
+        }
+        return StandardResp.success(ids);
     }
 
     default <E extends PkEntity<P>> Resp<Void> preUpdateEntity(E entity) {

@@ -20,8 +20,10 @@ import com.ecfront.dew.common.$;
 import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
+import idealworld.dew.baas.iam.scene.appconsole.dto.resource.ResourceAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.resource.ResourceSubjectAddReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.*;
+import idealworld.dew.baas.iam.scene.common.dto.tenant.TenantRegisterReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.app.AppAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.TenantIdentAddReq;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.TenantModifyReq;
@@ -47,14 +49,35 @@ public class CommonTest extends BasicTest {
 
     @Test
     public void testCommon() {
+        // 注册租户
+        Assertions.assertEquals("认证名规则不合法", postToEntity("/common/tenant", TenantRegisterReq.builder()
+                .tenantName("测试租户")
+                .appName("默认应用")
+                .accountUserName("jy")
+                .accountPassword("sss")
+                .build(), IdentOptInfo.class).getMessage());
+        var identOptInfo = postToEntity("/common/tenant", TenantRegisterReq.builder()
+                .tenantName("测试租户")
+                .appName("默认应用")
+                .accountUserName("jzy1")
+                .accountPassword("si2nc$@2")
+                .build(), IdentOptInfo.class).getBody();
+        Assertions.assertNotNull(identOptInfo.getAccountCode());
+        identOptInfo = postToEntity("/common/tenant", TenantRegisterReq.builder()
+                .tenantName("测试租户")
+                .appName("默认应用")
+                .accountUserName("jzy1")
+                .accountPassword("si2nc$@2")
+                .build(), IdentOptInfo.class).getBody();
+        Assertions.assertNotNull(identOptInfo.getAccountCode());
         // 注册账号
-        Assertions.assertEquals("应用[2]对应租户不存在、未启用或禁止注册", postToEntity("/common/account", AccountRegisterReq.builder()
+        Assertions.assertTrue(postToEntity("/common/account", AccountRegisterReq.builder()
                 .name("孤岛旭日")
                 .kind(AccountIdentKind.EMAIL)
                 .ak("1")
                 .sk("s")
                 .relAppId(appId)
-                .build(), IdentOptInfo.class).getMessage());
+                .build(), IdentOptInfo.class).getMessage().contains("对应租户不存在、未启用或禁止注册"));
         loginBySystemAdmin();
         patchToEntity("/console/tenant/tenant", TenantModifyReq.builder()
                 .allowAccountRegister(true)
@@ -81,7 +104,7 @@ public class CommonTest extends BasicTest {
                 .sk("s")
                 .relAppId(appId)
                 .build(), IdentOptInfo.class).getMessage());
-        var identOptInfo = postToEntity("/common/account", AccountRegisterReq.builder()
+        identOptInfo = postToEntity("/common/account", AccountRegisterReq.builder()
                 .name("ss")
                 .kind(AccountIdentKind.USERNAME)
                 .ak("gdxr")
@@ -176,29 +199,34 @@ public class CommonTest extends BasicTest {
         var oauthJson = $.json.toJson(oauth);
 
         Assertions.assertEquals("对应的OAuth资源主体不存在", postToEntity("/common/oauth/login", AccountOAuthLoginReq.builder()
-                .kind(AccountIdentKind.WECHAT_MP)
+                .kind(AccountIdentKind.WECHAT_XCX)
                 .code("ownc3@s")
                 .relAppId(1L)
                 .build(), IdentOptInfo.class).getMessage());
         loginBySystemAdmin();
-        Assertions.assertTrue(postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .code(AccountIdentKind.WECHAT_MP.toString())
+        var resourceSubjectId = postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
+                .code(AccountIdentKind.WECHAT_XCX.toString())
                 .kind(ResourceKind.OAUTH)
                 .name("微信OAuth")
-                .uri("oauth://" + AccountIdentKind.WECHAT_MP.toString())
-                .ak(oauthJson.get("wechat-mp").get("ak").asText())
-                .sk(oauthJson.get("wechat-mp").get("sk").asText())
+                .uri("oauth://" + AccountIdentKind.WECHAT_XCX.toString())
+                .ak(oauthJson.get("wechat-xcx").get("ak").asText())
+                .sk(oauthJson.get("wechat-xcx").get("sk").asText())
+                .build(), Long.class).getBody();
+        Assertions.assertTrue(postToEntity("/console/app/resource", ResourceAddReq.builder()
+                .name("微信OAuth")
+                .uri("oauth://" + AccountIdentKind.WECHAT_XCX.toString())
+                .relResourceSubjectId(resourceSubjectId)
                 .build(), Long.class).ok());
         removeToken();
         Assertions.assertTrue(postToEntity("/common/oauth/login", AccountOAuthLoginReq.builder()
-                .kind(AccountIdentKind.WECHAT_MP)
+                .kind(AccountIdentKind.WECHAT_XCX)
                 .code("ownc3@s")
                 .relAppId(1L)
                 .build(), IdentOptInfo.class).getMessage().contains("invalid code"));
         // code只能用一次
         /*Assertions.assertEquals("应用[1]对应租户不存在、未启用或禁止注册", postToEntity("/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_MP)
-                .code(oauthJson.get("wechat-mp").get("code").asText())
+                .code(oauthJson.get("wechat-xcx").get("code").asText())
                 .relAppId(1L)
                 .build(), IdentOptInfo.class).getMessage());*/
         loginBySystemAdmin();
@@ -209,26 +237,26 @@ public class CommonTest extends BasicTest {
         // code只能用一次
        /* Assertions.assertEquals("认证类型不存在或已禁用", postToEntity("/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_MP)
-                .code(oauthJson.get("wechat-mp").get("code").asText())
+                .code(oauthJson.get("wechat-xcx").get("code").asText())
                 .relAppId(1L)
                 .build(), IdentOptInfo.class).getMessage());*/
         loginBySystemAdmin();
         Assertions.assertTrue(postToEntity("/console/tenant/tenant/ident", TenantIdentAddReq.builder()
-                .kind(AccountIdentKind.WECHAT_MP)
+                .kind(AccountIdentKind.WECHAT_XCX)
                 .validTimeSec(60 * 60 * 24 * 10L)
                 .build(), Long.class).ok());
         removeToken();
         // 注册
         var identOptInfo = postToEntity("/common/oauth/login", AccountOAuthLoginReq.builder()
-                .kind(AccountIdentKind.WECHAT_MP)
-                .code(oauthJson.get("wechat-mp").get("code").asText())
+                .kind(AccountIdentKind.WECHAT_XCX)
+                .code(oauthJson.get("wechat-xcx").get("code").asText())
                 .relAppId(1L)
                 .build(), IdentOptInfo.class).getBody();
         Assertions.assertNotNull(identOptInfo.getAccountCode());
         // 登录 code只能用一次
         /*identOptInfo = postToEntity("/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_MP)
-                .code(oauthJson.get("wechat-mp").get("code").asText())
+                .code(oauthJson.get("wechat-xcx").get("code").asText())
                 .relAppId(1L)
                 .build(), IdentOptInfo.class).getBody();
         Assertions.assertNotNull(identOptInfo.getAccountCode());*/

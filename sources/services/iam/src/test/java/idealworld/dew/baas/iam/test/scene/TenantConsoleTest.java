@@ -33,21 +33,20 @@ public class TenantConsoleTest extends BasicTest {
     @BeforeEach
     public void before() {
         loginBySystemAdmin();
-        // 租户注册
-        var tenantId = postToEntity("/console/system/tenant", TenantAddReq.builder()
-                .name("xyy")
-                .build(), Long.class).getBody();
     }
 
     @Order(1)
     @Test
     public void testTenant() {
+        // 添加租户
+        Assertions.assertTrue(postToEntity("/console/system/tenant", TenantAddReq.builder()
+                .name("xyy")
+                .build(), Long.class).ok());
         // 修改当前租户
-        patchToEntity("/console/tenant/tenant", TenantModifyReq.builder()
+        Assertions.assertTrue(patchToEntity("/console/tenant/tenant", TenantModifyReq.builder()
                 .name("xyy_new")
                 .allowAccountRegister(true)
-                .build(), Void.class);
-
+                .build(), Void.class).ok());
         // 获取当前租户信息
         var tenantResp = getToEntity("/console/tenant/tenant", TenantResp.class).getBody();
         Assertions.assertEquals("xyy_new", tenantResp.getName());
@@ -56,24 +55,23 @@ public class TenantConsoleTest extends BasicTest {
         // --------------------------------------------------------------------
 
         // 添加当前租户的认证
-        var tenantIdentIdR = postToEntity("/console/tenant/tenant/ident", TenantIdentAddReq.builder()
+        Assertions.assertEquals("租户认证类型已存在", postToEntity("/console/tenant/tenant/ident", TenantIdentAddReq.builder()
                 .kind(AccountIdentKind.USERNAME)
                 .validTimeSec(60 * 60 * 24 * 10L)
-                .build(), Long.class);
-        Assertions.assertFalse(tenantIdentIdR.ok());
-        tenantIdentIdR = postToEntity("/console/tenant/tenant/ident", TenantIdentAddReq.builder()
+                .build(), Long.class).getMessage());
+        var tenantIdentId = postToEntity("/console/tenant/tenant/ident", TenantIdentAddReq.builder()
                 .kind(AccountIdentKind.PHONE)
                 .validTimeSec(60 * 60 * 24 * 10L)
-                .build(), Long.class);
+                .build(), Long.class).getBody();
 
         // 修改当前租户的某个认证
-        patchToEntity("/console/tenant/tenant/ident/" + tenantIdentIdR.getBody(), TenantIdentModifyReq.builder()
+        patchToEntity("/console/tenant/tenant/ident/" + tenantIdentId, TenantIdentModifyReq.builder()
                 .validAKRuleNote("手机号码校验规则")
                 .validAKRule("^[1](([3][0-9])|([4][5-9])|([5][0-3,5-9])|([6][5,6])|([7][0-8])|([8][0-9])|([9][1,8,9]))[0-9]{8}$")
                 .build(), Void.class);
 
         // 获取当前租户的某个认证信息
-        var tenantIdentResp = getToEntity("/console/tenant/tenant/ident/" + tenantIdentIdR.getBody(), TenantIdentResp.class).getBody();
+        var tenantIdentResp = getToEntity("/console/tenant/tenant/ident/" + tenantIdentId, TenantIdentResp.class).getBody();
         Assertions.assertEquals("^[1](([3][0-9])|([4][5-9])|([5][0-3,5-9])|([6][5,6])|([7][0-8])|([8][0-9])|([9][1,8,9]))[0-9]{8}$", tenantIdentResp.getValidAKRule());
 
         // 获取当前租户的认证列表信息
@@ -87,8 +85,8 @@ public class TenantConsoleTest extends BasicTest {
         Assertions.assertEquals(AccountIdentKind.USERNAME, tenantIdentResps.getObjects().get(0).getKind());
 
         // 删除当前租户的某个认证
-        delete("/console/tenant/tenant/ident/" + tenantIdentIdR.getBody());
-        Assertions.assertFalse(getToEntity("/console/tenant/tenant/ident/" + tenantIdentIdR.getBody(), TenantIdentResp.class).ok());
+        delete("/console/tenant/tenant/ident/" + tenantIdentId);
+        Assertions.assertFalse(getToEntity("/console/tenant/tenant/ident/" + tenantIdentId, TenantIdentResp.class).ok());
 
         // --------------------------------------------------------------------
 
@@ -136,34 +134,33 @@ public class TenantConsoleTest extends BasicTest {
     public void testApp() {
         // 添加当前租户的应用
         var appId = postToEntity("/console/tenant/app", AppAddReq.builder()
-                .name("testAPP")
+                .name("testAPP11")
                 .build(), Long.class).getBody();
-        postToEntity("/console/tenant/app", AppAddReq.builder()
-                .name("testAPP2")
-                .build(), Long.class).getBody();
-        Assertions.assertFalse(postToEntity("/console/tenant/app", AppAddReq.builder()
-                .name("testAPP")
+        Assertions.assertTrue(postToEntity("/console/tenant/app", AppAddReq.builder()
+                .name("testAPP22")
                 .build(), Long.class).ok());
+        Assertions.assertEquals("应用名称已存在", postToEntity("/console/tenant/app", AppAddReq.builder()
+                .name("testAPP11")
+                .build(), Long.class).getMessage());
 
         // 修改当前租户的某个应用
-        Assertions.assertFalse(patchToEntity("/console/tenant/app/" + appId, AppModifyReq.builder()
-                .name("testAPP2")
-                .build(), Void.class).ok());
-        patchToEntity("/console/tenant/app/" + appId, AppModifyReq.builder()
-                .name("testAPP3")
+        Assertions.assertEquals("应用名称已存在", patchToEntity("/console/tenant/app/" + appId, AppModifyReq.builder()
+                .name("testAPP22")
+                .build(), Void.class).getMessage());
+        Assertions.assertTrue(patchToEntity("/console/tenant/app/" + appId, AppModifyReq.builder()
+                .name("testAPP33")
                 .status(CommonStatus.DISABLED)
-                .build(), Void.class);
+                .build(), Void.class).ok());
 
         // 获取当前租户的某个应用信息
         var appResp = getToEntity("/console/tenant/app/" + appId, AppResp.class).getBody();
-        Assertions.assertEquals("testapp3", appResp.getName());
+        Assertions.assertEquals("testapp33", appResp.getName());
         Assertions.assertEquals(CommonStatus.DISABLED, appResp.getStatus());
 
         // 获取当前租户的应用列表信息
         var appResps = getToPage("/console/tenant/app", 1L, 10, AppResp.class).getBody();
-        Assertions.assertEquals(3, appResps.getRecordTotal());
         Assertions.assertEquals(1, appResps.getPageTotal());
-        Assertions.assertEquals("testapp3", appResps.getObjects().get(1).getName());
+        Assertions.assertTrue(appResps.getObjects().stream().anyMatch(app -> app.getName().equalsIgnoreCase("testapp33")));
 
     }
 
@@ -176,9 +173,9 @@ public class TenantConsoleTest extends BasicTest {
                 .build(), Long.class).getBody();
 
         // 修改当前租户的某个账号
-        patchToEntity("/console/tenant/account/" + accountId, AccountModifyReq.builder()
+        Assertions.assertTrue(patchToEntity("/console/tenant/account/" + accountId, AccountModifyReq.builder()
                 .name("风雨逐梦")
-                .build(), Void.class);
+                .build(), Void.class).ok());
 
         // 获取当前租户的某个账号信息
         var accountResp = getToEntity("/console/tenant/account/" + accountId, AccountResp.class).getBody();
@@ -187,9 +184,8 @@ public class TenantConsoleTest extends BasicTest {
 
         // 获取当前租户的账号列表信息
         var accountResps = getToPage("/console/tenant/account", 1L, 10, AccountResp.class).getBody();
-        Assertions.assertEquals(2, accountResps.getRecordTotal());
         Assertions.assertEquals(1, accountResps.getPageTotal());
-        Assertions.assertEquals("风雨逐梦", accountResps.getObjects().get(1).getName());
+        Assertions.assertTrue(accountResps.getObjects().stream().anyMatch(account -> account.getName().equals("风雨逐梦")));
 
         // --------------------------------------------------------------------
 
@@ -272,21 +268,21 @@ public class TenantConsoleTest extends BasicTest {
 
         // 添加当前租户某个账号的关联群组
         Assertions.assertTrue(postToEntity("/console/tenant/account/" + accountId + "/group/1", "", Long.class).ok());
-        Assertions.assertFalse(postToEntity("/console/tenant/account/" + accountId + "/group/10", "", Long.class).ok());
+        Assertions.assertFalse(postToEntity("/console/tenant/account/" + accountId + "/group/100", "", Long.class).ok());
 
         // 删除当前租户某个账号的某个关联群组
         Assertions.assertTrue(delete("/console/tenant/account/" + accountId + "/group/1").ok());
-        Assertions.assertFalse(delete("/console/tenant/account/" + accountId + "/group/10").ok());
+        Assertions.assertFalse(delete("/console/tenant/account/" + accountId + "/group/100").ok());
 
         // --------------------------------------------------------------------
 
         // 添加当前租户某个账号的关联角色
         Assertions.assertTrue(postToEntity("/console/tenant/account/" + accountId + "/role/1", "", Long.class).ok());
-        Assertions.assertFalse(postToEntity("/console/tenant/account/" + accountId + "/role/10", "", Long.class).ok());
+        Assertions.assertFalse(postToEntity("/console/tenant/account/" + accountId + "/role/100", "", Long.class).ok());
 
         // 删除当前租户某个账号的某个关联群组
         Assertions.assertTrue(delete("/console/tenant/account/" + accountId + "/role/1").ok());
-        Assertions.assertFalse(delete("/console/tenant/account/" + accountId + "/role/10").ok());
+        Assertions.assertFalse(delete("/console/tenant/account/" + accountId + "/role/100").ok());
 
         // --------------------------------------------------------------------
 

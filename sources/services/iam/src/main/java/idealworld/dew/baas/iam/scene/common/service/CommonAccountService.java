@@ -159,7 +159,7 @@ public class CommonAccountService extends IAMBasicService {
         return loginWithoutAuth(accountId, openId, ak, appId, tenantId);
     }
 
-    private Resp<IdentOptInfo> loginWithoutAuth(Long accountId, String openId, String ak, Long appId, Long tenantId) {
+    protected Resp<IdentOptInfo> loginWithoutAuth(Long accountId, String openId, String ak, Long appId, Long tenantId) {
         log.info("Login Success:  [{}-{}] ak {}", tenantId, appId, ak);
         String token = KeyHelper.generateToken();
         var optInfo = new IdentOptCacheInfo();
@@ -167,8 +167,8 @@ public class CommonAccountService extends IAMBasicService {
         optInfo.setToken(token);
         // TODO
         optInfo.setTokenKind(IdentOptCacheInfo.DEFAULT_TOKEN_KIND_FLAG);
-        optInfo.setRoleInfo(commonFunctionService.findRoleInfo(accountId, appId));
-        optInfo.setGroupInfo(commonFunctionService.findGroupInfo(accountId, appId));
+        optInfo.setRoleInfo(commonFunctionService.findRoleInfo(accountId));
+        optInfo.setGroupInfo(commonFunctionService.findGroupInfo(accountId));
         optInfo.setAppId(appId);
         optInfo.setTenantId(tenantId);
         Dew.auth.setOptInfo(optInfo);
@@ -269,7 +269,7 @@ public class CommonAccountService extends IAMBasicService {
                     return StandardResp.badRequest(BUSINESS_ACCOUNT_CERT, "密码错误");
                 }
                 return StandardResp.success(null);
-            case WECHAT_MP:
+            case WECHAT_XCX:
                 String accessToken = Dew.cluster.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString());
                 if (accessToken == null) {
                     return StandardResp.badRequest(BUSINESS_ACCOUNT_IDENT, "Access Token不存在");

@@ -85,14 +85,6 @@ public class AuthPolicyResp extends IdResp {
     private Boolean exclusive;
 
     @NotNull
-    @Schema(title = "关联权限主体的应用Id", required = true)
-    private Long relSubjectAppId;
-
-    @NotNull
-    @Schema(title = "关联权限主体的租户Id", required = true)
-    private Long relSubjectTenantId;
-
-    @NotNull
     @Schema(title = "所属应用Id", required = true)
     private Long relAppId;
 

@@ -24,15 +24,17 @@ import idealworld.dew.baas.common.dto.IdentOptInfo;
 import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
 import idealworld.dew.baas.common.resp.StandardResp;
+import idealworld.dew.baas.iam.domain.auth.QResource;
 import idealworld.dew.baas.iam.domain.auth.QResourceSubject;
 import idealworld.dew.baas.iam.domain.ident.QAccount;
 import idealworld.dew.baas.iam.domain.ident.QAccountIdent;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
+import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountLoginReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountOAuthLoginReq;
 import idealworld.dew.baas.iam.scene.common.dto.account.AccountRegisterReq;
 import idealworld.dew.baas.iam.scene.common.service.oauthimpl.PlatformAPI;
-import idealworld.dew.baas.iam.scene.common.service.oauthimpl.WechatMPAPI;
+import idealworld.dew.baas.iam.scene.common.service.oauthimpl.WechatXCXAPI;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -57,7 +59,7 @@ public class OAuthService extends IAMBasicService {
     @Autowired
     private CommonAccountService commonAccountService;
     @Autowired
-    private WechatMPAPI wechatService;
+    private WechatXCXAPI wechatXCXService;
 
     @Transactional
     public Resp<IdentOptInfo> login(AccountOAuthLoginReq accountOAuthLoginReq) {
@@ -136,17 +138,20 @@ public class OAuthService extends IAMBasicService {
     private Resp<Tuple3<PlatformAPI, String, String>> checkAndGetAKSK(AccountIdentKind kind, Long appId, Long tenantId) {
         PlatformAPI platformAPI;
         switch (kind) {
-            case WECHAT_MP:
-                platformAPI = wechatService;
+            case WECHAT_XCX:
+                platformAPI = wechatXCXService;
                 break;
             default:
                 return StandardResp.badRequest(BUSINESS_OAUTH, "认证类型不合法");
         }
+        var qResource = QResource.resource;
         var qResourceSubject = QResourceSubject.resourceSubject;
         var oauthResourceSubject = sqlBuilder.select(qResourceSubject.ak, qResourceSubject.sk)
-                .from(qResourceSubject)
-                .where(qResourceSubject.relTenantId.eq(tenantId))
-                .where(qResourceSubject.relAppId.eq(appId))
+                .from(qResource)
+                .innerJoin(qResourceSubject).on(qResourceSubject.id.eq(qResource.relResourceSubjectId))
+                .where((qResource.relAppId.eq(appId).and(qResource.relTenantId.eq(tenantId)))
+                        .or(qResource.exposeKind.eq(ExposeKind.TENANT).and(qResource.relTenantId.eq(tenantId)))
+                        .or(qResource.exposeKind.eq(ExposeKind.GLOBAL)))
                 .where(qResourceSubject.kind.eq(ResourceKind.OAUTH))
                 .where(qResourceSubject.code.eq(kind.toString()))
                 .fetchOne();

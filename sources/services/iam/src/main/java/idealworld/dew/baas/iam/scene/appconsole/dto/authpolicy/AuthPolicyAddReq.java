@@ -71,8 +71,7 @@ public class AuthPolicyAddReq implements Serializable {
     @Schema(title = "关联资源Id", required = true)
     private Long relResourceId;
 
-    @NotNull
-    @Schema(title = "操作类型", required = true)
+    @Schema(title = "操作类型")
     private OptActionKind actionKind;
 
     @NotNull
@@ -82,13 +81,5 @@ public class AuthPolicyAddReq implements Serializable {
     @Schema(title = "是否排他")
     @Builder.Default
     private Boolean exclusive = true;
-
-    @NotNull
-    @Schema(title = "关联权限主体的应用Id", required = true)
-    private Long relSubjectAppId;
-
-    @NotNull
-    @Schema(title = "关联权限主体的租户Id", required = true)
-    private Long relSubjectTenantId;
 
 }
