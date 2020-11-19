@@ -140,7 +140,7 @@ public class TestFlow extends BasicTest {
                             "resource.reldb#" + $.json.toJsonString(ExchangeData.builder()
                                     .actionKind(OptActionKind.CREATE)
                                     .subjectCategory("resource")
-                                    .subjectCode("xxxx")
+                                    .subjectId("xxxx")
                                     .detailData(new HashMap<>() {
                                         {
                                             put("resourceUri", "reldb://subjectCodexx/iam_account/name");
@@ -173,7 +173,7 @@ public class TestFlow extends BasicTest {
                             "resource.reldb#" + $.json.toJsonString(ExchangeData.builder()
                                     .actionKind(OptActionKind.DELETE)
                                     .subjectCategory("resource")
-                                    .subjectCode("xxxx")
+                                    .subjectId("xxxx")
                                     .detailData(new HashMap<>() {
                                         {
                                             put("resourceUri", "reldb://subjectCodexx/iam_account/name");

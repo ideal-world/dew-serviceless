@@ -20,7 +20,7 @@ public class RelDBApplication extends CommonApplication<RelDBConfig> {
         initRedis(config);
         initHttpClient(config);
         var authPolicy = new RelDBAuthPolicy(config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
-        ExchangeProcessor.init();
+        ExchangeProcessor.init(config);
         var authHttpHandler = new AuthHandler(config.getSecurity(), authPolicy);
         initHttpServer(config, HttpServer.Route.builder()
                 .method(HttpMethod.POST)

@@ -125,18 +125,24 @@ public class ACAuthPolicyService extends IAMBasicService {
             patchAuthPolicy.setActionKind(OptActionKind.PATCH);
             var deleteAuthPolicy = $.bean.copyProperties(authPolicy, AuthPolicy.class);
             deleteAuthPolicy.setActionKind(OptActionKind.DELETE);
-            return saveEntities(createAuthPolicy, existsAuthPolicy, fetchAuthPolicy, modifyAuthPolicy, patchAuthPolicy, deleteAuthPolicy);
+            return sendMQBySave(
+                    saveEntities(createAuthPolicy, existsAuthPolicy, fetchAuthPolicy, modifyAuthPolicy, patchAuthPolicy, deleteAuthPolicy),
+                    AuthPolicy.class
+            );
         } else {
             var saveR = saveEntity(authPolicy);
             if (!saveR.ok()) {
                 return Resp.error(saveR);
-            } else {
-                return Resp.success(new ArrayList<>() {
-                    {
-                        add(saveR.getBody());
-                    }
-                });
             }
+            return sendMQBySave(
+                    Resp.success(new ArrayList<>() {
+                        {
+                            add(saveR.getBody());
+                        }
+                    }),
+                    AuthPolicy.class
+            );
+
         }
     }
 
@@ -218,7 +224,11 @@ public class ACAuthPolicyService extends IAMBasicService {
         if (authPolicyModifyReq.getExclusive() != null) {
             authPolicyUpdate.set(qAuthPolicy.exclusive, authPolicyModifyReq.getExclusive());
         }
-        return updateEntity(authPolicyUpdate);
+        return sendMQByUpdate(
+                updateEntity(authPolicyUpdate),
+                AuthPolicy.class,
+                authPolicyId
+        );
     }
 
     public Resp<AuthPolicyResp> getAuthPolicy(Long authPolicyId, Long relAppId, Long relTenantId) {
@@ -263,11 +273,15 @@ public class ACAuthPolicyService extends IAMBasicService {
     @Transactional
     public Resp<Void> deleteAuthPolicy(Long authPolicyId, Long relAppId, Long relTenantId) {
         var qAuthPolicy = QAuthPolicy.authPolicy;
-        return softDelEntity(sqlBuilder
-                .selectFrom(qAuthPolicy)
-                .where(qAuthPolicy.id.eq(authPolicyId))
-                .where(qAuthPolicy.relTenantId.eq(relTenantId))
-                .where(qAuthPolicy.relAppId.eq(relAppId)));
+        return sendMQByDelete(
+                softDelEntity(sqlBuilder
+                        .selectFrom(qAuthPolicy)
+                        .where(qAuthPolicy.id.eq(authPolicyId))
+                        .where(qAuthPolicy.relTenantId.eq(relTenantId))
+                        .where(qAuthPolicy.relAppId.eq(relAppId))),
+                AuthPolicy.class,
+                authPolicyId
+        );
     }
 
 }

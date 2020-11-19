@@ -1,5 +1,8 @@
 package idealworld.dew.baas.common.funs.httpclient;
 
+import com.ecfront.dew.common.$;
+import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.util.URIHelper;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
@@ -10,6 +13,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,6 +84,22 @@ public class HttpClient {
             return request.sendBuffer(body);
         }
         return request.send();
+    }
+
+    public static Map<String, String> getIdentOptHeader(Long appId, Long tenantId) {
+        var identOptInfo = IdentOptCacheInfo.builder()
+                .tenantId(tenantId)
+                .appId(appId)
+                .build();
+        return getIdentOptHeader(identOptInfo);
+    }
+
+    public static Map<String, String> getIdentOptHeader(IdentOptCacheInfo identOptCacheInfo) {
+        return new HashMap<>() {
+            {
+                put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64($.json.toJsonString(identOptCacheInfo), StandardCharsets.UTF_8));
+            }
+        };
     }
 
 }

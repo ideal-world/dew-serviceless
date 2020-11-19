@@ -24,6 +24,7 @@ import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.App;
 import idealworld.dew.baas.iam.domain.ident.QApp;
+import idealworld.dew.baas.iam.exchange.ExchangeProcessor;
 import idealworld.dew.baas.iam.scene.common.service.CommonFunctionService;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.app.AppAddReq;
@@ -45,6 +46,8 @@ public class TCAppService extends IAMBasicService {
 
     @Autowired
     private CommonFunctionService commonFunctionService;
+    @Autowired
+    private ExchangeProcessor exchangeProcessor;
 
     @Transactional
     public Resp<Long> addApp(AppAddReq appAddReq, Long relTenantId) {
@@ -60,7 +63,10 @@ public class TCAppService extends IAMBasicService {
         var app = $.bean.copyProperties(appAddReq, App.class);
         app.setRelTenantId(relTenantId);
         app.setStatus(CommonStatus.ENABLED);
-        return saveEntity(app);
+        return sendMQBySave(
+                saveEntity(app),
+                App.class
+        );
     }
 
     @Transactional
@@ -95,7 +101,22 @@ public class TCAppService extends IAMBasicService {
         if (appModifyReq.getStatus() != null) {
             appUpdate.set(qApp.status, appModifyReq.getStatus());
         }
-        return updateEntity(appUpdate);
+        var updateR = sendMQByUpdate(
+                updateEntity(appUpdate),
+                App.class,
+                appId
+        );
+        if (!updateR.ok()) {
+            return updateR;
+        }
+        if (appModifyReq.getStatus() != null) {
+            if (appModifyReq.getStatus() == CommonStatus.ENABLED) {
+                exchangeProcessor.enableApp(appId, relTenantId);
+            } else {
+                exchangeProcessor.disableApp(appId, relTenantId);
+            }
+        }
+        return updateR;
     }
 
     public Resp<AppResp> getApp(Long appId, Long relTenantId) {

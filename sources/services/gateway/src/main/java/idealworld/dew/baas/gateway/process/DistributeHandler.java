@@ -1,6 +1,5 @@
 package idealworld.dew.baas.gateway.process;
 
-import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.baas.common.Constant;
 import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
@@ -17,9 +16,6 @@ import io.vertx.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 鉴权处理器
@@ -64,13 +60,9 @@ public class DistributeHandler extends CommonHttpHandler {
                 break;
         }
         Future<HttpResponse<Buffer>> request;
-        Map<String, String> header = new HashMap<>() {
-            {
-                put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64($.json.toJsonString(identOptInfo), StandardCharsets.UTF_8));
-                put(Constant.REQUEST_RESOURCE_URI_FLAG, resourceUri.toString());
-                put(Constant.REQUEST_RESOURCE_ACTION_FLAG, action.toString());
-            }
-        };
+        var header = HttpClient.getIdentOptHeader(identOptInfo);
+        header.put(Constant.REQUEST_RESOURCE_URI_FLAG, resourceUri.toString());
+        header.put(Constant.REQUEST_RESOURCE_ACTION_FLAG, action.toString());
         switch (ResourceKind.parse(resourceUri.getScheme().toLowerCase())) {
             case HTTP:
                 request = HttpClient.request(httpMethod, resourceUri.toString(), body, header, distribute.getTimeoutMs());

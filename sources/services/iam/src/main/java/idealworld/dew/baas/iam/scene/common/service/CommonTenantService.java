@@ -101,7 +101,7 @@ public class CommonTenantService extends IAMBasicService {
         // 初始化应用认证
         acAppService.addAppIdent(AppIdentAddReq.builder()
                 .note("")
-                .build(), appId);
+                .build(), appId,tenantId);
         // 初始化账号
         var account = tcAccountService.innerAddAccount(AccountAddReq.builder()
                 .name(tenantRegisterReq.getTenantName() + " 管理员")

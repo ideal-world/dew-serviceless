@@ -61,7 +61,10 @@ public class ACRoleService extends IAMBasicService {
         var roleDef = $.bean.copyProperties(roleDefAddReq, RoleDef.class);
         roleDef.setRelTenantId(relTenantId);
         roleDef.setRelAppId(relAppId);
-        return saveEntity(roleDef);
+        return sendMQBySave(
+                saveEntity(roleDef),
+                RoleDef.class
+        );
     }
 
     @Transactional
@@ -92,7 +95,11 @@ public class ACRoleService extends IAMBasicService {
         if (roleDefModifyReq.getSort() != null) {
             roleDefUpdate.set(qRoleDef.sort, roleDefModifyReq.getSort());
         }
-        return updateEntity(roleDefUpdate);
+        return sendMQByUpdate(
+                updateEntity(roleDefUpdate),
+                RoleDef.class,
+                roleDefId
+        );
     }
 
     public Resp<RoleDefResp> getRoleDef(Long roleDefId, Long relAppId, Long relTenantId) {
@@ -135,11 +142,15 @@ public class ACRoleService extends IAMBasicService {
             return StandardResp.conflict(BUSINESS_ROLE_DEF, "请先删除关联的角色数据");
         }
         var qRoleDef = QRoleDef.roleDef;
-        return softDelEntity(sqlBuilder
-                .selectFrom(qRoleDef)
-                .where(qRoleDef.id.eq(roleDefId))
-                .where(qRoleDef.relTenantId.eq(relTenantId))
-                .where(qRoleDef.relAppId.eq(relAppId)));
+        return sendMQByDelete(
+                softDelEntity(sqlBuilder
+                        .selectFrom(qRoleDef)
+                        .where(qRoleDef.id.eq(roleDefId))
+                        .where(qRoleDef.relTenantId.eq(relTenantId))
+                        .where(qRoleDef.relAppId.eq(relAppId))),
+                RoleDef.class,
+                roleDefId
+        );
     }
 
     // --------------------------------------------------------------------
@@ -188,7 +199,10 @@ public class ACRoleService extends IAMBasicService {
         var role = $.bean.copyProperties(roleAddReq, Role.class);
         role.setRelTenantId(relTenantId);
         role.setRelAppId(relAppId);
-        return saveEntity(role);
+        return sendMQBySave(
+                saveEntity(role),
+                Role.class
+        );
     }
 
     @Transactional
@@ -207,7 +221,11 @@ public class ACRoleService extends IAMBasicService {
         if (roleModifyReq.getExposeKind() != null) {
             roleUpdate.set(qRole.exposeKind, roleModifyReq.getExposeKind());
         }
-        return updateEntity(roleUpdate);
+        return sendMQByUpdate(
+                updateEntity(roleUpdate),
+                Role.class,
+                roleId
+        );
     }
 
     public Resp<RoleResp> getRole(Long roleId, Long relAppId, Long relTenantId) {
@@ -280,11 +298,15 @@ public class ACRoleService extends IAMBasicService {
             return StandardResp.conflict(BUSINESS_ROLE, "请先删除关联的权限策略数据");
         }
         var qRole = QRole.role;
-        return softDelEntity(sqlBuilder
-                .selectFrom(qRole)
-                .where(qRole.id.eq(roleId))
-                .where(qRole.relTenantId.eq(relTenantId))
-                .where(qRole.relAppId.eq(relAppId)));
+        return sendMQByDelete(
+                softDelEntity(sqlBuilder
+                        .selectFrom(qRole)
+                        .where(qRole.id.eq(roleId))
+                        .where(qRole.relTenantId.eq(relTenantId))
+                        .where(qRole.relAppId.eq(relAppId))),
+                Role.class,
+                roleId
+        );
     }
 
     public Resp<Long> getTenantAdminRoleId() {

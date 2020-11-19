@@ -29,7 +29,7 @@ import idealworld.dew.baas.iam.domain.ident.QTenant;
 import idealworld.dew.baas.iam.enumeration.AccountIdentKind;
 import idealworld.dew.baas.iam.enumeration.ExposeKind;
 import idealworld.dew.baas.iam.enumeration.GroupKind;
-import idealworld.dew.baas.iam.interceptor.InterceptService;
+import idealworld.dew.baas.iam.exchange.ExchangeProcessor;
 import idealworld.dew.baas.iam.scene.appconsole.dto.app.AppIdentAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.authpolicy.AuthPolicyAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.group.GroupAddReq;
@@ -87,7 +87,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
     @Autowired
     private ACAuthPolicyService acAuthPolicyService;
     @Autowired
-    private InterceptService interceptService;
+    private ExchangeProcessor exchangeProcessor;
 
     /**
      * Init.
@@ -98,8 +98,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         StandardResp.setServiceFlag("IAM");
         DewContext.setOptInfoClazz(IdentOptCacheInfo.class);
         initIAMAppInfo();
-        interceptService.cacheTenantAndAppStatus();
-        interceptService.cacheAppIdents();
+        exchangeProcessor.cacheAppIdents();
     }
 
     private void initIAMAppInfo() {
@@ -135,7 +134,7 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         // 初始化应用认证
         acAppService.addAppIdent(AppIdentAddReq.builder()
                 .note("")
-                .build(), iamAppId);
+                .build(), iamAppId, tenantId);
         // 初始化角色定义
         var systemRoleDefAdminId = acRoleService.addRoleDef(RoleDefAddReq.builder()
                 .code(iamConfig.getSecurity().getSystemAdminRoleDefCode())

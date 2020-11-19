@@ -47,7 +47,7 @@ public class ACAppController extends IAMBasicController {
     @Operation(summary = "添加当前应用的认证")
     public Resp<Long> addAppIdent(@Validated @RequestBody AppIdentAddReq appIdentAddReq) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acAppService.addAppIdent(appIdentAddReq, currentAppAndTenantId._0);
+        return acAppService.addAppIdent(appIdentAddReq, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @PatchMapping(value = "ident/{appIdentId}")
@@ -55,7 +55,7 @@ public class ACAppController extends IAMBasicController {
     public Resp<Void> modifyAppIdent(@PathVariable Long appIdentId,
                                      @Validated @RequestBody AppIdentModifyReq appIdentModifyReq) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acAppService.modifyAppIdent(appIdentId, appIdentModifyReq, currentAppAndTenantId._0);
+        return acAppService.modifyAppIdent(appIdentId, appIdentModifyReq, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @GetMapping(value = "ident")

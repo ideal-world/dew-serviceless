@@ -109,10 +109,9 @@ public class AppConsoleTest extends BasicTest {
         Assertions.assertEquals("jdbc://xxxxx/", resourceSubjectResp.getUri());
 
         // 获取当前应用的资源主体列表信息
-        var resourceSubjectResps = getToPage("/console/app/resource/subject", 1L, 10, ResourceSubjectResp.class).getBody();
-        Assertions.assertEquals(2, resourceSubjectResps.getRecordTotal());
-        Assertions.assertEquals(1, resourceSubjectResps.getPageTotal());
-        Assertions.assertEquals("MYSQL", resourceSubjectResps.getObjects().get(1).getName());
+        var resourceSubjectResps = getToList("/console/app/resource/subject", ResourceSubjectResp.class).getBody();
+        Assertions.assertEquals(2, resourceSubjectResps.size());
+        Assertions.assertEquals("MYSQL", resourceSubjectResps.get(1).getName());
 
         // 添加当前应用的资源
         var resourceId = postToEntity("/console/app/resource", ResourceAddReq.builder()

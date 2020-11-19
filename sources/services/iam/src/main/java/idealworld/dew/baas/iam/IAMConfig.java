@@ -50,9 +50,6 @@ public class IAMConfig extends CommonConfig {
         if (config.containsKey(IAMConstant.CONFIG_ACCOUNT_VCODE_EXPIRE_SEC)) {
             security.accountVCodeExpireSec = Integer.parseInt(config.get(IAMConstant.CONFIG_ACCOUNT_VCODE_EXPIRE_SEC));
         }
-        if (config.containsKey(IAMConstant.CONFIG_SERVICE_URL)) {
-            serviceUrl = config.get(IAMConstant.CONFIG_SERVICE_URL);
-        }
         if (config.containsKey(IAMConstant.CONFIG_AUTH_POLICY_EXPIRE_CLEAN_INTERVAL_SEC)) {
             security.authPolicyExpireCleanIntervalSec = Long.parseLong(config.get(IAMConstant.CONFIG_AUTH_POLICY_EXPIRE_CLEAN_INTERVAL_SEC));
         }

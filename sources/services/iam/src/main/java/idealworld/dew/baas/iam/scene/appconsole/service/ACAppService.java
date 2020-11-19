@@ -22,12 +22,14 @@ import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.iam.domain.ident.AppIdent;
 import idealworld.dew.baas.iam.domain.ident.QAppIdent;
+import idealworld.dew.baas.iam.exchange.ExchangeProcessor;
 import idealworld.dew.baas.iam.scene.appconsole.dto.app.AppIdentAddReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.app.AppIdentModifyReq;
 import idealworld.dew.baas.iam.scene.appconsole.dto.app.AppIdentResp;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import idealworld.dew.baas.iam.util.KeyHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,17 +42,28 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ACAppService extends IAMBasicService {
 
+    @Autowired
+    private ExchangeProcessor exchangeProcessor;
+
     @Transactional
-    public Resp<Long> addAppIdent(AppIdentAddReq appIdentAddReq, Long relAppId) {
+    public Resp<Long> addAppIdent(AppIdentAddReq appIdentAddReq, Long relAppId, Long relTenantId) {
         var appIdent = $.bean.copyProperties(appIdentAddReq, AppIdent.class);
         appIdent.setAk(KeyHelper.generateAK());
         appIdent.setSk(KeyHelper.generateSK(appIdent.getAk()));
         appIdent.setRelAppId(relAppId);
-        return saveEntity(appIdent);
+        var saveR = sendMQBySave(
+                saveEntity(appIdent),
+                AppIdent.class
+        );
+        if (!saveR.ok()) {
+            return saveR;
+        }
+        exchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId);
+        return saveR;
     }
 
     @Transactional
-    public Resp<Void> modifyAppIdent(Long appIdentId, AppIdentModifyReq appIdentModifyReq, Long relAppId) {
+    public Resp<Void> modifyAppIdent(Long appIdentId, AppIdentModifyReq appIdentModifyReq, Long relAppId, Long relTenantId) {
         var qAppIdent = QAppIdent.appIdent;
         var appIdentUpdate = sqlBuilder.update(qAppIdent)
                 .where(qAppIdent.id.eq(appIdentId))
@@ -61,7 +74,21 @@ public class ACAppService extends IAMBasicService {
         if (appIdentModifyReq.getValidTime() != null) {
             appIdentUpdate.set(qAppIdent.validTime, appIdentModifyReq.getValidTime());
         }
-        return updateEntity(appIdentUpdate);
+        var updateR = sendMQByUpdate(
+                updateEntity(appIdentUpdate),
+                AppIdent.class,
+                appIdentId
+        );
+        if (!updateR.ok()) {
+            return updateR;
+        }
+        var appIdent = sqlBuilder.selectFrom(qAppIdent)
+                .where(qAppIdent.id.eq(appIdentId))
+                .where(qAppIdent.relAppId.eq(relAppId))
+                .fetchOne();
+        exchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId);
+        return updateR;
+
     }
 
     public Resp<Page<AppIdentResp>> pageAppIdents(Long pageNumber, Integer pageSize, Long relAppId) {
@@ -78,10 +105,24 @@ public class ACAppService extends IAMBasicService {
     @Transactional
     public Resp<Void> deleteAppIdent(Long appIdentId, Long relAppId) {
         var qAppIdent = QAppIdent.appIdent;
-        return softDelEntity(sqlBuilder
+        var appIdent = sqlBuilder
                 .selectFrom(qAppIdent)
                 .where(qAppIdent.id.eq(appIdentId))
-                .where(qAppIdent.relAppId.eq(relAppId)));
+                .where(qAppIdent.relAppId.eq(relAppId))
+                .fetchOne();
+        var deleteR = sendMQByDelete(
+                softDelEntity(sqlBuilder
+                        .selectFrom(qAppIdent)
+                        .where(qAppIdent.id.eq(appIdentId))
+                        .where(qAppIdent.relAppId.eq(relAppId))),
+                AppIdent.class,
+                appIdentId
+        );
+        if (!deleteR.ok()) {
+            return deleteR;
+        }
+        exchangeProcessor.deleteAppIdent(appIdent.getAk());
+        return deleteR;
     }
 
     public Resp<String> showSk(Long appIdentId, Long relAppId) {

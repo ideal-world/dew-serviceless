@@ -8,10 +8,12 @@ import idealworld.dew.baas.common.dto.exchange.ResourceExchange;
 import idealworld.dew.baas.common.dto.exchange.ResourceSubjectExchange;
 import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.enumeration.ResourceKind;
+import idealworld.dew.baas.common.funs.cache.RedisClient;
 import idealworld.dew.baas.common.funs.exchange.ExchangeHelper;
 import idealworld.dew.baas.common.funs.httpclient.HttpClient;
 import idealworld.dew.baas.common.funs.mysql.MysqlClient;
 import idealworld.dew.baas.common.util.URIHelper;
+import idealworld.dew.baas.reldb.RelDBConfig;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import lombok.extern.slf4j.Slf4j;
@@ -24,33 +26,41 @@ import java.util.HashSet;
 @Slf4j
 public class ExchangeProcessor {
 
-    public static Future<Void> init() {
+    public static Future<Void> init(RelDBConfig relDBConfig) {
+        var header = HttpClient.getIdentOptHeader(relDBConfig.getIam().getAppId(), relDBConfig.getIam().getTenantId());
+        HttpClient.request(HttpMethod.GET, relDBConfig.getIam().getUri() + "/console/app/resource/subject", null, header)
+                .onSuccess(result -> {
+                    var resourceSubjects = $.json.toList(result.toString(), ResourceSubjectExchange.class);
+                    for (var resourceSubject : resourceSubjects) {
+                        RedisClient.init(resourceSubject.getCode(), CommonApplication.VERTX,
+                                CommonConfig.RedisConfig.builder()
+                                        .uri(resourceSubject.getUri())
+                                        .password(resourceSubject.getSk())
+                                        .build());
+                        log.info("[Exchange]Init [resourceSubject.code={}] data", resourceSubject.getCode());
+                    }
+                })
+                .onFailure(e -> log.error("[Exchange]Init resourceSubjects error: {}", e.getMessage(), e.getCause()));
         return ExchangeHelper.register(new HashSet<>() {
             {
                 add("resource." + ResourceKind.RELDB.toString().toLowerCase());
-                add("resourceSubject." + ResourceKind.RELDB.toString().toLowerCase());
+                add("resourcesubject." + ResourceKind.RELDB.toString().toLowerCase());
             }
         }, exchangeData -> {
-            if (exchangeData.getSubjectCategory().equalsIgnoreCase("resourceSubject")) {
+            if (exchangeData.getSubjectCategory().startsWith("resourcesubject.")) {
                 if (exchangeData.getActionKind() == OptActionKind.CREATE
                         || exchangeData.getActionKind() == OptActionKind.MODIFY) {
-                    HttpClient.request(HttpMethod.GET, exchangeData.getFetchUrl(), null, null, null)
-                            .onSuccess(resp -> {
-                                var resourceSubjectExchange = $.json.toObject(exchangeData.getDetailData(), ResourceSubjectExchange.class);
-                                MysqlClient.remove(exchangeData.getSubjectCode());
-                                MysqlClient.init(exchangeData.getSubjectCode(), CommonApplication.VERTX,
-                                        CommonConfig.JDBCConfig.builder()
-                                                .uri(resourceSubjectExchange.getUri())
-                                                .build());
-                                log.info("[Exchange]Updated [resourceSubject.id={}] data", exchangeData.getSubjectCode());
-                            })
-                            .onFailure(e -> {
-                                log.error("[Exchange]Update [resourceSubject.id={}] error: {}", exchangeData.getSubjectCode(), e.getMessage(), e.getCause());
-                            });
-
+                    var resourceSubjectExchange = $.json.toObject(exchangeData.getDetailData(), ResourceSubjectExchange.class);
+                    MysqlClient.remove(resourceSubjectExchange.getCode());
+                    MysqlClient.init(resourceSubjectExchange.getCode(), CommonApplication.VERTX,
+                            CommonConfig.JDBCConfig.builder()
+                                    .uri(resourceSubjectExchange.getUri())
+                                    .build());
+                    log.info("[Exchange]Updated [resourceSubject.code={}] data", resourceSubjectExchange.getCode());
                 } else if (exchangeData.getActionKind() == OptActionKind.DELETE) {
-                    MysqlClient.remove(exchangeData.getSubjectCode());
-                    log.error("[Exchange]Removed [resourceSubject.id={}]", exchangeData.getSubjectCode());
+                    var code = (String) exchangeData.getDetailData().get("code");
+                    MysqlClient.remove(code);
+                    log.error("[Exchange]Removed [resourceSubject.code={}]", code);
                 }
             } else {
                 var resourceExchange = $.json.toObject(exchangeData.getDetailData(), ResourceExchange.class);

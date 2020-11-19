@@ -16,7 +16,6 @@
 
 package idealworld.dew.baas.iam.scene.appconsole.controller;
 
-import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import idealworld.dew.baas.iam.scene.appconsole.dto.resource.*;
 import idealworld.dew.baas.iam.scene.appconsole.service.ACResourceService;
@@ -67,9 +66,9 @@ public class ACResourceController extends IAMBasicController {
 
     @GetMapping(value = "subject")
     @Operation(summary = "获取当前应用的资源主体列表信息")
-    public Resp<Page<ResourceSubjectResp>> pageResourceSubjects(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
+    public Resp<List<ResourceSubjectResp>> findResourceSubjects() {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acResourceService.pageResourceSubjects(pageNumber, pageSize, currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return acResourceService.findResourceSubjects(currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "subject/{resourceSubjectId}")

@@ -1,6 +1,7 @@
 package idealworld.dew.baas.cache.exchange;
 
 import com.ecfront.dew.common.$;
+import idealworld.dew.baas.cache.CacheConfig;
 import idealworld.dew.baas.common.CommonApplication;
 import idealworld.dew.baas.common.CommonConfig;
 import idealworld.dew.baas.common.dto.exchange.ResourceSubjectExchange;
@@ -21,31 +22,40 @@ import java.util.HashSet;
 @Slf4j
 public class ExchangeProcessor {
 
-    public static Future<Void> init() {
+    public static Future<Void> init(CacheConfig cacheConfig) {
+        var header = HttpClient.getIdentOptHeader(cacheConfig.getIam().getAppId(), cacheConfig.getIam().getTenantId());
+        HttpClient.request(HttpMethod.GET, cacheConfig.getIam().getUri() + "/console/app/resource/subject", null, header)
+                .onSuccess(result -> {
+                    var resourceSubjects = $.json.toList(result.toString(), ResourceSubjectExchange.class);
+                    for (var resourceSubject : resourceSubjects) {
+                        RedisClient.init(resourceSubject.getCode(), CommonApplication.VERTX,
+                                CommonConfig.RedisConfig.builder()
+                                        .uri(resourceSubject.getUri())
+                                        .password(resourceSubject.getSk())
+                                        .build());
+                        log.info("[Exchange]Init [resourceSubject.code={}] data", resourceSubject.getCode());
+                    }
+                })
+                .onFailure(e -> log.error("[Exchange]Init resourceSubjects error: {}", e.getMessage(), e.getCause()));
         return ExchangeHelper.register(new HashSet<>() {
             {
-                add("resourceSubject." + ResourceKind.CACHE.toString().toLowerCase());
+                add("resourcesubject." + ResourceKind.CACHE.toString().toLowerCase());
             }
         }, exchangeData -> {
             if (exchangeData.getActionKind() == OptActionKind.CREATE
                     || exchangeData.getActionKind() == OptActionKind.MODIFY) {
-                HttpClient.request(HttpMethod.GET, exchangeData.getFetchUrl(), null, null, null)
-                        .onSuccess(resp -> {
-                            var resourceSubjectExchange = $.json.toObject(exchangeData.getDetailData(), ResourceSubjectExchange.class);
-                            RedisClient.remove(exchangeData.getSubjectCode());
-                            RedisClient.init(exchangeData.getSubjectCode(), CommonApplication.VERTX,
-                                    CommonConfig.RedisConfig.builder()
-                                            .uri(resourceSubjectExchange.getUri())
-                                            .password(resourceSubjectExchange.getSk())
-                                            .build());
-                            log.info("[Exchange]Updated [resourceSubject.id={}] data", exchangeData.getSubjectCode());
-                        })
-                        .onFailure(e -> {
-                            log.error("[Exchange]Update [resourceSubject.id={}] error: {}", exchangeData.getSubjectCode(), e.getMessage(), e.getCause());
-                        });
+                var resourceSubject = $.json.toObject(exchangeData.getDetailData(), ResourceSubjectExchange.class);
+                RedisClient.remove(resourceSubject.getCode());
+                RedisClient.init(resourceSubject.getCode(), CommonApplication.VERTX,
+                        CommonConfig.RedisConfig.builder()
+                                .uri(resourceSubject.getUri())
+                                .password(resourceSubject.getSk())
+                                .build());
+                log.info("[Exchange]Updated [resourceSubject.code={}] data", resourceSubject.getCode());
             } else if (exchangeData.getActionKind() == OptActionKind.DELETE) {
-                RedisClient.remove(exchangeData.getSubjectCode());
-                log.error("[Exchange]Removed [resourceSubject.id={}]", exchangeData.getSubjectCode());
+                var code = (String) exchangeData.getDetailData().get("code");
+                RedisClient.remove(code);
+                log.error("[Exchange]Removed [resourceSubject.code={}]", code);
             }
         });
     }

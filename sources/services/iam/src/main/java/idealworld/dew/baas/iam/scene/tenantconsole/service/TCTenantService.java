@@ -20,11 +20,14 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
+import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.resp.StandardResp;
 import idealworld.dew.baas.iam.domain.ident.*;
+import idealworld.dew.baas.iam.exchange.ExchangeProcessor;
 import idealworld.dew.baas.iam.scene.common.service.IAMBasicService;
 import idealworld.dew.baas.iam.scene.tenantconsole.dto.tenant.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +39,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Slf4j
 public class TCTenantService extends IAMBasicService {
+
+    @Autowired
+    private ExchangeProcessor exchangeProcessor;
 
     @Transactional
     public Resp<Void> modifyTenant(TenantModifyReq tenantModifyReq, Long relTenantId) {
@@ -57,7 +63,18 @@ public class TCTenantService extends IAMBasicService {
         if (tenantModifyReq.getStatus() != null) {
             tenantUpdate.set(qTenant.status, tenantModifyReq.getStatus());
         }
-        return updateEntity(tenantUpdate);
+        var updateR = updateEntity(tenantUpdate);
+        if (!updateR.ok()) {
+            return updateR;
+        }
+        if (tenantModifyReq.getStatus() != null) {
+            if (tenantModifyReq.getStatus() == CommonStatus.ENABLED) {
+                exchangeProcessor.enableTenant(relTenantId);
+            } else {
+                exchangeProcessor.disableTenant(relTenantId);
+            }
+        }
+        return updateR;
     }
 
     public Resp<TenantResp> getTenant(Long relTenantId) {

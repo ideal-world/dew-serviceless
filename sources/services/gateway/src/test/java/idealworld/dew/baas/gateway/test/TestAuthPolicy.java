@@ -407,7 +407,7 @@ public class TestAuthPolicy extends BasicTest {
                             "resource#" + $.json.toJsonString(ExchangeData.builder()
                                     .actionKind(OptActionKind.CREATE)
                                     .subjectCategory("resource")
-                                    .subjectCode("xxxx")
+                                    .subjectId("xxxx")
                                     .detailData(new HashMap<>() {
                                         {
                                             put("resourceUri", "http://iam.service/console/app/ident/**");
@@ -439,7 +439,7 @@ public class TestAuthPolicy extends BasicTest {
                             "resource#" + $.json.toJsonString(ExchangeData.builder()
                                     .actionKind(OptActionKind.DELETE)
                                     .subjectCategory("resource")
-                                    .subjectCode("xxxx")
+                                    .subjectId("xxxx")
                                     .detailData(new HashMap<>() {
                                         {
                                             put("resourceUri", "http://iam.service/console/app/ident/**");

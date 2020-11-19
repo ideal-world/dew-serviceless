@@ -66,7 +66,10 @@ public class ACGroupService extends IAMBasicService {
         var group = $.bean.copyProperties(groupAddReq, Group.class);
         group.setRelTenantId(relTenantId);
         group.setRelAppId(relAppId);
-        return saveEntity(group);
+        return sendMQBySave(
+                saveEntity(group),
+                Group.class
+        );
     }
 
     @Transactional
@@ -109,7 +112,11 @@ public class ACGroupService extends IAMBasicService {
         if (groupModifyReq.getExposeKind() != null) {
             groupUpdate.set(qGroup.exposeKind, groupModifyReq.getExposeKind());
         }
-        return updateEntity(groupUpdate);
+        return sendMQByUpdate(
+                updateEntity(groupUpdate),
+                Group.class,
+                groupId
+        );
     }
 
     public Resp<GroupResp> getGroup(Long groupId, Long relAppId, Long relTenantId) {
@@ -183,11 +190,15 @@ public class ACGroupService extends IAMBasicService {
             return StandardResp.conflict(BUSINESS_GROUP, "请先删除关联的群组节点数据");
         }
         var qGroup = QGroup.group;
-        return softDelEntity(sqlBuilder
-                .selectFrom(qGroup)
-                .where(qGroup.id.eq(groupId))
-                .where(qGroup.relTenantId.eq(relTenantId))
-                .where(qGroup.relAppId.eq(relAppId)));
+        return sendMQByDelete(
+                softDelEntity(sqlBuilder
+                        .selectFrom(qGroup)
+                        .where(qGroup.id.eq(groupId))
+                        .where(qGroup.relTenantId.eq(relTenantId))
+                        .where(qGroup.relAppId.eq(relAppId))),
+                Group.class,
+                groupId
+        );
     }
 
     // --------------------------------------------------------------------
@@ -215,7 +226,10 @@ public class ACGroupService extends IAMBasicService {
         }
         groupNode.setRelGroupId(groupId);
         groupNode.setCode(groupNodeCode);
-        return saveEntity(groupNode);
+        return sendMQBySave(
+                saveEntity(groupNode),
+                GroupNode.class
+        );
     }
 
     @Transactional
@@ -256,7 +270,11 @@ public class ACGroupService extends IAMBasicService {
             }
             groupNodeUpdate.set(qGroupNode.code, groupNodeCode);
         }
-        return updateEntity(groupNodeUpdate);
+        return sendMQByUpdate(
+                updateEntity(groupNodeUpdate),
+                GroupNode.class,
+                groupNodeId
+        );
     }
 
     public Resp<List<GroupNodeResp>> findGroupNodes(Long groupId, Long relAppId, Long relTenantId) {
@@ -318,7 +336,14 @@ public class ACGroupService extends IAMBasicService {
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
                 .fetchOne();
-        softDelEntity(groupNode);
+        var deleteR = sendMQByDelete(
+                softDelEntity(groupNode),
+                GroupNode.class,
+                groupNodeId
+        );
+        if (!deleteR.ok()) {
+            return deleteR;
+        }
         updateOtherGroupNodeCode(groupNode.getRelGroupId(), groupNode.getCode(), true, null);
         return Resp.success(null);
     }

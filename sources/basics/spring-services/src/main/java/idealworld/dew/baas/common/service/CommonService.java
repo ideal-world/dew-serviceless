@@ -31,7 +31,7 @@ import java.io.Serializable;
  * @author gudaoxuri
  */
 @Slf4j
-public abstract class CommonService<P extends Serializable> implements StorageWithEventService<P> {
+public abstract class CommonService<P extends Serializable> implements StorageService<P> {
 
     /**
      * The Sql builder.

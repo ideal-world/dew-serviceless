@@ -19,7 +19,7 @@ public class CacheApplication extends CommonApplication<CacheConfig> {
         initRedis(config);
         initHttpClient(config);
         var cacheHandler = new CacheHandler();
-        ExchangeProcessor.init();
+        ExchangeProcessor.init(config);
         initHttpServer(config, HttpServer.Route.builder()
                 .method(HttpMethod.POST)
                 .path(Constant.REQUEST_PATH_FLAG)

@@ -16,17 +16,15 @@
 
 package idealworld.dew.baas.iam.scene.common.service;
 
+import com.ecfront.dew.common.Resp;
 import group.idealworld.dew.Dew;
 import group.idealworld.dew.core.cluster.ClusterElection;
-import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.service.CommonService;
-import idealworld.dew.baas.iam.IAMConfig;
-import idealworld.dew.baas.iam.domain.auth.*;
-import idealworld.dew.baas.iam.domain.ident.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import idealworld.dew.baas.iam.exchange.ExchangeProcessor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * IAM basic service.
@@ -60,38 +58,52 @@ public abstract class IAMBasicService extends CommonService<Long> {
     protected static final String BUSINESS_AUTH_POLICY = "AUTH_POLICY";
     protected static final String BUSINESS_OAUTH = "OAUTH";
 
-    private static final List<String> NOTIFY_BY_MQ_ENTITIES = new ArrayList<>() {
-        {
-            // 除租户外的资源都通知
-            add(AuthPolicy.class.getName());
-            add(ResourceSubject.class.getName());
-            add(Resource.class.getName());
-            add(Role.class.getName());
-            add(RoleDef.class.getName());
-            add(Group.class.getName());
-            add(GroupNode.class.getName());
-            add(AccountGroup.class.getName());
-            add(AccountRole.class.getName());
-            add(Account.class.getName());
-            add(AccountBind.class.getName());
-            add(AccountApp.class.getName());
-            add(AccountIdent.class.getName());
-            add(App.class.getName());
-            add(AppIdent.class.getName());
-        }
-    };
-
-    @Autowired
-    private IAMConfig iamConfig;
-
-    @Override
-    public String topicName() {
-        return Constant.EVENT_NOTIFY_TOPIC_BY_IAM;
+    protected <E> Resp<E> sendMQBySave(Resp<E> resp, Class<?> subjectCategoryClazz) {
+        return sendMQBySave(resp, subjectCategoryClazz, new HashMap<>());
     }
 
-    @Override
-    public boolean notifyByMQ(String entityName) {
-        return NOTIFY_BY_MQ_ENTITIES.contains(entityName);
+    protected <E> Resp<E> sendMQBySave(Resp<E> resp, Class<?> subjectCategoryClazz, Map<String, Object> detailData) {
+        return sendMQBySave(resp, subjectCategoryClazz.getSimpleName().toLowerCase(), detailData);
+    }
+
+    protected <E> Resp<E> sendMQBySave(Resp<E> resp, String subjectCategory, Map<String, Object> detailData) {
+        if (!resp.ok()) {
+            return resp;
+        }
+        ExchangeProcessor.publish(subjectCategory, OptActionKind.CREATE, resp.getBody(), detailData);
+        return resp;
+    }
+
+    protected <E> Resp<E> sendMQByUpdate(Resp<E> resp, Class<?> subjectCategoryClazz, Object subjectId) {
+        return sendMQByUpdate(resp, subjectCategoryClazz, subjectId, new HashMap<>());
+    }
+
+    protected <E> Resp<E> sendMQByUpdate(Resp<E> resp, Class<?> subjectCategoryClazz, Object subjectId, Map<String, Object> detailData) {
+        return sendMQByUpdate(resp, subjectCategoryClazz.getSimpleName().toLowerCase(), subjectId, detailData);
+    }
+
+    protected <E> Resp<E> sendMQByUpdate(Resp<E> resp, String subjectCategory, Object subjectId, Map<String, Object> detailData) {
+        if (!resp.ok()) {
+            return resp;
+        }
+        ExchangeProcessor.publish(subjectCategory, OptActionKind.MODIFY, subjectId, detailData);
+        return resp;
+    }
+
+    protected <E> Resp<E> sendMQByDelete(Resp<E> resp, Class<?> subjectCategoryClazz, Object subjectId) {
+        return sendMQByDelete(resp, subjectCategoryClazz, subjectId, new HashMap<>());
+    }
+
+    protected <E> Resp<E> sendMQByDelete(Resp<E> resp, Class<?> subjectCategoryClazz, Object subjectId, Map<String, Object> detailData) {
+        return sendMQByDelete(resp, subjectCategoryClazz.getSimpleName().toLowerCase(), subjectId, detailData);
+    }
+
+    protected <E> Resp<E> sendMQByDelete(Resp<E> resp, String subjectCategory, Object subjectId, Map<String, Object> detailData) {
+        if (!resp.ok()) {
+            return resp;
+        }
+        ExchangeProcessor.publish(subjectCategory, OptActionKind.DELETE, subjectId, detailData);
+        return resp;
     }
 
 }

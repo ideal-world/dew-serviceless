@@ -38,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -56,7 +57,10 @@ public class TCAccountService extends IAMBasicService {
     public Resp<Long> addAccount(AccountAddReq accountAddReq, Long relTenantId) {
         var addAccountR = innerAddAccount(accountAddReq, relTenantId);
         if (addAccountR.ok()) {
-            return Resp.success(addAccountR.getBody().getId());
+            return sendMQBySave(
+                    Resp.success(addAccountR.getBody().getId()),
+                    Account.class
+            );
         } else {
             return Resp.error(addAccountR);
         }
@@ -100,7 +104,11 @@ public class TCAccountService extends IAMBasicService {
         if (accountModifyReq.getStatus() != null) {
             accountUpdate.set(qAccount.status, accountModifyReq.getStatus());
         }
-        return updateEntity(accountUpdate);
+        return sendMQByUpdate(
+                updateEntity(accountUpdate),
+                Account.class,
+                accountId
+        );
     }
 
     public Resp<AccountResp> getAccount(Long accountId, Long relTenantId) {
@@ -165,7 +173,11 @@ public class TCAccountService extends IAMBasicService {
                 .selectFrom(qAccountBind)
                 .where(qAccountBind.fromAccountId.eq(accountId)
                         .or(qAccountBind.toAccountId.eq(accountId))));
-        return deletedAccountR;
+        return sendMQByDelete(
+                deletedAccountR,
+                Account.class,
+                accountId
+        );
     }
 
     // --------------------------------------------------------------------
@@ -215,7 +227,10 @@ public class TCAccountService extends IAMBasicService {
             accountIdent.setValidEndTime(validRuleAndGetValidEndTimeR.getBody());
         }
         accountIdent.setSk(processIdentSkR.getBody());
-        return saveEntity(accountIdent);
+        return sendMQBySave(
+                saveEntity(accountIdent),
+                AccountIdent.class
+        );
     }
 
     @Transactional
@@ -272,7 +287,11 @@ public class TCAccountService extends IAMBasicService {
         if (accountIdentModifyReq.getValidEndTime() != null) {
             accountIdentUpdate.set(qAccountIdent.validEndTime, accountIdentModifyReq.getValidEndTime());
         }
-        return updateEntity(accountIdentUpdate);
+        return sendMQByUpdate(
+                updateEntity(accountIdentUpdate),
+                AccountIdent.class,
+                accountIdentId
+        );
     }
 
     public Resp<List<AccountIdentResp>> findAccountIdents(Long accountId, Long relTenantId) {
@@ -292,10 +311,14 @@ public class TCAccountService extends IAMBasicService {
     @Transactional
     public Resp<Void> deleteAccountIdent(Long accountIdentId, Long relTenantId) {
         var qAccountIdent = QAccountIdent.accountIdent;
-        return softDelEntity(sqlBuilder
-                .selectFrom(qAccountIdent)
-                .where(qAccountIdent.id.eq(accountIdentId))
-                .where(qAccountIdent.relTenantId.eq(relTenantId)));
+        return sendMQByDelete(
+                softDelEntity(sqlBuilder
+                        .selectFrom(qAccountIdent)
+                        .where(qAccountIdent.id.eq(accountIdentId))
+                        .where(qAccountIdent.relTenantId.eq(relTenantId)))
+                , AccountIdent.class,
+                accountIdentId
+        );
     }
 
 
@@ -311,10 +334,18 @@ public class TCAccountService extends IAMBasicService {
         if (!checkAppMembershipR.ok()) {
             return Resp.error(checkAppMembershipR);
         }
-        return saveEntity(AccountApp.builder()
-                .relAccountId(accountId)
-                .relAppId(appId)
-                .build());
+        return sendMQBySave(
+                saveEntity(AccountApp.builder()
+                        .relAccountId(accountId)
+                        .relAppId(appId)
+                        .build()),
+                AccountApp.class,
+                new HashMap<>() {
+                    {
+                        put("relAccountId", accountId);
+                        put("relAppId", appId);
+                    }
+                });
     }
 
     @Transactional
@@ -335,7 +366,17 @@ public class TCAccountService extends IAMBasicService {
         if (!checkAppMembershipR.ok()) {
             return Resp.error(checkAppMembershipR);
         }
-        return softDelEntity(accountApp);
+        return sendMQByDelete(
+                softDelEntity(accountApp),
+                AccountApp.class,
+                accountAppId,
+                new HashMap<>() {
+                    {
+                        put("relAccountId", accountApp.getRelAccountId());
+                        put("relAppId", accountApp.getRelAppId());
+                    }
+                }
+        );
     }
 
     // --------------------------------------------------------------------
@@ -350,10 +391,18 @@ public class TCAccountService extends IAMBasicService {
         if (!checkGroupNodeMembership.ok()) {
             return Resp.error(checkGroupNodeMembership);
         }
-        return saveEntity(AccountGroup.builder()
-                .relAccountId(accountId)
-                .relGroupNodeId(groupNodeId)
-                .build());
+        return sendMQBySave(
+                saveEntity(AccountGroup.builder()
+                        .relAccountId(accountId)
+                        .relGroupNodeId(groupNodeId)
+                        .build()),
+                AccountGroup.class,
+                new HashMap<>() {
+                    {
+                        put("relAccountId", accountId);
+                        put("relGroupNodeId", groupNodeId);
+                    }
+                });
     }
 
     @Transactional
@@ -370,7 +419,17 @@ public class TCAccountService extends IAMBasicService {
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
         }
-        return softDelEntity(accountGroup);
+        return sendMQByDelete(
+                softDelEntity(accountGroup),
+                AccountGroup.class,
+                accountGroupId,
+                new HashMap<>() {
+                    {
+                        put("relAccountId", accountGroup.getRelAccountId());
+                        put("relGroupNodeId", accountGroup.getRelGroupNodeId());
+                    }
+                }
+        );
     }
 
     // --------------------------------------------------------------------
@@ -385,10 +444,18 @@ public class TCAccountService extends IAMBasicService {
         if (!checkRoleMembership.ok()) {
             return Resp.error(checkRoleMembership);
         }
-        return saveEntity(AccountRole.builder()
-                .relAccountId(accountId)
-                .relRoleId(roleId)
-                .build());
+        return sendMQBySave(
+                saveEntity(AccountRole.builder()
+                        .relAccountId(accountId)
+                        .relRoleId(roleId)
+                        .build()),
+                AccountRole.class,
+                new HashMap<>() {
+                    {
+                        put("relAccountId", accountId);
+                        put("relRoleId", roleId);
+                    }
+                });
     }
 
     @Transactional
@@ -405,7 +472,17 @@ public class TCAccountService extends IAMBasicService {
         if (!checkAccountMembershipR.ok()) {
             return Resp.error(checkAccountMembershipR);
         }
-        return softDelEntity(accountRole);
+        return sendMQByDelete(
+                softDelEntity(accountRole),
+                AccountRole.class,
+                accountRoleId,
+                new HashMap<>() {
+                    {
+                        put("relAccountId", accountRole.getRelAccountId());
+                        put("relRoleId", accountRole.getRelRoleId());
+                    }
+                }
+        );
     }
 
 }

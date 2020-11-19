@@ -37,6 +37,8 @@ public abstract class CommonConfig {
     protected HttpServerConfig httpServer = new HttpServerConfig();
     @Builder.Default
     protected RedisConfig redis = new RedisConfig();
+    @Builder.Default
+    protected IAMConfig iam = new IAMConfig();
 
     @Data
     @Builder
@@ -61,6 +63,19 @@ public abstract class CommonConfig {
         private Integer maxPoolSize = 100;
         @Builder.Default
         private Integer maxPoolWaiting = 1000;
+
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class IAMConfig {
+
+        @Builder.Default
+        private String uri = "http://iam";
+        private Long appId;
+        private Long tenantId;
 
     }
 
