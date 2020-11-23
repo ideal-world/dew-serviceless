@@ -72,7 +72,7 @@ public class DistributeHandler extends CommonHttpHandler {
                 request = HttpClient.request(httpMethod,
                         distribute.getIamServiceName(),
                         distribute.getIamServicePort(),
-                        distribute.getIamServicePath(),
+                        Constant.REQUEST_PATH_FLAG,
                         null,
                         body, header, distribute.getTimeoutMs());
                 break;
@@ -80,7 +80,7 @@ public class DistributeHandler extends CommonHttpHandler {
                 request = HttpClient.request(httpMethod,
                         distribute.getReldbServiceName(),
                         distribute.getReldbServicePort(),
-                        distribute.getReldbServicePath(),
+                        Constant.REQUEST_PATH_FLAG,
                         null,
                         body, header, distribute.getTimeoutMs());
                 break;
@@ -88,7 +88,7 @@ public class DistributeHandler extends CommonHttpHandler {
                 request = HttpClient.request(httpMethod,
                         distribute.getCacheServiceName(),
                         distribute.getCacheServicePort(),
-                        distribute.getCacheServicePath(),
+                        Constant.REQUEST_PATH_FLAG,
                         null,
                         body, header, distribute.getTimeoutMs());
                 break;
@@ -96,7 +96,7 @@ public class DistributeHandler extends CommonHttpHandler {
                 request = HttpClient.request(httpMethod,
                         distribute.getMqServiceName(),
                         distribute.getMqServicePort(),
-                        distribute.getMqServicePath(),
+                        Constant.REQUEST_PATH_FLAG,
                         null,
                         body, header, distribute.getTimeoutMs());
                 break;
@@ -104,7 +104,7 @@ public class DistributeHandler extends CommonHttpHandler {
                 request = HttpClient.request(httpMethod,
                         distribute.getObjServiceName(),
                         distribute.getObjServicePort(),
-                        distribute.getObjServicePath(),
+                        Constant.REQUEST_PATH_FLAG,
                         null,
                         body, header, distribute.getTimeoutMs());
                 break;

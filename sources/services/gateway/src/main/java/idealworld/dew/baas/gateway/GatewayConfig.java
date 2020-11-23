@@ -55,31 +55,21 @@ public class GatewayConfig extends CommonConfig {
         @Builder.Default
         private Integer iamServicePort = 9000;
         @Builder.Default
-        private String iamServicePath = "/exec";
-        @Builder.Default
         private String cacheServiceName = "cache.service";
         @Builder.Default
         private Integer cacheServicePort = 9000;
-        @Builder.Default
-        private String cacheServicePath = "/exec";
         @Builder.Default
         private String reldbServiceName = "reldb.service";
         @Builder.Default
         private Integer reldbServicePort = 9000;
         @Builder.Default
-        private String reldbServicePath = "/exec";
-        @Builder.Default
         private String mqServiceName = "mq.service";
         @Builder.Default
         private Integer mqServicePort = 9000;
         @Builder.Default
-        private String mqServicePath = "/exec";
-        @Builder.Default
         private String objServiceName = "obj.service";
         @Builder.Default
         private Integer objServicePort = 9000;
-        @Builder.Default
-        private String objServicePath = "/exec";
 
     }
 

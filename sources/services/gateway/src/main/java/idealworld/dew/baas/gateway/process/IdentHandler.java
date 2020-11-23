@@ -133,6 +133,7 @@ public class IdentHandler extends CommonHttpHandler {
         }
         var reqPath = ctx.request().path();
         var reqQuery = ctx.request().query() != null ? ctx.request().query() : "";
+        var sortedReqQuery = Arrays.stream(reqQuery.split("&")).sorted(String::compareTo).collect(Collectors.joining("&"));
         RedisClient.choose("").get(security.getCacheAkSkInfoKey() + ak, security.getTokenCacheExpireSec())
                 .onSuccess(legalSkAndAppId -> {
                     if (legalSkAndAppId == null) {
@@ -144,7 +145,7 @@ public class IdentHandler extends CommonHttpHandler {
                     var tenantId = Long.parseLong(skAndAppIdSplit[1]);
                     var appId = Long.parseLong(skAndAppIdSplit[2]);
                     var calcSignature = $.security.encodeStringToBase64(
-                            $.security.digest.digest((reqMethod + "\n" + reqDate + "\n" + reqPath + "\n" + reqQuery).toLowerCase(),
+                            $.security.digest.digest((reqMethod + "\n" + reqDate + "\n" + reqPath + "\n" + sortedReqQuery).toLowerCase(),
                                     sk, "HmacSHA1"),
                             StandardCharsets.UTF_8);
                     if (!reqSignature.equalsIgnoreCase(calcSignature)) {

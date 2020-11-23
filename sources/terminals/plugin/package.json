@@ -1,0 +1,21 @@
+{
+  "name": "@dew/plugin",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "tsc -b ./packages/tsconfig-pkg.json",
+    "bootstrap": "lerna bootstrap",
+    "clean": "lerna run --parallel clean",
+    "release": "lerna publish",
+    "test": "jest",
+    "testC": "jest --coverage --no-cache"
+  },
+  "author": "gudaoxuri",
+  "dependencies": {},
+  "devDependencies": {
+    "lerna": "^3.22.1",
+    "typescript": "^4.0.2"
+  }
+}
