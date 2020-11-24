@@ -52,6 +52,10 @@ public class IdentHandler extends CommonHttpHandler {
             error(StandardCode.BAD_REQUEST, "请求格式不合法，缺少query", ctx);
             return;
         }
+        if (!ctx.request().headers().contains(security.getAppId())) {
+            error(StandardCode.BAD_REQUEST, "请求格式不合法，缺少[" + security.getAppId() + "]", ctx);
+            return;
+        }
         var queryMap = Arrays.stream(URLDecoder.decode(ctx.request().query().trim(), StandardCharsets.UTF_8).split("&"))
                 .map(item -> item.split("="))
                 .collect(Collectors.toMap(item -> item[0], item -> item.length > 1 ? item[1] : ""));
@@ -85,8 +89,22 @@ public class IdentHandler extends CommonHttpHandler {
         var authorization = ctx.request().headers().contains(security.getAkSkFieldName())
                 ? ctx.request().getHeader(security.getAkSkFieldName()) : null;
         if (token == null && authorization == null) {
-            ctx.put(CONTEXT_INFO, new IdentOptCacheInfo());
-            ctx.next();
+            var appId = Long.parseLong(ctx.request().headers().get(security.getAppId()));
+            RedisClient.choose("").get(security.getCacheAppInfo() + appId, security.getAppInfoCacheExpireSec())
+                    .onSuccess(appInfo -> {
+                        if (appInfo == null) {
+                            error(StandardCode.UNAUTHORIZED, "认证错误，AppId不合法", ctx);
+                            return;
+                        }
+                        var appInfoItems = appInfo.split("\n");
+                        var tenantId = Long.parseLong(appInfoItems[0]);
+                        var identOptCacheInfo = new IdentOptCacheInfo();
+                        identOptCacheInfo.setAppId(appId);
+                        identOptCacheInfo.setTenantId(tenantId);
+                        ctx.put(CONTEXT_INFO, identOptCacheInfo);
+                        ctx.next();
+                    })
+                    .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
             return;
         }
 

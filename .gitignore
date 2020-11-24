@@ -25,6 +25,9 @@ out/
 .project
 
 node_modules/
+*.tsbuildinfo
+dist/
+
 .vertx/
 
 *-prod.yml

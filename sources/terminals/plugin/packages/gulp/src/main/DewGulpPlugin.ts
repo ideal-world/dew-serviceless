@@ -1,8 +1,8 @@
 import * as through from 'through2'
 import * as gutil from 'gulp-util'
-import * as dewKernel from '@dew/plugin-kernel'
+import {checkAndReplace2} from "@dew/plugin-kernel/dist/main/DewPlugin";
 
-var PluginError = gutil.PluginError;
+const PluginError = gutil.PluginError;
 
 function checkAndReplace(): string {
     return through.obj(function (file, enc, cb) {
@@ -10,7 +10,7 @@ function checkAndReplace(): string {
             cb(null, file);
         }
         // TODO
-        dewKernel.checkAndReplace('')
+        checkAndReplace2('')
         cb(null, file);
 
     });

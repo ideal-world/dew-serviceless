@@ -151,6 +151,17 @@ public class ExchangeProcessor extends IAMBasicService {
     }
 
     public void enableApp(Long appId, Long tenantId) {
+        var qApp = QApp.app;
+        sqlBuilder
+                .select(qApp.publicKey, qApp.privateKey)
+                .from(qApp)
+                .where(qApp.id.eq(appId))
+                .fetch()
+                .forEach(info -> {
+                    var publicKey = info.get(0, String.class);
+                    var privateKey = info.get(1, String.class);
+                    Dew.cluster.cache.set(IAMConstant.CACHE_APP_INFO + appId, tenantId + "\n" + publicKey + "\n" + privateKey);
+                });
         var qAppIdent = QAppIdent.appIdent;
         sqlBuilder
                 .select(qAppIdent.ak, qAppIdent.sk, qAppIdent.validTime)
@@ -174,6 +185,7 @@ public class ExchangeProcessor extends IAMBasicService {
                 .where(qAppIdent.relAppId.eq(appId))
                 .fetch()
                 .forEach(this::deleteAppIdent);
+        Dew.cluster.cache.del(IAMConstant.CACHE_APP_INFO + appId);
     }
 
     public void changeAppIdent(AppIdent appIdent, Long appId, Long tenantId) {

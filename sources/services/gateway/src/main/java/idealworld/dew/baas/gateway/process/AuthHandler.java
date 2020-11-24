@@ -2,6 +2,7 @@ package idealworld.dew.baas.gateway.process;
 
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.baas.common.Constant;
+import idealworld.dew.baas.common.dto.IdentOptCacheInfo;
 import idealworld.dew.baas.common.enumeration.AuthResultKind;
 import idealworld.dew.baas.common.enumeration.OptActionKind;
 import idealworld.dew.baas.common.funs.httpserver.CommonHttpHandler;
@@ -28,7 +29,7 @@ public class AuthHandler extends CommonHttpHandler {
     public void handle(RoutingContext ctx) {
         var resourceUri = (URI) ctx.get(Constant.REQUEST_RESOURCE_URI_FLAG);
         var action = (OptActionKind) ctx.get(Constant.REQUEST_RESOURCE_ACTION_FLAG);
-        var identOptInfo = (idealworld.dew.baas.common.dto.IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
+        var identOptInfo = (IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
         var subjectInfo = packageSubjectInfo(identOptInfo);
         authPolicy.authentication(action.toString(), resourceUri, subjectInfo)
                 .onSuccess(authResultKind -> {

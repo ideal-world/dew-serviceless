@@ -18,7 +18,6 @@ package idealworld.dew.baas.common;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.exception.RTException;
-import lombok.Builder;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -53,7 +52,6 @@ public class Constant {
      * 鉴权策略缓存
      */
     public static final String CACHE_AUTH_POLICY = "iam:auth:policy:";
-    public static final String CACHE_RELDB_SQL_MAPPING = "reldb:sql:mapping:";
     /**
      * 最小的时间.
      */

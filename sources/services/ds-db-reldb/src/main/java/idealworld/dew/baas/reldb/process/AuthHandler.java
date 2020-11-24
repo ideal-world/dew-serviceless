@@ -15,8 +15,6 @@ import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -48,15 +46,22 @@ public class AuthHandler extends CommonHttpHandler {
             error(StandardCode.BAD_REQUEST, "请求的资源主题不存在", ctx);
             return;
         }
-        var sqlInfo = ctx.getBodyAsString().split("\\|");
-        var sqlKey = sqlInfo[0];
-        RedisClient.choose("").get(Constant.CACHE_RELDB_SQL_MAPPING + sqlKey, security.getSqlCacheExpireSec())
-                .onSuccess(sql -> {
-                    if (sql == null) {
-                        error(StandardCode.BAD_REQUEST, "请求的SQL不存在", ctx);
+        var strIdentOpt = $.security.decodeBase64ToString(ctx.request().getHeader(Constant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8);
+        var identOptInfo = $.json.toObject(strIdentOpt, IdentOptCacheInfo.class);
+        var sqlInfo = $.json.toJson(ctx.getBodyAsString());
+        var encryptSql = sqlInfo.get("sql").asText();
+        var parameters = $.json.toList(sqlInfo.get("parameters"), Object.class);
+        RedisClient.choose("").get(security.getCacheAppInfo() + identOptInfo.getAppId(), security.getAppInfoCacheExpireSec())
+                .onSuccess(appInfo -> {
+                    if (appInfo == null) {
+                        error(StandardCode.UNAUTHORIZED, "认证错误，AppId不合法", ctx);
                         return;
                     }
-                    List<SqlParser.SqlAst> sqlAsts = SqlParser.parse(sql);
+                    var appInfoItems = appInfo.split("\n");
+                    var privateKey = $.security.asymmetric.getPrivateKey(appInfoItems[2], "RSA");
+                    var decryptSql = new String($.security.asymmetric.decrypt(
+                            $.security.decodeBase64ToBytes(encryptSql), privateKey, 1024, "RSA/ECB/OAEPWithSHA1AndMGF1Padding"));
+                    var sqlAsts = SqlParser.parse(decryptSql);
                     if (sqlAsts == null) {
                         error(StandardCode.BAD_REQUEST, "请求的SQL解析错误", ctx);
                         return;
@@ -72,28 +77,20 @@ public class AuthHandler extends CommonHttpHandler {
                                 );
                             })
                             .collect(Collectors.groupingBy(item -> item._1, Collectors.mapping(item -> item._0, Collectors.toList())));
-                    var strIdentOpt = $.security.decodeBase64ToString(ctx.request().getHeader(Constant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8);
-                    var identOpt = $.json.toObject(strIdentOpt, IdentOptCacheInfo.class);
-                    var subjectInfo = packageSubjectInfo(identOpt);
+                    var subjectInfo = packageSubjectInfo(identOptInfo);
                     authPolicy.authentication(resources, subjectInfo)
                             .onSuccess(authResultKind -> {
                                 if (authResultKind == AuthResultKind.REJECT) {
                                     error(StandardCode.UNAUTHORIZED, "鉴权错误，没有权限访问对应的资源", ctx);
                                     return;
                                 }
-                                var sqlParameters = sqlInfo.length == 1 ? new ArrayList<>() : $.json.toList(sqlInfo[1], Object.class);
-                                MysqlClient.choose(URIHelper.newURI(strResourceUriWithoutPath).getHost()).exec(sql, sqlParameters)
-                                        .onSuccess(result -> {
-                                            ctx.end(result.toBuffer());
-                                        })
+                                MysqlClient.choose(URIHelper.newURI(strResourceUriWithoutPath).getHost()).exec(decryptSql, parameters)
+                                        .onSuccess(result -> ctx.end(result.toBuffer()))
                                         .onFailure(e -> error(StandardCode.BAD_REQUEST, "数据查询错误", ctx, e));
                             })
                             .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
                 })
-                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e.getCause()));
-
-
+                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
     }
-
 
 }

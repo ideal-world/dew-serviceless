@@ -1,8 +1,8 @@
 import * as request from "./util/Request";
 import {IdentOptInfo} from "./domain/IdentOptInfo";
 
-let _appId: string = ''
 let _iamServerName: string = 'iam'
+let _appId: string = ''
 
 export default {
     db: db,
@@ -52,8 +52,9 @@ export default {
 }
 
 function init(serverUrl: string, appId: string, iamServerName?: string): void {
-    request.setServerUrl(serverUrl)
     _appId = appId
+    request.setServerUrl(serverUrl)
+    request.setAppId(appId)
     if (iamServerName) {
         _iamServerName = iamServerName
     }
@@ -62,9 +63,12 @@ function init(serverUrl: string, appId: string, iamServerName?: string): void {
 function db(resourceSubjectCode: string, encryptedSql: string, parameters: string[]): Promise<any[]> {
     let item = encryptedSql.split('|')
     if (item.length !== 2) {
-        throw "SQL statements are not encrypted :" + encryptedSql
+        throw "SQL statements are not encrypted : " + encryptedSql
     }
-    return request.req('reldb', 'reldb://' + resourceSubjectCode, item[0], item[1])
+    return request.req('reldb', 'reldb://' + resourceSubjectCode, item[0], {
+        sql: item[1],
+        parameters: parameters
+    })
 }
 
 function http(resourceSubjectCode: string, action: string, pathAndQuery: string, body?: any): Promise<any[]> {

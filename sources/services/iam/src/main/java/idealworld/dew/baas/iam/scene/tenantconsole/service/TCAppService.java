@@ -61,6 +61,9 @@ public class TCAppService extends IAMBasicService {
             return StandardResp.conflict(BUSINESS_APP, "应用名称已存在");
         }
         var app = $.bean.copyProperties(appAddReq, App.class);
+        var keys = $.security.asymmetric.generateKeys("RSA", 1024);
+        app.setPubKey(keys.get("PublicKey"));
+        app.setPriKey(keys.get("PrivateKey"));
         app.setRelTenantId(relTenantId);
         app.setStatus(CommonStatus.ENABLED);
         return sendMQBySave(

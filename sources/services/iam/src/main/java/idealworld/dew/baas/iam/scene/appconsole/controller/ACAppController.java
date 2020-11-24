@@ -79,4 +79,19 @@ public class ACAppController extends IAMBasicController {
         return acAppService.showSk(appIdentId, currentAppAndTenantId._0);
     }
 
+
+    @GetMapping(value = "publicKey")
+    @Operation(summary = "获取当前应用的公钥")
+    public Resp<String> showPublicKey() {
+        var currentAppAndTenantId = getCurrentAppAndTenantId();
+        return acAppService.showPublicKey(currentAppAndTenantId._0);
+    }
+
+    @GetMapping(value = "privateKey")
+    @Operation(summary = "获取当前应用的私钥")
+    public Resp<String> showPrivateKey() {
+        var currentAppAndTenantId = getCurrentAppAndTenantId();
+        return acAppService.showPrivateKey(currentAppAndTenantId._0);
+    }
+
 }

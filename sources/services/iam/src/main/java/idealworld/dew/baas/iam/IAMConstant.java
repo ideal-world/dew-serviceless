@@ -10,6 +10,7 @@ import idealworld.dew.baas.common.Constant;
 public class IAMConstant extends Constant {
 
     public static final String CACHE_APP_AK = "dew:auth:app:ak:";
+    public static final String CACHE_APP_INFO = "dew:auth:app:";
     public static final String CACHE_ACCESS_TOKEN = "dew:auth:oauth:access-token:";
     public static final String CACHE_ACCOUNT_VCODE_TMP_REL = "dew:auth:account:vocde:tmprel:";
     public static final String CACHE_ACCOUNT_VCODE_ERROR_TIMES = "dew:auth:account:vocde:errortimes:";

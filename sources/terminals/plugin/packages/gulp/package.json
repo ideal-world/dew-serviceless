@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "Dew BaaS plugin Gulp",
   "scripts": {
-    "build:": "tsc -b",
     "test": "jest",
-    "testC": "jest --coverage --no-cache"
+    "testC": "jest --coverage --no-cache",
+    "dev": "npm run clean && tsc --build --watch",
+    "build": "npm run clean && npm run compile",
+    "clean": "rm -rf ./dist && rm -rf tsconfig.build.tsbuildinfo",
+    "compile": "tsc --build",
+    "prepublishOnly": "npm run build"
   },
   "author": "gudaoxuri",
   "dependencies": {

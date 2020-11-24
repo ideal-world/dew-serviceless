@@ -3,17 +3,21 @@
   "version": "1.0.0",
   "description": "Dew BaaS plugin Kernel",
   "scripts": {
-    "build": "tsc -b",
     "test": "jest",
-    "testC": "jest --coverage --no-cache"
+    "testC": "jest --coverage --no-cache",
+    "dev": "npm run clean && tsc --build --watch",
+    "build": "npm run clean && npm run compile",
+    "clean": "rm -rf ./dist && rm -rf tsconfig.build.tsbuildinfo",
+    "compile": "tsc --build",
+    "prepublishOnly": "npm run build"
   },
   "author": "gudaoxuri",
   "dependencies": {
-    "@types/crypto-js": "^4.0.1",
+    "@types/node-rsa": "^1.0.0",
     "acorn": "^8.0.4",
     "axios": "^0.20.0",
-    "crypto-js": "^4.0.0",
-    "moment": "^2.29.0"
+    "moment": "^2.29.0",
+    "node-rsa": "^1.1.1"
   },
   "devDependencies": {
     "@types/jest": "^26.0.12",

@@ -1,11 +1,13 @@
 import axios from 'axios';
 import {JsonMap} from "../domain/Basic";
 
-const TOKEN_HEAD_NAME = 'Dew-Token'
+const TOKEN_FLAG = 'Dew-Token'
 const REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri"
 const REQUEST_RESOURCE_ACTION_FLAG = "Dew-Resource-Action"
+const APP_ID_FLAG = "Dew-App-Id"
 let _token: string = ''
 let _serverUrl: string = ''
+let _appId: string = ''
 
 const MOCK_DATA: JsonMap<Function> = {}
 
@@ -23,6 +25,10 @@ export function setToken(token: string): void {
     _token = token
 }
 
+export function setAppId(appId: string): void {
+    _appId = appId
+}
+
 export function setServerUrl(serverUrl: string): void {
     if (serverUrl.trim().endsWith("/")) {
         serverUrl = serverUrl.trim().substring(0, serverUrl.trim().length - 1)
@@ -37,8 +43,12 @@ export function req<T>(name: string, resourceUri: string, resourceAction: string
             resolve(MOCK_DATA[name.toLowerCase()].call(null, resourceAction, resourceUri, body))
         })
     }
+    if(!_appId){
+        throw 'The Http Head must contain ['+APP_ID_FLAG+']'
+    }
     headers = headers ? headers : {}
-    headers[TOKEN_HEAD_NAME] = _token ? _token : ''
+    headers[APP_ID_FLAG] = _appId
+    headers[TOKEN_FLAG] = _token ? _token : ''
     console.log('[Dew]Request [%s]%s', resourceAction, resourceUri)
     return new Promise<T>((resolve, reject) => {
         axios.request<any>({

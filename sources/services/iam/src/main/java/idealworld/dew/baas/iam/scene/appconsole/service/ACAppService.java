@@ -21,6 +21,7 @@ import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
 import idealworld.dew.baas.iam.domain.ident.AppIdent;
+import idealworld.dew.baas.iam.domain.ident.QApp;
 import idealworld.dew.baas.iam.domain.ident.QAppIdent;
 import idealworld.dew.baas.iam.exchange.ExchangeProcessor;
 import idealworld.dew.baas.iam.scene.appconsole.dto.app.AppIdentAddReq;
@@ -132,6 +133,24 @@ public class ACAppService extends IAMBasicService {
                 .from(qAppIdent)
                 .where(qAppIdent.id.eq(appIdentId))
                 .where(qAppIdent.relAppId.eq(relAppId))
+                .fetchOne());
+    }
+
+    public Resp<String> showPublicKey(Long relAppId) {
+        var qApp = QApp.app;
+        return Resp.success(sqlBuilder
+                .select(qApp.publicKey)
+                .from(qApp)
+                .where(qApp.id.eq(relAppId))
+                .fetchOne());
+    }
+
+    public Resp<String> showPrivateKey(Long relAppId) {
+        var qApp = QApp.app;
+        return Resp.success(sqlBuilder
+                .select(qApp.privateKey)
+                .from(qApp)
+                .where(qApp.id.eq(relAppId))
                 .fetchOne());
     }
 

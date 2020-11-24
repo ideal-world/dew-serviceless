@@ -32,11 +32,11 @@ import java.util.Map;
 
 public class TestFlow extends BasicTest {
 
-    private static RelDBConfig gatewayConfig;
+    private static RelDBConfig relDBConfig;
 
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {
-        gatewayConfig = YamlHelper.toObject(RelDBConfig.class, $.file.readAllByClassPath("application-test.yml", StandardCharsets.UTF_8));
+        relDBConfig = YamlHelper.toObject(RelDBConfig.class, $.file.readAllByClassPath("application-test.yml", StandardCharsets.UTF_8));
         System.getProperties().put("dew.profile", "test");
         RedisTestHelper.start();
         HttpClient.init(vertx);
@@ -45,7 +45,7 @@ public class TestFlow extends BasicTest {
 
     @Test
     public void testFlow(Vertx vertx, VertxTestContext testContext) {
-        var errorResult = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
+        var errorResult = $.http.postWrap("http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
                 "xxxx|reldb://subjectCodexx");
         Assertions.assertEquals("请求格式不合法", errorResult.result);
 
@@ -56,7 +56,7 @@ public class TestFlow extends BasicTest {
                 .token("token01")
                 .build());
 
-        errorResult = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
+        errorResult = $.http.postWrap("http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
                 "xxxx|reldb://subjectCodexx", new HashMap<>() {
                     {
                         put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
@@ -83,7 +83,7 @@ public class TestFlow extends BasicTest {
                         MysqlClient.choose("subjectCodexx").exec("insert into iam_account(name, open_id, status) values (?, ?, ?)", "孤岛旭日1", "xxxx", "ENABLED")
                 )
                 .compose(resp -> {
-                    var error2Result = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
+                    var error2Result = $.http.postWrap("http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
                             "xxxx|reldb://subjectCodexx", new HashMap<>() {
                                 {
                                     put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
@@ -93,21 +93,8 @@ public class TestFlow extends BasicTest {
                     Assertions.assertEquals("请求的SQL不存在", error2Result.result);
                     return Future.succeededFuture();
                 })
-                .compose(resp -> RedisClient.choose("").set(Constant.CACHE_RELDB_SQL_MAPPING + "xxxx", "select name fromm iam_account"))
-                .compose(resp -> {
-                    var error2Result = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
-                            "xxxx|", new HashMap<>() {
-                                {
-                                    put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
-                                    put(Constant.REQUEST_RESOURCE_URI_FLAG, "reldb://subjectCodexx");
-                                }
-                            });
-                    Assertions.assertEquals("请求的SQL解析错误", error2Result.result);
-                    return Future.succeededFuture();
-                })
-                .compose(resp -> RedisClient.choose("").set(Constant.CACHE_RELDB_SQL_MAPPING + "xxxx", "select name from iam_account"))
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("xxxx|"),
+                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("{\"sql\":\"select name from iam_account\",\"parameters\":[]}"),
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
@@ -119,7 +106,7 @@ public class TestFlow extends BasicTest {
                     Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", resp.bodyAsString());
                     return Future.succeededFuture();
                 })
-                .compose(resp -> ExchangeProcessor.init())
+                .compose(resp -> ExchangeProcessor.init(relDBConfig))
                 .compose(resp ->
                         RedisClient.choose("").set(Constant.CACHE_AUTH_POLICY + "reldb:subjectCodexx/iam_account/name:fetch",
                                 $.json.toJsonString(new HashMap<String, Map<String, List<String>>>() {
@@ -153,7 +140,7 @@ public class TestFlow extends BasicTest {
                 .compose(resp ->
                         Future.future(promise ->
                                 vertx.setTimer(5000, h -> {
-                                    HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("xxxx|"),
+                                    HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("{\"sql\":\"select name from iam_account\",\"parameters\":[]}"),
                                             new HashMap<>() {
                                                 {
                                                     put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
@@ -186,7 +173,7 @@ public class TestFlow extends BasicTest {
                 .compose(resp ->
                         Future.future(promise ->
                                 vertx.setTimer(2000, h -> {
-                                    HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("xxxx|"),
+                                    HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("{\"sql\":\"select name from iam_account\",\"parameters\":[]}"),
                                             new HashMap<>() {
                                                 {
                                                     put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);

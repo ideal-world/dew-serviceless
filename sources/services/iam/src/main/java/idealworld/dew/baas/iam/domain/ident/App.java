@@ -16,8 +16,8 @@
 
 package idealworld.dew.baas.iam.domain.ident;
 
-import idealworld.dew.baas.common.enumeration.CommonStatus;
 import idealworld.dew.baas.common.domain.SafeEntity;
+import idealworld.dew.baas.common.enumeration.CommonStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -59,6 +59,14 @@ public class App extends SafeEntity {
     @Column(nullable = false,
             columnDefinition = "varchar(2000) comment '应用扩展信息，Json格式'")
     private String parameters;
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(255) comment '公钥'")
+    private String pubKey;
+
+    @Column(nullable = false,
+            columnDefinition = "varchar(1000) comment '私钥'")
+    private String priKey;
 
     @Column(nullable = false,
             columnDefinition = "bigint comment '关联租户Id'")

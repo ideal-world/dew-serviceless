@@ -8,9 +8,7 @@
     "build": "tsc -b ./packages/tsconfig-pkg.json",
     "bootstrap": "lerna bootstrap",
     "clean": "lerna run --parallel clean",
-    "release": "lerna publish",
-    "test": "jest",
-    "testC": "jest --coverage --no-cache"
+    "release": "lerna publish"
   },
   "author": "gudaoxuri",
   "dependencies": {},

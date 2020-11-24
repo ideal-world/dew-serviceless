@@ -84,11 +84,15 @@ public class GatewayConfig extends CommonConfig {
         @Builder.Default
         private String akSkFieldName = "Authorization";
         @Builder.Default
+        private String appId = "Dew-App-Id";
+        @Builder.Default
         private String akSkDateFieldName = "Dew-Date";
         @Builder.Default
         private Integer tokenCacheExpireSec = 60;
         @Builder.Default
         private Integer akSkCacheExpireSec = 60;
+        @Builder.Default
+        private Integer appInfoCacheExpireSec = 60;
         @Builder.Default
         private Integer resourceCacheExpireSec = 60 * 60 * 24;
         @Builder.Default
@@ -97,6 +101,8 @@ public class GatewayConfig extends CommonConfig {
         private String cacheTokenInfoKey = "dew:auth:token:info:";
         @Builder.Default
         private String cacheAkSkInfoKey = "dew:auth:app:ak:";
+        @Builder.Default
+        private String cacheAppInfo = "dew:auth:app:";
         @Builder.Default
         private Map<String, List<String>> blockIps = new LinkedHashMap<>();
         @Builder.Default
