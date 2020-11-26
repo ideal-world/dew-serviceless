@@ -15,6 +15,7 @@
   "dependencies": {
     "@dew/plugin-kernel": "^1.0.0",
     "@types/crypto-js": "^4.0.1",
+    "@types/through2": "^2.0.36",
     "gulp-util": "^3.0.8",
     "through2": "^4.0.2"
   },

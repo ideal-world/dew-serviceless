@@ -1,17 +1,20 @@
 import * as through from 'through2'
 import * as gutil from 'gulp-util'
-import {checkAndReplace2} from "@dew/plugin-kernel/dist/main/DewPlugin";
+import {checkAndReplace} from "@dew/plugin-kernel/dist/main/DewPlugin";
 
 const PluginError = gutil.PluginError;
+const PLUGIN_NAME = 'Dew-Build';
 
-function checkAndReplace(): string {
+module.exports = function () {
     return through.obj(function (file, enc, cb) {
-        if (file === null) {
-            cb(null, file);
+        if (file.isBuffer()) {
+            file.contents =Buffer.from(checkAndReplace(file.contents.toString('utf8')))
+            this.push(file)
+            cb()
         }
-        // TODO
-        checkAndReplace2('')
-        cb(null, file);
-
-    });
+        if (file.isStream()) {
+            this.emit('error', new PluginError(PLUGIN_NAME, 'Streams are not supported!'))
+            cb()
+        }
+    })
 }

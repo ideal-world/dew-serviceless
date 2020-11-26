@@ -8,7 +8,7 @@ export default {
     db: db,
     fun: {
         login: login,
-        logout: logout()
+        logout: logout
     },
     http: {
         fetch: function (resourceSubjectCode: string, pathAndQuery: string): Promise<any[]> {

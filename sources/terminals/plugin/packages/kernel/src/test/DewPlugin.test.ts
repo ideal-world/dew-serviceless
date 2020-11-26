@@ -73,4 +73,6 @@ test('Test check and replace', async () => {
     `)*/
 
     expect(checkAndReplace("xxfsss")).toContain("xxfsss")
+    expect(checkAndReplace("'xxfsss'")).toContain("'xxfsss'")
+    expect(checkAndReplace("'select haha  aaa fddd, from 1'")).toContain("'select haha  aaa fddd, from 1'")
 })
