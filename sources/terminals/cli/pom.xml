@@ -27,8 +27,8 @@
         <relativePath>../../../parents/basic/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-sdk</artifactId>
-    <name>5.0 Dew BAAS SDK</name>
+    <artifactId>baas-terminal-cli</artifactId>
+    <name>5.2 Dew BAAS Terminal CLI</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 

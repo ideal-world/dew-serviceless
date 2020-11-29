@@ -27,8 +27,8 @@
         <relativePath>../../../parents/basic/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-plugin</artifactId>
-    <name>5.1 Dew BAAS Plugin</name>
+    <artifactId>baas-terminal-plugin</artifactId>
+    <name>5.1 Dew BAAS Terminal Plugin</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
