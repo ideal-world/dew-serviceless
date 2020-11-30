@@ -1,0 +1,19 @@
+{
+  "name": "@dew/plugin",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "clean": "lerna run clean",
+    "build": "lerna run build",
+    "deploy": "lerna publish",
+    "test": "lerna run test"
+  },
+  "author": "gudaoxuri",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^4.0.2",
+    "lerna": "~3.22.1"
+  }
+}
