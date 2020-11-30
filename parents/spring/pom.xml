@@ -26,13 +26,13 @@
         <version>3.0.0-Beta1</version>
     </parent>
 
-    <artifactId>baas-parent-spring</artifactId>
-    <name>1.2 Dew BAAS Parent Spring</name>
+    <artifactId>serviceless-parent-spring</artifactId>
+    <name>1.2 Dew Serviceless Parent Spring</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <dew-baas.version>1.0.0-SNAPSHOT</dew-baas.version>
+        <dew-serviceless.version>1.0.0-SNAPSHOT</dew-serviceless.version>
         <checkstyle.config.path>./checkstyle.xml</checkstyle.config.path>
     </properties>
 
@@ -53,17 +53,17 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/ideal-world/dew-baas.git</connection>
-        <developerConnection>scm:git:https://github.com/ideal-world/dew-baas.git</developerConnection>
-        <url>https://github.com/ideal-world/dew-baas</url>
+        <connection>scm:git:https://github.com/ideal-world/dew-serviceless.git</connection>
+        <developerConnection>scm:git:https://github.com/ideal-world/dew-serviceless.git</developerConnection>
+        <url>https://github.com/ideal-world/dew-serviceless</url>
     </scm>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>group.idealworld.dew</groupId>
-                <artifactId>baas-basics-spring-services</artifactId>
-                <version>${dew-baas.version}</version>
+                <artifactId>serviceless-basics-spring-services</artifactId>
+                <version>${dew-serviceless.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

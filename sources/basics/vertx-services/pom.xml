@@ -22,27 +22,27 @@
 
     <parent>
         <groupId>group.idealworld.dew</groupId>
-        <artifactId>baas-parent-vertx</artifactId>
+        <artifactId>serviceless-parent-vertx</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../../../parents/vertx/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-basics-vertx-services</artifactId>
-    <name>3.1 Dew BAAS Basics Vertx Services</name>
+    <artifactId>serviceless-basics-vertx-services</artifactId>
+    <name>3.1 Dew Serviceless Basics Vertx Services</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
         <maven.install.skip>true</maven.install.skip>
         <maven.deploy.skip>true</maven.deploy.skip>
-        <main.verticle>idealworld.dew.baas.common.CommonApplication</main.verticle>
+        <main.verticle>idealworld.dew.serviceless.common.CommonApplication</main.verticle>
         <graalvm.version>20.2.0</graalvm.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
-            <artifactId>baas-basics-common</artifactId>
+            <artifactId>serviceless-basics-common</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>org.mindrot</groupId>
@@ -119,7 +119,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <argLine>
-                                -agentlib:native-image-agent=access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/group.idealworld.dew/baas-services-gateway/agent-access-filter.json,config-output-dir=${project.basedir}/src/main/resources/META-INF/native-image/group.idealworld.dew/baas-services-gateway/
+                                -agentlib:native-image-agent=access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/group.idealworld.dew/serviceless-services-gateway/agent-access-filter.json,config-output-dir=${project.basedir}/src/main/resources/META-INF/native-image/group.idealworld.dew/serviceless-services-gateway/
                             </argLine>
                         </configuration>
                     </plugin>

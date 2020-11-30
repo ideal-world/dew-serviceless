@@ -7,7 +7,7 @@
 
 [source,java]
 ----
-include::{projectdir}/sources/services/iam/src/main/java/idealworld/dew/baas/iam/domain/ident/Tenant.java[]
+include::{projectdir}/sources/services/iam/src/main/java/idealworld/dew/serviceless/iam/domain/ident/Tenant.java[]
 ----
 
 

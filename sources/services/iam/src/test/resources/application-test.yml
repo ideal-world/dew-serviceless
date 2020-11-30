@@ -13,12 +13,12 @@ spring:
 #    password: 123456
 dew:
   basic:
-    name: Dew BaaS Test
+    name: Dew Serviceless Test
     version: 1.0
-    desc: Dew BaaS 测试
+    desc: Dew Serviceless 测试
     web-site: http://www.idealworld.group
     doc:
-      base-package: idealworld.dew.baas.iam.scene.common.controller
+      base-package: idealworld.dew.serviceless.iam.scene.common.controller
 
 server:
   port: 8081

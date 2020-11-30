@@ -1,6 +1,6 @@
 == 开发指南
 
-``Dew-BAAS`` 基于 Apache 2.0 license 分发，如果您要向 ``Dew`` 贡献代码或 Fork 为自己的分支项目请遵循许可证要求。
+``Dew-Serviceless`` 基于 Apache 2.0 license 分发，如果您要向 ``Dew`` 贡献代码或 Fork 为自己的分支项目请遵循许可证要求。
 
 SCM： https://github.com/ideal-world/dew-saas[https://github.com/ideal-world/dew-saas]
 

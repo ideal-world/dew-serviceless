@@ -1,7 +1,7 @@
 {
   "name": "@dew/plugin-gulp",
   "version": "1.0.0",
-  "description": "Dew BaaS plugin Gulp",
+  "description": "Dew Serviceless plugin Gulp",
   "scripts": {
     "test": "jest",
     "testC": "jest --coverage --no-cache",

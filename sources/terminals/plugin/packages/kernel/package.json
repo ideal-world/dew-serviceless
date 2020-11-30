@@ -1,7 +1,7 @@
 {
   "name": "@dew/plugin-kernel",
   "version": "1.0.0",
-  "description": "Dew BaaS plugin Kernel",
+  "description": "Dew Serviceless plugin Kernel",
   "scripts": {
     "test": "jest",
     "testC": "jest --coverage --no-cache",

@@ -21,8 +21,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>group.idealworld.dew</groupId>
-    <artifactId>baas-build</artifactId>
-    <name>0 Dew BAAS Build</name>
+    <artifactId>serviceless-build</artifactId>
+    <name>0 Dew Serviceless Build</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
@@ -43,9 +43,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/ideal-world/dew-baas.git</connection>
-        <developerConnection>scm:git:https://github.com/ideal-world/dew-baas.git</developerConnection>
-        <url>https://github.com/ideal-world/dew-baas</url>
+        <connection>scm:git:https://github.com/ideal-world/dew-serviceless.git</connection>
+        <developerConnection>scm:git:https://github.com/ideal-world/dew-serviceless.git</developerConnection>
+        <url>https://github.com/ideal-world/dew-serviceless</url>
     </scm>
 
     <modules>

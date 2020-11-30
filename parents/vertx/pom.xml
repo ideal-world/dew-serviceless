@@ -22,13 +22,13 @@
 
     <parent>
         <groupId>group.idealworld.dew</groupId>
-        <artifactId>baas-parent</artifactId>
+        <artifactId>serviceless-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../basic/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-parent-vertx</artifactId>
-    <name>1.1 Dew BAAS Parent Vertx</name>
+    <artifactId>serviceless-parent-vertx</artifactId>
+    <name>1.1 Dew Serviceless Parent Vertx</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
@@ -44,8 +44,8 @@
         <dependencies>
             <dependency>
                 <groupId>group.idealworld.dew</groupId>
-                <artifactId>baas-basics-vertx-services</artifactId>
-                <version>${dew-baas.version}</version>
+                <artifactId>serviceless-basics-vertx-services</artifactId>
+                <version>${dew-serviceless.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.vertx</groupId>

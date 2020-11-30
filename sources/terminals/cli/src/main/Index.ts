@@ -10,7 +10,7 @@ import figlet from "figlet";
 import {JsonMap} from "./domain/Basic";
 import * as fileHelper from './util/FileHelper';
 
-const TEMPLATE_SIMPLATE_GIT_ADDR = 'https://github.com/ideal-world/dew-baas-template-simple.git'
+const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless-template-simple.git'
 let _answers: JsonMap<any> = {}
 
 const createAppWithNewTenantSteps: any[] = [
@@ -212,7 +212,7 @@ async function createApp() {
     }
     console.log('Create template project to %s', path)
     // TODO package.json 内容替换
-    await gitHelper.clone(TEMPLATE_SIMPLATE_GIT_ADDR, path, 1)
+    await gitHelper.clone(TEMPLATE_SIMPLE_GIT_ADDR, path, 1)
     fileHelper.writeFile(path + '/Dew.key', publicKey)
     console.log('Template project created.')
 }

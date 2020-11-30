@@ -22,26 +22,26 @@
 
     <parent>
         <groupId>group.idealworld.dew</groupId>
-        <artifactId>baas-parent-vertx</artifactId>
+        <artifactId>serviceless-parent-vertx</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../../../parents/vertx/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-services-gateway</artifactId>
-    <name>4.0 Dew BAAS Services Gateway</name>
+    <artifactId>serviceless-services-gateway</artifactId>
+    <name>4.0 Dew Serviceless Services Gateway</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
         <maven.install.skip>true</maven.install.skip>
         <maven.deploy.skip>true</maven.deploy.skip>
-        <main.verticle>idealworld.dew.baas.gateway.GatewayApplication</main.verticle>
+        <main.verticle>idealworld.dew.serviceless.gateway.GatewayApplication</main.verticle>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
-            <artifactId>baas-basics-vertx-services</artifactId>
+            <artifactId>serviceless-basics-vertx-services</artifactId>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>

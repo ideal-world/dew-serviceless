@@ -1,4 +1,4 @@
-== New generation BAAS platform.
+== New generation Serviceless platform.
 
 Building……
 

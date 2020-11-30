@@ -21,8 +21,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>group.idealworld.dew</groupId>
-    <artifactId>baas-parent</artifactId>
-    <name>1.0 Dew BAAS Parent</name>
+    <artifactId>serviceless-parent</artifactId>
+    <name>1.0 Dew Serviceless Parent</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
@@ -39,7 +39,7 @@
         <maven.deploy.skip>false</maven.deploy.skip>
         <checkstyle.skip>false</checkstyle.skip>
 
-        <dew-baas.version>1.0.0-SNAPSHOT</dew-baas.version>
+        <dew-serviceless.version>1.0.0-SNAPSHOT</dew-serviceless.version>
         <dew-common.version>3.0.0-beta2</dew-common.version>
         <junit.version>4.13</junit.version>
         <lombok.version>1.18.12</lombok.version>
@@ -64,9 +64,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/ideal-world/dew-baas.git</connection>
-        <developerConnection>scm:git:https://github.com/ideal-world/dew-baas.git</developerConnection>
-        <url>https://github.com/ideal-world/dew-baas</url>
+        <connection>scm:git:https://github.com/ideal-world/dew-serviceless.git</connection>
+        <developerConnection>scm:git:https://github.com/ideal-world/dew-serviceless.git</developerConnection>
+        <url>https://github.com/ideal-world/dew-serviceless</url>
     </scm>
 
     <dependencies>
@@ -92,8 +92,8 @@
             </dependency>
             <dependency>
                 <groupId>group.idealworld.dew</groupId>
-                <artifactId>baas-basics-common</artifactId>
-                <version>${dew-baas.version}</version>
+                <artifactId>serviceless-basics-common</artifactId>
+                <version>${dew-serviceless.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>

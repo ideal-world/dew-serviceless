@@ -22,13 +22,13 @@
 
     <parent>
         <groupId>group.idealworld.dew</groupId>
-        <artifactId>baas-parent</artifactId>
+        <artifactId>serviceless-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../../../parents/basic/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-terminal-cli</artifactId>
-    <name>5.2 Dew BAAS Terminal CLI</name>
+    <artifactId>serviceless-terminal-cli</artifactId>
+    <name>5.2 Dew Serviceless Terminal CLI</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 

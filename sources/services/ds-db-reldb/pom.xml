@@ -22,20 +22,20 @@
 
     <parent>
         <groupId>group.idealworld.dew</groupId>
-        <artifactId>baas-parent-vertx</artifactId>
+        <artifactId>serviceless-parent-vertx</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../../../parents/vertx/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-services-reldb</artifactId>
-    <name>4.2 Dew BAAS Services RelDB</name>
+    <artifactId>serviceless-services-reldb</artifactId>
+    <name>4.2 Dew Serviceless Services RelDB</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
         <maven.install.skip>true</maven.install.skip>
         <maven.deploy.skip>true</maven.deploy.skip>
-        <main.verticle>idealworld.dew.baas.reldb.RelDBApplication</main.verticle>
+        <main.verticle>idealworld.dew.serviceless.reldb.RelDBApplication</main.verticle>
 
         <druid.version>1.2.3</druid.version>
     </properties>
@@ -43,7 +43,7 @@
     <dependencies>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
-            <artifactId>baas-basics-vertx-services</artifactId>
+            <artifactId>serviceless-basics-vertx-services</artifactId>
         </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>

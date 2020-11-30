@@ -1,7 +1,7 @@
 {
   "rules": [
     {
-      "excludeClasses": "idealworld.dew.baas.gateway.test.**"
+      "excludeClasses": "idealworld.dew.serviceless.gateway.test.**"
     },
     {
       "excludeClasses": "org.apache.maven.surefire.**"

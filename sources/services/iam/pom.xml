@@ -22,20 +22,20 @@
 
     <parent>
         <groupId>group.idealworld.dew</groupId>
-        <artifactId>baas-parent-spring</artifactId>
+        <artifactId>serviceless-parent-spring</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../../../parents/spring/pom.xml</relativePath>
     </parent>
 
-    <artifactId>baas-services-iam</artifactId>
-    <name>4.1 Dew BAAS Services IAM</name>
+    <artifactId>serviceless-services-iam</artifactId>
+    <name>4.1 Dew Serviceless Services IAM</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
-            <artifactId>baas-basics-spring-services</artifactId>
+            <artifactId>serviceless-basics-spring-services</artifactId>
         </dependency>
         <dependency>
             <groupId>group.idealworld.dew</groupId>

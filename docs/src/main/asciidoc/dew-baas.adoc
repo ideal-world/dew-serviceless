@@ -2,7 +2,7 @@ ifndef::imagesdir[:imagesdir: . ]
 :_imagesdir: {imagesdir}
 :imagesdir: {_imagesdir}/_chapter
 
-= Dew BaaS 平台
+= Dew Serviceless 平台
 :revnumber: 20201001
 :author: gudaoxuri
 :doctype: book

@@ -1,7 +1,7 @@
 {
   "name": "@dew/sdk",
   "version": "1.0.0",
-  "description": "Dew BaaS SDK",
+  "description": "Dew Serviceless SDK",
   "scripts": {
     "build": "tsc -b",
     "test": "jest",
