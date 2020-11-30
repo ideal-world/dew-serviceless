@@ -19,7 +19,10 @@ package idealworld.dew.serviceless.iam.scene.tenantconsole.dto.tenant;
 import idealworld.dew.serviceless.common.dto.IdResp;
 import idealworld.dew.serviceless.iam.enumeration.AccountIdentKind;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;

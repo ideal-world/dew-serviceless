@@ -16,8 +16,8 @@
 
 package idealworld.dew.serviceless.iam.domain.ident;
 
-import idealworld.dew.serviceless.common.enumeration.CommonStatus;
 import idealworld.dew.serviceless.common.domain.SafeEntity;
+import idealworld.dew.serviceless.common.enumeration.CommonStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

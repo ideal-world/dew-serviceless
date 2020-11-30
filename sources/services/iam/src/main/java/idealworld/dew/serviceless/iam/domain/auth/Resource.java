@@ -16,8 +16,8 @@
 
 package idealworld.dew.serviceless.iam.domain.auth;
 
-import idealworld.dew.serviceless.iam.domain.AppBasedEntity;
 import idealworld.dew.serviceless.common.enumeration.ResourceKind;
+import idealworld.dew.serviceless.iam.domain.AppBasedEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
