@@ -125,11 +125,11 @@ public class DistributeHandler extends CommonHttpHandler {
                         body, header, distribute.getTimeoutMs());
                 break;
             default:
-                error(StandardCode.NOT_FOUND, "资源类型不存在", ctx);
+                error(StandardCode.NOT_FOUND, DistributeHandler.class, "资源类型不存在", ctx);
                 return;
         }
         request.onSuccess(resp -> ctx.end(resp.body()))
-                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx));
+                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, DistributeHandler.class, "转发服务错误", ctx));
     }
 
 }

@@ -33,8 +33,6 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <maven.install.skip>true</maven.install.skip>
-        <maven.deploy.skip>true</maven.deploy.skip>
         <main.verticle>idealworld.dew.serviceless.common.CommonApplication</main.verticle>
         <graalvm.version>20.2.0</graalvm.version>
     </properties>

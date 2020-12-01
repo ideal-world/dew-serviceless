@@ -65,7 +65,7 @@ public class IdentHandler extends CommonHttpHandler {
                 ctx.request().query() == null ? "" : "?" + ctx.request().query(), getIP(ctx.request()));
         // checker
         if (ctx.request().query() == null || ctx.request().query().trim().isBlank()) {
-            error(StandardCode.BAD_REQUEST, "请求格式不合法，缺少query", ctx);
+            error(StandardCode.BAD_REQUEST, IdentHandler.class, "请求格式不合法，缺少query", ctx);
             return;
         }
         var queryMap = Arrays.stream(URLDecoder.decode(ctx.request().query().trim(), StandardCharsets.UTF_8).split("&"))
@@ -76,7 +76,7 @@ public class IdentHandler extends CommonHttpHandler {
                 || !queryMap.containsKey(Constant.REQUEST_RESOURCE_ACTION_FLAG)
                 || queryMap.get(Constant.REQUEST_RESOURCE_ACTION_FLAG).isBlank()
         ) {
-            error(StandardCode.BAD_REQUEST, "请求格式不合法，缺少[" + Constant.REQUEST_RESOURCE_URI_FLAG + "]或[" + Constant.REQUEST_RESOURCE_ACTION_FLAG + "]", ctx);
+            error(StandardCode.BAD_REQUEST, IdentHandler.class, "请求格式不合法，缺少[" + Constant.REQUEST_RESOURCE_URI_FLAG + "]或[" + Constant.REQUEST_RESOURCE_ACTION_FLAG + "]", ctx);
             return;
         }
         URI resourceUri;
@@ -84,24 +84,28 @@ public class IdentHandler extends CommonHttpHandler {
         try {
             resourceUri = URIHelper.newURI(queryMap.get(Constant.REQUEST_RESOURCE_URI_FLAG));
             if (resourceUri.getScheme() == null || resourceUri.getHost() == null) {
-                error(StandardCode.BAD_REQUEST, "请求格式不合法，资源URI错误", ctx);
+                error(StandardCode.BAD_REQUEST, IdentHandler.class, "请求格式不合法，资源URI错误", ctx);
                 return;
             }
             ResourceKind.parse(resourceUri.getScheme().toLowerCase());
             actionKind = OptActionKind.parse(queryMap.get(Constant.REQUEST_RESOURCE_ACTION_FLAG).toLowerCase());
         } catch (RTException e) {
-            error(StandardCode.BAD_REQUEST, "请求格式不合法，资源类型或操作类型不存在", ctx);
+            error(StandardCode.BAD_REQUEST, IdentHandler.class, "请求格式不合法，资源类型或操作类型不存在", ctx);
             return;
         }
         ctx.put(Constant.REQUEST_RESOURCE_URI_FLAG, resourceUri);
         ctx.put(Constant.REQUEST_RESOURCE_ACTION_FLAG, actionKind);
 
         var token = ctx.request().headers().contains(security.getTokenFieldName())
-                ? ctx.request().getHeader(security.getTokenFieldName()) : null;
+                && !ctx.request().getHeader(security.getTokenFieldName()).trim().isBlank()
+                ? ctx.request().getHeader(security.getTokenFieldName()).trim() : null;
         var authorization = ctx.request().headers().contains(security.getAkSkFieldName())
-                ? ctx.request().getHeader(security.getAkSkFieldName()) : null;
+                && !ctx.request().getHeader(security.getAkSkFieldName()).trim().isBlank()
+                ? ctx.request().getHeader(security.getAkSkFieldName()).trim() : null;
+
         if (token == null && authorization == null) {
-            if (ctx.request().headers().contains(security.getAppId())) {
+            if (!ctx.request().headers().contains(security.getAppId())
+                    || ctx.request().headers().get(security.getAppId()).trim().isBlank()) {
                 // E.g. 注册租户
                 var identOptCacheInfo = new IdentOptCacheInfo();
                 identOptCacheInfo.setAppId(Constant.OBJECT_UNDEFINED);
@@ -110,11 +114,11 @@ public class IdentHandler extends CommonHttpHandler {
                 ctx.next();
                 return;
             }
-            var appId = Long.parseLong(ctx.request().headers().get(security.getAppId()));
+            var appId = Long.parseLong(ctx.request().headers().get(security.getAppId().trim()));
             RedisClient.choose("").get(security.getCacheAppInfo() + appId, security.getAppInfoCacheExpireSec())
                     .onSuccess(appInfo -> {
                         if (appInfo == null) {
-                            error(StandardCode.UNAUTHORIZED, "认证错误，AppId不合法", ctx);
+                            error(StandardCode.UNAUTHORIZED, IdentHandler.class, "认证错误，AppId不合法", ctx);
                             return;
                         }
                         var appInfoItems = appInfo.split("\n");
@@ -125,7 +129,7 @@ public class IdentHandler extends CommonHttpHandler {
                         ctx.put(CONTEXT_INFO, identOptCacheInfo);
                         ctx.next();
                     })
-                    .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
+                    .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, IdentHandler.class, "缓存服务错误", ctx, e));
             return;
         }
 
@@ -137,26 +141,20 @@ public class IdentHandler extends CommonHttpHandler {
                                 ? $.json.toObject(optInfo, IdentOptCacheInfo.class)
                                 : null;
                         if (optInfo == null) {
-                            error(StandardCode.UNAUTHORIZED, "认证错误，Token不合法", ctx);
+                            error(StandardCode.UNAUTHORIZED, IdentHandler.class, "认证错误，Token不合法", ctx);
                             return;
                         }
                         identOptInfo.setToken(token);
                         ctx.put(CONTEXT_INFO, identOptInfo);
                         ctx.next();
                     })
-                    .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
+                    .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, IdentHandler.class, "缓存服务错误", ctx, e));
             return;
         }
         // fetch ak/sk
-        if (!ctx.request().headers().contains(security.getAkSkDateFieldName())
-                || ctx.request().getHeader(security.getAkSkDateFieldName()).isBlank()) {
-            error(StandardCode.BAD_REQUEST,
-                    "请求格式不合法，HTTP Header[" + security.getAkSkDateFieldName() + "]不存在", ctx);
-            return;
-        }
         if (!authorization.contains(":")
                 || authorization.split(":").length != 2) {
-            error(StandardCode.BAD_REQUEST,
+            error(StandardCode.BAD_REQUEST, IdentHandler.class,
                     "请求格式不合法，HTTP Header[" + security.getAkSkFieldName() + "]格式错误", ctx);
             return;
         }
@@ -167,7 +165,7 @@ public class IdentHandler extends CommonHttpHandler {
         var sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         if (sdf.parse(reqDate).getTime() + security.getAppRequestDateOffsetMs() < System.currentTimeMillis()) {
-            error(StandardCode.UNAUTHORIZED, "认证错误，请求时间已过期", ctx);
+            error(StandardCode.UNAUTHORIZED, IdentHandler.class, "认证错误，请求时间已过期", ctx);
             return;
         }
         var reqPath = ctx.request().path();
@@ -176,7 +174,7 @@ public class IdentHandler extends CommonHttpHandler {
         RedisClient.choose("").get(security.getCacheAkSkInfoKey() + ak, security.getTokenCacheExpireSec())
                 .onSuccess(legalSkAndAppId -> {
                     if (legalSkAndAppId == null) {
-                        error(StandardCode.UNAUTHORIZED, "认证错误，AK不存在", ctx);
+                        error(StandardCode.UNAUTHORIZED, IdentHandler.class, "认证错误，AK不存在", ctx);
                         return;
                     }
                     var skAndAppIdSplit = legalSkAndAppId.split(":");
@@ -188,7 +186,7 @@ public class IdentHandler extends CommonHttpHandler {
                                     sk, "HmacSHA1"),
                             StandardCharsets.UTF_8);
                     if (!reqSignature.equalsIgnoreCase(calcSignature)) {
-                        error(StandardCode.UNAUTHORIZED, "认证错误，签名不合法", ctx);
+                        error(StandardCode.UNAUTHORIZED, IdentHandler.class, "认证错误，签名不合法", ctx);
                         return;
                     }
                     var identOptInfo = new IdentOptCacheInfo();
@@ -197,7 +195,7 @@ public class IdentHandler extends CommonHttpHandler {
                     ctx.put(CONTEXT_INFO, identOptInfo);
                     ctx.next();
                 })
-                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
+                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, IdentHandler.class, "缓存服务错误", ctx, e));
     }
 
     private String getIP(HttpServerRequest request) {

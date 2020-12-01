@@ -40,7 +40,7 @@ public class CacheHandler extends CommonHttpHandler {
     public void handle(RoutingContext ctx) {
         if (!ctx.request().headers().contains(Constant.REQUEST_RESOURCE_URI_FLAG)
                 || !ctx.request().headers().contains(Constant.REQUEST_RESOURCE_ACTION_FLAG)) {
-            error(StandardCode.BAD_REQUEST, "请求格式不合法", ctx);
+            error(StandardCode.BAD_REQUEST, CacheHandler.class, "请求格式不合法", ctx);
             return;
         }
         var strResourceUriWithoutPath = ctx.request().getHeader(Constant.REQUEST_RESOURCE_URI_FLAG);
@@ -49,11 +49,11 @@ public class CacheHandler extends CommonHttpHandler {
         var resourcePath = resourceUri.getPath().substring(1).split("/");
         var resourceQuery = URIHelper.getSingleValueQuery(resourceUri.getQuery());
         if (!RedisClient.contains(resourceSubjectCode)) {
-            error(StandardCode.BAD_REQUEST, "请求的资源主题不存在", ctx);
+            error(StandardCode.BAD_REQUEST, CacheHandler.class, "请求的资源主题不存在", ctx);
             return;
         }
         if (resourcePath.length < 1) {
-            error(StandardCode.BAD_REQUEST, "请求的格式不正确", ctx);
+            error(StandardCode.BAD_REQUEST, CacheHandler.class, "请求的格式不正确", ctx);
             return;
         }
         var key = resourcePath[0];
@@ -116,7 +116,7 @@ public class CacheHandler extends CommonHttpHandler {
                     }
                 }
                 log.warn("[Cache]Unsupported operations: action = {}, key = {}, fieldKey = {}, body = {}, expire = {}", action, key, fieldKey, body, attrExpire);
-                error(StandardCode.BAD_REQUEST, "请求的格式不正确", ctx);
+                error(StandardCode.BAD_REQUEST, CacheHandler.class, "请求的格式不正确", ctx);
                 break;
             case DELETE:
                 if (fieldKey == null || fieldKey.isBlank() || fieldKey.equals("*")) {
@@ -131,7 +131,7 @@ public class CacheHandler extends CommonHttpHandler {
 
     private <E> void resultProcess(AsyncResult<E> handler, RoutingContext ctx) {
         if (handler.failed()) {
-            error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, handler.cause());
+            error(StandardCode.INTERNAL_SERVER_ERROR, CacheHandler.class, "缓存服务错误", ctx, handler.cause());
             return;
         }
         var result = handler.result();

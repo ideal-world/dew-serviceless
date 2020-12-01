@@ -34,7 +34,8 @@
 
     <properties>
         <exec-maven-plugin.version>1.5.0</exec-maven-plugin.version>
-        <maven.test.skip>false</maven.test.skip>
+        <maven.install.skip>true</maven.install.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
 
     <build>
@@ -84,7 +85,8 @@
                         </goals>
                         <phase>test</phase>
                         <configuration>
-                            <arguments>test --skipTests=${maven.test.skip}</arguments>
+                            <skip>${maven.test.skip}</skip>
+                            <arguments>test</arguments>
                         </configuration>
                     </execution>
                     <execution>

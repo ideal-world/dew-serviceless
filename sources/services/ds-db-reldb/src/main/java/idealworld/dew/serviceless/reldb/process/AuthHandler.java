@@ -53,13 +53,13 @@ public class AuthHandler extends CommonHttpHandler {
     public void handle(RoutingContext ctx) {
         if (!ctx.request().headers().contains(Constant.REQUEST_IDENT_OPT_FLAG)
                 || !ctx.request().headers().contains(Constant.REQUEST_RESOURCE_URI_FLAG)) {
-            error(StandardCode.BAD_REQUEST, "请求格式不合法", ctx);
+            error(StandardCode.BAD_REQUEST, AuthHandler.class, "请求格式不合法", ctx);
             return;
         }
         var strResourceUriWithoutPath = ctx.request().getHeader(Constant.REQUEST_RESOURCE_URI_FLAG);
         var resourceSubjectCode = URIHelper.newURI(strResourceUriWithoutPath).getHost();
         if (!MysqlClient.contains(resourceSubjectCode)) {
-            error(StandardCode.BAD_REQUEST, "请求的资源主题不存在", ctx);
+            error(StandardCode.BAD_REQUEST, AuthHandler.class, "请求的资源主题不存在", ctx);
             return;
         }
         var strIdentOpt = $.security.decodeBase64ToString(ctx.request().getHeader(Constant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8);
@@ -70,7 +70,7 @@ public class AuthHandler extends CommonHttpHandler {
         RedisClient.choose("").get(security.getCacheAppInfo() + identOptInfo.getAppId(), security.getAppInfoCacheExpireSec())
                 .onSuccess(appInfo -> {
                     if (appInfo == null) {
-                        error(StandardCode.UNAUTHORIZED, "认证错误，AppId不合法", ctx);
+                        error(StandardCode.UNAUTHORIZED, AuthHandler.class, "认证错误，AppId不合法", ctx);
                         return;
                     }
                     var appInfoItems = appInfo.split("\n");
@@ -79,7 +79,7 @@ public class AuthHandler extends CommonHttpHandler {
                             $.security.decodeBase64ToBytes(encryptSql), privateKey, 1024, "RSA/ECB/OAEPWithSHA1AndMGF1Padding"));
                     var sqlAsts = SqlParser.parse(decryptSql);
                     if (sqlAsts == null) {
-                        error(StandardCode.BAD_REQUEST, "请求的SQL解析错误", ctx);
+                        error(StandardCode.BAD_REQUEST, AuthHandler.class, "请求的SQL解析错误", ctx);
                         return;
                     }
                     var resources = sqlAsts.stream()
@@ -97,16 +97,16 @@ public class AuthHandler extends CommonHttpHandler {
                     authPolicy.authentication(resources, subjectInfo)
                             .onSuccess(authResultKind -> {
                                 if (authResultKind == AuthResultKind.REJECT) {
-                                    error(StandardCode.UNAUTHORIZED, "鉴权错误，没有权限访问对应的资源", ctx);
+                                    error(StandardCode.UNAUTHORIZED, AuthHandler.class, "鉴权错误，没有权限访问对应的资源", ctx);
                                     return;
                                 }
                                 MysqlClient.choose(URIHelper.newURI(strResourceUriWithoutPath).getHost()).exec(decryptSql, parameters)
                                         .onSuccess(result -> ctx.end(result.toBuffer()))
-                                        .onFailure(e -> error(StandardCode.BAD_REQUEST, "数据查询错误", ctx, e));
+                                        .onFailure(e -> error(StandardCode.BAD_REQUEST, AuthHandler.class, "数据查询错误", ctx, e));
                             })
-                            .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
+                            .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, AuthHandler.class, "鉴权服务错误", ctx, e));
                 })
-                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
+                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, AuthHandler.class, "缓存服务错误", ctx, e));
     }
 
 }

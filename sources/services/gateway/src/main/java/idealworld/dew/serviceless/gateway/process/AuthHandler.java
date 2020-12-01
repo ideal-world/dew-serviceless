@@ -50,12 +50,12 @@ public class AuthHandler extends CommonHttpHandler {
         authPolicy.authentication(action.toString(), resourceUri, subjectInfo)
                 .onSuccess(authResultKind -> {
                     if (authResultKind == AuthResultKind.REJECT) {
-                        error(StandardCode.UNAUTHORIZED, "鉴权错误，没有权限访问对应的资源[" + action + "|" + resourceUri.toString() + "]", ctx);
+                        error(StandardCode.UNAUTHORIZED, AuthHandler.class, "鉴权错误，没有权限访问对应的资源[" + action + "|" + resourceUri.toString() + "]", ctx);
                         return;
                     }
                     ctx.next();
                 })
-                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, "服务错误", ctx, e));
+                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, AuthHandler.class, "鉴权服务错误", ctx, e));
     }
 
 

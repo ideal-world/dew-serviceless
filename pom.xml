@@ -22,7 +22,7 @@
 
     <groupId>group.idealworld.dew</groupId>
     <artifactId>serviceless-build</artifactId>
-    <name>0 Dew Serviceless Build</name>
+    <name>0.0 Dew Serviceless Build</name>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
@@ -48,6 +48,11 @@
         <url>https://github.com/ideal-world/dew-serviceless</url>
     </scm>
 
+    <properties>
+        <maven.install.skip>true</maven.install.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
     <modules>
         <module>parents/basic</module>
         <module>parents/vertx</module>
@@ -61,6 +66,7 @@
         <module>sources/services/ds-db-reldb</module>
         <module>sources/services/ds-cache</module>
         <module>sources/terminals</module>
+        <module>it</module>
 
     </modules>
 

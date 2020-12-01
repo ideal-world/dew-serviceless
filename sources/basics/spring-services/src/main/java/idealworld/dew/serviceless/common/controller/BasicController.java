@@ -18,6 +18,8 @@ package idealworld.dew.serviceless.common.controller;
 
 import com.ecfront.dew.common.tuple.Tuple2;
 import group.idealworld.dew.Dew;
+import group.idealworld.dew.core.auth.dto.OptInfo;
+import idealworld.dew.serviceless.common.Constant;
 import idealworld.dew.serviceless.common.dto.IdentOptCacheInfo;
 import idealworld.dew.serviceless.common.resp.StandardResp;
 import org.springframework.core.io.FileSystemResource;
@@ -28,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Optional;
 
 /**
  * Basic controller.
@@ -36,24 +39,40 @@ import java.nio.file.Files;
  */
 public abstract class BasicController {
 
-    protected Tuple2<Long, Long> getCurrentAppAndTenantId() {
+    private Optional<IdentOptCacheInfo> getIdentOptCacheInfo() {
         return Dew.auth.getOptInfo()
-                .map(info -> new Tuple2<>(((IdentOptCacheInfo) info).getAppId(), ((IdentOptCacheInfo) info).getTenantId()))
+                .map(info -> {
+                    if (((IdentOptCacheInfo) info).getAppId() == Constant.OBJECT_UNDEFINED
+                            || ((IdentOptCacheInfo) info).getTenantId() == Constant.OBJECT_UNDEFINED) {
+                        throw StandardResp.e(
+                                StandardResp.unAuthorized("BASIC", "凭证不存在")
+                        );
+                    }
+                    return Optional.of((IdentOptCacheInfo) info);
+                })
+                .orElseThrow(() -> StandardResp.e(
+                        StandardResp.unAuthorized("BASIC", "凭证不存在")
+                ));
+    }
+
+    protected Tuple2<Long, Long> getCurrentAppAndTenantId() {
+        return getIdentOptCacheInfo()
+                .map(info -> new Tuple2<>(info.getAppId(), info.getTenantId()))
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.unAuthorized("BASIC", "用户未登录")
                 ));
     }
 
     protected Long getCurrentTenantId() {
-        return Dew.auth.getOptInfo()
-                .map(info -> ((IdentOptCacheInfo) info).getTenantId())
+        return getIdentOptCacheInfo()
+                .map(IdentOptCacheInfo::getTenantId)
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.unAuthorized("BASIC", "用户未登录")
                 ));
     }
 
     protected String getCurrentOpenId() {
-        return Dew.auth.getOptInfo()
+        return getIdentOptCacheInfo()
                 .map(info -> (String) info.getAccountCode())
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.unAuthorized("BASIC", "用户未登录")
@@ -61,8 +80,8 @@ public abstract class BasicController {
     }
 
     protected String getCurrentToken() {
-        return Dew.auth.getOptInfo()
-                .map(info -> info.getToken())
+        return getIdentOptCacheInfo()
+                .map(OptInfo::getToken)
                 .orElseThrow(() -> StandardResp.e(
                         StandardResp.unAuthorized("BASIC", "用户未登录")
                 ));

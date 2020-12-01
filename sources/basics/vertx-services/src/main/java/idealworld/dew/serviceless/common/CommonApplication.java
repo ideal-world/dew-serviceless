@@ -65,10 +65,10 @@ public abstract class CommonApplication<C extends CommonConfig> extends Abstract
         String config;
         try {
             config = $.file.readAllByClassPath("application-" + System.getProperty(PROFILE_KEY) + ".yml", StandardCharsets.UTF_8);
-        } catch (RTIOException ignore) {
+        } catch (RTIOException | NullPointerException ignore) {
             try {
                 config = $.file.readAllByClassPath("application-" + System.getProperty(PROFILE_KEY) + ".yaml", StandardCharsets.UTF_8);
-            } catch (RTIOException e) {
+            } catch (RTIOException | NullPointerException e) {
                 log.error("[Startup]Configuration file [{}] not found in classpath", "application-" + System.getProperty(PROFILE_KEY) + ".yml/yaml");
                 throw e;
             }

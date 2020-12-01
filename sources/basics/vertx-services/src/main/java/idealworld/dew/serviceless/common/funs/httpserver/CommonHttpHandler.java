@@ -40,13 +40,13 @@ public abstract class CommonHttpHandler implements Handler<RoutingContext> {
 
     protected static final String CONTEXT_INFO = "CONTEXT";
 
-    protected void error(StandardCode statusCode, String msg, RoutingContext ctx) {
-        log.warn("[Process]Request error [{}]: {}", statusCode.toString(), msg);
+    protected void error(StandardCode statusCode, Class<?> clazz, String msg, RoutingContext ctx) {
+        log.warn("[" + clazz.getSimpleName() + "]Request error [{}]: {}", statusCode.toString(), msg);
         ctx.response().setStatusCode(Integer.parseInt(statusCode.toString())).end(msg);
     }
 
-    protected void error(StandardCode statusCode, String msg, RoutingContext ctx, Throwable e) {
-        log.warn("[Process]Request error [{}]{}", statusCode.toString(), e.getMessage(), e);
+    protected void error(StandardCode statusCode, Class<?> clazz, String msg, RoutingContext ctx, Throwable e) {
+        log.warn("[" + clazz.getSimpleName() + "]Request error [{}]{}", statusCode.toString(), e.getMessage(), e);
         ctx.response().setStatusCode(Integer.parseInt(statusCode.toString())).end(msg);
     }
 
