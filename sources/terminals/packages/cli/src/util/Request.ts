@@ -26,7 +26,6 @@ const MOCK_DATA: JsonMap<Function> = {}
 const TOKEN_FLAG = 'Dew-Token'
 const REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri"
 const REQUEST_RESOURCE_ACTION_FLAG = "Dew-Resource-Action"
-const APP_ID_FLAG = "Dew-App-Id"
 
 const AUTHENTICATION_HEAD_NAME = 'Authentication'
 const DATE_HEAD_NAME = 'Dew-Date'
@@ -73,23 +72,25 @@ export function req<T>(name: string, resourceUri: string, resourceAction: string
     headers[TOKEN_FLAG] = _token ? _token : ''
     let pathAndQuery = REQUEST_RESOURCE_URI_FLAG + '=' + resourceUri + '&' + REQUEST_RESOURCE_ACTION_FLAG + '=' + resourceAction
     generateAuthentication('post', pathAndQuery, headers)
-    console.log('[Dew]Request [%s]%s', resourceAction, resourceUri)
+    console.log('[Dew]Request [%s]%s , GW = [%s]', resourceAction, resourceUri, _serverUrl)
     return new Promise((resolve, reject) => {
         axios.request<any>({
             url: _serverUrl + '?' + pathAndQuery,
             method: 'post',
             headers: headers,
-            data: body
+            data: body ? body : {}
         })
             .then(res => {
                 let data = res.data
                 if (data.code === '200') {
                     resolve(data.body)
                 } else {
+                    console.error('请求错误 : [' + data.code + ']' + data.message)
                     reject('[' + data.code + ']' + data.message)
                 }
             })
             .catch(error => {
+                console.error('请求错误 : [' + error.response.status + ']' + error.stack)
                 reject(error)
             })
     })

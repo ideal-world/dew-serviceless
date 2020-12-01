@@ -11,9 +11,8 @@
     "clean": "rimraf ./dist && rimraf tsconfig.build.tsbuildinfo",
     "compile": "tsc -b",
     "build": "yarn run clean && yarn run compile",
-    "test": "jest",
-    "testC": "jest --coverage --no-cache",
-    "prepublishOnly": "yarn run build"
+    "prepublishOnly": "yarn run build",
+    "start": "tsc && node bin/dewcli"
   },
   "license": "Apache-2.0",
   "author": "gudaoxuri",
@@ -31,21 +30,9 @@
     "moment": "^2.29.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.7",
-    "@types/jest": "^26.0.12",
     "@types/node": "^14.6.2",
-    "browserify": "^16.5.2",
-    "gulp": "^4.0.2",
-    "gulp-rename": "^2.0.0",
-    "gulp-typescript": "^6.0.0-alpha.1",
-    "gulp-uglify-es": "^2.0.0",
-    "jest": "^26.4.2",
-    "ts-jest": "^26.3.0",
     "ts-node": "^9.0.0",
-    "tsify": "^5.0.2",
     "typescript": "^4.0.2",
-    "vinyl-buffer": "^1.0.1",
-    "vinyl-source-stream": "^2.0.0",
     "rimraf": "^3.0.2"
   },
   "bin": {

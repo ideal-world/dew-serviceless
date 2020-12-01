@@ -22,24 +22,27 @@ import * as gitHelper from './util/GitHelper'
 import chalk from "chalk";
 import clear from "clear";
 import figlet from "figlet";
-import {JsonMap} from "./domain/Basic";
 import * as fileHelper from './util/FileHelper';
+import fsPath from "path";
 
 const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless-template-simple.git'
-let _answers: JsonMap<any> = {}
+
+const GATEWAY_SERVER_URL = "http://127.0.0.1:9000";
+const IAM_URL = "http://127.0.0.1:8081";
 
 const createAppWithNewTenantSteps: any[] = [
     {
         type: 'input',
         message: '请输入租户名称:',
         name: 'tenantName',
-        default: _answers.appName,
         when: function (answers: any) {
             return answers.kind === '创建应用'
-                && !answers.createTenant
+                && answers.createTenant
         },
         validate: function (val) {
-            _answers['tenantName'] = val.trim()
+            if (!val.trim()) {
+                return '请输入租户名称'
+            }
             return true
         },
         filter: function (val: string) {
@@ -52,26 +55,30 @@ const createAppWithNewTenantSteps: any[] = [
         default: 'admin',
         when: function (answers: any) {
             return answers.kind === '创建应用'
-                && !answers.createTenant
+                && answers.createTenant
         },
         validate: function (val) {
-            _answers['tenantAdminUsername'] = val.trim()
+            if (!val.trim()) {
+                return '请输入管理员用户名'
+            }
             return true
         },
         filter: function (val: string) {
             return val.trim()
         }
     }, {
-        type: 'password',
+        type: 'input',
         message: '请输入管理员密码:',
         name: 'tenantAdminPassword',
         default: 'Dew93Xi2@s!',
         when: function (answers: any) {
             return answers.kind === '创建应用'
-                && !answers.createTenant
+                && answers.createTenant
         },
         validate: function (val) {
-            _answers['tenantAdminPassword'] = val
+            if (!val.trim()) {
+                return '请输入管理员密码'
+            }
             return true
         },
     },
@@ -84,10 +91,12 @@ const createAppWithExistTenantSteps: any[] = [
         name: 'tenantAdminUsername',
         when: function (answers: any) {
             return answers.kind === '创建应用'
-                && answers.createTenant
+                && !answers.createTenant
         },
         validate: function (val) {
-            _answers['tenantAdminUsername'] = val.trim()
+            if (!val.trim()) {
+                return '请输入要创建应用的租户管理员用户名'
+            }
             return true
         },
         filter: function (val: string) {
@@ -99,10 +108,12 @@ const createAppWithExistTenantSteps: any[] = [
         name: 'tenantAdminPassword',
         when: function (answers: any) {
             return answers.kind === '创建应用'
-                && answers.createTenant
+                && !answers.createTenant
         },
         validate: function (val) {
-            _answers['tenantAdminPassword'] = val
+            if (!val.trim()) {
+                return '请输入要创建应用的租户管理员密码'
+            }
             return true
         },
     }, {
@@ -114,7 +125,12 @@ const createAppWithExistTenantSteps: any[] = [
                 && !answers.createTenant
         },
         validate: function (val) {
-            _answers['tenantAdminAppId'] = val.trim()
+            if (!val.trim()) {
+                return '请输入要创建应用的租户管理员的应用Id'
+            }
+            if (isNaN(parseInt(val.trim()))) {
+                return '应用Id为数值类型'
+            }
             return true
         },
         filter: function (val: string) {
@@ -132,7 +148,13 @@ const createAppSteps: any[] = [
             return answers.kind === '创建应用'
         },
         validate: function (val) {
-            _answers['appName'] = val.trim()
+            if (!val.trim()) {
+                return '请输入应用名称'
+            }
+            let path = fsPath.resolve(fileHelper.pwd(), val.trim())
+            if (fileHelper.exists(path)) {
+                return '该应用名称在当前路径下已存在，请更换应用名称或路径'
+            }
             return true
         },
         filter: function (val: string) {
@@ -144,11 +166,7 @@ const createAppSteps: any[] = [
         name: "createTenant",
         when: function (answers: any) {
             return answers.kind === '创建应用'
-        },
-        validate: function (val) {
-            _answers['createTenant'] = val.trim()
-            return true
-        },
+        }
     }
 ].concat(createAppWithExistTenantSteps, createAppWithNewTenantSteps)
 
@@ -157,7 +175,11 @@ const allSteps: any[] = [
         type: 'input',
         message: '请输入服务地址:',
         name: 'serverUrl',
+        default: GATEWAY_SERVER_URL,
         validate: function (val) {
+            if (!val.trim()) {
+                return '请输入服务地址'
+            }
             request.setServerUrl(val)
             return true
         }
@@ -167,27 +189,23 @@ const allSteps: any[] = [
         name: 'kind',
         choices: [
             "创建应用",
-        ],
-        validate: function (val) {
-            _answers['kind'] = val.trim()
-            return true
-        },
+        ]
     }
 ].concat(createAppSteps)
 
-async function createApp() {
+async function createApp(answers: any) {
     let confirmMessage
-    if (!_answers.createTenant) {
-        let identOptInfo = await request.req<IdentOptInfo>('login', 'http://iam/common/login', 'CREATE', {
-            ak: _answers.tenantAdminUsername,
-            sk: _answers.tenantAdminPassword,
-            relAppId: _answers.tenantAdminAppId
+    if (!answers.createTenant) {
+        let identOptInfo = await request.req<IdentOptInfo>('login', IAM_URL + '/common/login', 'CREATE', {
+            ak: answers.tenantAdminUsername,
+            sk: answers.tenantAdminPassword,
+            relAppId: answers.tenantAdminAppId
         })
         request.setToken(identOptInfo.token)
-        let tenantName = (await request.req<any>('getTenant', 'http://iam/console/tenant/tenant', 'FETCH')).name
-        confirmMessage = '即将在租户 [' + tenantName + '] 中创建应用 [' + _answers.appName + ']'
+        let tenantName = (await request.req<any>('getTenant', IAM_URL + '/console/tenant/tenant', 'FETCH')).name
+        confirmMessage = '即将在租户 [' + tenantName + '] 中创建应用 [' + answers.appName + ']'
     } else {
-        confirmMessage = '即将创建应用 [' + _answers.appName + ']'
+        confirmMessage = '即将创建应用 [' + answers.appName + ']'
     }
     let confirmAnswer = await inquirer.prompt([{
         type: 'confirm',
@@ -197,38 +215,39 @@ async function createApp() {
     if (!confirmAnswer) {
         return;
     }
-    if (_answers.createTenant) {
-        let identOptInfo = await request.req<IdentOptInfo>('createTenant', 'http://iam/common/tenant', 'CREATE', {
-            tenantName: _answers.tenantName,
-            appName: _answers.appName,
-            accountUserName: _answers.tenantAdminUsername,
-            accountPassword: _answers.tenantAdminPassword,
+    if (answers.createTenant) {
+        let identOptInfo = await request.req<IdentOptInfo>('createTenant', IAM_URL + '/common/tenant', 'CREATE', {
+            tenantName: answers.tenantName,
+            appName: answers.appName,
+            accountUserName: answers.tenantAdminUsername,
+            accountPassword: answers.tenantAdminPassword,
         })
         request.setToken(identOptInfo.token)
     } else {
-        await request.req<any>('createApp', 'http://iam/console/tenant/app', 'CREATE', {
-            name: _answers.appName,
+        await request.req<any>('createApp', IAM_URL + '/console/tenant/app', 'CREATE', {
+            name: answers.appName,
         })
     }
-    let publicKey = await request.req<string>('getAppPublicKey', 'http://iam/console/app/app/publicKey', 'FETCH')
-    let path = fileHelper.pwd() + '/' + _answers.appName
-    if (fileHelper.exists(path)) {
-        throw 'The path [' + path + '] already exists.'
-    }
-    console.log('Create template project to %s', path)
+    let publicKey = await request.req<string>('getAppPublicKey', IAM_URL + '/console/app/app/publicKey', 'FETCH')
+    let path = fsPath.resolve(fileHelper.pwd(), answers.appName)
+    console.log(chalk.green('正在创建模板到 [' + path + ']'))
     // TODO package.json 内容替换
     await gitHelper.clone(TEMPLATE_SIMPLE_GIT_ADDR, path, 1)
     fileHelper.writeFile(path + '/Dew.key', publicKey)
-    console.log('Template project created.')
+    console.log(chalk.green.bold.bgWhite('应用创建完成，请到 [' + path + '] 中查看。'))
 }
 
-export async function run(){
+export async function run() {
     clear()
-    console.log(chalk.yellow(figlet.textSync('Dew CLI', {horizontalLayout: 'full'})))
-    await inquirer.prompt(allSteps)
-    switch (_answers.kind) {
-        case '创建应用':
-            await createApp()
-            break;
+    console.log(chalk.green(figlet.textSync('Dew CLI', {horizontalLayout: 'full'})))
+    let answers = await inquirer.prompt(allSteps)
+    try {
+        switch (answers.kind) {
+            case '创建应用':
+                await createApp(answers)
+                break;
+        }
+    } catch (e) {
+        console.log(chalk.red.bold('执行错误，请检查修正。'))
     }
 }
