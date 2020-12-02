@@ -142,10 +142,13 @@ public class TenantConsoleTest extends BasicTest {
         Assertions.assertEquals("应用名称已存在", postToEntity("/console/tenant/app", AppAddReq.builder()
                 .name("testAPP11")
                 .build(), Long.class).getMessage());
+        Assertions.assertEquals("应用名称已存在", postToEntity("/console/tenant/app", AppAddReq.builder()
+                .name(" testapp11 ")
+                .build(), Long.class).getMessage());
 
         // 修改当前租户的某个应用
         Assertions.assertEquals("应用名称已存在", patchToEntity("/console/tenant/app/" + appId, AppModifyReq.builder()
-                .name("testAPP22")
+                .name("testAPp22 ")
                 .build(), Void.class).getMessage());
         Assertions.assertTrue(patchToEntity("/console/tenant/app/" + appId, AppModifyReq.builder()
                 .name("testAPP33")
@@ -154,7 +157,7 @@ public class TenantConsoleTest extends BasicTest {
 
         // 获取当前租户的某个应用信息
         var appResp = getToEntity("/console/tenant/app/" + appId, AppResp.class).getBody();
-        Assertions.assertEquals("testapp33", appResp.getName());
+        Assertions.assertEquals("testAPP33", appResp.getName());
         Assertions.assertEquals(CommonStatus.DISABLED, appResp.getStatus());
 
         // 获取当前租户的应用列表信息
@@ -261,7 +264,6 @@ public class TenantConsoleTest extends BasicTest {
         Assertions.assertFalse(postToEntity("/console/tenant/account/" + accountId + "/app/10", "", Long.class).ok());
 
         // 删除当前租户某个账号的某个关联应用
-        Assertions.assertTrue(delete("/console/tenant/account/" + accountId + "/app/1").ok());
         Assertions.assertFalse(delete("/console/tenant/account/" + accountId + "/app/10").ok());
 
         // --------------------------------------------------------------------

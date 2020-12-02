@@ -70,7 +70,7 @@ export function req<T>(name: string, resourceUri: string, resourceAction: string
     }
     headers = headers ? headers : {}
     headers[TOKEN_FLAG] = _token ? _token : ''
-    let pathAndQuery = REQUEST_RESOURCE_URI_FLAG + '=' + resourceUri + '&' + REQUEST_RESOURCE_ACTION_FLAG + '=' + resourceAction
+    let pathAndQuery = REQUEST_RESOURCE_URI_FLAG + '=' + encodeURIComponent(resourceUri) + '&' + REQUEST_RESOURCE_ACTION_FLAG + '=' + resourceAction
     generateAuthentication('post', pathAndQuery, headers)
     console.log('[Dew]Request [%s]%s , GW = [%s]', resourceAction, resourceUri, _serverUrl)
     return new Promise((resolve, reject) => {
@@ -78,7 +78,7 @@ export function req<T>(name: string, resourceUri: string, resourceAction: string
             url: _serverUrl + '?' + pathAndQuery,
             method: 'post',
             headers: headers,
-            data: body ? body : {}
+            data: body
         })
             .then(res => {
                 let data = res.data

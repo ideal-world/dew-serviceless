@@ -38,7 +38,6 @@ public class Constant {
      */
     public static final String EVENT_NOTIFY_TOPIC_BY_IAM = "event:notify:iam";
 
-
     public static final String REQUEST_PATH_FLAG = "/exec";
     public static final String REQUEST_IDENT_OPT_FLAG = "Dew-Ident-Opt";
     public static final String REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri";
@@ -51,7 +50,7 @@ public class Constant {
     /**
      * 鉴权策略缓存
      */
-    public static final String CACHE_AUTH_POLICY = "iam:auth:policy:";
+    public static final String CACHE_AUTH_POLICY = "dew:iam:policy:";
     /**
      * 最小的时间.
      */

@@ -52,16 +52,18 @@ public class ResourceSubjectResp extends AppBasedResp {
     @NotNull
     @NotBlank
     @Size(max = 255)
+    @Schema(title = "资源主体编码后缀", required = true)
+    private String codePostfix;
+
+    @NotNull
+    @NotBlank
+    @Size(max = 255)
     @Schema(title = "资源主体名称", required = true)
     private String name;
 
     @NotNull
     @Schema(title = "资源主体显示排序，asc", required = true)
     private Integer sort;
-
-    @NotNull
-    @Schema(title = "是否默认", required = true)
-    private Boolean defaultByApp = false;
 
     @NotNull
     @Schema(title = "资源类型", required = true)

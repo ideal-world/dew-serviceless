@@ -71,7 +71,7 @@ public class CommonController extends IAMBasicController {
         return oAuthService.login(accountOAuthLoginReq);
     }
 
-    @PostMapping(value = "logout")
+    @DeleteMapping(value = "logout")
     @Operation(summary = "退出登录")
     public Resp<Void> login() {
         return commonAccountService.logout(getCurrentToken(), getCurrentOpenId());

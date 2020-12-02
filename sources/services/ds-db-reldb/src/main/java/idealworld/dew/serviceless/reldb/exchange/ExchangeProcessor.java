@@ -44,7 +44,7 @@ public class ExchangeProcessor {
 
     public static Future<Void> init(RelDBConfig relDBConfig) {
         var header = HttpClient.getIdentOptHeader(relDBConfig.getIam().getAppId(), relDBConfig.getIam().getTenantId());
-        HttpClient.request(HttpMethod.GET, relDBConfig.getIam().getUri() + "/console/app/resource/subject", null, header)
+        HttpClient.request(HttpMethod.GET, relDBConfig.getIam().getUri() + "/console/app/resource/subject?qKind=" + ResourceKind.RELDB.toString(), null, header)
                 .onSuccess(result -> {
                     var resourceSubjects = $.json.toList(result.toString(), ResourceSubjectExchange.class);
                     for (var resourceSubject : resourceSubjects) {

@@ -3,3 +3,14 @@ redis:
 security:
   tokenCacheExpireSec: 0
   akSkCacheExpireSec: 0
+distribute:
+  iamServiceName: 127.0.0.1
+  iamServicePort: 8081
+  cacheServiceName: 127.0.0.1
+  cacheServicePort: 8082
+  reldbServiceName: 127.0.0.1
+  reldbServicePort: 8083
+  mqServiceName: 127.0.0.1
+  mqServicePort: 8084
+  objServiceName: 127.0.0.1
+  objServicePort: 8085

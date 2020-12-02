@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package idealworld.dew.serviceless.gateway.test;
+package idealworld.dew.serviceless.cache.test;
 
-import idealworld.dew.serviceless.gateway.GatewayApplication;
+import idealworld.dew.serviceless.cache.CacheApplication;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
@@ -24,14 +24,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 
-public class TestGatewayApplication extends BasicTest {
+public class TestCacheApplication extends BasicTest {
 
     @SneakyThrows
     @Test
     public void start(Vertx vertx, VertxTestContext testContext) {
         RedisTestHelper.start();
         System.getProperties().put("dew.profile", "test");
-        vertx.deployVerticle(new GatewayApplication(), testContext.succeedingThenComplete());
+        vertx.deployVerticle(new CacheApplication(), testContext.succeedingThenComplete());
         new CountDownLatch(1).await();
     }
 

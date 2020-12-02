@@ -127,9 +127,9 @@ public class TCAccountService extends IAMBasicService {
                 .where(qAccount.relTenantId.eq(relTenantId)));
     }
 
-    public Resp<Page<AccountResp>> pageAccounts(Long pageNumber, Integer pageSize, Long relTenantId) {
+    public Resp<Page<AccountResp>> pageAccounts(Long pageNumber, Integer pageSize, String qOpenId, String qName, Long relTenantId) {
         var qAccount = QAccount.account;
-        return pageDTOs(sqlBuilder.select(Projections.bean(AccountResp.class,
+        var accountQuery = sqlBuilder.select(Projections.bean(AccountResp.class,
                 qAccount.id,
                 qAccount.openId,
                 qAccount.name,
@@ -139,7 +139,14 @@ public class TCAccountService extends IAMBasicService {
                 qAccount.status,
                 qAccount.relTenantId))
                 .from(qAccount)
-                .where(qAccount.relTenantId.eq(relTenantId)), pageNumber, pageSize);
+                .where(qAccount.relTenantId.eq(relTenantId));
+        if (qOpenId != null && !qOpenId.isBlank()) {
+            accountQuery.where(qAccount.openId.likeIgnoreCase("%" + qOpenId + "%"));
+        }
+        if (qName != null && !qName.isBlank()) {
+            accountQuery.where(qAccount.name.likeIgnoreCase("%" + qName + "%"));
+        }
+        return pageDTOs(accountQuery, pageNumber, pageSize);
     }
 
     @Transactional

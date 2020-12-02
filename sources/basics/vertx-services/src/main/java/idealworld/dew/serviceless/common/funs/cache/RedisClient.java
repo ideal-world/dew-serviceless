@@ -46,6 +46,9 @@ public class RedisClient {
 
     public static void init(String code, Vertx vertx, CommonConfig.RedisConfig config) {
         var redisClient = new RedisClient();
+        if (config.getPassword() != null && config.getPassword().isBlank()) {
+            config.setPassword(null);
+        }
         redisClient.innerVertx = vertx;
         var redis = Redis.createClient(
                 vertx,

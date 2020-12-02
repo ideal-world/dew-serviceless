@@ -54,7 +54,7 @@ public class ACRoleService extends IAMBasicService {
                 .from(qRoleDef)
                 .where(qRoleDef.relTenantId.eq(relTenantId))
                 .where(qRoleDef.relAppId.eq(relAppId))
-                .where(qRoleDef.code.eq(roleDefAddReq.getCode()))
+                .where(qRoleDef.code.equalsIgnoreCase(roleDefAddReq.getCode()))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_ROLE_DEF, "角色定义编码已存在");
         }
@@ -77,7 +77,7 @@ public class ACRoleService extends IAMBasicService {
                 .from(qRoleDef)
                 .where(qRoleDef.relTenantId.eq(relTenantId))
                 .where(qRoleDef.relAppId.eq(relAppId))
-                .where(qRoleDef.code.eq(roleDefModifyReq.getCode()))
+                .where(qRoleDef.code.equalsIgnoreCase(roleDefModifyReq.getCode()))
                 .where(qRoleDef.id.ne(roleDefId))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_ROLE_DEF, "角色定义编码已存在");
@@ -117,9 +117,9 @@ public class ACRoleService extends IAMBasicService {
                 .where(qRoleDef.relAppId.eq(relAppId)));
     }
 
-    public Resp<List<RoleDefResp>> findRoleDef(Long relAppId, Long relTenantId) {
+    public Resp<List<RoleDefResp>> findRoleDef(String qCode, String qName, Long relAppId, Long relTenantId) {
         var qRoleDef = QRoleDef.roleDef;
-        return findDTOs(sqlBuilder.select(Projections.bean(RoleDefResp.class,
+        var roleDefQuery = sqlBuilder.select(Projections.bean(RoleDefResp.class,
                 qRoleDef.id,
                 qRoleDef.code,
                 qRoleDef.name,
@@ -128,8 +128,14 @@ public class ACRoleService extends IAMBasicService {
                 qRoleDef.relTenantId))
                 .from(qRoleDef)
                 .where(qRoleDef.relTenantId.eq(relTenantId))
-                .where(qRoleDef.relAppId.eq(relAppId))
-                .orderBy(qRoleDef.sort.asc()));
+                .where(qRoleDef.relAppId.eq(relAppId));
+        if (qCode != null && !qCode.isBlank()) {
+            roleDefQuery.where(qRoleDef.code.likeIgnoreCase("%" + qCode + "%"));
+        }
+        if (qName != null && !qName.isBlank()) {
+            roleDefQuery.where(qRoleDef.name.likeIgnoreCase("%" + qName + "%"));
+        }
+        return findDTOs(roleDefQuery.orderBy(qRoleDef.sort.asc()));
     }
 
     @Transactional
@@ -245,9 +251,9 @@ public class ACRoleService extends IAMBasicService {
                 .where(qRole.relAppId.eq(relAppId)));
     }
 
-    public Resp<List<RoleResp>> findRoles(Long relAppId, Long relTenantId) {
+    public Resp<List<RoleResp>> findRoles(String qName, Long relAppId, Long relTenantId) {
         var qRole = QRole.role;
-        return findDTOs(sqlBuilder.select(Projections.bean(RoleResp.class,
+        var roleQuery = sqlBuilder.select(Projections.bean(RoleResp.class,
                 qRole.id,
                 qRole.relRoleDefId,
                 qRole.relGroupNodeId,
@@ -258,13 +264,16 @@ public class ACRoleService extends IAMBasicService {
                 qRole.relTenantId))
                 .from(qRole)
                 .where(qRole.relTenantId.eq(relTenantId))
-                .where(qRole.relAppId.eq(relAppId))
-                .orderBy(qRole.sort.asc()));
+                .where(qRole.relAppId.eq(relAppId));
+        if (qName != null && !qName.isBlank()) {
+            roleQuery.where(qRole.name.likeIgnoreCase("%" + qName + "%"));
+        }
+        return findDTOs(roleQuery.orderBy(qRole.sort.asc()));
     }
 
-    public Resp<List<RoleResp>> findExposeRoles(Long relAppId, Long relTenantId) {
+    public Resp<List<RoleResp>> findExposeRoles(String qName, Long relAppId, Long relTenantId) {
         var qRole = QRole.role;
-        return findDTOs(sqlBuilder.select(Projections.bean(RoleResp.class,
+        var roleQuery = sqlBuilder.select(Projections.bean(RoleResp.class,
                 qRole.id,
                 qRole.relRoleDefId,
                 qRole.relGroupNodeId,
@@ -276,8 +285,11 @@ public class ACRoleService extends IAMBasicService {
                 .from(qRole)
                 .where((qRole.exposeKind.eq(ExposeKind.TENANT).and(qRole.relTenantId.eq(relTenantId)))
                         .or(qRole.exposeKind.eq(ExposeKind.GLOBAL)))
-                .where(qRole.relAppId.ne(relAppId))
-                .orderBy(qRole.sort.asc()));
+                .where(qRole.relAppId.ne(relAppId));
+        if (qName != null && !qName.isBlank()) {
+            roleQuery.where(qRole.name.likeIgnoreCase("%" + qName + "%"));
+        }
+        return findDTOs(roleQuery.orderBy(qRole.sort.asc()));
     }
 
     @Transactional
@@ -315,7 +327,7 @@ public class ACRoleService extends IAMBasicService {
         return Resp.success(sqlBuilder.select(qRole.id)
                 .from(qRole)
                 .innerJoin(qRoleDef).on(qRoleDef.id.eq(qRole.relRoleDefId))
-                .where(qRoleDef.code.eq(iamConfig.getSecurity().getTenantAdminRoleDefCode().toLowerCase()))
+                .where(qRoleDef.code.equalsIgnoreCase(iamConfig.getSecurity().getTenantAdminRoleDefCode().toLowerCase()))
                 .orderBy(qRoleDef.createTime.asc())
                 .fetchOne());
     }
@@ -326,7 +338,7 @@ public class ACRoleService extends IAMBasicService {
         return Resp.success(sqlBuilder.select(qRole.id)
                 .from(qRole)
                 .innerJoin(qRoleDef).on(qRoleDef.id.eq(qRole.relRoleDefId))
-                .where(qRoleDef.code.eq(iamConfig.getSecurity().getAppAdminRoleDefCode().toLowerCase()))
+                .where(qRoleDef.code.equalsIgnoreCase(iamConfig.getSecurity().getAppAdminRoleDefCode().toLowerCase()))
                 .orderBy(qRoleDef.createTime.asc())
                 .fetchOne());
     }

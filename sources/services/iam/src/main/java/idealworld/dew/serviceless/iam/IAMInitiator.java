@@ -187,49 +187,67 @@ public class IAMInitiator extends IAMBasicService implements ApplicationListener
         tcAccountService.addAccountRole(iamAccountId, appRoleAdminId, tenantId);
         // 初始化资源主体
         var iamAPIResourceSubjectId = acResourceService.addResourceSubject(ResourceSubjectAddReq.builder()
-                .code("iam")
-                .name(iamConfig.getApp().getIamAppName())
+                .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
+                .name(iamConfig.getApp().getIamAppName() + " APIs")
                 .uri(iamConfig.getServiceUrl())
                 .kind(ResourceKind.HTTP)
                 .build(), iamAppId, tenantId).getBody();
+        var iamMenuResourceSubjectId = acResourceService.addResourceSubject(ResourceSubjectAddReq.builder()
+                .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
+                .name(iamConfig.getApp().getIamAppName() + "Menus")
+                .uri(iamConfig.getServiceUrl().replace("http", "menu"))
+                .kind(ResourceKind.MENU)
+                .build(), iamAppId, tenantId).getBody();
         // 初始化资源
-        var systemResourceId = acResourceService.addResource(ResourceAddReq.builder()
+        var systemAPIResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("系统控制台资源")
-                .uri(iamConfig.getServiceUrl() + "/console/system/**")
+                .pathAndQuery("/console/system/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .build(), iamAppId, tenantId).getBody();
-        var tenantResourceId = acResourceService.addResource(ResourceAddReq.builder()
+        var tenantAPIResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("租户控制台资源")
-                .uri(iamConfig.getServiceUrl() + "/console/tenant/**")
+                .pathAndQuery("/console/tenant/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .exposeKind(ExposeKind.GLOBAL)
                 .build(), iamAppId, tenantId).getBody();
-        var appResourceId = acResourceService.addResource(ResourceAddReq.builder()
+        var appAPIResourceId = acResourceService.addResource(ResourceAddReq.builder()
                 .name("应用控制台资源")
-                .uri(iamConfig.getServiceUrl() + "/console/app/**")
+                .pathAndQuery("/console/app/**")
                 .relResourceSubjectId(iamAPIResourceSubjectId)
                 .exposeKind(ExposeKind.GLOBAL)
+                .build(), iamAppId, tenantId).getBody();
+        var appMenuResourceId = acResourceService.addResource(ResourceAddReq.builder()
+                .name("应用控制台菜单")
+                .pathAndQuery("/app")
+                .relResourceSubjectId(iamMenuResourceSubjectId)
                 .build(), iamAppId, tenantId).getBody();
         // 初始化权限策略
         acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ROLE)
                 .relSubjectIds(systemRoleAdminId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
-                .relResourceId(systemResourceId)
+                .relResourceId(systemAPIResourceId)
                 .resultKind(AuthResultKind.ACCEPT)
                 .build(), iamAppId, tenantId);
         acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ROLE)
                 .relSubjectIds(tenantRoleAdminId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
-                .relResourceId(tenantResourceId)
+                .relResourceId(tenantAPIResourceId)
                 .resultKind(AuthResultKind.ACCEPT)
                 .build(), iamAppId, tenantId);
         acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ROLE)
                 .relSubjectIds(appRoleAdminId + ",")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)
-                .relResourceId(appResourceId)
+                .relResourceId(appAPIResourceId)
+                .resultKind(AuthResultKind.ACCEPT)
+                .build(), iamAppId, tenantId);
+        acAuthPolicyService.addAuthPolicy(AuthPolicyAddReq.builder()
+                .relSubjectKind(AuthSubjectKind.ROLE)
+                .relSubjectIds(appRoleAdminId + ",")
+                .subjectOperator(AuthSubjectOperatorKind.EQ)
+                .relResourceId(appMenuResourceId)
                 .resultKind(AuthResultKind.ACCEPT)
                 .build(), iamAppId, tenantId);
         log.info("[Startup]Initialization complete.\n" +

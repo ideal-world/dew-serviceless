@@ -18,6 +18,7 @@ package idealworld.dew.serviceless.iam.scene.appconsole.controller;
 
 import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
+import idealworld.dew.serviceless.common.enumeration.AuthSubjectKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyAddReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyModifyReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyResp;
@@ -69,9 +70,10 @@ public class ACAuthPolicyController extends IAMBasicController {
 
     @GetMapping(value = "")
     @Operation(summary = "获取当前应用的权限策略列表信息")
-    public Resp<Page<AuthPolicyResp>> pageAuthPolicies(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
+    public Resp<Page<AuthPolicyResp>> pageAuthPolicies(@RequestParam Long pageNumber, @RequestParam Integer pageSize,
+                                                       @RequestParam(required = false) AuthSubjectKind qSubjectKind) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acAuthPolicyService.pageAuthPolicies(pageNumber, pageSize, currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return acAuthPolicyService.pageAuthPolicies(pageNumber, pageSize, qSubjectKind, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "{authPolicyId}")

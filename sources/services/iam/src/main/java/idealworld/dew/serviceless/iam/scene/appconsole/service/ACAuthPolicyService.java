@@ -20,12 +20,14 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
+import idealworld.dew.serviceless.common.enumeration.AuthSubjectKind;
 import idealworld.dew.serviceless.common.enumeration.OptActionKind;
 import idealworld.dew.serviceless.common.resp.StandardResp;
 import idealworld.dew.serviceless.iam.domain.auth.AuthPolicy;
 import idealworld.dew.serviceless.iam.domain.auth.QAuthPolicy;
 import idealworld.dew.serviceless.iam.domain.auth.QResource;
 import idealworld.dew.serviceless.iam.enumeration.ExposeKind;
+import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyAddReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyModifyReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyResp;
@@ -52,6 +54,8 @@ public class ACAuthPolicyService extends IAMBasicService {
 
     @Autowired
     private CommonFunctionService commonFunctionService;
+    @Autowired
+    private ExchangeProcessor exchangeProcessor;
 
     @Transactional
     public Resp<List<Long>> addAuthPolicy(AuthPolicyAddReq authPolicyAddReq, Long relAppId, Long relTenantId) {
@@ -59,13 +63,14 @@ public class ACAuthPolicyService extends IAMBasicService {
             authPolicyAddReq.setRelSubjectIds(authPolicyAddReq.getRelSubjectIds() + ",");
         }
         var qResource = QResource.resource;
-        if (sqlBuilder.select(qResource.id)
+        var resourceUri = sqlBuilder.select(qResource.uri)
                 .from(qResource)
                 .where(qResource.id.eq(authPolicyAddReq.getRelResourceId()))
                 .where((qResource.relTenantId.eq(relTenantId).and(qResource.relAppId.eq(relAppId)))
                         .or(qResource.exposeKind.eq(ExposeKind.TENANT).and(qResource.relTenantId.eq(relTenantId)))
                         .or(qResource.exposeKind.eq(ExposeKind.GLOBAL)))
-                .fetchCount() == 0) {
+                .fetchOne();
+        if (resourceUri == null) {
             return StandardResp.unAuthorized(BUSINESS_AUTH_POLICY, "权限策略对应的资源不合法");
         }
         var subjectIds = Arrays.stream(authPolicyAddReq.getRelSubjectIds().split(","))
@@ -99,6 +104,7 @@ public class ACAuthPolicyService extends IAMBasicService {
         var existsCheckQuery = sqlBuilder.select(qAuthPolicy.id)
                 .from(qAuthPolicy)
                 .where(qAuthPolicy.relSubjectKind.eq(authPolicyAddReq.getRelSubjectKind()))
+                // TODO 是否存在需要拆分判断
                 .where(qAuthPolicy.relSubjectIds.eq(authPolicyAddReq.getRelSubjectIds()))
                 .where(qAuthPolicy.effectiveTime.eq(authPolicyAddReq.getEffectiveTime()))
                 .where(qAuthPolicy.expiredTime.eq(authPolicyAddReq.getExpiredTime()))
@@ -125,8 +131,57 @@ public class ACAuthPolicyService extends IAMBasicService {
             patchAuthPolicy.setActionKind(OptActionKind.PATCH);
             var deleteAuthPolicy = $.bean.copyProperties(authPolicy, AuthPolicy.class);
             deleteAuthPolicy.setActionKind(OptActionKind.DELETE);
+            var saveR = saveEntities(createAuthPolicy, existsAuthPolicy, fetchAuthPolicy, modifyAuthPolicy, patchAuthPolicy, deleteAuthPolicy);
+            if (!saveR.ok()) {
+                return saveR;
+            }
+            subjectIds.forEach(subjectId -> {
+                exchangeProcessor.addPolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                        .resourceUri(resourceUri)
+                        .actionKind(OptActionKind.CREATE)
+                        .subjectKind(authPolicy.getRelSubjectKind())
+                        .subjectOperator(authPolicy.getSubjectOperator())
+                        .subjectId(subjectId + "")
+                        .build());
+                exchangeProcessor.addPolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                        .resourceUri(resourceUri)
+                        .actionKind(OptActionKind.EXISTS)
+                        .subjectKind(authPolicy.getRelSubjectKind())
+                        .subjectOperator(authPolicy.getSubjectOperator())
+                        .subjectId(subjectId + "")
+                        .build());
+                exchangeProcessor.addPolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                        .resourceUri(resourceUri)
+                        .actionKind(OptActionKind.FETCH)
+                        .subjectKind(authPolicy.getRelSubjectKind())
+                        .subjectOperator(authPolicy.getSubjectOperator())
+                        .subjectId(subjectId + "")
+                        .build());
+                exchangeProcessor.addPolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                        .resourceUri(resourceUri)
+                        .actionKind(OptActionKind.MODIFY)
+                        .subjectKind(authPolicy.getRelSubjectKind())
+                        .subjectOperator(authPolicy.getSubjectOperator())
+                        .subjectId(subjectId + "")
+                        .build());
+                exchangeProcessor.addPolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                        .resourceUri(resourceUri)
+                        .actionKind(OptActionKind.PATCH)
+                        .subjectKind(authPolicy.getRelSubjectKind())
+                        .subjectOperator(authPolicy.getSubjectOperator())
+                        .subjectId(subjectId + "")
+                        .build());
+                exchangeProcessor.addPolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                        .resourceUri(resourceUri)
+                        .actionKind(OptActionKind.DELETE)
+                        .subjectKind(authPolicy.getRelSubjectKind())
+                        .subjectOperator(authPolicy.getSubjectOperator())
+                        .subjectId(subjectId + "")
+                        .build());
+            });
+
             return sendMQBySave(
-                    saveEntities(createAuthPolicy, existsAuthPolicy, fetchAuthPolicy, modifyAuthPolicy, patchAuthPolicy, deleteAuthPolicy),
+                    saveR,
                     AuthPolicy.class
             );
         } else {
@@ -134,6 +189,13 @@ public class ACAuthPolicyService extends IAMBasicService {
             if (!saveR.ok()) {
                 return Resp.error(saveR);
             }
+            subjectIds.forEach(subjectId -> exchangeProcessor.addPolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                    .resourceUri(resourceUri)
+                    .actionKind(authPolicy.getActionKind())
+                    .subjectKind(authPolicy.getRelSubjectKind())
+                    .subjectOperator(authPolicy.getSubjectOperator())
+                    .subjectId(subjectId + "")
+                    .build()));
             return sendMQBySave(
                     Resp.success(new ArrayList<>() {
                         {
@@ -224,8 +286,46 @@ public class ACAuthPolicyService extends IAMBasicService {
         if (authPolicyModifyReq.getExclusive() != null) {
             authPolicyUpdate.set(qAuthPolicy.exclusive, authPolicyModifyReq.getExclusive());
         }
+        var originalAuthPolicy = sqlBuilder.selectFrom(qAuthPolicy)
+                .where(qAuthPolicy.id.eq(authPolicyId))
+                .fetchOne();
+        var updateR = updateEntity(authPolicyUpdate);
+        if (!updateR.ok()) {
+            return updateR;
+        }
+        var originalAuthPolicyResourceUri = sqlBuilder.select(qResource.uri)
+                .from(qResource)
+                .where(qResource.id.eq(originalAuthPolicy.getRelResourceId()))
+                .fetchOne();
+        var newAuthPolicy = sqlBuilder.selectFrom(qAuthPolicy)
+                .where(qAuthPolicy.id.eq(authPolicyId))
+                .fetchOne();
+        var newAuthPolicyResourceUri = sqlBuilder.select(qResource.uri)
+                .from(qResource)
+                .where(qResource.id.eq(newAuthPolicy.getRelResourceId()))
+                .fetchOne();
+        Arrays.stream(originalAuthPolicy.getRelSubjectIds().split(","))
+                .filter(id -> !id.trim().isBlank())
+                .map(id -> Long.parseLong(id.trim()))
+                .forEach(subjectId -> exchangeProcessor.removePolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                        .resourceUri(originalAuthPolicyResourceUri)
+                        .actionKind(originalAuthPolicy.getActionKind())
+                        .subjectKind(originalAuthPolicy.getRelSubjectKind())
+                        .subjectOperator(originalAuthPolicy.getSubjectOperator())
+                        .subjectId(subjectId + "")
+                        .build()));
+        Arrays.stream(newAuthPolicy.getRelSubjectIds().split(","))
+                .filter(id -> !id.trim().isBlank())
+                .map(id -> Long.parseLong(id.trim()))
+                .forEach(subjectId -> exchangeProcessor.removePolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                        .resourceUri(newAuthPolicyResourceUri)
+                        .actionKind(newAuthPolicy.getActionKind())
+                        .subjectKind(newAuthPolicy.getRelSubjectKind())
+                        .subjectOperator(newAuthPolicy.getSubjectOperator())
+                        .subjectId(subjectId + "")
+                        .build()));
         return sendMQByUpdate(
-                updateEntity(authPolicyUpdate),
+                updateR,
                 AuthPolicy.class,
                 authPolicyId
         );
@@ -251,9 +351,9 @@ public class ACAuthPolicyService extends IAMBasicService {
                 .where(qAuthPolicy.relAppId.eq(relAppId)));
     }
 
-    public Resp<Page<AuthPolicyResp>> pageAuthPolicies(Long pageNumber, Integer pageSize, Long relAppId, Long relTenantId) {
+    public Resp<Page<AuthPolicyResp>> pageAuthPolicies(Long pageNumber, Integer pageSize, AuthSubjectKind qSubjectKind, Long relAppId, Long relTenantId) {
         var qAuthPolicy = QAuthPolicy.authPolicy;
-        return pageDTOs(sqlBuilder.select(Projections.bean(AuthPolicyResp.class,
+        var authPolicyQuery = sqlBuilder.select(Projections.bean(AuthPolicyResp.class,
                 qAuthPolicy.relSubjectKind,
                 qAuthPolicy.relSubjectIds,
                 qAuthPolicy.subjectOperator,
@@ -267,18 +367,44 @@ public class ACAuthPolicyService extends IAMBasicService {
                 qAuthPolicy.relTenantId))
                 .from(qAuthPolicy)
                 .where(qAuthPolicy.relTenantId.eq(relTenantId))
-                .where(qAuthPolicy.relAppId.eq(relAppId)), pageNumber, pageSize);
+                .where(qAuthPolicy.relAppId.eq(relAppId));
+        if (qSubjectKind != null) {
+            authPolicyQuery.where(qAuthPolicy.relSubjectKind.eq(qSubjectKind));
+        }
+        return pageDTOs(authPolicyQuery, pageNumber, pageSize);
     }
 
     @Transactional
     public Resp<Void> deleteAuthPolicy(Long authPolicyId, Long relAppId, Long relTenantId) {
         var qAuthPolicy = QAuthPolicy.authPolicy;
+        var qResource = QResource.resource;
+        var originalAuthPolicy = sqlBuilder.selectFrom(qAuthPolicy)
+                .where(qAuthPolicy.id.eq(authPolicyId))
+                .fetchOne();
+        var originalAuthPolicyResourceUri = sqlBuilder.select(qResource.uri)
+                .from(qResource)
+                .where(qResource.id.eq(originalAuthPolicy.getRelResourceId()))
+                .fetchOne();
+        var deleteR = softDelEntity(sqlBuilder
+                .selectFrom(qAuthPolicy)
+                .where(qAuthPolicy.id.eq(authPolicyId))
+                .where(qAuthPolicy.relTenantId.eq(relTenantId))
+                .where(qAuthPolicy.relAppId.eq(relAppId)));
+        if (!deleteR.ok()) {
+            return deleteR;
+        }
+        Arrays.stream(originalAuthPolicy.getRelSubjectIds().split(","))
+                .filter(id -> !id.trim().isBlank())
+                .map(id -> Long.parseLong(id.trim()))
+                .forEach(subjectId -> exchangeProcessor.removePolicy(ExchangeProcessor.AuthPolicyInfo.builder()
+                        .resourceUri(originalAuthPolicyResourceUri)
+                        .actionKind(originalAuthPolicy.getActionKind())
+                        .subjectKind(originalAuthPolicy.getRelSubjectKind())
+                        .subjectOperator(originalAuthPolicy.getSubjectOperator())
+                        .subjectId(subjectId + "")
+                        .build()));
         return sendMQByDelete(
-                softDelEntity(sqlBuilder
-                        .selectFrom(qAuthPolicy)
-                        .where(qAuthPolicy.id.eq(authPolicyId))
-                        .where(qAuthPolicy.relTenantId.eq(relTenantId))
-                        .where(qAuthPolicy.relAppId.eq(relAppId))),
+                deleteR,
                 AuthPolicy.class,
                 authPolicyId
         );

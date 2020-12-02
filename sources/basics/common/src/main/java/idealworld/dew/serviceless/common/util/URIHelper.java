@@ -31,24 +31,52 @@ import java.util.stream.Collectors;
 public class URIHelper {
 
     public static String formatUri(URI uri) {
+        if (uri.getSchemeSpecificPart() != null && !uri.getSchemeSpecificPart().isBlank()) {
+            // E.g. jdbc:h2:men:iam 不用解析
+            return uri.toString();
+        }
         var query = "";
         if (uri.getQuery() != null && !uri.getQuery().isBlank()) {
             query = Arrays.stream(uri.getQuery().split("&"))
                     .sorted(Comparator.comparing(u -> u.split("=")[0]))
                     .collect(Collectors.joining("&"));
         }
+        var path = uri.getPath().isBlank()
+                ? ""
+                : uri.getPath().endsWith("/")
+                ? uri.getPath().substring(0, uri.getPath().length() - 1)
+                : uri.getPath();
         return uri.getScheme()
                 + "://"
                 + uri.getHost()
                 + (uri.getPort() != -1 ? ":" + uri.getPort() : "")
-                + (uri.getPath().isBlank() ? "/" : uri.getPath())
+                + path
                 + (uri.getQuery() != null ? "?" + query : "");
+    }
+
+    @SneakyThrows
+    public static String formatUri(String host, String pathAndQuery) {
+        if (!pathAndQuery.startsWith("/")) {
+            pathAndQuery = "/" + pathAndQuery;
+        }
+        if (host.endsWith("/")) {
+            host = host.substring(0, host.length() - 1);
+        }
+        var uri = new URI(host + pathAndQuery);
+        return formatUri(uri);
     }
 
     @SneakyThrows
     public static String formatUri(String strUri) {
         var uri = new URI(strUri);
         return formatUri(uri);
+    }
+
+    @SneakyThrows
+    public static String getPathAndQuery(String strUri) {
+        var uri = new URI(strUri);
+        return (uri.getPath().isBlank() ? "/" : uri.getPath())
+                + (uri.getQuery() != null ? "?" + uri.getQuery() : "");
     }
 
     public static Map<String, String> getSingleValueQuery(String query) {

@@ -78,19 +78,19 @@ public class AppConsoleTest extends BasicTest {
     public void testResource() {
         // 添加当前应用的资源主体
         var resourceSubjectId = postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .code("defaultmysql")
+                .codePostfix("defaultmysql")
                 .kind(ResourceKind.RELDB)
                 .name("MYSQL")
                 .uri("jdbc://xxxxx")
                 .build(), Long.class).getBody();
         Assertions.assertEquals("资源主体编码已存在", postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .code("defaultmysql")
+                .codePostfix("defaultmysql")
                 .kind(ResourceKind.RELDB)
                 .name("mysql")
                 .uri("jdbc://xxxxx")
                 .build(), Long.class).getMessage());
         Assertions.assertEquals("资源主体URI已存在", postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .code("defaultmysql2")
+                .codePostfix("defaultmysql2")
                 .kind(ResourceKind.RELDB)
                 .name("mysql")
                 .uri("jdbc://xxxxx")
@@ -98,47 +98,59 @@ public class AppConsoleTest extends BasicTest {
 
         // 修改当前应用的某个资源主体
         Assertions.assertTrue(patchToEntity("/console/app/resource/subject/" + resourceSubjectId, ResourceSubjectModifyReq.builder()
-                .code("mysql")
+                .codePostfix("mysql")
+                .kind(ResourceKind.RELDB)
                 .sort(100)
                 .build(), Void.class).ok());
 
         // 获取当前应用的某个资源主体信息
         var resourceSubjectResp = getToEntity("/console/app/resource/subject/" + resourceSubjectId, ResourceSubjectResp.class).getBody();
-        Assertions.assertEquals("mysql", resourceSubjectResp.getCode());
+        Assertions.assertEquals("mysql", resourceSubjectResp.getCodePostfix());
         Assertions.assertEquals("MYSQL", resourceSubjectResp.getName());
-        Assertions.assertEquals("jdbc://xxxxx/", resourceSubjectResp.getUri());
+        Assertions.assertEquals("jdbc://xxxxx", resourceSubjectResp.getUri());
 
         // 获取当前应用的资源主体列表信息
         var resourceSubjectResps = getToList("/console/app/resource/subject", ResourceSubjectResp.class).getBody();
-        Assertions.assertEquals(2, resourceSubjectResps.size());
-        Assertions.assertEquals("MYSQL", resourceSubjectResps.get(1).getName());
+        Assertions.assertEquals(3, resourceSubjectResps.size());
+        Assertions.assertEquals("MYSQL", resourceSubjectResps.get(2).getName());
+        resourceSubjectResps = getToList("/console/app/resource/subject?qKind=" + ResourceKind.RELDB.toString(), ResourceSubjectResp.class).getBody();
+        Assertions.assertEquals(1, resourceSubjectResps.size());
+        Assertions.assertEquals("MYSQL", resourceSubjectResps.get(0).getName());
+        resourceSubjectResps = getToList("/console/app/resource/subject?qKind=" + ResourceKind.HTTP.toString(), ResourceSubjectResp.class).getBody();
+        Assertions.assertEquals(1, resourceSubjectResps.size());
+        Assertions.assertEquals("用户权限中心 APIs", resourceSubjectResps.get(0).getName());
+        resourceSubjectResps = getToList("/console/app/resource/subject?qKind=" + ResourceKind.HTTP.toString() + "&qName=权限", ResourceSubjectResp.class).getBody();
+        Assertions.assertEquals(1, resourceSubjectResps.size());
+        Assertions.assertEquals("用户权限中心 APIs", resourceSubjectResps.get(0).getName());
+        resourceSubjectResps = getToList("/console/app/resource/subject?qKind=" + ResourceKind.HTTP.toString() + "&qName=权限系统", ResourceSubjectResp.class).getBody();
+        Assertions.assertEquals(0, resourceSubjectResps.size());
 
         // 添加当前应用的资源
         var resourceId = postToEntity("/console/app/resource", ResourceAddReq.builder()
                 .name("MYSQL IAM DB")
-                .uri("reldb://mysql")
+                .pathAndQuery("/mysql")
                 .relResourceSubjectId(resourceSubjectId)
                 .build(), Long.class).getBody();
         Assertions.assertEquals("资源URI已存在", postToEntity("/console/app/resource", ResourceAddReq.builder()
                 .name("MYSQL IAM DB")
-                .uri("reldb://mysql/")
+                .pathAndQuery("/mysql/")
                 .relResourceSubjectId(resourceSubjectId)
                 .build(), Long.class).getMessage());
 
         // 获取当前应用的某个角色信息
         Assertions.assertTrue(patchToEntity("/console/app/resource/" + resourceId, ResourceModifyReq.builder()
-                .uri("reldb://mysql/")
+                .pathAndQuery("/")
                 .sort(100)
                 .build(), Void.class).ok());
 
         // 获取当前应用的某个资源信息
         var resourceResp = getToEntity("/console/app/resource/" + resourceId, ResourceResp.class).getBody();
-        Assertions.assertEquals("reldb://mysql/", resourceResp.getUri());
+        Assertions.assertEquals("/", resourceResp.getPathAndQuery());
 
         // 获取当前应用的资源列表信息
         var resourceResps = getToList("/console/app/resource", ResourceResp.class).getBody();
-        Assertions.assertEquals(4, resourceResps.size());
-        Assertions.assertEquals("MYSQL IAM DB", resourceResps.get(3).getName());
+        Assertions.assertEquals(5, resourceResps.size());
+        Assertions.assertEquals("MYSQL IAM DB", resourceResps.get(4).getName());
 
         // 删除当前应用的某个角色定义
         Assertions.assertTrue(delete("/console/app/resource/" + resourceId).ok());
@@ -393,9 +405,9 @@ public class AppConsoleTest extends BasicTest {
 
         // 获取当前应用的权限策略列表信息
         var authPolicyResps = getToPage("/console/app/authpolicy", 1L, 100, AuthPolicyResp.class).getBody();
-        Assertions.assertEquals(19, authPolicyResps.getRecordTotal());
+        Assertions.assertEquals(25, authPolicyResps.getRecordTotal());
         Assertions.assertEquals(1, authPolicyResps.getPageTotal());
-        Assertions.assertEquals(1, authPolicyResps.getObjects().get(18).getRelResourceId());
+        Assertions.assertEquals(1, authPolicyResps.getObjects().get(24).getRelResourceId());
 
         // 删除当前应用的某个权限策略
         Assertions.assertTrue(delete("/console/app/authpolicy/" + authPolicyId).ok());

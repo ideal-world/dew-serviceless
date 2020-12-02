@@ -100,7 +100,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "iam_resource", indexes = {
-        @Index(columnList = "relTenantId,relAppId,uri", unique = true),
+        @Index(columnList = "uri", unique = true),
         @Index(columnList = "parentId"),
         @Index(columnList = "exposeKind"),
 })

@@ -153,7 +153,7 @@ public class OAuthService extends IAMBasicService {
                         .or(qResource.exposeKind.eq(ExposeKind.TENANT).and(qResource.relTenantId.eq(tenantId)))
                         .or(qResource.exposeKind.eq(ExposeKind.GLOBAL)))
                 .where(qResourceSubject.kind.eq(ResourceKind.OAUTH))
-                .where(qResourceSubject.code.eq(kind.toString()))
+                .where(qResourceSubject.code.equalsIgnoreCase(kind.toString()))
                 .fetchOne();
         if (oauthResourceSubject == null) {
             return StandardResp.notFound(BUSINESS_OAUTH, "对应的OAuth资源主体不存在");

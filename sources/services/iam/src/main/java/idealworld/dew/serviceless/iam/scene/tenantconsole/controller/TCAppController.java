@@ -64,8 +64,9 @@ public class TCAppController extends IAMBasicController {
 
     @GetMapping(value = "")
     @Operation(summary = "获取当前租户的应用列表信息")
-    public Resp<Page<AppResp>> pageApps(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
-        return tcAppService.pageApps(pageNumber, pageSize, getCurrentTenantId());
+    public Resp<Page<AppResp>> pageApps(@RequestParam Long pageNumber, @RequestParam Integer pageSize,
+                                        @RequestParam(required = false) String qName) {
+        return tcAppService.pageApps(pageNumber, pageSize, qName, getCurrentTenantId());
     }
 
 }

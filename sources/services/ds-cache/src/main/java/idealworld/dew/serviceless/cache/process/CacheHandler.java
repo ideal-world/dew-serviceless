@@ -16,6 +16,8 @@
 
 package idealworld.dew.serviceless.cache.process;
 
+import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.serviceless.cache.CacheConstant;
 import idealworld.dew.serviceless.common.Constant;
@@ -24,7 +26,6 @@ import idealworld.dew.serviceless.common.funs.cache.RedisClient;
 import idealworld.dew.serviceless.common.funs.httpserver.CommonHttpHandler;
 import idealworld.dew.serviceless.common.util.URIHelper;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,33 +58,36 @@ public class CacheHandler extends CommonHttpHandler {
             return;
         }
         var key = resourcePath[0];
-        var fieldKey = resourcePath.length == 2 ? resourcePath[1] : null;
+        var fieldName = resourcePath.length == 2 ? resourcePath[1] : null;
         var action = OptActionKind.parse(ctx.request().getHeader(Constant.REQUEST_RESOURCE_ACTION_FLAG));
         var redisClient = RedisClient.choose(resourceSubjectCode);
         switch (action) {
             case EXISTS:
-                if (fieldKey == null) {
+                if (fieldName == null) {
                     redisClient.exists(key).onComplete(handler -> resultProcess(handler, ctx));
                 } else {
-                    redisClient.hexists(key, fieldKey).onComplete(handler -> resultProcess(handler, ctx));
+                    redisClient.hexists(key, fieldName).onComplete(handler -> resultProcess(handler, ctx));
                 }
                 break;
             case FETCH:
-                if (fieldKey == null) {
+                if (fieldName == null) {
                     redisClient.get(key).onComplete(handler -> resultProcess(handler, ctx));
-                } else if (fieldKey.isBlank() || fieldKey.equals("*")) {
+                } else if (fieldName.isBlank() || fieldName.equals("*")) {
                     redisClient.hgetall(key).onComplete(handler -> resultProcess(handler, ctx));
                 } else {
-                    redisClient.hget(key, fieldKey).onComplete(handler -> resultProcess(handler, ctx));
+                    redisClient.hget(key, fieldName).onComplete(handler -> resultProcess(handler, ctx));
                 }
                 break;
             case CREATE:
             case MODIFY:
                 var body = ctx.getBodyAsString();
-                var attrExpire = resourceQuery.containsKey(CacheConstant.REQUEST_ATTR_EXPIRE) ? Long.parseLong(resourceQuery.get(CacheConstant.REQUEST_ATTR_EXPIRE)) : null;
+                var attrExpire = resourceQuery.containsKey(CacheConstant.REQUEST_ATTR_EXPIRE)
+                        && !resourceQuery.get(CacheConstant.REQUEST_ATTR_EXPIRE).isBlank()
+                        ? Long.parseLong(resourceQuery.get(CacheConstant.REQUEST_ATTR_EXPIRE))
+                        : null;
                 var attrIncr = resourceQuery.containsKey(CacheConstant.REQUEST_ATTR_INCR);
 
-                if (fieldKey == null) {
+                if (fieldName == null) {
                     if (body != null && !body.isBlank() && attrIncr) {
                         redisClient.incrby(key, Integer.valueOf(body)).onComplete(handler -> resultProcess(handler, ctx));
                         break;
@@ -101,13 +105,13 @@ public class CacheHandler extends CommonHttpHandler {
                         break;
                     }
                 }
-                if (fieldKey != null) {
+                if (fieldName != null) {
                     if (body != null && !body.isBlank() && attrIncr) {
-                        redisClient.hincrby(key, fieldKey, Integer.valueOf(body)).onComplete(handler -> resultProcess(handler, ctx));
+                        redisClient.hincrby(key, fieldName, Integer.valueOf(body)).onComplete(handler -> resultProcess(handler, ctx));
                         break;
                     }
                     if (body != null && !body.isBlank() && attrExpire == null) {
-                        redisClient.hset(key, fieldKey, body).onComplete(handler -> resultProcess(handler, ctx));
+                        redisClient.hset(key, fieldName, body).onComplete(handler -> resultProcess(handler, ctx));
                         break;
                     }
                     if (attrExpire != null) {
@@ -115,14 +119,14 @@ public class CacheHandler extends CommonHttpHandler {
                         break;
                     }
                 }
-                log.warn("[Cache]Unsupported operations: action = {}, key = {}, fieldKey = {}, body = {}, expire = {}", action, key, fieldKey, body, attrExpire);
+                log.warn("[Cache]Unsupported operations: action = {}, key = {}, fieldKey = {}, body = {}, expire = {}", action, key, fieldName, body, attrExpire);
                 error(StandardCode.BAD_REQUEST, CacheHandler.class, "请求的格式不正确", ctx);
                 break;
             case DELETE:
-                if (fieldKey == null || fieldKey.isBlank() || fieldKey.equals("*")) {
+                if (fieldName == null || fieldName.isBlank() || fieldName.equals("*")) {
                     redisClient.del(key).onComplete(handler -> resultProcess(handler, ctx));
                 } else {
-                    redisClient.hdel(key, fieldKey).onComplete(handler -> resultProcess(handler, ctx));
+                    redisClient.hdel(key, fieldName).onComplete(handler -> resultProcess(handler, ctx));
                 }
                 break;
         }
@@ -134,18 +138,7 @@ public class CacheHandler extends CommonHttpHandler {
             error(StandardCode.INTERNAL_SERVER_ERROR, CacheHandler.class, "缓存服务错误", ctx, handler.cause());
             return;
         }
-        var result = handler.result();
-        if (result == null) {
-            ctx.end("");
-        } else if (result instanceof String) {
-            ctx.end((String) result);
-        } else if (result instanceof Number) {
-            ctx.end(String.valueOf(result));
-        } else if (result instanceof Boolean) {
-            ctx.end(String.valueOf(result));
-        } else {
-            ctx.end(JsonObject.mapFrom(result).toBuffer());
-        }
+        ctx.end($.json.toJsonString(Resp.success(handler.result())));
     }
 
 

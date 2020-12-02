@@ -27,6 +27,7 @@ import fsPath from "path";
 
 const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless-template-simple.git'
 
+// TODO
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000";
 const IAM_URL = "http://127.0.0.1:8081";
 

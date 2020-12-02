@@ -17,18 +17,29 @@
 package idealworld.dew.serviceless.iam.exchange;
 
 import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.Resp;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import group.idealworld.dew.Dew;
 import idealworld.dew.serviceless.common.Constant;
 import idealworld.dew.serviceless.common.dto.exchange.ExchangeData;
+import idealworld.dew.serviceless.common.enumeration.AuthSubjectKind;
+import idealworld.dew.serviceless.common.enumeration.AuthSubjectOperatorKind;
 import idealworld.dew.serviceless.common.enumeration.CommonStatus;
 import idealworld.dew.serviceless.common.enumeration.OptActionKind;
+import idealworld.dew.serviceless.common.resp.StandardResp;
+import idealworld.dew.serviceless.common.util.URIHelper;
 import idealworld.dew.serviceless.iam.IAMConstant;
 import idealworld.dew.serviceless.iam.domain.auth.*;
 import idealworld.dew.serviceless.iam.domain.ident.*;
 import idealworld.dew.serviceless.iam.scene.common.service.IAMBasicService;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -41,6 +52,7 @@ import java.util.Map;
 public class ExchangeProcessor extends IAMBasicService {
 
     private static final String QUICK_CHECK_SPLIT = "#";
+    private static final String BUSINESS_AUTH = "AUTH";
 
     public static void publish(String subjectCategory, OptActionKind actionKind, Object subjectIds, Map<String, Object> detailData) {
         if (subjectIds instanceof Collection<?>) {
@@ -93,7 +105,7 @@ public class ExchangeProcessor extends IAMBasicService {
             return url + "console/app/role/def/" + subjectId;
         } else if (subjectCategory.equals(Role.class.getSimpleName().toLowerCase())) {
             return url + "console/app/role/" + subjectId;
-        } else if (subjectCategory.equals(ResourceSubject.class.getSimpleName().toLowerCase())) {
+        } else if (subjectCategory.startsWith(ResourceSubject.class.getSimpleName().toLowerCase())) {
             return url + "console/app/resource/subject/" + subjectId;
         } else if (subjectCategory.equals(Resource.class.getSimpleName().toLowerCase())) {
             return url + "console/app/resource/" + subjectId;
@@ -220,6 +232,73 @@ public class ExchangeProcessor extends IAMBasicService {
             Dew.cluster.cache.setex(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId,
                     (validTime.getTime() - System.currentTimeMillis()) / 1000);
         }
+    }
+
+    public Resp<Void> addPolicy(AuthPolicyInfo policyInfo) {
+        if ((policyInfo.getSubjectOperator() == AuthSubjectOperatorKind.INCLUDE
+                || policyInfo.getSubjectOperator() == AuthSubjectOperatorKind.LIKE)
+                && policyInfo.subjectKind != AuthSubjectKind.GROUP_NODE) {
+            return StandardResp.badRequest(BUSINESS_AUTH, "权限主体运算类型为INCLUDE/LIKE时权限主体只能为GROUP_NODE");
+        }
+        policyInfo.setResourceUri(URIHelper.formatUri(policyInfo.getResourceUri()));
+        var key = IAMConstant.CACHE_AUTH_POLICY
+                + policyInfo.getResourceUri().replace("//", "") + ":"
+                + policyInfo.getActionKind().toString().toLowerCase();
+        var policyValue = Dew.cluster.cache.exists(key) ? (ObjectNode) $.json.toJson(Dew.cluster.cache.get(key)) : $.json.createObjectNode();
+        if (!policyValue.has(policyInfo.subjectOperator.toString().toLowerCase())) {
+            policyValue.set(policyInfo.subjectOperator.toString().toLowerCase(), $.json.createObjectNode());
+        }
+        if (!policyValue.get(policyInfo.subjectOperator.toString().toLowerCase()).has(policyInfo.subjectKind.toString().toLowerCase())) {
+            ((ObjectNode) policyValue.get(policyInfo.subjectOperator.toString().toLowerCase())).set(policyInfo.subjectKind.toString().toLowerCase(), $.json.createObjectNode());
+        }
+        ((ObjectNode) policyValue.get(policyInfo.subjectOperator.toString().toLowerCase()).get(policyInfo.subjectKind.toString().toLowerCase())).putArray(policyInfo.getSubjectId());
+        Dew.cluster.cache.set(key, $.json.toJsonString(policyValue));
+        return Resp.success(null);
+    }
+
+    public Resp<Void> removePolicy(AuthPolicyInfo policyInfo) {
+        policyInfo.setResourceUri(URIHelper.formatUri(policyInfo.getResourceUri()));
+        var key = IAMConstant.CACHE_AUTH_POLICY
+                + policyInfo.getResourceUri().replace("//", "") + ":"
+                + policyInfo.getActionKind().toString().toLowerCase();
+        if (!Dew.cluster.cache.exists(key)) {
+            return Resp.success(null);
+        }
+        var policyValue = (ObjectNode) $.json.toJson(Dew.cluster.cache.get(key));
+        if (!policyValue.has(policyInfo.subjectOperator.toString().toLowerCase())
+                || !policyValue.get(policyInfo.subjectOperator.toString().toLowerCase()).has(policyInfo.subjectKind.toString().toLowerCase())) {
+            return Resp.success(null);
+        }
+        ((ObjectNode) policyValue.get(policyInfo.subjectOperator.toString().toLowerCase()).get(policyInfo.subjectKind.toString().toLowerCase())).remove(policyInfo.getSubjectId());
+        Dew.cluster.cache.set(key, $.json.toJsonString(policyValue));
+        return Resp.success(null);
+    }
+
+    public Resp<Void> removePolicy(String resourceUri, OptActionKind actionKind) {
+        resourceUri = URIHelper.formatUri(resourceUri);
+        var key = IAMConstant.CACHE_AUTH_POLICY
+                + resourceUri.replace("//", "") + ":"
+                + actionKind.toString().toLowerCase();
+        Dew.cluster.cache.del(key);
+        return Resp.success(null);
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AuthPolicyInfo implements Serializable {
+
+        private String resourceUri;
+
+        private OptActionKind actionKind;
+
+        private AuthSubjectKind subjectKind;
+
+        private String subjectId;
+
+        private AuthSubjectOperatorKind subjectOperator;
+
     }
 
 }

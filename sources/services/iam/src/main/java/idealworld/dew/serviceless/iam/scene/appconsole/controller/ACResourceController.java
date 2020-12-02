@@ -17,6 +17,7 @@
 package idealworld.dew.serviceless.iam.scene.appconsole.controller;
 
 import com.ecfront.dew.common.Resp;
+import idealworld.dew.serviceless.common.enumeration.ResourceKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.resource.*;
 import idealworld.dew.serviceless.iam.scene.appconsole.service.ACResourceService;
 import idealworld.dew.serviceless.iam.scene.common.controller.IAMBasicController;
@@ -66,9 +67,12 @@ public class ACResourceController extends IAMBasicController {
 
     @GetMapping(value = "subject")
     @Operation(summary = "获取当前应用的资源主体列表信息")
-    public Resp<List<ResourceSubjectResp>> findResourceSubjects() {
+    public Resp<List<ResourceSubjectResp>> findResourceSubjects(
+            @RequestParam(required = false) String qCode,
+            @RequestParam(required = false) String qName,
+            @RequestParam(required = false) ResourceKind qKind) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acResourceService.findResourceSubjects(currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return acResourceService.findResourceSubjects(qCode, qName, qKind, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "subject/{resourceSubjectId}")
@@ -104,11 +108,13 @@ public class ACResourceController extends IAMBasicController {
 
     @GetMapping(value = "")
     @Operation(summary = "获取当前应用的资源列表信息")
-    public Resp<List<ResourceResp>> findResources(@RequestParam(required = false, defaultValue = "false") Boolean expose) {
+    public Resp<List<ResourceResp>> findResources(@RequestParam(required = false, defaultValue = "false") Boolean expose,
+                                                  @RequestParam(required = false) String qName,
+                                                  @RequestParam(required = false) String qUri) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
         return !expose
-                ? acResourceService.findResources(currentAppAndTenantId._0, currentAppAndTenantId._1)
-                : acResourceService.findExposeResources(currentAppAndTenantId._0, currentAppAndTenantId._1);
+                ? acResourceService.findResources(qName, qUri, currentAppAndTenantId._0, currentAppAndTenantId._1)
+                : acResourceService.findExposeResources(qName, qUri, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "{resourceId}")

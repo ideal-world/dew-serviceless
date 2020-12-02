@@ -52,11 +52,10 @@ public class TCAppService extends IAMBasicService {
     @Transactional
     public Resp<Long> addApp(AppAddReq appAddReq, Long relTenantId) {
         var qApp = QApp.app;
-        appAddReq.setName(appAddReq.getName().toLowerCase());
         if (sqlBuilder.select(qApp.id)
                 .from(qApp)
                 .where(qApp.relTenantId.eq(relTenantId))
-                .where(qApp.name.eq(appAddReq.getName()))
+                .where(qApp.name.equalsIgnoreCase(appAddReq.getName()))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_APP, "应用名称已存在");
         }
@@ -66,8 +65,12 @@ public class TCAppService extends IAMBasicService {
         app.setPriKey(keys.get("PrivateKey"));
         app.setRelTenantId(relTenantId);
         app.setStatus(CommonStatus.ENABLED);
+        var saveR = saveEntity(app);
+        if (saveR.ok()) {
+            exchangeProcessor.enableApp(saveR.getBody(), relTenantId);
+        }
         return sendMQBySave(
-                saveEntity(app),
+                saveR,
                 App.class
         );
     }
@@ -78,13 +81,10 @@ public class TCAppService extends IAMBasicService {
         if (!commonFunctionService.checkAppMembership(appId, relTenantId).ok()) {
             return StandardResp.unAuthorized(BUSINESS_APP, "应用Id不合法");
         }
-        if (appModifyReq.getName() != null) {
-            appModifyReq.setName(appModifyReq.getName().toLowerCase());
-        }
         if (appModifyReq.getName() != null && sqlBuilder.select(qApp.id)
                 .from(qApp)
                 .where(qApp.relTenantId.eq(relTenantId))
-                .where(qApp.name.eq(appModifyReq.getName()))
+                .where(qApp.name.equalsIgnoreCase(appModifyReq.getName()))
                 .where(qApp.id.ne(appId))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_APP, "应用名称已存在");
@@ -136,9 +136,9 @@ public class TCAppService extends IAMBasicService {
                 .where(qApp.relTenantId.eq(relTenantId)));
     }
 
-    public Resp<Page<AppResp>> pageApps(Long pageNumber, Integer pageSize, Long relTenantId) {
+    public Resp<Page<AppResp>> pageApps(Long pageNumber, Integer pageSize, String qName, Long relTenantId) {
         var qApp = QApp.app;
-        return pageDTOs(sqlBuilder.select(Projections.bean(AppResp.class,
+        var appQuery = sqlBuilder.select(Projections.bean(AppResp.class,
                 qApp.id,
                 qApp.name,
                 qApp.icon,
@@ -146,7 +146,11 @@ public class TCAppService extends IAMBasicService {
                 qApp.status,
                 qApp.relTenantId))
                 .from(qApp)
-                .where(qApp.relTenantId.eq(relTenantId)), pageNumber, pageSize);
+                .where(qApp.relTenantId.eq(relTenantId));
+        if (qName != null && !qName.isBlank()) {
+            appQuery.where(qApp.name.likeIgnoreCase("%" + qName + "%"));
+        }
+        return pageDTOs(appQuery, pageNumber, pageSize);
     }
 
 }

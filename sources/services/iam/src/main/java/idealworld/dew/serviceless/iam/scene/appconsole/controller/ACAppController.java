@@ -60,9 +60,10 @@ public class ACAppController extends IAMBasicController {
 
     @GetMapping(value = "ident")
     @Operation(summary = "获取当前应用的认证列表信息")
-    public Resp<Page<AppIdentResp>> pageApps(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
+    public Resp<Page<AppIdentResp>> pageApps(@RequestParam Long pageNumber, @RequestParam Integer pageSize,
+                                             @RequestParam(required = false) String qNote) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acAppService.pageAppIdents(pageNumber, pageSize, currentAppAndTenantId._0);
+        return acAppService.pageAppIdents(pageNumber, pageSize, currentAppAndTenantId._0, qNote);
     }
 
     @DeleteMapping(value = "ident/{appIdentId}")

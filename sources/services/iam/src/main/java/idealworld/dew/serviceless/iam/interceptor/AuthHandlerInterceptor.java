@@ -47,10 +47,16 @@ public class AuthHandlerInterceptor implements AsyncHandlerInterceptor {
         context.setId($.field.createUUID());
         context.setSourceIP(Dew.Util.getRealIP(request));
         context.setRequestUri(request.getRequestURI());
-        context.setToken(identOpt.getTokenKind());
         context.setTokenKind(identOpt.getToken());
-        DewContext.setContext(context);
-        Dew.context().setInnerOptInfo(Optional.of(identOpt));
+        if (identOpt.getAppId() == null && identOpt.getToken() == null) {
+            context.setToken(null);
+            DewContext.setContext(context);
+            Dew.context().setInnerOptInfo(Optional.empty());
+        } else {
+            context.setToken(identOpt.getTokenKind());
+            DewContext.setContext(context);
+            Dew.context().setInnerOptInfo(Optional.of(identOpt));
+        }
         return true;
     }
 

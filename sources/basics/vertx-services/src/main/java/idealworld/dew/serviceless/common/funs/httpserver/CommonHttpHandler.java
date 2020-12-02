@@ -16,6 +16,8 @@
 
 package idealworld.dew.serviceless.common.funs.httpserver;
 
+import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.serviceless.common.Constant;
 import idealworld.dew.serviceless.common.dto.IdentOptCacheInfo;
@@ -42,12 +44,12 @@ public abstract class CommonHttpHandler implements Handler<RoutingContext> {
 
     protected void error(StandardCode statusCode, Class<?> clazz, String msg, RoutingContext ctx) {
         log.warn("[" + clazz.getSimpleName() + "]Request error [{}]: {}", statusCode.toString(), msg);
-        ctx.response().setStatusCode(Integer.parseInt(statusCode.toString())).end(msg);
+        ctx.response().setStatusCode(200).end($.json.toJsonString(new Resp<Void>(statusCode.toString(), msg, null)));
     }
 
     protected void error(StandardCode statusCode, Class<?> clazz, String msg, RoutingContext ctx, Throwable e) {
         log.warn("[" + clazz.getSimpleName() + "]Request error [{}]{}", statusCode.toString(), e.getMessage(), e);
-        ctx.response().setStatusCode(Integer.parseInt(statusCode.toString())).end(msg);
+        ctx.response().setStatusCode(200).end($.json.toJsonString(new Resp<Void>(statusCode.toString(), msg, null)));
     }
 
     protected Map<AuthSubjectKind, List<String>> packageSubjectInfo(IdentOptCacheInfo identOptInfo) {

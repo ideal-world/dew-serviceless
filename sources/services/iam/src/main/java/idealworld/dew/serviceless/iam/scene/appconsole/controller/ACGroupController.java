@@ -17,6 +17,7 @@
 package idealworld.dew.serviceless.iam.scene.appconsole.controller;
 
 import com.ecfront.dew.common.Resp;
+import idealworld.dew.serviceless.iam.enumeration.GroupKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.group.*;
 import idealworld.dew.serviceless.iam.scene.appconsole.service.ACGroupService;
 import idealworld.dew.serviceless.iam.scene.common.controller.IAMBasicController;
@@ -66,9 +67,11 @@ public class ACGroupController extends IAMBasicController {
 
     @GetMapping(value = "")
     @Operation(summary = "获取当前应用的群组列表信息")
-    public Resp<List<GroupResp>> findGroups() {
+    public Resp<List<GroupResp>> findGroups(@RequestParam(required = false) String qCode,
+                                            @RequestParam(required = false) String qName,
+                                            @RequestParam(required = false) GroupKind qKind) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acGroupService.findGroups(currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return acGroupService.findGroups(qCode, qName, qKind, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "{groupId}")

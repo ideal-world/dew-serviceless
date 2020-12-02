@@ -37,6 +37,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public interface StorageService<P extends Serializable> {
 
@@ -65,7 +67,7 @@ public interface StorageService<P extends Serializable> {
 
     default Resp<List<P>> saveEntities(PkEntity<P>... pkEntities) {
         var ids = new ArrayList<P>();
-        for(var entity: pkEntities) {
+        for (var entity : pkEntities) {
             var preSaveEntityR = preSaveEntity(entity);
             if (!preSaveEntityR.ok()) {
                 return Resp.error(preSaveEntityR);
@@ -247,6 +249,14 @@ public interface StorageService<P extends Serializable> {
         return StandardResp.success(obj);
     }
 
+    default <E> Resp<E> getDTO(JPAQuery<E> jpaQuery, Function<E, E> convertFun) {
+        var getR = getDTO(jpaQuery);
+        if (getR.ok()) {
+            getR.setBody(convertFun.apply(getR.getBody()));
+        }
+        return getR;
+    }
+
     /**
      * Find dt os.
      *
@@ -255,8 +265,16 @@ public interface StorageService<P extends Serializable> {
      * @return the resp
      */
     default <E> Resp<List<E>> findDTOs(JPAQuery<E> jpaQuery) {
-        var obj = jpaQuery.fetch();
-        return StandardResp.success(obj);
+        var objs = jpaQuery.fetch();
+        return StandardResp.success(objs);
+    }
+
+    default <E> Resp<List<E>> findDTOs(JPAQuery<E> jpaQuery, Function<E, E> convertFun) {
+        var findR = findDTOs(jpaQuery);
+        if (findR.ok()) {
+            findR.setBody(findR.getBody().stream().map(convertFun).collect(Collectors.toList()));
+        }
+        return findR;
     }
 
     /**
@@ -303,6 +321,14 @@ public interface StorageService<P extends Serializable> {
                     .fetchResults();
             return StandardResp.success(Page.build(pageNumber, pageSize, objs.getTotal(), objs.getResults()));
         }
+    }
+
+    default <E> Resp<Page<E>> pageDTOs(JPAQuery<E> jpaQuery, Long pageNumber, Integer pageSize, Function<E, E> convertFun) {
+        var pageR = pageDTOs(jpaQuery, pageNumber, pageSize);
+        if (pageR.ok()) {
+            pageR.getBody().setObjects(pageR.getBody().getObjects().stream().map(convertFun).collect(Collectors.toList()));
+        }
+        return pageR;
     }
 
     /**

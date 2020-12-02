@@ -64,8 +64,10 @@ public class TCAccountController extends IAMBasicController {
 
     @GetMapping(value = "")
     @Operation(summary = "获取当前租户的账号列表信息")
-    public Resp<Page<AccountResp>> pageAccounts(@RequestParam Long pageNumber, @RequestParam Integer pageSize) {
-        return tcAccountService.pageAccounts(pageNumber, pageSize, getCurrentTenantId());
+    public Resp<Page<AccountResp>> pageAccounts(@RequestParam Long pageNumber, @RequestParam Integer pageSize,
+                                                @RequestParam(required = false) String qOpenId,
+                                                @RequestParam(required = false) String qName) {
+        return tcAccountService.pageAccounts(pageNumber, pageSize, qOpenId, qName, getCurrentTenantId());
     }
 
     @DeleteMapping(value = "{accountId}")
@@ -90,7 +92,6 @@ public class TCAccountController extends IAMBasicController {
                                          @Validated @RequestBody AccountIdentModifyReq accountIdentModifyReq) {
         return tcAccountService.modifyAccountIdent(accountIdentId, accountIdentModifyReq, getCurrentTenantId());
     }
-
 
     @GetMapping(value = "{accountId}/ident")
     @Operation(summary = "获取当前租户某个账号的认证列表信息")

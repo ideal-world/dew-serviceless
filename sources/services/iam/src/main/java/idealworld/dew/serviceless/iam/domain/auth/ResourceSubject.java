@@ -30,10 +30,22 @@ import javax.persistence.*;
  * 资源主体.
  * <p>
  * 所有三方调用都视为资源，需要配置资源主体，比如微信公众号、华为云等
- *
  * <p>
- * {@link ResourceKind#MENU} 及 {@link ResourceKind#ELEMENT}
- * uri = <空>
+ * code = <appId>.<kind>.<code | default>
+ * <p>
+ * {@link ResourceKind#MENU}:
+ * uri = MENU路径
+ * <p>
+ * e.g.
+ * <p>
+ * uri = menu:///
+ * <p>
+ * {@link ResourceKind#ELEMENT}:
+ * uri = 元素路径
+ * <p>
+ * e.g.
+ * <p>
+ * uri = element:///
  * <p>
  * {@link ResourceKind#HTTP}:
  * uri = API路径
@@ -76,10 +88,9 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "iam_resource_subject", indexes = {
-        @Index(columnList = "relTenantId,relAppId,code", unique = true),
+        @Index(columnList = "code", unique = true),
         @Index(columnList = "relTenantId,relAppId,uri", unique = true),
-        @Index(columnList = "relTenantId,relAppId,kind"),
-        @Index(columnList = "defaultByApp")
+        @Index(columnList = "relTenantId,relAppId,kind")
 })
 @org.hibernate.annotations.Table(appliesTo = "iam_resource_subject",
         comment = "资源主体")
@@ -109,10 +120,6 @@ public class ResourceSubject extends SafeEntity {
     @Column(nullable = false,
             columnDefinition = "int comment '资源主体显示排序，asc'")
     private Integer sort;
-
-    @Column(nullable = false,
-            columnDefinition = "tinyint(1) comment '是否默认'")
-    private Boolean defaultByApp;
 
     @Column(nullable = false,
             columnDefinition = "varchar(1000) comment 'AK，部分类型支持写到URI中'")

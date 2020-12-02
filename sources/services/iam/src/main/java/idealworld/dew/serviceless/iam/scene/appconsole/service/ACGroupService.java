@@ -26,6 +26,7 @@ import idealworld.dew.serviceless.common.resp.StandardResp;
 import idealworld.dew.serviceless.iam.IAMConfig;
 import idealworld.dew.serviceless.iam.domain.auth.*;
 import idealworld.dew.serviceless.iam.enumeration.ExposeKind;
+import idealworld.dew.serviceless.iam.enumeration.GroupKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.group.*;
 import idealworld.dew.serviceless.iam.scene.common.service.IAMBasicService;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +60,7 @@ public class ACGroupService extends IAMBasicService {
                 .from(qGroup)
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
-                .where(qGroup.code.eq(groupAddReq.getCode()))
+                .where(qGroup.code.equalsIgnoreCase(groupAddReq.getCode()))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_GROUP, "群组编码已存在");
         }
@@ -79,7 +80,7 @@ public class ACGroupService extends IAMBasicService {
                 .from(qGroup)
                 .where(qGroup.relTenantId.eq(relTenantId))
                 .where(qGroup.relAppId.eq(relAppId))
-                .where(qGroup.code.eq(groupModifyReq.getCode()))
+                .where(qGroup.code.equalsIgnoreCase(groupModifyReq.getCode()))
                 .where(qGroup.id.ne(groupId))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_GROUP, "群组编码已存在");
@@ -139,9 +140,10 @@ public class ACGroupService extends IAMBasicService {
                 .where(qGroup.relAppId.eq(relAppId)));
     }
 
-    public Resp<List<GroupResp>> findGroups(Long relAppId, Long relTenantId) {
+    public Resp<List<GroupResp>> findGroups(String qCode, String qName, GroupKind qKind,
+                                            Long relAppId, Long relTenantId) {
         var qGroup = QGroup.group;
-        return findDTOs(sqlBuilder.select(Projections.bean(GroupResp.class,
+        var groupQuery = sqlBuilder.select(Projections.bean(GroupResp.class,
                 qGroup.id,
                 qGroup.code,
                 qGroup.kind,
@@ -155,8 +157,17 @@ public class ACGroupService extends IAMBasicService {
                 qGroup.relTenantId))
                 .from(qGroup)
                 .where(qGroup.relTenantId.eq(relTenantId))
-                .where(qGroup.relAppId.eq(relAppId))
-                .orderBy(qGroup.sort.asc()));
+                .where(qGroup.relAppId.eq(relAppId));
+        if (qCode != null && !qCode.isBlank()) {
+            groupQuery.where(qGroup.code.likeIgnoreCase("%" + qCode + "%"));
+        }
+        if (qName != null && !qName.isBlank()) {
+            groupQuery.where(qGroup.name.likeIgnoreCase("%" + qName + "%"));
+        }
+        if (qKind != null) {
+            groupQuery.where(qGroup.kind.eq(qKind));
+        }
+        return findDTOs(groupQuery.orderBy(qGroup.sort.asc()));
     }
 
     public Resp<List<GroupResp>> findExposeGroups(Long relAppId, Long relTenantId) {
@@ -220,7 +231,7 @@ public class ACGroupService extends IAMBasicService {
         if (sqlBuilder.select(qGroupNode.id)
                 .from(qGroupNode)
                 .where(qGroupNode.relGroupId.eq(groupId))
-                .where(qGroupNode.code.eq(groupNodeCode))
+                .where(qGroupNode.code.equalsIgnoreCase(groupNodeCode))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_GROUP_NODE, "群组节点编码已存在");
         }
@@ -263,7 +274,7 @@ public class ACGroupService extends IAMBasicService {
             if (sqlBuilder.select(qGroupNode.id)
                     .from(qGroupNode)
                     .where(qGroupNode.relGroupId.eq(persistentGroupNode.getRelGroupId()))
-                    .where(qGroupNode.code.eq(groupNodeCode))
+                    .where(qGroupNode.code.equalsIgnoreCase(groupNodeCode))
                     .where(qGroupNode.id.ne(groupNodeId))
                     .fetchCount() != 0) {
                 return StandardResp.conflict(BUSINESS_GROUP_NODE, "群组节点编码已存在");

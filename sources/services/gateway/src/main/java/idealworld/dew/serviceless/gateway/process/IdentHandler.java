@@ -68,7 +68,7 @@ public class IdentHandler extends CommonHttpHandler {
             error(StandardCode.BAD_REQUEST, IdentHandler.class, "请求格式不合法，缺少query", ctx);
             return;
         }
-        var queryMap = Arrays.stream(URLDecoder.decode(ctx.request().query().trim(), StandardCharsets.UTF_8).split("&"))
+        var queryMap = Arrays.stream(ctx.request().query().trim().split("&"))
                 .map(item -> item.split("="))
                 .collect(Collectors.toMap(item -> item[0], item -> item.length > 1 ? item[1] : ""));
         if (!queryMap.containsKey(Constant.REQUEST_RESOURCE_URI_FLAG)
@@ -82,8 +82,8 @@ public class IdentHandler extends CommonHttpHandler {
         URI resourceUri;
         OptActionKind actionKind;
         try {
-            resourceUri = URIHelper.newURI(queryMap.get(Constant.REQUEST_RESOURCE_URI_FLAG));
-            if (resourceUri.getScheme() == null || resourceUri.getHost() == null) {
+            resourceUri = URIHelper.newURI(URLDecoder.decode(queryMap.get(Constant.REQUEST_RESOURCE_URI_FLAG), StandardCharsets.UTF_8));
+            if (resourceUri.getScheme() == null) {
                 error(StandardCode.BAD_REQUEST, IdentHandler.class, "请求格式不合法，资源URI错误", ctx);
                 return;
             }

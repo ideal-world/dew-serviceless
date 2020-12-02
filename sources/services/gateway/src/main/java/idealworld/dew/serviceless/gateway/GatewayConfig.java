@@ -100,9 +100,9 @@ public class GatewayConfig extends CommonConfig {
         @Builder.Default
         private String cacheTokenInfoKey = "dew:auth:token:info:";
         @Builder.Default
-        private String cacheAkSkInfoKey = "dew:auth:app:ak:";
+        private String cacheAkSkInfoKey = "dew:iam:app:ak:";
         @Builder.Default
-        private String cacheAppInfo = "dew:auth:app:";
+        private String cacheAppInfo = "dew:iam:app:info";
         @Builder.Default
         private Map<String, List<String>> blockIps = new LinkedHashMap<>();
         @Builder.Default

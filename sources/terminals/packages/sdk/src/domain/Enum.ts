@@ -14,6 +14,29 @@
  * limitations under the License.
  */
 
-export function example() {
-    console.log("...")
+export enum OptActionKind {
+    /**
+     * 是否存在.
+     */
+    EXISTS = 'EXISTS',
+    /**
+     * 获取.
+     */
+    FETCH = 'FETCH',
+    /**
+     * 创建.
+     */
+    CREATE = 'CREATE',
+    /**
+     * 更新.
+     */
+    MODIFY = 'MODIFY',
+    /**
+     * 局部更新（仅HTTP）.
+     */
+    PATCH = 'PATCH',
+    /**
+     * 删除.
+     */
+    DELETE = 'DELETE',
 }

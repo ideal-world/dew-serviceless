@@ -22,9 +22,11 @@ import com.querydsl.core.types.Projections;
 import idealworld.dew.serviceless.common.Constant;
 import idealworld.dew.serviceless.common.dto.exchange.ResourceExchange;
 import idealworld.dew.serviceless.common.dto.exchange.ResourceSubjectExchange;
+import idealworld.dew.serviceless.common.enumeration.ResourceKind;
 import idealworld.dew.serviceless.common.resp.StandardResp;
 import idealworld.dew.serviceless.common.util.URIHelper;
 import idealworld.dew.serviceless.iam.IAMConfig;
+import idealworld.dew.serviceless.iam.IAMConstant;
 import idealworld.dew.serviceless.iam.domain.auth.*;
 import idealworld.dew.serviceless.iam.enumeration.ExposeKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.resource.*;
@@ -53,12 +55,15 @@ public class ACResourceService extends IAMBasicService {
     @Transactional
     public Resp<Long> addResourceSubject(ResourceSubjectAddReq resourceSubjectAddReq, Long relAppId, Long relTenantId) {
         var qResourceSubject = QResourceSubject.resourceSubject;
+        var resourceCode = relAppId + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                + resourceSubjectAddReq.getKind().toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                + resourceSubjectAddReq.getCodePostfix();
         resourceSubjectAddReq.setUri(URIHelper.formatUri(resourceSubjectAddReq.getUri()));
         if (sqlBuilder.select(qResourceSubject.id)
                 .from(qResourceSubject)
                 .where(qResourceSubject.relTenantId.eq(relTenantId))
                 .where(qResourceSubject.relAppId.eq(relAppId))
-                .where(qResourceSubject.code.eq(resourceSubjectAddReq.getCode()))
+                .where(qResourceSubject.code.equalsIgnoreCase(resourceCode))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_RESOURCE_SUBJECT, "资源主体编码已存在");
         }
@@ -71,6 +76,7 @@ public class ACResourceService extends IAMBasicService {
             return StandardResp.conflict(BUSINESS_RESOURCE_SUBJECT, "资源主体URI已存在");
         }
         var resourceSubject = $.bean.copyProperties(resourceSubjectAddReq, ResourceSubject.class);
+        resourceSubject.setCode(resourceCode);
         resourceSubject.setRelTenantId(relTenantId);
         resourceSubject.setRelAppId(relAppId);
         return sendMQBySave(
@@ -92,14 +98,23 @@ public class ACResourceService extends IAMBasicService {
     @Transactional
     public Resp<Void> modifyResourceSubject(Long resourceSubjectId, ResourceSubjectModifyReq resourceSubjectModifyReq, Long relAppId, Long relTenantId) {
         var qResourceSubject = QResourceSubject.resourceSubject;
-        if (resourceSubjectModifyReq.getCode() != null && sqlBuilder.select(qResourceSubject.id)
-                .from(qResourceSubject)
-                .where(qResourceSubject.relTenantId.eq(relTenantId))
-                .where(qResourceSubject.relAppId.eq(relAppId))
-                .where(qResourceSubject.code.eq(resourceSubjectModifyReq.getCode()))
-                .where(qResourceSubject.id.ne(resourceSubjectId))
-                .fetchCount() != 0) {
-            return StandardResp.conflict(BUSINESS_RESOURCE_SUBJECT, "资源主体编码已存在");
+        String resourceCode = null;
+        if (resourceSubjectModifyReq.getCodePostfix() != null) {
+            if (resourceSubjectModifyReq.getKind() == null) {
+                return StandardResp.conflict(BUSINESS_RESOURCE_SUBJECT, "资源主体编码后缀与类型必须同时存在");
+            }
+            resourceCode = relAppId + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                    + resourceSubjectModifyReq.getKind().toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                    + resourceSubjectModifyReq.getCodePostfix();
+            if (sqlBuilder.select(qResourceSubject.id)
+                    .from(qResourceSubject)
+                    .where(qResourceSubject.relTenantId.eq(relTenantId))
+                    .where(qResourceSubject.relAppId.eq(relAppId))
+                    .where(qResourceSubject.code.equalsIgnoreCase(resourceCode))
+                    .where(qResourceSubject.id.ne(resourceSubjectId))
+                    .fetchCount() != 0) {
+                return StandardResp.conflict(BUSINESS_RESOURCE_SUBJECT, "资源主体编码已存在");
+            }
         }
         if (resourceSubjectModifyReq.getUri() != null) {
             resourceSubjectModifyReq.setUri(URIHelper.formatUri(resourceSubjectModifyReq.getUri()));
@@ -117,17 +132,14 @@ public class ACResourceService extends IAMBasicService {
                 .where(qResourceSubject.id.eq(resourceSubjectId))
                 .where(qResourceSubject.relTenantId.eq(relTenantId))
                 .where(qResourceSubject.relAppId.eq(relAppId));
-        if (resourceSubjectModifyReq.getCode() != null) {
-            resourceSubjectUpdate.set(qResourceSubject.code, resourceSubjectModifyReq.getCode());
+        if (resourceCode != null) {
+            resourceSubjectUpdate.set(qResourceSubject.code, resourceCode);
         }
         if (resourceSubjectModifyReq.getName() != null) {
             resourceSubjectUpdate.set(qResourceSubject.name, resourceSubjectModifyReq.getName());
         }
         if (resourceSubjectModifyReq.getSort() != null) {
             resourceSubjectUpdate.set(qResourceSubject.sort, resourceSubjectModifyReq.getSort());
-        }
-        if (resourceSubjectModifyReq.getDefaultByApp() != null) {
-            resourceSubjectUpdate.set(qResourceSubject.defaultByApp, resourceSubjectModifyReq.getDefaultByApp());
         }
         if (resourceSubjectModifyReq.getKind() != null) {
             resourceSubjectUpdate.set(qResourceSubject.kind, resourceSubjectModifyReq.getKind());
@@ -176,10 +188,10 @@ public class ACResourceService extends IAMBasicService {
         var qResourceSubject = QResourceSubject.resourceSubject;
         return getDTO(sqlBuilder.select(Projections.bean(ResourceSubjectResp.class,
                 qResourceSubject.id,
-                qResourceSubject.code,
+                qResourceSubject.code.as("code"),
+                qResourceSubject.code.as("codePostfix"),
                 qResourceSubject.name,
                 qResourceSubject.sort,
-                qResourceSubject.defaultByApp,
                 qResourceSubject.kind,
                 qResourceSubject.uri,
                 qResourceSubject.ak,
@@ -191,17 +203,21 @@ public class ACResourceService extends IAMBasicService {
                 .from(qResourceSubject)
                 .where(qResourceSubject.id.eq(resourceSubjectId))
                 .where(qResourceSubject.relTenantId.eq(relTenantId))
-                .where(qResourceSubject.relAppId.eq(relAppId)));
+                .where(qResourceSubject.relAppId.eq(relAppId)), obj -> {
+            obj.setCodePostfix(obj.getCodePostfix().split("\\" + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT)[2]);
+            return obj;
+        });
     }
 
-    public Resp<List<ResourceSubjectResp>> findResourceSubjects(Long relAppId, Long relTenantId) {
+    public Resp<List<ResourceSubjectResp>> findResourceSubjects(String qCode, String qName, ResourceKind qKind,
+                                                                Long relAppId, Long relTenantId) {
         var qResourceSubject = QResourceSubject.resourceSubject;
-        return findDTOs(sqlBuilder.select(Projections.bean(ResourceSubjectResp.class,
+        var resourceSubjectQuery = sqlBuilder.select(Projections.bean(ResourceSubjectResp.class,
                 qResourceSubject.id,
-                qResourceSubject.code,
+                qResourceSubject.code.as("code"),
+                qResourceSubject.code.as("codePostfix"),
                 qResourceSubject.name,
                 qResourceSubject.sort,
-                qResourceSubject.defaultByApp,
                 qResourceSubject.kind,
                 qResourceSubject.uri,
                 qResourceSubject.ak,
@@ -212,8 +228,20 @@ public class ACResourceService extends IAMBasicService {
                 qResourceSubject.relTenantId))
                 .from(qResourceSubject)
                 .where(qResourceSubject.relTenantId.eq(relTenantId))
-                .where(qResourceSubject.relAppId.eq(relAppId))
-                .orderBy(qResourceSubject.sort.asc()));
+                .where(qResourceSubject.relAppId.eq(relAppId));
+        if (qCode != null && !qCode.isBlank()) {
+            resourceSubjectQuery.where(qResourceSubject.code.likeIgnoreCase("%" + qCode + "%"));
+        }
+        if (qName != null && !qName.isBlank()) {
+            resourceSubjectQuery.where(qResourceSubject.name.likeIgnoreCase("%" + qName + "%"));
+        }
+        if (qKind != null) {
+            resourceSubjectQuery.where(qResourceSubject.kind.eq(qKind));
+        }
+        return findDTOs(resourceSubjectQuery.orderBy(qResourceSubject.sort.asc()), obj -> {
+            obj.setCodePostfix(obj.getCodePostfix().split("\\" + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT)[2]);
+            return obj;
+        });
     }
 
     @Transactional
@@ -259,13 +287,20 @@ public class ACResourceService extends IAMBasicService {
 
     @Transactional
     public Resp<Long> addResource(ResourceAddReq resourceAddReq, Long relAppId, Long relTenantId) {
+        var qResourceSubject = QResourceSubject.resourceSubject;
         var qResource = QResource.resource;
-        resourceAddReq.setUri(URIHelper.formatUri(resourceAddReq.getUri()));
+        var resourceSubjectUri = sqlBuilder.select(qResourceSubject.uri)
+                .from(qResourceSubject)
+                .where(qResourceSubject.relTenantId.eq(relTenantId))
+                .where(qResourceSubject.relAppId.eq(relAppId))
+                .where(qResourceSubject.id.eq(resourceAddReq.getRelResourceSubjectId()))
+                .fetchOne();
+        var resourceUri = URIHelper.formatUri(resourceSubjectUri, resourceAddReq.getPathAndQuery());
         if (sqlBuilder.select(qResource.id)
                 .from(qResource)
                 .where(qResource.relTenantId.eq(relTenantId))
                 .where(qResource.relAppId.eq(relAppId))
-                .where(qResource.uri.eq(resourceAddReq.getUri()))
+                .where(qResource.uri.eq(resourceUri))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_RESOURCE, "资源URI已存在");
         }
@@ -278,6 +313,7 @@ public class ACResourceService extends IAMBasicService {
             return StandardResp.unAuthorized(BUSINESS_RESOURCE, "资源所属组Id不合法");
         }
         var resource = $.bean.copyProperties(resourceAddReq, Resource.class);
+        resource.setUri(resourceUri);
         resource.setRelTenantId(relTenantId);
         resource.setRelAppId(relAppId);
         return sendMQBySave(
@@ -293,14 +329,21 @@ public class ACResourceService extends IAMBasicService {
     @Transactional
     public Resp<Void> modifyResource(Long resourceId, ResourceModifyReq resourceModifyReq, Long relAppId, Long relTenantId) {
         var qResource = QResource.resource;
-        if (resourceModifyReq.getUri() != null) {
-            resourceModifyReq.setUri(URIHelper.formatUri(resourceModifyReq.getUri()));
+        String resourceUri = null;
+        if (resourceModifyReq.getPathAndQuery() != null) {
+            var qResourceSubject = QResourceSubject.resourceSubject;
+            var resourceSubjectUri = sqlBuilder.select(qResourceSubject.uri)
+                    .from(qResource)
+                    .innerJoin(qResourceSubject).on(qResourceSubject.id.eq(qResource.relResourceSubjectId))
+                    .where(qResource.id.eq(resourceId))
+                    .fetchOne();
+            resourceUri = URIHelper.formatUri(resourceSubjectUri, resourceModifyReq.getPathAndQuery());
         }
-        if (resourceModifyReq.getUri() != null && sqlBuilder.select(qResource.id)
+        if (resourceUri != null && sqlBuilder.select(qResource.id)
                 .from(qResource)
                 .where(qResource.relTenantId.eq(relTenantId))
                 .where(qResource.relAppId.eq(relAppId))
-                .where(qResource.uri.eq(resourceModifyReq.getUri()))
+                .where(qResource.uri.eq(resourceUri))
                 .where(qResource.id.ne(resourceId))
                 .fetchCount() != 0) {
             return StandardResp.conflict(BUSINESS_RESOURCE, "资源URI已存在");
@@ -320,8 +363,8 @@ public class ACResourceService extends IAMBasicService {
         if (resourceModifyReq.getName() != null) {
             resourceUpdate.set(qResource.name, resourceModifyReq.getName());
         }
-        if (resourceModifyReq.getUri() != null) {
-            resourceUpdate.set(qResource.uri, resourceModifyReq.getUri());
+        if (resourceUri != null) {
+            resourceUpdate.set(qResource.uri, resourceUri);
         }
         if (resourceModifyReq.getIcon() != null) {
             resourceUpdate.set(qResource.icon, resourceModifyReq.getIcon());
@@ -365,7 +408,7 @@ public class ACResourceService extends IAMBasicService {
         return getDTO(sqlBuilder.select(Projections.bean(ResourceResp.class,
                 qResource.id,
                 qResource.name,
-                qResource.uri,
+                qResource.uri.as("pathAndQuery"),
                 qResource.icon,
                 qResource.action,
                 qResource.sort,
@@ -378,15 +421,19 @@ public class ACResourceService extends IAMBasicService {
                 .from(qResource)
                 .where(qResource.id.eq(resourceId))
                 .where(qResource.relTenantId.eq(relTenantId))
-                .where(qResource.relAppId.eq(relAppId)));
+                .where(qResource.relAppId.eq(relAppId)), obj -> {
+            obj.setPathAndQuery(URIHelper.getPathAndQuery(obj.getPathAndQuery()));
+            return obj;
+        });
     }
 
-    public Resp<List<ResourceResp>> findResources(Long relAppId, Long relTenantId) {
+    public Resp<List<ResourceResp>> findResources(String qName, String qUri,
+                                                  Long relAppId, Long relTenantId) {
         var qResource = QResource.resource;
-        return findDTOs(sqlBuilder.select(Projections.bean(ResourceResp.class,
+        var resourceQuery = sqlBuilder.select(Projections.bean(ResourceResp.class,
                 qResource.id,
                 qResource.name,
-                qResource.uri,
+                qResource.uri.as("pathAndQuery"),
                 qResource.icon,
                 qResource.action,
                 qResource.sort,
@@ -398,16 +445,26 @@ public class ACResourceService extends IAMBasicService {
                 qResource.relTenantId))
                 .from(qResource)
                 .where(qResource.relTenantId.eq(relTenantId))
-                .where(qResource.relAppId.eq(relAppId))
-                .orderBy(qResource.sort.asc()));
+                .where(qResource.relAppId.eq(relAppId));
+        if (qName != null && !qName.isBlank()) {
+            resourceQuery.where(qResource.name.equalsIgnoreCase(qName));
+        }
+        if (qUri != null && !qUri.isBlank()) {
+            resourceQuery.where(qResource.uri.likeIgnoreCase("%" + qUri + "%"));
+        }
+        return findDTOs(resourceQuery.orderBy(qResource.sort.asc()), obj -> {
+            obj.setPathAndQuery(URIHelper.getPathAndQuery(obj.getPathAndQuery()));
+            return obj;
+        });
     }
 
-    public Resp<List<ResourceResp>> findExposeResources(Long relAppId, Long relTenantId) {
+    public Resp<List<ResourceResp>> findExposeResources(String qName, String qUri,
+                                                        Long relAppId, Long relTenantId) {
         var qResource = QResource.resource;
-        return findDTOs(sqlBuilder.select(Projections.bean(ResourceResp.class,
+        var resourceQuery = sqlBuilder.select(Projections.bean(ResourceResp.class,
                 qResource.id,
                 qResource.name,
-                qResource.uri,
+                qResource.uri.as("pathAndQuery"),
                 qResource.icon,
                 qResource.action,
                 qResource.sort,
@@ -420,8 +477,17 @@ public class ACResourceService extends IAMBasicService {
                 .from(qResource)
                 .where((qResource.exposeKind.eq(ExposeKind.TENANT).and(qResource.relTenantId.eq(relTenantId)))
                         .or(qResource.exposeKind.eq(ExposeKind.GLOBAL)))
-                .where(qResource.relAppId.ne(relAppId))
-                .orderBy(qResource.sort.asc()));
+                .where(qResource.relAppId.ne(relAppId));
+        if (qName != null && !qName.isBlank()) {
+            resourceQuery.where(qResource.name.equalsIgnoreCase(qName));
+        }
+        if (qUri != null && !qUri.isBlank()) {
+            resourceQuery.where(qResource.uri.likeIgnoreCase("%" + qUri + "%"));
+        }
+        return findDTOs(resourceQuery.orderBy(qResource.sort.asc()), obj -> {
+            obj.setPathAndQuery(URIHelper.getPathAndQuery(obj.getPathAndQuery()));
+            return obj;
+        });
     }
 
     @Transactional

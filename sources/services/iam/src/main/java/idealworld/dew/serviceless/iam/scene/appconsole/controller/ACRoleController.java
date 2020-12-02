@@ -66,9 +66,10 @@ public class ACRoleController extends IAMBasicController {
 
     @GetMapping(value = "def")
     @Operation(summary = "获取当前应用的角色定义列表信息")
-    public Resp<List<RoleDefResp>> findRoleDef() {
+    public Resp<List<RoleDefResp>> findRoleDef(@RequestParam(required = false) String qCode,
+                                               @RequestParam(required = false) String qName) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
-        return acRoleService.findRoleDef(currentAppAndTenantId._0, currentAppAndTenantId._1);
+        return acRoleService.findRoleDef(qCode, qName, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "def/{roleDefId}")
@@ -104,11 +105,12 @@ public class ACRoleController extends IAMBasicController {
 
     @GetMapping(value = "")
     @Operation(summary = "获取当前应用的角色列表信息")
-    public Resp<List<RoleResp>> findRoles(@RequestParam(required = false, defaultValue = "false") Boolean expose) {
+    public Resp<List<RoleResp>> findRoles(@RequestParam(required = false, defaultValue = "false") Boolean expose,
+                                          @RequestParam(required = false) String qName) {
         var currentAppAndTenantId = getCurrentAppAndTenantId();
         return !expose
-                ? acRoleService.findRoles(currentAppAndTenantId._0, currentAppAndTenantId._1)
-                : acRoleService.findExposeRoles(currentAppAndTenantId._0, currentAppAndTenantId._1);
+                ? acRoleService.findRoles(qName, currentAppAndTenantId._0, currentAppAndTenantId._1)
+                : acRoleService.findExposeRoles(qName, currentAppAndTenantId._0, currentAppAndTenantId._1);
     }
 
     @DeleteMapping(value = "{roleId}")

@@ -43,8 +43,8 @@ public class ResourceSubjectAddReq implements Serializable {
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源主体编码", required = true)
-    private String code;
+    @Schema(title = "资源主体编码后缀", required = true)
+    private String codePostfix;
 
     @NotNull
     @NotBlank
@@ -55,10 +55,6 @@ public class ResourceSubjectAddReq implements Serializable {
     @Schema(title = "资源主体显示排序，asc")
     @Builder.Default
     private Integer sort = 0;
-
-    @Schema(title = "是否默认")
-    @Builder.Default
-    private Boolean defaultByApp = false;
 
     @NotNull
     @Schema(title = "资源类型", required = true)

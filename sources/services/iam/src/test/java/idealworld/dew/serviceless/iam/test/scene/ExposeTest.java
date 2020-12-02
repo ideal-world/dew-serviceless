@@ -78,7 +78,7 @@ public class ExposeTest extends BasicTest {
                 .build(), Long.class).getBody();
         // 添加当前应用的资源主体
         var resourceSubjectId = postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .code("testApp")
+                .codePostfix("testApp")
                 .kind(ResourceKind.HTTP)
                 .name("测试应用资源主题")
                 .uri("http://test-app")
@@ -86,17 +86,17 @@ public class ExposeTest extends BasicTest {
         // 添加当前应用的资源
         var adminResourceId = postToEntity("/console/app/resource", ResourceAddReq.builder()
                 .name("后台管理")
-                .uri("http://test-app/system/**")
+                .pathAndQuery("/system/**")
                 .relResourceSubjectId(resourceSubjectId)
                 .build(), Long.class).getBody();
         var tenantResourceId = postToEntity("/console/app/resource", ResourceAddReq.builder()
                 .name("同租户可见资源")
-                .uri("http://test-app/limit/**")
+                .pathAndQuery("/limit/**")
                 .relResourceSubjectId(resourceSubjectId)
                 .build(), Long.class).getBody();
         var globalResourceId = postToEntity("/console/app/resource", ResourceAddReq.builder()
                 .name("公开资源")
-                .uri("http://test-app/public/**")
+                .pathAndQuery("/public/**")
                 .relResourceSubjectId(resourceSubjectId)
                 .exposeKind(ExposeKind.GLOBAL)
                 .build(), Long.class).getBody();
@@ -145,7 +145,7 @@ public class ExposeTest extends BasicTest {
                 .build(), Long.class).getBody();
         // 添加当前应用的资源主体
         var test2ResourceSubjectId = postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .code("test2App")
+                .codePostfix("test2App")
                 .kind(ResourceKind.HTTP)
                 .name("测试2应用资源主题")
                 .uri("http://test2-app")
@@ -153,7 +153,7 @@ public class ExposeTest extends BasicTest {
         // 添加当前应用的资源
         var test2ResourceId = postToEntity("/console/app/resource", ResourceAddReq.builder()
                 .name("业务操作")
-                .uri("http://test2-app/bus/**")
+                .pathAndQuery("/bus/**")
                 .relResourceSubjectId(test2ResourceSubjectId)
                 .build(), Long.class).getBody();
 

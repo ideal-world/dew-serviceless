@@ -41,6 +41,7 @@ import java.util.stream.Stream;
  * <p>
  * Redis格式：
  * <p>
+ *     // TODO 加上过期时间
  * 资源类型:资源URI:资源操作类型 = {权限主体运算类型:{权限主体类型:[权限主体Id]}}
  *
  * @author gudaoxuri

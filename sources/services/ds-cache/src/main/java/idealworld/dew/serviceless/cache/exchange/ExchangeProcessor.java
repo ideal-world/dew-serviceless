@@ -30,6 +30,7 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 
 /**
@@ -40,9 +41,11 @@ public class ExchangeProcessor {
 
     public static Future<Void> init(CacheConfig cacheConfig) {
         var header = HttpClient.getIdentOptHeader(cacheConfig.getIam().getAppId(), cacheConfig.getIam().getTenantId());
-        HttpClient.request(HttpMethod.GET, cacheConfig.getIam().getUri() + "/console/app/resource/subject", null, header)
+        HttpClient.request(HttpMethod.GET, cacheConfig.getIam().getUri() + "/console/app/resource/subject?qKind=" + ResourceKind.CACHE.toString(), null, header)
                 .onSuccess(result -> {
-                    var resourceSubjects = $.json.toList(result.toString(), ResourceSubjectExchange.class);
+                    var resourceSubjects = $.json.toList(
+                            $.json.toJson(result.body().toString(StandardCharsets.UTF_8)).get("body"),
+                                    ResourceSubjectExchange.class);
                     for (var resourceSubject : resourceSubjects) {
                         RedisClient.init(resourceSubject.getCode(), CommonApplication.VERTX,
                                 CommonConfig.RedisConfig.builder()

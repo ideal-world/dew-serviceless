@@ -43,8 +43,8 @@ public class ResourceModifyReq implements Serializable {
     private String name;
 
     @Size(max = 5000)
-    @Schema(title = "资源URI")
-    private String uri;
+    @Schema(title = "资源路径")
+    private String pathAndQuery;
 
     @Size(max = 1000)
     @Schema(title = "资源图标（路径）")

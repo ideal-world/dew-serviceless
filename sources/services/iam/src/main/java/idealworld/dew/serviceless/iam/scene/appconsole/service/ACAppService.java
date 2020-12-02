@@ -92,15 +92,19 @@ public class ACAppService extends IAMBasicService {
 
     }
 
-    public Resp<Page<AppIdentResp>> pageAppIdents(Long pageNumber, Integer pageSize, Long relAppId) {
+    public Resp<Page<AppIdentResp>> pageAppIdents(Long pageNumber, Integer pageSize, Long relAppId, String qNote) {
         var qAppIdent = QAppIdent.appIdent;
-        return pageDTOs(sqlBuilder.select(Projections.bean(AppIdentResp.class,
+        var appIdentQuery = sqlBuilder.select(Projections.bean(AppIdentResp.class,
                 qAppIdent.id,
                 qAppIdent.note,
                 qAppIdent.ak,
                 qAppIdent.validTime))
                 .from(qAppIdent)
-                .where(qAppIdent.relAppId.eq(relAppId)), pageNumber, pageSize);
+                .where(qAppIdent.relAppId.eq(relAppId));
+        if (qNote != null && !qNote.isBlank()) {
+            appIdentQuery.where(qAppIdent.note.likeIgnoreCase(qNote));
+        }
+        return pageDTOs(appIdentQuery, pageNumber, pageSize);
     }
 
     @Transactional

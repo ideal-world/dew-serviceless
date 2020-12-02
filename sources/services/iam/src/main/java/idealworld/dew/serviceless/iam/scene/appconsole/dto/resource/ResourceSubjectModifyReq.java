@@ -39,8 +39,8 @@ import java.io.Serializable;
 public class ResourceSubjectModifyReq implements Serializable {
 
     @Size(max = 255)
-    @Schema(title = "资源主体编码")
-    private String code;
+    @Schema(title = "资源主体编码后缀")
+    private String codePostfix;
 
     @Size(max = 255)
     @Schema(title = "资源主体名称")
@@ -48,9 +48,6 @@ public class ResourceSubjectModifyReq implements Serializable {
 
     @Schema(title = "资源主体显示排序，asc")
     private Integer sort;
-
-    @Schema(title = "是否默认")
-    private Boolean defaultByApp;
 
     @Schema(title = "资源类型")
     private ResourceKind kind;

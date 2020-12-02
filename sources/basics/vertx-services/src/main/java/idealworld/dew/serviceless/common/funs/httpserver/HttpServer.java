@@ -46,8 +46,7 @@ public class HttpServer {
         routes.stream()
                 .map(route -> {
                     var currentRoute = router.route(route.getMethod(), route.getPath());
-                    currentRoute.consumes("application/json")
-                            .produces("application/json");
+                    currentRoute.produces("application/json");
                     if (route.parseBody) {
                         currentRoute.handler(BodyHandler.create(false));
                     }

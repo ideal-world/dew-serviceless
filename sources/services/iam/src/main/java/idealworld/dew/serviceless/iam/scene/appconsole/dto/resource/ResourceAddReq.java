@@ -50,8 +50,8 @@ public class ResourceAddReq implements Serializable {
     @NotNull
     @NotBlank
     @Size(max = 5000)
-    @Schema(title = "资源URI", required = true)
-    private String uri;
+    @Schema(title = "资源路径", required = true)
+    private String pathAndQuery;
 
     @Size(max = 1000)
     @Schema(title = "资源图标（路径）")

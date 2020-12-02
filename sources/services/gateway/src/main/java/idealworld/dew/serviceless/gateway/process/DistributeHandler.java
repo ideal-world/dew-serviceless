@@ -53,8 +53,8 @@ public class DistributeHandler extends CommonHttpHandler {
         var resourceUri = (URI) ctx.get(Constant.REQUEST_RESOURCE_URI_FLAG);
         var action = (OptActionKind) ctx.get(Constant.REQUEST_RESOURCE_ACTION_FLAG);
 
-        HttpMethod httpMethod = HttpMethod.GET;
         Buffer body = null;
+        HttpMethod httpMethod = HttpMethod.GET;
         switch (action) {
             case FETCH:
                 httpMethod = HttpMethod.GET;
@@ -81,48 +81,62 @@ public class DistributeHandler extends CommonHttpHandler {
         header.put(Constant.REQUEST_RESOURCE_ACTION_FLAG, action.toString());
         switch (ResourceKind.parse(resourceUri.getScheme().toLowerCase())) {
             case HTTP:
-                request = HttpClient.request(httpMethod, resourceUri.toString(), body, header, distribute.getTimeoutMs());
+                request = HttpClient.request(httpMethod,
+                        resourceUri.toString(),
+                        body,
+                        header,
+                        distribute.getTimeoutMs());
                 break;
             case MENU:
             case ELEMENT:
-                request = HttpClient.request(httpMethod,
+                request = HttpClient.request(HttpMethod.POST,
                         distribute.getIamServiceName(),
                         distribute.getIamServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
-                        body, header, distribute.getTimeoutMs());
+                        body,
+                        header,
+                        distribute.getTimeoutMs());
                 break;
             case RELDB:
-                request = HttpClient.request(httpMethod,
+                request = HttpClient.request(HttpMethod.POST,
                         distribute.getReldbServiceName(),
                         distribute.getReldbServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
-                        body, header, distribute.getTimeoutMs());
+                        body,
+                        header,
+                        distribute.getTimeoutMs());
                 break;
             case CACHE:
-                request = HttpClient.request(httpMethod,
+                request = HttpClient.request(HttpMethod.POST,
                         distribute.getCacheServiceName(),
                         distribute.getCacheServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
-                        body, header, distribute.getTimeoutMs());
+                        body,
+                        header,
+                        distribute.getTimeoutMs());
                 break;
             case MQ:
-                request = HttpClient.request(httpMethod,
+                request = HttpClient.request(HttpMethod.POST,
                         distribute.getMqServiceName(),
                         distribute.getMqServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
-                        body, header, distribute.getTimeoutMs());
+                        body,
+                        header,
+                        distribute.getTimeoutMs());
                 break;
             case OBJECT:
-                request = HttpClient.request(httpMethod,
+                request = HttpClient.request(HttpMethod.POST,
                         distribute.getObjServiceName(),
                         distribute.getObjServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
-                        body, header, distribute.getTimeoutMs());
+                        body,
+                        header,
+                        distribute.getTimeoutMs());
                 break;
             default:
                 error(StandardCode.NOT_FOUND, DistributeHandler.class, "资源类型不存在", ctx);

@@ -71,6 +71,10 @@ public class CommonTest extends BasicTest {
                 .build(), IdentOptInfo.class).getBody();
         Assertions.assertNotNull(identOptInfo.getAccountCode());
         // 注册账号
+        loginBySystemAdmin();
+        patchToEntity("/console/tenant/tenant", TenantModifyReq.builder()
+                .allowAccountRegister(false)
+                .build(), Void.class);
         Assertions.assertTrue(postToEntity("/common/account", AccountRegisterReq.builder()
                 .name("孤岛旭日")
                 .kind(AccountIdentKind.EMAIL)
@@ -78,7 +82,6 @@ public class CommonTest extends BasicTest {
                 .sk("s")
                 .relAppId(appId)
                 .build(), IdentOptInfo.class).getMessage().contains("对应租户不存在、未启用或禁止注册"));
-        loginBySystemAdmin();
         patchToEntity("/console/tenant/tenant", TenantModifyReq.builder()
                 .allowAccountRegister(true)
                 .build(), Void.class);
@@ -170,7 +173,7 @@ public class CommonTest extends BasicTest {
 
         // 退出登录
         removeToken();
-        Assertions.assertEquals("[Internal Server Error]用户未登录", postToEntity("/common/logout", "", Void.class).getMessage());
+        Assertions.assertEquals("[Internal Server Error]用户未登录", delete("/common/logout").getMessage());
         setToken(identOptInfo.getToken());
         Assertions.assertTrue(postToEntity("/common/logout", "", Void.class).ok());
 
@@ -205,7 +208,7 @@ public class CommonTest extends BasicTest {
                 .build(), IdentOptInfo.class).getMessage());
         loginBySystemAdmin();
         var resourceSubjectId = postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .code(AccountIdentKind.WECHAT_XCX.toString())
+                .codePostfix(AccountIdentKind.WECHAT_XCX.toString())
                 .kind(ResourceKind.OAUTH)
                 .name("微信OAuth")
                 .uri("oauth://" + AccountIdentKind.WECHAT_XCX.toString())
@@ -214,7 +217,7 @@ public class CommonTest extends BasicTest {
                 .build(), Long.class).getBody();
         Assertions.assertTrue(postToEntity("/console/app/resource", ResourceAddReq.builder()
                 .name("微信OAuth")
-                .uri("oauth://" + AccountIdentKind.WECHAT_XCX.toString())
+                .pathAndQuery(AccountIdentKind.WECHAT_XCX.toString())
                 .relResourceSubjectId(resourceSubjectId)
                 .build(), Long.class).ok());
         removeToken();

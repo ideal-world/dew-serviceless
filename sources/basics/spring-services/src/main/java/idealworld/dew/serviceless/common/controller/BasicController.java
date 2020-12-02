@@ -39,7 +39,7 @@ import java.util.Optional;
  */
 public abstract class BasicController {
 
-    private Optional<IdentOptCacheInfo> getIdentOptCacheInfo() {
+    protected Optional<IdentOptCacheInfo> getIdentOptCacheInfo() {
         return Dew.auth.getOptInfo()
                 .map(info -> {
                     if (((IdentOptCacheInfo) info).getAppId() == Constant.OBJECT_UNDEFINED
@@ -50,9 +50,7 @@ public abstract class BasicController {
                     }
                     return Optional.of((IdentOptCacheInfo) info);
                 })
-                .orElseThrow(() -> StandardResp.e(
-                        StandardResp.unAuthorized("BASIC", "凭证不存在")
-                ));
+                .orElse(Optional.empty());
     }
 
     protected Tuple2<Long, Long> getCurrentAppAndTenantId() {
