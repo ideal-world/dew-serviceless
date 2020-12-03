@@ -25,8 +25,6 @@ import idealworld.dew.serviceless.common.Constant;
  */
 public class IAMConstant extends Constant {
 
-    public static final String CACHE_APP_AK = "dew:iam:app:ak:";
-    public static final String CACHE_APP_INFO = "dew:iam:app:info";
     public static final String CACHE_ACCESS_TOKEN = "dew:iam:oauth:access-token:";
     public static final String CACHE_ACCOUNT_VCODE_TMP_REL = "dew:iam:account:vocde:tmprel:";
     public static final String CACHE_ACCOUNT_VCODE_ERROR_TIMES = "dew:iam:account:vocde:errortimes:";

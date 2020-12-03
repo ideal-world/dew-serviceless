@@ -52,10 +52,14 @@ function replaceSql(fileContent: string, ast: Node): string {
 }
 
 function encrypt(text: string): string {
+    initRSA()
+    return rsa.encryptByPub(text)
+}
+
+export function initRSA(publicKeyContent?: string): void {
     if (!rsa) {
-        let publicKey = fs.readFileSync(path.resolve(__dirname, '../', 'Dew.key'), {encoding: 'utf8'})
+        let publicKey = publicKeyContent ? publicKeyContent : fs.readFileSync(path.resolve(__dirname, '../', 'Dew.key'), {encoding: 'utf8'})
         rsa = new RSA()
         rsa.loadKey(publicKey)
     }
-    return rsa.encryptByPub(text)
 }

@@ -19,10 +19,7 @@ package idealworld.dew.serviceless.iam.scene.appconsole.dto.resource;
 import idealworld.dew.serviceless.common.enumeration.ResourceKind;
 import idealworld.dew.serviceless.iam.scene.common.dto.AppBasedResp;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
@@ -94,5 +91,9 @@ public class ResourceSubjectResp extends AppBasedResp {
     @Size(max = 1000)
     @Schema(title = "第三方平台项目名，如华为云的ProjectId", required = true)
     private String platformProjectId;
+
+    @NotNull
+    @Schema(title = "执行超时")
+    private Long timeoutMS;
 
 }

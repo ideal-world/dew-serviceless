@@ -35,8 +35,8 @@ public class ExecTest extends BasicTest {
         var resourceSubjectRelDBId = postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
                 .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
                 .kind(ResourceKind.RELDB)
-                .name("h2")
-                .uri("jdbc:h2:mem:test1")
+                .name("mysql")
+                .uri("mysql://root:123456@127.0.0.1:3306/test")
                 .build(), Long.class).getBody();
         var resourceSubjectCacheId = postToEntity("/console/app/resource/subject", ResourceSubjectAddReq.builder()
                 .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)

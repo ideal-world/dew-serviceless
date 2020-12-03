@@ -53,96 +53,113 @@ public class DistributeHandler extends CommonHttpHandler {
         var resourceUri = (URI) ctx.get(Constant.REQUEST_RESOURCE_URI_FLAG);
         var action = (OptActionKind) ctx.get(Constant.REQUEST_RESOURCE_ACTION_FLAG);
 
-        Buffer body = null;
-        HttpMethod httpMethod = HttpMethod.GET;
-        switch (action) {
-            case FETCH:
-                httpMethod = HttpMethod.GET;
-                break;
-            case CREATE:
-                httpMethod = HttpMethod.POST;
-                body = ctx.getBody();
-                break;
-            case MODIFY:
-                httpMethod = HttpMethod.PUT;
-                body = ctx.getBody();
-                break;
-            case PATCH:
-                httpMethod = HttpMethod.PATCH;
-                body = ctx.getBody();
-                break;
-            case DELETE:
-                httpMethod = HttpMethod.DELETE;
-                break;
-        }
+        Buffer body = ctx.getBody();
         Future<HttpResponse<Buffer>> request;
         var header = HttpClient.getIdentOptHeader(identOptInfo);
         header.put(Constant.REQUEST_RESOURCE_URI_FLAG, resourceUri.toString());
         header.put(Constant.REQUEST_RESOURCE_ACTION_FLAG, action.toString());
         switch (ResourceKind.parse(resourceUri.getScheme().toLowerCase())) {
             case HTTP:
-                request = HttpClient.request(httpMethod,
-                        resourceUri.toString(),
-                        body,
-                        header,
-                        distribute.getTimeoutMs());
+                if (resourceUri.getHost().equalsIgnoreCase(distribute.getIamServiceName())) {
+                    HttpMethod httpMethod = HttpMethod.GET;
+                    switch (action) {
+                        case FETCH:
+                            httpMethod = HttpMethod.GET;
+                            break;
+                        case CREATE:
+                            httpMethod = HttpMethod.POST;
+                            break;
+                        case MODIFY:
+                            httpMethod = HttpMethod.PUT;
+                            break;
+                        case PATCH:
+                            httpMethod = HttpMethod.PATCH;
+                            break;
+                        case DELETE:
+                            httpMethod = HttpMethod.DELETE;
+                            break;
+                    }
+                    request = HttpClient.choose("").request(httpMethod,
+                            resourceUri.toString(),
+                            body,
+                            header,
+                            distribute.getTimeoutMS());
+                } else {
+                    ctx.request().headers().forEach(h -> header.put(h.getKey(), h.getValue()));
+                    request = HttpClient.choose("").request(HttpMethod.POST,
+                            distribute.getHttpServiceName(),
+                            distribute.getHttpServicePort(),
+                            Constant.REQUEST_PATH_FLAG,
+                            null,
+                            body,
+                            header,
+                            distribute.getTimeoutMS());
+                }
                 break;
             case MENU:
             case ELEMENT:
-                request = HttpClient.request(HttpMethod.POST,
+                request = HttpClient.choose("").request(HttpMethod.POST,
                         distribute.getIamServiceName(),
                         distribute.getIamServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
                         body,
                         header,
-                        distribute.getTimeoutMs());
+                        distribute.getTimeoutMS());
                 break;
             case RELDB:
-                request = HttpClient.request(HttpMethod.POST,
+                request = HttpClient.choose("").request(HttpMethod.POST,
                         distribute.getReldbServiceName(),
                         distribute.getReldbServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
                         body,
                         header,
-                        distribute.getTimeoutMs());
+                        distribute.getTimeoutMS());
                 break;
             case CACHE:
-                request = HttpClient.request(HttpMethod.POST,
+                request = HttpClient.choose("").request(HttpMethod.POST,
                         distribute.getCacheServiceName(),
                         distribute.getCacheServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
                         body,
                         header,
-                        distribute.getTimeoutMs());
+                        distribute.getTimeoutMS());
                 break;
             case MQ:
-                request = HttpClient.request(HttpMethod.POST,
+                request = HttpClient.choose("").request(HttpMethod.POST,
                         distribute.getMqServiceName(),
                         distribute.getMqServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
                         body,
                         header,
-                        distribute.getTimeoutMs());
+                        distribute.getTimeoutMS());
                 break;
             case OBJECT:
-                request = HttpClient.request(HttpMethod.POST,
+                request = HttpClient.choose("").request(HttpMethod.POST,
                         distribute.getObjServiceName(),
                         distribute.getObjServicePort(),
                         Constant.REQUEST_PATH_FLAG,
                         null,
                         body,
                         header,
-                        distribute.getTimeoutMs());
+                        distribute.getTimeoutMS());
                 break;
             default:
                 error(StandardCode.NOT_FOUND, DistributeHandler.class, "资源类型不存在", ctx);
                 return;
         }
-        request.onSuccess(resp -> ctx.end(resp.body()))
+        request
+                .onSuccess(resp -> {
+                    if (ResourceKind.parse(resourceUri.getScheme().toLowerCase()) == ResourceKind.HTTP
+                            && !resourceUri.getHost().equalsIgnoreCase(distribute.getIamServiceName())) {
+                        // 外部调用带上返回的HTTP Header
+                        resp.headers().forEach(h -> ctx.response().putHeader(h.getKey(), h.getValue()));
+                    }
+                    ctx.end(resp.body());
+                })
                 .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, DistributeHandler.class, "转发服务错误", ctx));
     }
 

@@ -56,7 +56,7 @@ public class URIHelper {
 
     @SneakyThrows
     public static String formatUri(String host, String pathAndQuery) {
-        if (!pathAndQuery.startsWith("/")) {
+        if (!pathAndQuery.isBlank() && !pathAndQuery.startsWith("/")) {
             pathAndQuery = "/" + pathAndQuery;
         }
         if (host.endsWith("/")) {
@@ -74,8 +74,16 @@ public class URIHelper {
 
     @SneakyThrows
     public static String getPathAndQuery(String strUri) {
-        var uri = new URI(strUri);
-        return (uri.getPath().isBlank() ? "/" : uri.getPath())
+        return getPathAndQuery(new URI(strUri));
+    }
+
+    public static String getPathAndQuery(URI uri) {
+        var path = uri.getPath().isBlank()
+                ? ""
+                : uri.getPath().endsWith("/")
+                ? uri.getPath().substring(0, uri.getPath().length() - 1)
+                : uri.getPath();
+        return path
                 + (uri.getQuery() != null ? "?" + uri.getQuery() : "");
     }
 

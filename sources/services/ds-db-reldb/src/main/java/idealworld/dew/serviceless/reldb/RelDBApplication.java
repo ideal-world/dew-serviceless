@@ -20,7 +20,7 @@ import idealworld.dew.serviceless.common.CommonApplication;
 import idealworld.dew.serviceless.common.Constant;
 import idealworld.dew.serviceless.common.funs.httpserver.HttpServer;
 import idealworld.dew.serviceless.reldb.exchange.ExchangeProcessor;
-import idealworld.dew.serviceless.reldb.process.AuthHandler;
+import idealworld.dew.serviceless.reldb.process.SqlHandler;
 import idealworld.dew.serviceless.reldb.process.RelDBAuthPolicy;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
@@ -37,12 +37,12 @@ public class RelDBApplication extends CommonApplication<RelDBConfig> {
         initHttpClient(config);
         var authPolicy = new RelDBAuthPolicy(config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
         ExchangeProcessor.init(config);
-        var authHttpHandler = new AuthHandler(config.getSecurity(), authPolicy);
+        var sqlHandler = new SqlHandler(config.getSecurity(), authPolicy);
         initHttpServer(config, HttpServer.Route.builder()
                 .method(HttpMethod.POST)
                 .path(Constant.REQUEST_PATH_FLAG)
                 .parseBody(true)
-                .handlers(Collections.singletonList(authHttpHandler))
+                .handlers(Collections.singletonList(sqlHandler))
                 .build())
                 .onSuccess(resp -> startPromise.complete())
                 .onFailure(e -> startPromise.fail(e.getCause()));

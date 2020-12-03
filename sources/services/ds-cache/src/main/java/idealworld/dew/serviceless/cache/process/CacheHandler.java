@@ -50,7 +50,7 @@ public class CacheHandler extends CommonHttpHandler {
         var resourcePath = resourceUri.getPath().substring(1).split("/");
         var resourceQuery = URIHelper.getSingleValueQuery(resourceUri.getQuery());
         if (!RedisClient.contains(resourceSubjectCode)) {
-            error(StandardCode.BAD_REQUEST, CacheHandler.class, "请求的资源主题不存在", ctx);
+            error(StandardCode.BAD_REQUEST, CacheHandler.class, "请求的资源主题[" + resourceSubjectCode + "]不存在", ctx);
             return;
         }
         if (resourcePath.length < 1) {

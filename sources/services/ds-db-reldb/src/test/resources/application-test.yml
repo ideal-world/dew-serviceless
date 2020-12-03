@@ -1,2 +1,10 @@
+httpServer:
+  port: 8084
 redis:
   uri: redis://localhost:6379
+iam:
+  uri: http://127.0.0.1:8081
+  appId: 1
+  tenantId: 1
+security:
+  appInfoCacheExpireSec: 0

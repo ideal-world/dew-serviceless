@@ -49,7 +49,7 @@ public class GatewayConfig extends CommonConfig {
     public static class Distribute {
 
         @Builder.Default
-        private Integer timeoutMs = 10000;
+        private Long timeoutMS = 10000L;
         @Builder.Default
         private String iamServiceName = "iam.service";
         @Builder.Default
@@ -58,6 +58,10 @@ public class GatewayConfig extends CommonConfig {
         private String cacheServiceName = "cache.service";
         @Builder.Default
         private Integer cacheServicePort = 9000;
+        @Builder.Default
+        private String httpServiceName = "http.service";
+        @Builder.Default
+        private Integer httpServicePort = 9000;
         @Builder.Default
         private String reldbServiceName = "reldb.service";
         @Builder.Default
@@ -99,10 +103,6 @@ public class GatewayConfig extends CommonConfig {
         private Integer appRequestDateOffsetMs = 5000;
         @Builder.Default
         private String cacheTokenInfoKey = "dew:auth:token:info:";
-        @Builder.Default
-        private String cacheAkSkInfoKey = "dew:iam:app:ak:";
-        @Builder.Default
-        private String cacheAppInfo = "dew:iam:app:info";
         @Builder.Default
         private Map<String, List<String>> blockIps = new LinkedHashMap<>();
         @Builder.Default

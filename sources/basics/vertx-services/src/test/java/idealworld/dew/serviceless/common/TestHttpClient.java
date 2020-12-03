@@ -31,7 +31,7 @@ public class TestHttpClient extends BasicTest {
 
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {
-        HttpClient.init(vertx);
+        HttpClient.init("", vertx, HttpClient.HttpConfig.builder().build());
         testContext.completeNow();
     }
 
@@ -39,13 +39,13 @@ public class TestHttpClient extends BasicTest {
     @Test
     public void testHttp(Vertx vertx, VertxTestContext testContext) {
         var count = new CountDownLatch(2);
-        HttpClient.request(HttpMethod.GET, "http://www.baidu.com", null, null, null)
+        HttpClient.choose("").request(HttpMethod.GET, "http://www.baidu.com", null, null, null)
                 .onSuccess(response -> {
                     var html = response.body().toString("UTF-8");
                     Assertions.assertTrue(html.contains("百度"));
                     count.countDown();
                 });
-        HttpClient.request(HttpMethod.GET, "www.baidu.com", 80, "/s", "ie=UTF-8&wd=dew", null, null, null)
+        HttpClient.choose("").request(HttpMethod.GET, "www.baidu.com", 80, "/s", "ie=UTF-8&wd=dew", null, null, null)
                 .onSuccess(response -> {
                     var html = response.body().toString("UTF-8");
                     Assertions.assertTrue(html.contains("dew"));

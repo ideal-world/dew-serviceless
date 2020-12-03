@@ -8,9 +8,11 @@ distribute:
   iamServicePort: 8081
   cacheServiceName: 127.0.0.1
   cacheServicePort: 8082
+  httpServiceName: 127.0.0.1
+  httpServicePort: 8083
   reldbServiceName: 127.0.0.1
-  reldbServicePort: 8083
+  reldbServicePort: 8084
   mqServiceName: 127.0.0.1
-  mqServicePort: 8084
+  mqServicePort: 8085
   objServiceName: 127.0.0.1
-  objServicePort: 8085
+  objServicePort: 8086

@@ -72,4 +72,7 @@ public class ResourceSubjectModifyReq implements Serializable {
     @Schema(title = "第三方平台项目名，如华为云的ProjectId")
     private String platformProjectId;
 
+    @Schema(title = "执行超时")
+    private Long timeoutMS;
+
 }

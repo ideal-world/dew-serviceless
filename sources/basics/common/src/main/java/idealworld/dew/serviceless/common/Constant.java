@@ -51,6 +51,8 @@ public class Constant {
      * 鉴权策略缓存
      */
     public static final String CACHE_AUTH_POLICY = "dew:iam:policy:";
+    public static final String CACHE_APP_AK = "dew:iam:app:ak:";
+    public static final String CACHE_APP_INFO = "dew:iam:app:info:";
     /**
      * 最小的时间.
      */

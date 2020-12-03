@@ -33,7 +33,7 @@ import java.util.HashSet;
 public class ExchangeProcessor {
 
     public static Future<Void> init() {
-        return ExchangeHelper.register(new HashSet<>() {
+        return ExchangeHelper.watch(new HashSet<>() {
             {
                 add("resource");
             }

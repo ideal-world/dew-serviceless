@@ -65,6 +65,7 @@
         <module>sources/services/iam</module>
         <module>sources/services/ds-db-reldb</module>
         <module>sources/services/ds-cache</module>
+        <module>sources/services/ds-http</module>
         <module>sources/terminals</module>
         <module>it</module>
 

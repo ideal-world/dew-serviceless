@@ -138,6 +138,10 @@ public class ResourceSubject extends SafeEntity {
     private String platformProjectId;
 
     @Column(nullable = false,
+            columnDefinition = "int comment '执行超时'")
+    private Long timeoutMS;
+
+    @Column(nullable = false,
             columnDefinition = "bigint comment '关联应用Id'")
     private Long relAppId;
 

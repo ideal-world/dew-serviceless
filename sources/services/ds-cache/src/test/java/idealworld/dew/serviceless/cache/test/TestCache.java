@@ -17,6 +17,7 @@
 package idealworld.dew.serviceless.cache.test;
 
 import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.Resp;
 import idealworld.dew.serviceless.cache.CacheApplication;
 import idealworld.dew.serviceless.cache.CacheConfig;
 import idealworld.dew.serviceless.cache.CacheConstant;
@@ -58,7 +59,7 @@ public class TestCache extends BasicTest {
 
         Future.succeededFuture()
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("someValue"),
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("someValue"),
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.CREATE.toString());
@@ -67,7 +68,7 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp -> {
-                    Assertions.assertEquals("请求的资源主题不存在", resp.bodyAsString());
+                    Assertions.assertEquals("请求的资源主题[" + resourceSubjectCode + "]不存在", Resp.generic(resp.bodyAsString(), Void.class).getMessage());
                     return Future.succeededFuture();
                 })
                 .compose(resp -> {
@@ -76,7 +77,7 @@ public class TestCache extends BasicTest {
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("someValue"),
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("someValue"),
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.CREATE.toString());
@@ -85,7 +86,7 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.FETCH.toString());
@@ -94,11 +95,11 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp -> {
-                    Assertions.assertEquals("someValue", resp.bodyAsString());
+                    Assertions.assertEquals("someValue", Resp.generic(resp.bodyAsString(), String.class).getBody());
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.EXISTS.toString());
@@ -107,11 +108,11 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp -> {
-                    Assertions.assertEquals("true", resp.bodyAsString());
+                    Assertions.assertEquals("true", Resp.generic(resp.bodyAsString(), String.class).getBody());
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.MODIFY.toString());
@@ -121,7 +122,7 @@ public class TestCache extends BasicTest {
                 )
                 .compose(resp ->
                         Future.future(promise -> vertx.setTimer(1000L, h ->
-                                HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
+                                HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
                                         new HashMap<>() {
                                             {
                                                 put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.EXISTS.toString());
@@ -130,11 +131,11 @@ public class TestCache extends BasicTest {
                                         }).onSuccess(promise::complete))
                         ))
                 .compose(resp -> {
-                    Assertions.assertEquals("false", ((HttpResponseImpl) resp).body().toString());
+                    Assertions.assertEquals("false", Resp.generic(((HttpResponseImpl) resp).body().toString(), String.class).getBody());
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.DELETE.toString());
@@ -143,7 +144,7 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.EXISTS.toString());
@@ -152,11 +153,11 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp -> {
-                    Assertions.assertEquals("false", resp.bodyAsString());
+                    Assertions.assertEquals("false", Resp.generic(resp.bodyAsString(), String.class).getBody());
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("孤岛旭日"),
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("孤岛旭日"),
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.CREATE.toString());
@@ -165,7 +166,7 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.FETCH.toString());
@@ -174,11 +175,11 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp -> {
-                    Assertions.assertEquals("孤岛旭日", resp.bodyAsString());
+                    Assertions.assertEquals("孤岛旭日", Resp.generic(resp.bodyAsString(), String.class).getBody());
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, null,
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.DELETE.toString());
@@ -187,7 +188,7 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("5"),
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("5"),
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.MODIFY.toString());
@@ -196,7 +197,7 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("10"),
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + cacheConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("10"),
                                 new HashMap<>() {
                                     {
                                         put(Constant.REQUEST_RESOURCE_ACTION_FLAG, OptActionKind.MODIFY.toString());
@@ -205,7 +206,7 @@ public class TestCache extends BasicTest {
                                 })
                 )
                 .compose(resp -> {
-                    Assertions.assertEquals("15", resp.bodyAsString());
+                    Assertions.assertEquals("15", Resp.generic(resp.bodyAsString(), String.class).getBody());
                     return Future.succeededFuture();
                 })
                 .onSuccess(resp -> testContext.completeNow());

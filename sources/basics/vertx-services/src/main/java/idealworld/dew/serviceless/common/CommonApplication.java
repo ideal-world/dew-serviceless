@@ -47,7 +47,7 @@ public abstract class CommonApplication<C extends CommonConfig> extends Abstract
     }
 
     protected void initHttpClient(C config) {
-        HttpClient.init(vertx);
+        HttpClient.init("", vertx, HttpClient.HttpConfig.builder().build());
     }
 
     protected Future<Void> initHttpServer(C config, HttpServer.Route... routes) {

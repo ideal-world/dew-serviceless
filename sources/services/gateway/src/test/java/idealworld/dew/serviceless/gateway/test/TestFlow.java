@@ -167,7 +167,7 @@ public class TestFlow extends BasicTest {
                 });
         Assertions.assertEquals("认证错误，AK不存在", errorResult.result);
 
-        RedisClient.choose("").set(gatewayConfig.getSecurity().getCacheAkSkInfoKey() + "xx", "skxx:1123456:789");
+        RedisClient.choose("").set(Constant.CACHE_APP_AK + "xx", "skxx:1123456:789");
         vertx.setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:" + gatewayConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG +
                             "?" + Constant.REQUEST_RESOURCE_URI_FLAG +

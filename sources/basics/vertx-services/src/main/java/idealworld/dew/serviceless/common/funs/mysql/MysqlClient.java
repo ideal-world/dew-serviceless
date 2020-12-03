@@ -47,6 +47,7 @@ public class MysqlClient {
         var poolOptions = new PoolOptions()
                 .setMaxSize(config.getMaxPoolSize())
                 .setMaxWaitQueueSize(config.getMaxPoolWaitQueueSize());
+        // TODO 修改成 MySQLConnectOptions 形式
         if (config.getUri() != null && !config.getUri().isBlank()) {
             mysqlClient.client = MySQLPool.pool(vertx, config.getUri().trim(), poolOptions);
         } else {
@@ -93,7 +94,7 @@ public class MysqlClient {
         }
         return execBatch(sql, new ArrayList<>() {
             {
-                add(Collections.singletonList(parameters));
+                add(parameters);
             }
         });
     }

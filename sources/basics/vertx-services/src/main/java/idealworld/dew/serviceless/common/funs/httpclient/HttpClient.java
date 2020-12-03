@@ -27,6 +27,10 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
@@ -39,28 +43,49 @@ import java.util.Map;
 @Slf4j
 public class HttpClient {
 
-    private static WebClient webClient;
+    private static final Map<String, HttpClient> HTTP_CLIENTS = new HashMap<>();
+    private WebClient webClient;
+    private HttpConfig httpConfig;
 
-    public static void init(Vertx vertx) {
-        webClient = WebClient.create(vertx);
+    public static void init(String code, Vertx vertx, HttpConfig httpConfig) {
+        var httpClient = new HttpClient();
+        httpClient.webClient = WebClient.create(vertx);
+        httpClient.httpConfig = httpConfig;
+        HTTP_CLIENTS.put(code, httpClient);
     }
 
-    public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url) {
+    public static HttpClient choose(String code) {
+        return HTTP_CLIENTS.get(code);
+    }
+
+    public static Boolean contains(String code) {
+        return HTTP_CLIENTS.containsKey(code);
+    }
+
+    public static void remove(String code) {
+        HTTP_CLIENTS.remove(code);
+    }
+
+    public Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url) {
         return request(httpMethod, url, null, null, null);
     }
 
-    public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body) {
+    public Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body) {
         return request(httpMethod, url, body, null, null);
     }
 
-    public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header) {
+    public Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header) {
         return request(httpMethod, url, body, header, null);
     }
 
-    public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header, Integer timeout) {
+    public Future<HttpResponse<Buffer>> requestByResourceSubject(HttpMethod httpMethod, String pathAndQuery, Buffer body, Map<String, String> header) {
+        return request(httpMethod, URIHelper.formatUri(httpConfig.getUri(), pathAndQuery), body, header, httpConfig.getTimeoutMS());
+    }
+
+    public Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header, Long timeoutMS) {
         var request = webClient.requestAbs(httpMethod, url);
-        if (timeout != null) {
-            request.timeout(timeout);
+        if (timeoutMS != null) {
+            request.timeout(timeoutMS);
         }
         if (header == null) {
             header = new HashMap<>();
@@ -77,11 +102,11 @@ public class HttpClient {
         return request.send();
     }
 
-    public static Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String host, Integer port, String path, String query,
-                                                       Buffer body, Map<String, String> header, Integer timeout) {
+    public Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String host, Integer port, String path, String query,
+                                                Buffer body, Map<String, String> header, Long timeoutMS) {
         var request = webClient.request(httpMethod, port, host, path);
-        if (timeout != null) {
-            request.timeout(timeout);
+        if (timeoutMS != null) {
+            request.timeout(timeoutMS);
         }
         if (query != null) {
             URIHelper.getSingleValueQuery(query)
@@ -116,6 +141,17 @@ public class HttpClient {
                 put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64($.json.toJsonString(identOptCacheInfo), StandardCharsets.UTF_8));
             }
         };
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HttpConfig {
+
+        private String uri;
+        private Long timeoutMS;
+
     }
 
 }

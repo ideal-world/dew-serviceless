@@ -91,6 +91,7 @@ public class ACResourceService extends IAMBasicService {
                         .sk(resourceSubject.getSk())
                         .platformAccount(resourceSubject.getPlatformAccount())
                         .platformProjectId(resourceSubject.getPlatformProjectId())
+                        .timeoutMS(resourceSubject.getTimeoutMS())
                         .build(), String.class, Object.class)
         );
     }
@@ -159,6 +160,9 @@ public class ACResourceService extends IAMBasicService {
         if (resourceSubjectModifyReq.getPlatformProjectId() != null) {
             resourceSubjectUpdate.set(qResourceSubject.platformProjectId, resourceSubjectModifyReq.getPlatformProjectId());
         }
+        if (resourceSubjectModifyReq.getTimeoutMS() != null) {
+            resourceSubjectUpdate.set(qResourceSubject.timeoutMS, resourceSubjectModifyReq.getTimeoutMS());
+        }
         var updateR = updateEntity(resourceSubjectUpdate);
         if (!updateR.ok()) {
             return updateR;
@@ -180,6 +184,7 @@ public class ACResourceService extends IAMBasicService {
                         .sk(resourceSubject.getSk())
                         .platformAccount(resourceSubject.getPlatformAccount())
                         .platformProjectId(resourceSubject.getPlatformProjectId())
+                        .timeoutMS(resourceSubject.getTimeoutMS())
                         .build(), String.class, Object.class)
         );
     }
@@ -199,7 +204,9 @@ public class ACResourceService extends IAMBasicService {
                 qResourceSubject.platformAccount,
                 qResourceSubject.platformProjectId,
                 qResourceSubject.relAppId,
-                qResourceSubject.relTenantId))
+                qResourceSubject.relTenantId,
+                qResourceSubject.timeoutMS
+        ))
                 .from(qResourceSubject)
                 .where(qResourceSubject.id.eq(resourceSubjectId))
                 .where(qResourceSubject.relTenantId.eq(relTenantId))
@@ -225,7 +232,9 @@ public class ACResourceService extends IAMBasicService {
                 qResourceSubject.platformAccount,
                 qResourceSubject.platformProjectId,
                 qResourceSubject.relAppId,
-                qResourceSubject.relTenantId))
+                qResourceSubject.relTenantId,
+                qResourceSubject.timeoutMS
+        ))
                 .from(qResourceSubject)
                 .where(qResourceSubject.relTenantId.eq(relTenantId))
                 .where(qResourceSubject.relAppId.eq(relAppId));

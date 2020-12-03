@@ -43,8 +43,6 @@ public class RelDBConfig extends CommonConfig {
     public static class Security {
 
         @Builder.Default
-        private String cacheAppInfo = "dew:auth:app:";
-        @Builder.Default
         private Integer appInfoCacheExpireSec = 60;
         @Builder.Default
         private Integer resourceCacheExpireSec = 60 * 60 * 24;

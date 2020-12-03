@@ -17,6 +17,7 @@
 package idealworld.dew.serviceless.reldb.test;
 
 import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.Resp;
 import idealworld.dew.serviceless.common.CommonConfig;
 import idealworld.dew.serviceless.common.Constant;
 import idealworld.dew.serviceless.common.dto.IdentOptCacheInfo;
@@ -50,20 +51,26 @@ public class TestFlow extends BasicTest {
 
     private static RelDBConfig relDBConfig;
 
+    private Map<String, String> rsaKeys = $.security.asymmetric.generateKeys("RSA", 1024);
+
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {
         relDBConfig = YamlHelper.toObject(RelDBConfig.class, $.file.readAllByClassPath("application-test.yml", StandardCharsets.UTF_8));
         System.getProperties().put("dew.profile", "test");
         RedisTestHelper.start();
-        HttpClient.init(vertx);
+        HttpClient.init("", vertx, HttpClient.HttpConfig.builder().build());
         vertx.deployVerticle(new RelDBApplication(), testContext.succeedingThenComplete());
+    }
+
+    private String encrypt(String sql) {
+        return $.security.encodeBytesToBase64($.security.asymmetric.encrypt(sql.getBytes(), $.security.asymmetric.getPublicKey(rsaKeys.get("PublicKey"), "RSA"), 1024, "RSA/ECB/OAEPWithSHA1AndMGF1Padding"));
     }
 
     @Test
     public void testFlow(Vertx vertx, VertxTestContext testContext) {
         var errorResult = $.http.postWrap("http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
-                "xxxx|reldb://subjectCodexx");
-        Assertions.assertEquals("请求格式不合法", errorResult.result);
+                "{\"sql\":\"select name from iam_account\",\"parameters\":[]}");
+        Assertions.assertEquals("请求格式不合法", Resp.generic(errorResult.result, Void.class).getMessage());
 
         var identOptCacheInfo = $.json.toJsonString(IdentOptCacheInfo.builder()
                 .accountCode("a01")
@@ -73,15 +80,17 @@ public class TestFlow extends BasicTest {
                 .build());
 
         errorResult = $.http.postWrap("http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
-                "xxxx|reldb://subjectCodexx", new HashMap<>() {
+                "{\"sql\":\"select name from iam_account\",\"parameters\":[]}", new HashMap<>() {
                     {
-                        put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
+                        put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(identOptCacheInfo, StandardCharsets.UTF_8));
                         put(Constant.REQUEST_RESOURCE_URI_FLAG, "reldb://subjectCodexx");
                     }
                 });
-        Assertions.assertEquals("请求的资源主题不存在", errorResult.result);
+        Assertions.assertEquals("请求的资源主题[subjectCodexx]不存在", Resp.generic(errorResult.result, Void.class).getMessage());
 
         Future.succeededFuture()
+                .compose(resp -> RedisClient.choose("").del(Constant.CACHE_APP_INFO + "1000"))
+                .compose(resp -> RedisClient.choose("").del(Constant.CACHE_AUTH_POLICY + "reldb:subjectCodexx/iam_account/name:fetch"))
                 .compose(resp -> MysqlClient.init("subjectCodexx", vertx, CommonConfig.JDBCConfig.builder()
                         .uri("mysql://root:123456@127.0.0.1:3306/test").build()))
                 .compose(resp -> MysqlClient.choose("subjectCodexx").exec("drop table if exists iam_account"))
@@ -98,28 +107,63 @@ public class TestFlow extends BasicTest {
                 .compose(resp ->
                         MysqlClient.choose("subjectCodexx").exec("insert into iam_account(name, open_id, status) values (?, ?, ?)", "孤岛旭日1", "xxxx", "ENABLED")
                 )
-                .compose(resp -> {
-                    var error2Result = $.http.postWrap("http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
-                            "xxxx|reldb://subjectCodexx", new HashMap<>() {
-                                {
-                                    put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
-                                    put(Constant.REQUEST_RESOURCE_URI_FLAG, "reldb://subjectCodexx");
-                                }
-                            });
-                    Assertions.assertEquals("请求的SQL不存在", error2Result.result);
-                    return Future.succeededFuture();
-                })
                 .compose(resp ->
-                        HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("{\"sql\":\"select name from iam_account\",\"parameters\":[]}"),
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
+                                Buffer.buffer("{\"sql\":\"select name from iam_account\",\"parameters\":[]}"),
                                 new HashMap<>() {
                                     {
-                                        put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
+                                        put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(identOptCacheInfo, StandardCharsets.UTF_8));
                                         put(Constant.REQUEST_RESOURCE_URI_FLAG, "reldb://subjectCodexx");
                                     }
                                 })
                 )
                 .compose(resp -> {
-                    Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", resp.bodyAsString());
+                    Assertions.assertEquals("认证错误，AppId不合法", Resp.generic(resp.bodyAsString(), Void.class).getMessage());
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        RedisClient.choose("").set(Constant.CACHE_APP_INFO + "1000", "2000\n" + rsaKeys.get("PublicKey") + "\n" + rsaKeys.get("PrivateKey"))
+                )
+                .compose(resp ->
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
+                                Buffer.buffer("{\"sql\":\"" + encrypt("select1 name from iam_account1") + "\",\"parameters\":[]}"),
+                                new HashMap<>() {
+                                    {
+                                        put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(identOptCacheInfo, StandardCharsets.UTF_8));
+                                        put(Constant.REQUEST_RESOURCE_URI_FLAG, "reldb://subjectCodexx");
+                                    }
+                                })
+                )
+                .compose(resp -> {
+                    Assertions.assertEquals("请求的SQL解析错误", Resp.generic(resp.bodyAsString(), Void.class).getMessage());
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
+                                Buffer.buffer("{\"sql\":\"" + encrypt("select name from iam_account1") + "\",\"parameters\":[]}"),
+                                new HashMap<>() {
+                                    {
+                                        put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(identOptCacheInfo, StandardCharsets.UTF_8));
+                                        put(Constant.REQUEST_RESOURCE_URI_FLAG, "reldb://subjectCodexx");
+                                    }
+                                })
+                )
+                .compose(resp -> {
+                    Assertions.assertEquals("数据查询错误", Resp.generic(resp.bodyAsString(), Void.class).getMessage());
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
+                                Buffer.buffer("{\"sql\":\"" + encrypt("select name from iam_account") + "\",\"parameters\":[]}"),
+                                new HashMap<>() {
+                                    {
+                                        put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(identOptCacheInfo, StandardCharsets.UTF_8));
+                                        put(Constant.REQUEST_RESOURCE_URI_FLAG, "reldb://subjectCodexx");
+                                    }
+                                })
+                )
+                .compose(resp -> {
+                    Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", Resp.generic(resp.bodyAsString(), String.class).getBody());
                     return Future.succeededFuture();
                 })
                 .compose(resp -> ExchangeProcessor.init(relDBConfig))
@@ -156,15 +200,16 @@ public class TestFlow extends BasicTest {
                 .compose(resp ->
                         Future.future(promise ->
                                 vertx.setTimer(5000, h -> {
-                                    HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("{\"sql\":\"select name from iam_account\",\"parameters\":[]}"),
+                                    HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
+                                            Buffer.buffer("{\"sql\":\"" + encrypt("select name from iam_account") + "\",\"parameters\":[]}"),
                                             new HashMap<>() {
                                                 {
-                                                    put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
+                                                    put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(identOptCacheInfo, StandardCharsets.UTF_8));
                                                     put(Constant.REQUEST_RESOURCE_URI_FLAG, "reldb://subjectCodexx");
                                                 }
                                             })
                                             .onSuccess(r -> {
-                                                Assertions.assertEquals("鉴权错误，没有权限访问对应的资源", r.bodyAsString());
+                                                Assertions.assertEquals("鉴权错误，没有权限访问对应的资源", Resp.generic(r.bodyAsString(), Void.class).getMessage());
                                                 promise.complete(null);
                                             });
                                 })
@@ -189,15 +234,16 @@ public class TestFlow extends BasicTest {
                 .compose(resp ->
                         Future.future(promise ->
                                 vertx.setTimer(2000, h -> {
-                                    HttpClient.request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG, Buffer.buffer("{\"sql\":\"select name from iam_account\",\"parameters\":[]}"),
+                                    HttpClient.choose("").request(HttpMethod.POST, "http://127.0.0.1:" + relDBConfig.getHttpServer().getPort() + Constant.REQUEST_PATH_FLAG,
+                                            Buffer.buffer("{\"sql\":\"" + encrypt("select name from iam_account") + "\",\"parameters\":[]}"),
                                             new HashMap<>() {
                                                 {
-                                                    put(Constant.REQUEST_IDENT_OPT_FLAG, identOptCacheInfo);
+                                                    put(Constant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(identOptCacheInfo, StandardCharsets.UTF_8));
                                                     put(Constant.REQUEST_RESOURCE_URI_FLAG, "reldb://subjectCodexx");
                                                 }
                                             })
                                             .onSuccess(r -> {
-                                                Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", r.bodyAsString());
+                                                Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", Resp.generic(r.bodyAsString(), String.class).getBody());
                                                 promise.complete(null);
                                             });
                                 })

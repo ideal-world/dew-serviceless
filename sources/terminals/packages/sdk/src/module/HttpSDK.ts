@@ -25,7 +25,7 @@ export function init(appId: number): void {
     _appId = appId
 }
 
-export function httpSDK(){
+export function httpSDK() {
     return HttpSDK(_appId + ".http.default")
 }
 
@@ -58,6 +58,10 @@ function http<T>(resourceSubjectCode: string, optActionKind: OptActionKind, path
     if (!pathAndQuery.startsWith('/')) {
         pathAndQuery = '/' + pathAndQuery
     }
+    if (!header) {
+        header = {}
+    }
+    header["Content-Type"] = "application/json charset=utf-8"
     return request.req<T>('http', 'http://' + resourceSubjectCode + pathAndQuery, optActionKind, body, header, true)
 }
 

@@ -115,7 +115,7 @@ public class IdentHandler extends CommonHttpHandler {
                 return;
             }
             var appId = Long.parseLong(ctx.request().headers().get(security.getAppId().trim()));
-            RedisClient.choose("").get(security.getCacheAppInfo() + appId, security.getAppInfoCacheExpireSec())
+            RedisClient.choose("").get(Constant.CACHE_APP_INFO + appId, security.getAppInfoCacheExpireSec())
                     .onSuccess(appInfo -> {
                         if (appInfo == null) {
                             error(StandardCode.UNAUTHORIZED, IdentHandler.class, "认证错误，AppId不合法", ctx);
@@ -171,7 +171,7 @@ public class IdentHandler extends CommonHttpHandler {
         var reqPath = ctx.request().path();
         var reqQuery = ctx.request().query() != null ? ctx.request().query() : "";
         var sortedReqQuery = Arrays.stream(reqQuery.split("&")).sorted(String::compareTo).collect(Collectors.joining("&"));
-        RedisClient.choose("").get(security.getCacheAkSkInfoKey() + ak, security.getTokenCacheExpireSec())
+        RedisClient.choose("").get(Constant.CACHE_APP_AK + ak, security.getTokenCacheExpireSec())
                 .onSuccess(legalSkAndAppId -> {
                     if (legalSkAndAppId == null) {
                         error(StandardCode.UNAUTHORIZED, IdentHandler.class, "认证错误，AK不存在", ctx);
