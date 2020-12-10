@@ -34,7 +34,12 @@ import javax.validation.constraints.Size;
 @SuperBuilder
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class SoftDelEntity extends IdEntity {
+public class SoftDelEntity extends SafeEntity {
+
+    @Override
+    public String tableName() {
+        return "dew_del_record";
+    }
 
     @NotNull
     @NotBlank

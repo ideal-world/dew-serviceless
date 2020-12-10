@@ -18,7 +18,10 @@ package idealworld.dew.framework.test;
 
 import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.domain.IdEntity;
+import idealworld.dew.framework.domain.SoftDelEntity;
 import idealworld.dew.framework.dto.CommonStatus;
+import idealworld.dew.framework.dto.IdentOptInfo;
+import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
 import idealworld.dew.framework.fun.test.DewTest;
 import io.vertx.core.Future;
@@ -172,13 +175,48 @@ public class FunSQLClientTest extends DewTest {
                             }
                         }, Account.class)
                 )
-                .onSuccess(resp -> {
+                .compose(resp -> {
                     Assertions.assertEquals(3, resp.getBody().size());
                     Assertions.assertEquals("孤岛旭日4", resp.getBody().get(0).name);
                     Assertions.assertEquals("yyyy", resp.getBody().get(0).openId);
                     Assertions.assertEquals(CommonStatus.ENABLED, resp.getBody().get(0).status);
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        funSQLClient.softDelete("select * from account where name in (#{n1})", new HashMap<>() {
+                            {
+                                put("n1", "孤岛旭日6");
+                            }
+                        }, Account.class, ProcessContext.builder()
+                                .req(ProcessContext.Request.builder()
+                                        .identOptInfo(new IdentOptInfo()).build()).build())
+                )
+                .compose(resp ->
+                        funSQLClient.delete("delete from account where name = #{n1}", new HashMap<>() {
+                            {
+                                put("n1", "孤岛旭日5");
+                            }
+                        })
+                )
+                .compose(resp ->
+                        funSQLClient.select("select * from account", new HashMap<>(), Account.class)
+                )
+                .compose(resp -> {
+                    Assertions.assertEquals(4, resp.getBody().size());
+                    Assertions.assertEquals("孤岛旭日4", resp.getBody().get(3).name);
+                    Assertions.assertEquals("yyyy", resp.getBody().get(3).openId);
+                    Assertions.assertEquals(CommonStatus.ENABLED, resp.getBody().get(3).status);
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        funSQLClient.select("select * from " + new SoftDelEntity().tableName(), new HashMap<>(), SoftDelEntity.class)
+                )
+                .onSuccess(resp -> {
+                    Assertions.assertEquals(1, resp.getBody().size());
+                    Assertions.assertTrue(resp.getBody().get(0).getContent().contains("孤岛旭日6"));
                     testContext.completeNow();
-                });
+                })
+                .onFailure(testContext::failNow);
     }
 
     @Test

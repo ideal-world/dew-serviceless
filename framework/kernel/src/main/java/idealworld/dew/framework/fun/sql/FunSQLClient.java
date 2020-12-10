@@ -21,6 +21,7 @@ import com.ecfront.dew.common.Resp;
 import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SafeEntity;
+import idealworld.dew.framework.domain.SoftDelEntity;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.util.CaseFormatter;
 import io.vertx.core.CompositeFuture;
@@ -34,6 +35,7 @@ import io.vertx.mysqlclient.MySQLPool;
 import io.vertx.sqlclient.*;
 import io.vertx.sqlclient.templates.SqlTemplate;
 import io.vertx.sqlclient.templates.TupleMapper;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -165,6 +167,44 @@ public class FunSQLClient {
                         .forUpdate(client, sql)
                         .executeBatch(parameters),
                 sql);
+    }
+
+    @SneakyThrows
+    public <E extends IdEntity> Future<Resp<Long>> softDelete(String sql, Map<String, Object> parameters, Class<E> entityClazz, ProcessContext context) {
+        Promise<Resp<Long>> promise = Promise.promise();
+        var tableName = entityClazz.getDeclaredConstructor().newInstance().tableName();
+        select(sql, parameters, Map.class)
+                .compose(selectR -> {
+                    Promise<List<Map<String, Object>>> insertP = Promise.promise();
+                    var deleteObjs = selectR.getBody();
+                    var softDelEntities = deleteObjs.stream()
+                            .map(deleteObj -> SoftDelEntity.builder()
+                                    .entityName(entityClazz.getSimpleName())
+                                    .recordId(deleteObj.get("id").toString())
+                                    .content(JsonObject.mapFrom(deleteObj).toString())
+                                    .build())
+                            .collect(Collectors.toList());
+                    insert(softDelEntities, context)
+                            .onSuccess(insertResult -> {
+                                insertP.complete(deleteObjs.stream()
+                                        .map(deleteObj -> {
+                                            var item = new HashMap<String, Object>();
+                                            item.put("id", deleteObj.get("id"));
+                                            return item;
+                                        })
+                                        .collect(Collectors.toList()));
+                            })
+                            .onFailure(insertP::fail);
+                    return insertP.future();
+                })
+                .compose(idR -> update("DELETE FROM " + tableName + " WHERE id = #{id}", idR))
+                .onSuccess(promise::complete)
+                .onFailure(promise::fail);
+        return promise.future();
+    }
+
+    public Future<Resp<Long>> delete(String sql, Map<String, Object> parameters) {
+        return update(sql, parameters);
     }
 
     public <E> Future<E> tx(Function<FunSQLClient, Future<E>> function) {
