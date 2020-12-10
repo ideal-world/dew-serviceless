@@ -16,10 +16,10 @@
 
 package idealworld.dew.serviceless.http.exchange;
 
-import idealworld.dew.serviceless.common.CommonApplication;
-import idealworld.dew.serviceless.common.enumeration.ResourceKind;
 import idealworld.dew.framework.fun.exchange.ExchangeHelper;
 import idealworld.dew.framework.fun.httpclient.HttpClient;
+import idealworld.dew.serviceless.common.CommonApplication;
+import idealworld.dew.serviceless.common.enumeration.ResourceKind;
 import idealworld.dew.serviceless.http.HttpConfig;
 import io.vertx.core.Future;
 import lombok.extern.slf4j.Slf4j;

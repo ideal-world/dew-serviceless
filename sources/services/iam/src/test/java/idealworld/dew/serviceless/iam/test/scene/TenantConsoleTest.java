@@ -25,7 +25,6 @@ import idealworld.dew.serviceless.iam.scene.tenantconsole.dto.app.AppModifyReq;
 import idealworld.dew.serviceless.iam.scene.tenantconsole.dto.app.AppResp;
 import idealworld.dew.serviceless.iam.scene.tenantconsole.dto.tenant.*;
 import idealworld.dew.serviceless.iam.test.BasicTest;
-import org.junit.jupiter.api.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TenantConsoleTest extends BasicTest {
