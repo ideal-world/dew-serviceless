@@ -16,7 +16,7 @@
 
 package idealworld.dew.serviceless.iam.scene.tenantconsole.dto.tenant;
 
-import idealworld.dew.serviceless.common.dto.IdResp;
+import idealworld.dew.framework.dto.IdResp;
 import idealworld.dew.serviceless.common.enumeration.CommonStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

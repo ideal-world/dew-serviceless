@@ -26,7 +26,7 @@ import idealworld.dew.serviceless.common.resp.StandardResp;
 import idealworld.dew.serviceless.iam.domain.auth.AuthPolicy;
 import idealworld.dew.serviceless.iam.domain.auth.QAuthPolicy;
 import idealworld.dew.serviceless.iam.domain.auth.QResource;
-import idealworld.dew.serviceless.iam.enumeration.ExposeKind;
+import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyAddReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyModifyReq;

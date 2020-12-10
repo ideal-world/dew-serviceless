@@ -16,8 +16,8 @@
 
 package idealworld.dew.serviceless.iam.scene.tenantconsole.dto.account;
 
-import idealworld.dew.serviceless.common.dto.IdResp;
-import idealworld.dew.serviceless.iam.enumeration.AccountIdentKind;
+import idealworld.dew.framework.dto.IdResp;
+import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;

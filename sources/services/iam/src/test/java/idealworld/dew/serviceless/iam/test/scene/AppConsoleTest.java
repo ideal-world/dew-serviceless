@@ -17,7 +17,7 @@
 package idealworld.dew.serviceless.iam.test.scene;
 
 import idealworld.dew.serviceless.common.enumeration.*;
-import idealworld.dew.serviceless.iam.enumeration.GroupKind;
+import idealworld.dew.serviceless.iam.dto.GroupKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.app.AppIdentAddReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.app.AppIdentModifyReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.app.AppIdentResp;

@@ -20,7 +20,7 @@ import com.ecfront.dew.common.$;
 import group.idealworld.dew.Dew;
 import group.idealworld.dew.core.DewContext;
 import idealworld.dew.serviceless.common.Constant;
-import idealworld.dew.serviceless.common.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;

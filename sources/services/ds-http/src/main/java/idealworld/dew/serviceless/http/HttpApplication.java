@@ -18,7 +18,7 @@ package idealworld.dew.serviceless.http;
 
 import idealworld.dew.serviceless.common.CommonApplication;
 import idealworld.dew.serviceless.common.Constant;
-import idealworld.dew.serviceless.common.funs.httpserver.HttpServer;
+import idealworld.dew.framework.fun.httpserver.HttpServer;
 import idealworld.dew.serviceless.http.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.http.process.HttpHandler;
 import io.vertx.core.Promise;

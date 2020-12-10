@@ -17,7 +17,7 @@
 package idealworld.dew.serviceless.iam.scene.common.controller;
 
 import com.ecfront.dew.common.Resp;
-import idealworld.dew.serviceless.common.dto.IdentOptInfo;
+import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.serviceless.iam.scene.common.dto.account.*;
 import idealworld.dew.serviceless.iam.scene.common.dto.tenant.TenantRegisterReq;
 import idealworld.dew.serviceless.iam.scene.common.service.CommonAccountService;

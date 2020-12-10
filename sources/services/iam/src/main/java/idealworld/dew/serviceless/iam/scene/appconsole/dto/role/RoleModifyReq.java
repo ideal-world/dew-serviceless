@@ -16,7 +16,7 @@
 
 package idealworld.dew.serviceless.iam.scene.appconsole.dto.role;
 
-import idealworld.dew.serviceless.iam.enumeration.ExposeKind;
+import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

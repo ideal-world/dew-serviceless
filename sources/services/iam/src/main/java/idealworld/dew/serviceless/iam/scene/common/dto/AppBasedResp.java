@@ -16,8 +16,8 @@
 
 package idealworld.dew.serviceless.iam.scene.common.dto;
 
-import idealworld.dew.serviceless.common.dto.IdResp;
-import idealworld.dew.serviceless.iam.enumeration.ExposeKind;
+import idealworld.dew.framework.dto.IdResp;
+import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

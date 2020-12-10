@@ -20,7 +20,7 @@ import idealworld.dew.serviceless.cache.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.cache.process.CacheHandler;
 import idealworld.dew.serviceless.common.CommonApplication;
 import idealworld.dew.serviceless.common.Constant;
-import idealworld.dew.serviceless.common.funs.httpserver.HttpServer;
+import idealworld.dew.framework.fun.httpserver.HttpServer;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
 import lombok.extern.slf4j.Slf4j;

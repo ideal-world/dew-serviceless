@@ -22,7 +22,7 @@ import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.tuple.Tuple2;
 import com.fasterxml.jackson.databind.JsonNode;
 import idealworld.dew.serviceless.common.resp.StandardResp;
-import idealworld.dew.serviceless.iam.enumeration.AccountIdentKind;
+import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
 import idealworld.dew.serviceless.iam.scene.common.service.IAMBasicService;
 import idealworld.dew.serviceless.iam.scene.common.service.OAuthService;
 import lombok.extern.slf4j.Slf4j;

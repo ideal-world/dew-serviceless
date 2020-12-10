@@ -16,7 +16,7 @@
 
 package idealworld.dew.serviceless.reldb.process;
 
-import idealworld.dew.serviceless.common.auth.AuthenticationProcessor;
+import idealworld.dew.framework.auth.AuthenticationProcessor;
 import idealworld.dew.serviceless.common.enumeration.AuthResultKind;
 import idealworld.dew.serviceless.common.enumeration.AuthSubjectKind;
 import io.vertx.core.Future;

@@ -56,7 +56,7 @@
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-mysql-client</artifactId>
+            <artifactId>vertx-sql-client-templates</artifactId>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>

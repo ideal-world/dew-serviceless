@@ -18,12 +18,12 @@ package idealworld.dew.serviceless.iam.scene.exec.service;
 
 import com.ecfront.dew.common.Resp;
 import com.querydsl.core.types.Projections;
-import idealworld.dew.serviceless.common.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.serviceless.common.enumeration.ResourceKind;
-import idealworld.dew.serviceless.common.util.URIHelper;
+import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.iam.domain.auth.QResource;
 import idealworld.dew.serviceless.iam.domain.auth.QResourceSubject;
-import idealworld.dew.serviceless.iam.enumeration.ExposeKind;
+import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.resource.ResourceResp;
 import idealworld.dew.serviceless.iam.scene.common.service.IAMBasicService;
 import lombok.extern.slf4j.Slf4j;

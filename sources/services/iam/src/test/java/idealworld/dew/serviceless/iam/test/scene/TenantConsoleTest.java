@@ -17,7 +17,7 @@
 package idealworld.dew.serviceless.iam.test.scene;
 
 import idealworld.dew.serviceless.common.enumeration.CommonStatus;
-import idealworld.dew.serviceless.iam.enumeration.AccountIdentKind;
+import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
 import idealworld.dew.serviceless.iam.scene.systemconsole.dto.TenantAddReq;
 import idealworld.dew.serviceless.iam.scene.tenantconsole.dto.account.*;
 import idealworld.dew.serviceless.iam.scene.tenantconsole.dto.app.AppAddReq;

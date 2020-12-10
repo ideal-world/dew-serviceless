@@ -17,7 +17,7 @@
 package idealworld.dew.serviceless.iam.scene.appconsole.controller;
 
 import com.ecfront.dew.common.Resp;
-import idealworld.dew.serviceless.iam.enumeration.GroupKind;
+import idealworld.dew.serviceless.iam.dto.GroupKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.group.*;
 import idealworld.dew.serviceless.iam.scene.appconsole.service.ACGroupService;
 import idealworld.dew.serviceless.iam.scene.common.controller.IAMBasicController;

@@ -17,9 +17,9 @@
 package idealworld.dew.serviceless.iam.test.scene;
 
 import com.ecfront.dew.common.$;
-import idealworld.dew.serviceless.common.dto.IdentOptInfo;
+import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.serviceless.common.enumeration.ResourceKind;
-import idealworld.dew.serviceless.iam.enumeration.AccountIdentKind;
+import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.resource.ResourceAddReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.resource.ResourceSubjectAddReq;
 import idealworld.dew.serviceless.iam.scene.common.dto.account.*;

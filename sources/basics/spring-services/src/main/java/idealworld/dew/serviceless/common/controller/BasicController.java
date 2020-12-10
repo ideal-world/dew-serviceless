@@ -20,7 +20,7 @@ import com.ecfront.dew.common.tuple.Tuple2;
 import group.idealworld.dew.Dew;
 import group.idealworld.dew.core.auth.dto.OptInfo;
 import idealworld.dew.serviceless.common.Constant;
-import idealworld.dew.serviceless.common.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.serviceless.common.resp.StandardResp;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;

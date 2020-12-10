@@ -16,12 +16,12 @@
 
 package idealworld.dew.serviceless.iam.test.scene;
 
-import idealworld.dew.serviceless.common.dto.IdentOptInfo;
+import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.serviceless.common.enumeration.AuthResultKind;
 import idealworld.dew.serviceless.common.enumeration.AuthSubjectKind;
 import idealworld.dew.serviceless.common.enumeration.AuthSubjectOperatorKind;
 import idealworld.dew.serviceless.common.enumeration.ResourceKind;
-import idealworld.dew.serviceless.iam.enumeration.ExposeKind;
+import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyAddReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy.AuthPolicyResp;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.resource.ResourceAddReq;

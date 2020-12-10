@@ -54,10 +54,13 @@
     </properties>
 
     <modules>
-        <module>parents/basic</module>
-        <module>parents/vertx</module>
-        <module>parents/spring</module>
-        <module>docs</module>
+        <module>framework/parent</module>
+        <module>framework/kernel</module>
+        <module>framework/auth</module>
+        <module>framework/test</module>
+        <module>module/gateway</module>
+        <module>module/iam</module>
+        <!--<module>docs</module>
         <module>sources/basics/common</module>
         <module>sources/basics/vertx-services</module>
         <module>sources/basics/spring-services</module>
@@ -67,8 +70,8 @@
         <module>sources/services/ds-cache</module>
         <module>sources/services/ds-http</module>
         <module>sources/terminals</module>
-        <module>it</module>
-
+        <module>it</module>-->
+        <module>terminals</module>
     </modules>
 
     <repositories>

@@ -16,7 +16,7 @@
 
 package idealworld.dew.serviceless.iam.scene.appconsole.dto.authpolicy;
 
-import idealworld.dew.serviceless.common.dto.IdResp;
+import idealworld.dew.framework.dto.IdResp;
 import idealworld.dew.serviceless.common.enumeration.AuthResultKind;
 import idealworld.dew.serviceless.common.enumeration.AuthSubjectKind;
 import idealworld.dew.serviceless.common.enumeration.AuthSubjectOperatorKind;

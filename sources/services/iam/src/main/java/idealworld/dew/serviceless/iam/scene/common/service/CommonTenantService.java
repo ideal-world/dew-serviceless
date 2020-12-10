@@ -18,10 +18,10 @@ package idealworld.dew.serviceless.iam.scene.common.service;
 
 import com.ecfront.dew.common.Resp;
 import idealworld.dew.serviceless.common.Constant;
-import idealworld.dew.serviceless.common.dto.IdentOptInfo;
+import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.serviceless.common.resp.StandardResp;
 import idealworld.dew.serviceless.iam.IAMConfig;
-import idealworld.dew.serviceless.iam.enumeration.AccountIdentKind;
+import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
 import idealworld.dew.serviceless.iam.scene.appconsole.dto.app.AppIdentAddReq;
 import idealworld.dew.serviceless.iam.scene.appconsole.service.ACAppService;
 import idealworld.dew.serviceless.iam.scene.appconsole.service.ACResourceService;

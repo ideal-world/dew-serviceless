@@ -16,7 +16,7 @@
 
 package idealworld.dew.serviceless.iam.scene.appconsole.dto.group;
 
-import idealworld.dew.serviceless.iam.enumeration.GroupKind;
+import idealworld.dew.serviceless.iam.dto.GroupKind;
 import idealworld.dew.serviceless.iam.scene.common.dto.AppBasedResp;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
