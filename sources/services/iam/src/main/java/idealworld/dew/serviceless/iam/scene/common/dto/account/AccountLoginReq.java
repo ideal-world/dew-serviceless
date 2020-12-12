@@ -17,7 +17,6 @@
 package idealworld.dew.serviceless.iam.scene.common.dto.account;
 
 import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

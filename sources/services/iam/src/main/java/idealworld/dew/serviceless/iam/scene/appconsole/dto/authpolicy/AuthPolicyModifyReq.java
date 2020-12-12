@@ -20,7 +20,6 @@ import idealworld.dew.serviceless.common.enumeration.AuthResultKind;
 import idealworld.dew.serviceless.common.enumeration.AuthSubjectKind;
 import idealworld.dew.serviceless.common.enumeration.AuthSubjectOperatorKind;
 import idealworld.dew.serviceless.common.enumeration.OptActionKind;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

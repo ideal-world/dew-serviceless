@@ -17,7 +17,6 @@
 package idealworld.dew.serviceless.iam.scene.appconsole.dto.app;
 
 import idealworld.dew.framework.dto.IdResp;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

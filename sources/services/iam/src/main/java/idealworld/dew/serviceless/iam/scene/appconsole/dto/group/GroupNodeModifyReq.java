@@ -17,7 +17,6 @@
 package idealworld.dew.serviceless.iam.scene.appconsole.dto.group;
 
 import idealworld.dew.serviceless.common.Constant;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
