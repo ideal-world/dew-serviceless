@@ -34,18 +34,18 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改角色定义请求")
+// 修改角色定义请求")
 public class RoleDefModifyReq implements Serializable {
 
     @Size(max = 255)
-    @Schema(title = "角色定义编码")
+    // 角色定义编码")
     private String code;
 
     @Size(max = 255)
-    @Schema(title = "角色定义名称")
+    // 角色定义名称")
     private String name;
 
-    @Schema(title = "显示排序，asc")
+    // 显示排序，asc")
     private Integer sort;
 
 }

@@ -56,22 +56,22 @@ public class TenantIdent extends SafeEntity {
     @NotNull
     @NotBlank
     @Size(max = 2000)
-    private String validAKRuleNote;
+    private String validAkRuleNote;
     // 认证AK校验正则规则
     @NotNull
     @NotBlank
     @Size(max = 2000)
-    private String validAKRule;
+    private String validAkRule;
     // 认证SK校验正则规则说明
     @NotNull
     @NotBlank
     @Size(max = 2000)
-    private String validSKRuleNote;
+    private String validSkRuleNote;
     // 认证SK校验正则规则
     @NotNull
     @NotBlank
     @Size(max = 2000)
-    private String validSKRule;
+    private String validSkRule;
     // 认证有效时间（秒）
     @NotNull
     private Long validTimeSec;

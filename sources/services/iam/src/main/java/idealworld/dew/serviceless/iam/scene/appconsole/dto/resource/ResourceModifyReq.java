@@ -35,35 +35,35 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改资源请求")
+// 修改资源请求")
 public class ResourceModifyReq implements Serializable {
 
     @Size(max = 255)
-    @Schema(title = "资源名称")
+    // 资源名称")
     private String name;
 
     @Size(max = 5000)
-    @Schema(title = "资源路径")
+    // 资源路径")
     private String pathAndQuery;
 
     @Size(max = 1000)
-    @Schema(title = "资源图标（路径）")
+    // 资源图标（路径）")
     private String icon;
 
     @Size(max = 1000)
-    @Schema(title = "触发后的操作，多用于菜单链接")
+    // 触发后的操作，多用于菜单链接")
     private String action;
 
-    @Schema(title = "资源显示排序，asc")
+    // 资源显示排序，asc")
     private Integer sort;
 
-    @Schema(title = "是否是资源组")
+    // 是否是资源组")
     private Boolean resGroup;
 
-    @Schema(title = "资源所属组Id")
+    // 资源所属组Id")
     private Long parentId;
 
-    @Schema(title = "开放等级类型")
+    // 开放等级类型")
     private ExposeKind exposeKind;
 
 }

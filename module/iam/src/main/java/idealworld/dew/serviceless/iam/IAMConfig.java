@@ -63,13 +63,13 @@ public class IAMConfig {
         @Builder.Default
         private String appAdminRoleDefName = "应用管理员";
         @Builder.Default
-        private String defaultValidAKRuleNote = "用户名校验规则";
+        private String defaultValidAkRuleNote = "用户名校验规则";
         @Builder.Default
-        private String defaultValidAKRule = "^[a-zA-Z\\d\\.]{3,20}$";
+        private String defaultValidAkRule = "^[a-zA-Z\\d\\.]{3,20}$";
         @Builder.Default
-        private String defaultValidSKRuleNote = "密码校验规则，8-20位字母+数字";
+        private String defaultValidSkRuleNote = "密码校验规则，8-20位字母+数字";
         @Builder.Default
-        private String defaultValidSKRule = "^(?![0-9]+$)(?![a-zA-Z]+$)\\S{8,20}$";
+        private String defaultValidSkRule = "^(?![0-9]+$)(?![a-zA-Z]+$)\\S{8,20}$";
         @Builder.Default
         private Integer accountVCodeExpireSec = 60 * 5;
         @Builder.Default

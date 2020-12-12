@@ -42,43 +42,43 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加权限策略请求")
+// 添加权限策略请求")
 public class AuthPolicyAddReq implements Serializable {
 
     @NotNull
-    @Schema(title = "关联权限主体类型", required = true)
+    // 关联权限主体类型
     private AuthSubjectKind relSubjectKind;
 
     @NotNull
     @NotBlank
     @Size(max = 10000)
-    @Schema(title = "关联权限主体Ids,有多个时逗号分隔", required = true)
+    // 关联权限主体Ids,有多个时逗号分隔
     private String relSubjectIds;
 
     @NotNull
-    @Schema(title = "关联权限主体运算类型", required = true)
+    // 关联权限主体运算类型
     private AuthSubjectOperatorKind subjectOperator;
 
-    @Schema(title = "生效时间")
+    // 生效时间")
     @Builder.Default
     protected Date effectiveTime = Constant.MIN_TIME;
 
-    @Schema(title = "失效时间")
+    // 失效时间")
     @Builder.Default
     protected Date expiredTime = Constant.MAX_TIME;
 
     @NotNull
-    @Schema(title = "关联资源Id", required = true)
+    // 关联资源Id
     private Long relResourceId;
 
-    @Schema(title = "操作类型")
+    // 操作类型")
     private OptActionKind actionKind;
 
     @NotNull
-    @Schema(title = "操作结果", required = true)
+    // 操作结果
     private AuthResultKind resultKind;
 
-    @Schema(title = "是否排他")
+    // 是否排他")
     @Builder.Default
     private Boolean exclusive = true;
 

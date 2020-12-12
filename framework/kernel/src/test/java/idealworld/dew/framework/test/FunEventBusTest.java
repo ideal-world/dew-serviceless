@@ -20,7 +20,7 @@ import com.ecfront.dew.common.Resp;
 import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
-import idealworld.dew.framework.fun.eventbus.KernelProcessor;
+import idealworld.dew.framework.fun.eventbus.ProcessHelper;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.test.DewTest;
 import io.vertx.core.Future;
@@ -52,7 +52,7 @@ public class FunEventBusTest extends DewTest {
     public void testComplexReqResp(Vertx vertx, VertxTestContext testContext) {
         var count = new CountDownLatch(4);
         ReceiveProcessor.addProcessor(OptActionKind.MODIFY, "/app/{name}/{kind}/enabled", context -> {
-            var userR = KernelProcessor.parseBody(context.req.body, User.class);
+            var userR = new ProcessHelper().parseBody(context.req.body, User.class);
             Assertions.assertEquals("xxxx", context.req.header.get("App-Id"));
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));

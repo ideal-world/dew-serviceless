@@ -35,44 +35,44 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改资源主体请求")
+// 修改资源主体请求")
 public class ResourceSubjectModifyReq implements Serializable {
 
     @Size(max = 255)
-    @Schema(title = "资源主体编码后缀")
+    // 资源主体编码后缀")
     private String codePostfix;
 
     @Size(max = 255)
-    @Schema(title = "资源主体名称")
+    // 资源主体名称")
     private String name;
 
-    @Schema(title = "资源主体显示排序，asc")
+    // 资源主体显示排序，asc")
     private Integer sort;
 
-    @Schema(title = "资源类型")
+    // 资源类型")
     private ResourceKind kind;
 
     @Size(max = 5000)
-    @Schema(title = "资源主体连接URI")
+    // 资源主体连接URI")
     private String uri;
 
     @Size(max = 1000)
-    @Schema(title = "AK，部分类型支持写到URI中")
+    // AK，部分类型支持写到URI中")
     private String ak;
 
     @Size(max = 1000)
-    @Schema(title = "SK，部分类型支持写到URI中")
+    // SK，部分类型支持写到URI中")
     private String sk;
 
     @Size(max = 1000)
-    @Schema(title = "第三方平台账号名")
+    // 第三方平台账号名")
     private String platformAccount;
 
     @Size(max = 1000)
-    @Schema(title = "第三方平台项目名，如华为云的ProjectId")
+    // 第三方平台项目名，如华为云的ProjectId")
     private String platformProjectId;
 
-    @Schema(title = "执行超时")
+    // 执行超时")
     private Long timeoutMS;
 
 }

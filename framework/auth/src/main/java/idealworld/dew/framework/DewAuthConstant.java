@@ -25,8 +25,6 @@ public class DewAuthConstant extends DewConstant{
 
     public static final String EVENT_NOTIFY_TOPIC_BY_IAM = "event:notify:iam";
 
-    public static final String PARAM_DEFAULT_TOKEN_KIND_FLAG = "DEFAULT";
-
     /**
      * 鉴权策略缓存
      */

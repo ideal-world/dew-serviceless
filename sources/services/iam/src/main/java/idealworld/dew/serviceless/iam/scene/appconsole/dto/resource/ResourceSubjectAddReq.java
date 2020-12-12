@@ -37,56 +37,56 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加资源主体请求")
+// 添加资源主体请求")
 public class ResourceSubjectAddReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源主体编码后缀", required = true)
+    // 资源主体编码后缀
     private String codePostfix;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源主体名称", required = true)
+    // 资源主体名称
     private String name;
 
-    @Schema(title = "资源主体显示排序，asc")
+    // 资源主体显示排序，asc")
     @Builder.Default
     private Integer sort = 0;
 
     @NotNull
-    @Schema(title = "资源类型", required = true)
+    // 资源类型
     private ResourceKind kind;
 
     @NotNull
     @NotBlank
     @Size(max = 5000)
-    @Schema(title = "资源主体连接URI", required = true)
+    // 资源主体连接URI
     private String uri;
 
     @Size(max = 1000)
-    @Schema(title = "AK，部分类型支持写到URI中")
+    // AK，部分类型支持写到URI中")
     @Builder.Default
     private String ak = "";
 
     @Size(max = 1000)
-    @Schema(title = "SK，部分类型支持写到URI中")
+    // SK，部分类型支持写到URI中")
     @Builder.Default
     private String sk = "";
 
     @Size(max = 1000)
-    @Schema(title = "第三方平台账号名")
+    // 第三方平台账号名")
     @Builder.Default
     private String platformAccount = "";
 
     @Size(max = 1000)
-    @Schema(title = "第三方平台项目名，如华为云的ProjectId")
+    // 第三方平台项目名，如华为云的ProjectId")
     @Builder.Default
     private String platformProjectId = "";
 
-    @Schema(title = "执行超时")
+    // 执行超时")
     @Builder.Default
     private Long timeoutMS = 0L;
 

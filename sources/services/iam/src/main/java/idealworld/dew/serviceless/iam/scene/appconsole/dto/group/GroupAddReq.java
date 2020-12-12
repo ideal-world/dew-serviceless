@@ -39,43 +39,43 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加角色定义请求")
+// 添加角色定义请求")
 public class GroupAddReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "群组编码", required = true)
+    // 群组编码
     private String code;
 
     @NotNull
-    @Schema(title = "群组类型", required = true)
+    // 群组类型
     private GroupKind kind;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "群组名称", required = true)
+    // 群组名称
     private String name;
 
     @Size(max = 1000)
-    @Schema(title = "群组图标（路径）")
+    // 群组图标（路径）")
     @Builder.Default
     private String icon = "";
 
-    @Schema(title = "显示排序，asc")
+    // 显示排序，asc")
     @Builder.Default
     private Integer sort = 0;
 
-    @Schema(title = "关联群组Id，用于多树合成")
+    // 关联群组Id，用于多树合成")
     @Builder.Default
     private Long relGroupId = Constant.OBJECT_UNDEFINED;
 
-    @Schema(title = "关联群起始组节点Id，用于多树合成")
+    // 关联群起始组节点Id，用于多树合成")
     @Builder.Default
     private Long relGroupNodeId = Constant.OBJECT_UNDEFINED;
 
-    @Schema(title = "开放等级类型")
+    // 开放等级类型")
     @Builder.Default
     private ExposeKind exposeKind = ExposeKind.APP;
 

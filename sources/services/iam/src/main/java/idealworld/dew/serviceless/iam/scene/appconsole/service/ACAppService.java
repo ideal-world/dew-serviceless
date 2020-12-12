@@ -49,8 +49,8 @@ public class ACAppService extends IAMBasicService {
     @Transactional
     public Resp<Long> addAppIdent(AppIdentAddReq appIdentAddReq, Long relAppId, Long relTenantId) {
         var appIdent = $.bean.copyProperties(appIdentAddReq, AppIdent.class);
-        appIdent.setAk(KeyHelper.generateAK());
-        appIdent.setSk(KeyHelper.generateSK(appIdent.getAk()));
+        appIdent.setAk(KeyHelper.generateAk());
+        appIdent.setSk(KeyHelper.generateSk(appIdent.getAk()));
         appIdent.setRelAppId(relAppId);
         var saveR = sendMQBySave(
                 saveEntity(appIdent),

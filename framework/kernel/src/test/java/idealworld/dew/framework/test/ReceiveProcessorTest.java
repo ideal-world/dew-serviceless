@@ -19,7 +19,6 @@ package idealworld.dew.framework.test;
 import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.framework.dto.OptActionKind;
-import idealworld.dew.framework.fun.eventbus.KernelProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessFun;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.test.DewTest;
@@ -83,12 +82,12 @@ public class ReceiveProcessorTest extends DewTest {
                 .onFailure(testContext::failNow);
     }
 
-    private ProcessFun MockProcessor1() {
+    private ProcessFun<String> MockProcessor1() {
         return context ->
                 Future.succeededFuture(Resp.success("/app"));
     }
 
-    private ProcessFun MockProcessor2() {
+    private ProcessFun<String> MockProcessor2() {
         return context -> {
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("测试", context.req.params.get("q"));
@@ -96,7 +95,7 @@ public class ReceiveProcessorTest extends DewTest {
         };
     }
 
-    private ProcessFun MockProcessor3() {
+    private ProcessFun<String> MockProcessor3() {
         return context -> {
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));
@@ -105,9 +104,9 @@ public class ReceiveProcessorTest extends DewTest {
         };
     }
 
-    private ProcessFun MockProcessor4() {
+    private ProcessFun<String> MockProcessor4() {
         return context -> {
-            var userR = KernelProcessor.parseBody(context.req.body, User.class);
+            var userR = context.helper.parseBody(context.req.body, User.class);
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));
             Assertions.assertEquals("测试", context.req.params.get("q"));

@@ -21,7 +21,7 @@ import idealworld.dew.framework.DewAuthConfig;
 import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ExchangeData;
-import idealworld.dew.framework.fun.auth.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceSubjectExchange;
 import idealworld.dew.framework.fun.cache.FunRedisClient;

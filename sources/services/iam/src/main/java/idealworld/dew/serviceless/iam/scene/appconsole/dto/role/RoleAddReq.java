@@ -37,26 +37,26 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加角色请求")
+// 添加角色请求")
 public class RoleAddReq implements Serializable {
 
     @NotNull
-    @Schema(title = "关联角色定义Id", required = true)
+    // 关联角色定义Id
     private Long relRoleDefId;
 
-    @Schema(title = "关联群组节点Id")
+    // 关联群组节点Id")
     @Builder.Default
     private Long relGroupNodeId = Constant.OBJECT_UNDEFINED;
 
     @Size(max = 255)
-    @Schema(title = "角色名称")
+    // 角色名称")
     private String name;
 
-    @Schema(title = "显示排序，asc")
+    // 显示排序，asc")
     @Builder.Default
     private Integer sort = 0;
 
-    @Schema(title = "开放等级类型")
+    // 开放等级类型")
     @Builder.Default
     private ExposeKind exposeKind = ExposeKind.APP;
 

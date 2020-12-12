@@ -37,27 +37,27 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "登录请求")
+// 登录请求")
 public class AccountLoginReq implements Serializable {
 
-    @Schema(title = "账号认证类型")
+    // 账号认证类型")
     @Builder.Default
     private AccountIdentKind kind = AccountIdentKind.USERNAME;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "账号认证名称", required = true)
+    // 账号认证名称
     private String ak;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "账号认证密钥", required = true)
+    // 账号认证密钥
     private String sk;
 
     @NotNull
-    @Schema(title = "关联应用Id", required = true)
+    // 关联应用Id
     private Long relAppId;
 
 }

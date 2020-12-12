@@ -18,7 +18,7 @@ package idealworld.dew.framework.fun.eventbus;
 
 import com.ecfront.dew.common.Resp;
 import idealworld.dew.framework.DewConstant;
-import idealworld.dew.framework.dto.IdentOptInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.cache.FunRedisClient;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
@@ -55,15 +55,15 @@ public class ReceiveProcessor {
             return Future.succeededFuture(Resp.badRequest("找不到对应的处理器"));
         }
         if (PROCESSORS.get(actionKind).containsKey(pathRequest)) {
-            return (Future<Resp<?>>) PROCESSORS.get(actionKind).get(pathRequest).process(ProcessContext.builder()
+            return PROCESSORS.get(actionKind).get(pathRequest).process(ProcessContext.builder()
                     .req(ProcessContext.Request.builder()
                             .header(header)
                             .params(new HashMap<>())
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
-                                            ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptInfo.class)
-                                            : new IdentOptInfo())
+                                            ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptCacheInfo.class)
+                                            : new IdentOptCacheInfo())
                             .build())
                     .fun(ProcessContext.Function.builder()
                             .sql(FunSQLClient.contains(moduleName) ? FunSQLClient.choose(moduleName) : null)
@@ -83,15 +83,15 @@ public class ReceiveProcessor {
             var pathPattern = matchedPathTemplate.get();
             var params = PATH_MATCHER.extractUriTemplateVariables(pathPattern, pathRequest);
             params.putAll(URIHelper.getSingleValueQuery(query));
-            return (Future<Resp<?>>) PROCESSORS.get(actionKind).get(pathPattern).process(ProcessContext.builder()
+            return PROCESSORS.get(actionKind).get(pathPattern).process(ProcessContext.builder()
                     .req(ProcessContext.Request.builder()
                             .header(header)
                             .params(params)
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
-                                            ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptInfo.class)
-                                            : new IdentOptInfo())
+                                            ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptCacheInfo.class)
+                                            : new IdentOptCacheInfo())
                             .build())
                     .fun(ProcessContext.Function.builder()
                             .sql(FunSQLClient.contains(moduleName) ? FunSQLClient.choose(moduleName) : null)

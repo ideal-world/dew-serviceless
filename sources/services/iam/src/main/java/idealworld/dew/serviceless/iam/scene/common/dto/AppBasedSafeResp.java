@@ -38,15 +38,15 @@ import javax.validation.constraints.NotNull;
 public class AppBasedSafeResp extends SafeResp {
 
     @NotNull
-    @Schema(title = "所属应用Id", required = true)
+    // 所属应用Id
     private Long relAppId;
 
     @NotNull
-    @Schema(title = "所属租户Id", required = true)
+    // 所属租户Id
     private Long relTenantId;
 
     @NotNull
-    @Schema(title = "开放等级类型", required = true)
+    // 开放等级类型
     private ExposeKind exposeKind;
 
 }

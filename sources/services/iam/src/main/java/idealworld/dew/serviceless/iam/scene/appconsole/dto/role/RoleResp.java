@@ -38,25 +38,25 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(title = "角色响应")
+// 角色响应")
 public class RoleResp extends AppBasedResp {
 
     @NotNull
-    @Schema(title = "关联角色定义Id", required = true)
+    // 关联角色定义Id
     private Long relRoleDefId;
 
     @NotNull
-    @Schema(title = "关联群组节点Id", required = true)
+    // 关联群组节点Id
     private Long relGroupNodeId;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色名称", required = true)
+    // 角色名称
     private String name;
 
     @NotNull
-    @Schema(title = "显示排序，asc", required = true)
+    // 显示排序，asc
     private Integer sort;
 
 }

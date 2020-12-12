@@ -38,48 +38,48 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加资源请求")
+// 添加资源请求")
 public class ResourceAddReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源名称", required = true)
+    // 资源名称
     private String name;
 
     @NotNull
     @NotBlank
     @Size(max = 5000)
-    @Schema(title = "资源路径", required = true)
+    // 资源路径
     private String pathAndQuery;
 
     @Size(max = 1000)
-    @Schema(title = "资源图标（路径）")
+    // 资源图标（路径）")
     @Builder.Default
     private String icon = "";
 
     @Size(max = 1000)
-    @Schema(title = "触发后的操作，多用于菜单链接")
+    // 触发后的操作，多用于菜单链接")
     @Builder.Default
     private String action = "";
 
-    @Schema(title = "资源显示排序，asc")
+    // 资源显示排序，asc")
     @Builder.Default
     private Integer sort = 0;
 
-    @Schema(title = "是否是资源组")
+    // 是否是资源组")
     @Builder.Default
     private Boolean resGroup = false;
 
-    @Schema(title = "资源所属组Id")
+    // 资源所属组Id")
     @Builder.Default
     private Long parentId = Constant.OBJECT_UNDEFINED;
 
     @NotNull
-    @Schema(title = "关联资源主体Id", required = true)
+    // 关联资源主体Id
     private Long relResourceSubjectId;
 
-    @Schema(title = "开放等级类型")
+    // 开放等级类型")
     @Builder.Default
     private ExposeKind exposeKind = ExposeKind.APP;
 

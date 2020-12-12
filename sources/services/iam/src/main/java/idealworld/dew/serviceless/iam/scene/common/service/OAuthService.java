@@ -64,13 +64,13 @@ public class OAuthService extends IAMBasicService {
     @Transactional
     public Resp<IdentOptInfo> login(AccountOAuthLoginReq accountOAuthLoginReq) {
         var tenantIdR = commonFunctionService.getEnabledTenantIdByAppId(accountOAuthLoginReq.getRelAppId(), false);
-        var checkAndGetAKSKR = checkAndGetAKSK(accountOAuthLoginReq.getKind(), accountOAuthLoginReq.getRelAppId(), tenantIdR.getBody());
-        if (!checkAndGetAKSKR.ok()) {
-            return Resp.error(checkAndGetAKSKR);
+        var checkAndGetAkSkR = checkAndGetAKSK(accountOAuthLoginReq.getKind(), accountOAuthLoginReq.getRelAppId(), tenantIdR.getBody());
+        if (!checkAndGetAkSkR.ok()) {
+            return Resp.error(checkAndGetAkSkR);
         }
-        PlatformAPI platformAPI = checkAndGetAKSKR.getBody()._0;
-        var oauthAk = checkAndGetAKSKR.getBody()._1;
-        var oauthSk = checkAndGetAKSKR.getBody()._2;
+        PlatformAPI platformAPI = checkAndGetAkSkR.getBody()._0;
+        var oauthAk = checkAndGetAkSkR.getBody()._1;
+        var oauthSk = checkAndGetAkSkR.getBody()._2;
         Resp<Tuple2<String, OAuthUserInfo>> oauthUserInfoR = platformAPI.getUserInfo(accountOAuthLoginReq.getCode(), oauthAk, oauthSk, accountOAuthLoginReq.getRelAppId());
         if (!oauthUserInfoR.ok()) {
             return StandardResp.error(oauthUserInfoR);
@@ -125,17 +125,17 @@ public class OAuthService extends IAMBasicService {
     }
 
     public Resp<String> getAccessToken(AccountIdentKind oauthKind, Long relAppId, Long relTenantId) {
-        var checkAndGetAKSKR = checkAndGetAKSK(oauthKind, relAppId, relTenantId);
-        if (!checkAndGetAKSKR.ok()) {
-            return Resp.error(checkAndGetAKSKR);
+        var checkAndGetAkSkR = checkAndGetAkSk(oauthKind, relAppId, relTenantId);
+        if (!checkAndGetAkSkR.ok()) {
+            return Resp.error(checkAndGetAkSkR);
         }
-        PlatformAPI platformAPI = checkAndGetAKSKR.getBody()._0;
-        var oauthAk = checkAndGetAKSKR.getBody()._1;
-        var oauthSk = checkAndGetAKSKR.getBody()._2;
+        PlatformAPI platformAPI = checkAndGetAkSkR.getBody()._0;
+        var oauthAk = checkAndGetAkSkR.getBody()._1;
+        var oauthSk = checkAndGetAkSkR.getBody()._2;
         return platformAPI.getAccessToken(oauthAk, oauthSk, relAppId);
     }
 
-    private Resp<Tuple3<PlatformAPI, String, String>> checkAndGetAKSK(AccountIdentKind kind, Long appId, Long tenantId) {
+    private Resp<Tuple3<PlatformAPI, String, String>> checkAndGetAkSk(AccountIdentKind kind, Long appId, Long tenantId) {
         PlatformAPI platformAPI;
         switch (kind) {
             case WECHAT_XCX:

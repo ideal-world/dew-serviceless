@@ -35,17 +35,17 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改角色请求")
+// 修改角色请求")
 public class RoleModifyReq implements Serializable {
 
     @Size(max = 255)
-    @Schema(title = "角色名称")
+    // 角色名称")
     private String name;
 
-    @Schema(title = "显示排序，asc")
+    // 显示排序，asc")
     private Integer sort;
 
-    @Schema(title = "开放等级类型")
+    // 开放等级类型")
     private ExposeKind exposeKind;
 
 }

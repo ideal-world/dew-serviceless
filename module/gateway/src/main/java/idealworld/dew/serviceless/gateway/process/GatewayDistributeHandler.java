@@ -20,7 +20,7 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.dto.OptActionKind;
-import idealworld.dew.framework.fun.auth.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.httpserver.AuthHttpHandler;

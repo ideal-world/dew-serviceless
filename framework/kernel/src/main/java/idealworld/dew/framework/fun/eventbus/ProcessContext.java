@@ -16,7 +16,7 @@
 
 package idealworld.dew.framework.fun.eventbus;
 
-import idealworld.dew.framework.dto.IdentOptInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.cache.FunRedisClient;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
@@ -37,10 +37,14 @@ import java.util.Map;
 @AllArgsConstructor
 public class ProcessContext {
 
+    private static final ProcessHelper _helper = new ProcessHelper();
+
     @Builder.Default
     public Request req = new Request();
     @Builder.Default
     public Function fun = new Function();
+    @Builder.Default
+    public ProcessHelper helper = _helper;
 
     @Data
     @Builder
@@ -51,7 +55,7 @@ public class ProcessContext {
         public Map<String, String> params;
         public Map<String, String> header;
         public Buffer body;
-        public IdentOptInfo identOptInfo;
+        public IdentOptCacheInfo identOptInfo;
 
     }
 

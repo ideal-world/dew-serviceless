@@ -37,63 +37,63 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(title = "资源信息响应")
+// 资源信息响应")
 public class ResourceSubjectResp extends AppBasedResp {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源主体编码", required = true)
+    // 资源主体编码
     private String code;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源主体编码后缀", required = true)
+    // 资源主体编码后缀
     private String codePostfix;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "资源主体名称", required = true)
+    // 资源主体名称
     private String name;
 
     @NotNull
-    @Schema(title = "资源主体显示排序，asc", required = true)
+    // 资源主体显示排序，asc
     private Integer sort;
 
     @NotNull
-    @Schema(title = "资源类型", required = true)
+    // 资源类型
     private ResourceKind kind;
 
     @NotNull
     @NotBlank
     @Size(max = 5000)
-    @Schema(title = "资源主体连接URI", required = true)
+    // 资源主体连接URI
     private String uri;
 
     @NotNull
     @Size(max = 1000)
-    @Schema(title = "AK，部分类型支持写到URI中", required = true)
+    // AK，部分类型支持写到URI中
     private String ak;
 
     @NotNull
     @Size(max = 1000)
-    @Schema(title = "SK，部分类型支持写到URI中", required = true)
+    // SK，部分类型支持写到URI中
     private String sk;
 
     @NotNull
     @Size(max = 1000)
-    @Schema(title = "第三方平台账号名", required = true)
+    // 第三方平台账号名
     private String platformAccount;
 
     @NotNull
     @Size(max = 1000)
-    @Schema(title = "第三方平台项目名，如华为云的ProjectId", required = true)
+    // 第三方平台项目名，如华为云的ProjectId
     private String platformProjectId;
 
     @NotNull
-    @Schema(title = "执行超时")
+    // 执行超时")
     private Long timeoutMS;
 
 }

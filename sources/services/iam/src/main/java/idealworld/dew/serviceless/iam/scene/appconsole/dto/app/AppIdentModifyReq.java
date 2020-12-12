@@ -35,14 +35,14 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改应用认证请求")
+// 修改应用认证请求")
 public class AppIdentModifyReq implements Serializable {
 
     @Size(max = 1000)
-    @Schema(title = "应用认证用途")
+    // 应用认证用途")
     private String note;
 
-    @Schema(title = "应用认证有效时间")
+    // 应用认证有效时间")
     private Date validTime;
 
 }

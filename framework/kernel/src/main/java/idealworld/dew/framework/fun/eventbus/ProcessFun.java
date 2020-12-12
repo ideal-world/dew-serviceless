@@ -16,11 +16,12 @@
 
 package idealworld.dew.framework.fun.eventbus;
 
+import com.ecfront.dew.common.Resp;
 import io.vertx.core.Future;
 
 @FunctionalInterface
-public interface ProcessFun {
+public interface ProcessFun<E> {
 
-    Future<?> process(ProcessContext context);
+    Future<Resp<E>> process(ProcessContext context);
 
 }

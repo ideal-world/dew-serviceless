@@ -95,7 +95,7 @@ public class FunSQLClient {
         SQL_CLIENTS.remove(code);
     }
 
-    public <E> Future<Resp<List<E>>> select(String sql, Map<String, Object> parameters, Class<E> returnClazz) {
+    public <E> Future<Resp<List<E>>> select(String sql, Map<String, Object> parameters, Class<E> returnClazz, ProcessContext context) {
         Promise<Resp<List<E>>> promise = Promise.promise();
         SqlTemplate
                 .forQuery(client, sql)
@@ -127,7 +127,7 @@ public class FunSQLClient {
 
     public <E extends IdEntity> Future<Resp<Long>> insert(E entity, ProcessContext context) {
         var tableName = entity.tableName();
-        addSafeInfo(entity, context);
+        addSafeInfo(entity, context, true);
         var caseEntity = CaseFormatter.camelToSnake(JsonObject.mapFrom(entity));
         var columns = caseEntity.stream().map(Map.Entry::getKey).collect(Collectors.joining(", "));
         var values = caseEntity.stream().map(j -> "#{" + j.getKey() + "}").collect(Collectors.joining(", "));
@@ -141,7 +141,7 @@ public class FunSQLClient {
 
     public <E extends IdEntity> Future<Resp<Long>> insert(List<E> entities, ProcessContext context) {
         var tableName = entities.get(0).tableName();
-        entities.forEach(entity -> addSafeInfo(entity, context));
+        entities.forEach(entity -> addSafeInfo(entity, context, true));
         var caseEntity = CaseFormatter.camelToSnake(JsonObject.mapFrom(entities.get(0)));
         var columns = caseEntity.stream().map(Map.Entry::getKey).collect(Collectors.joining(", "));
         var values = caseEntity.stream().map(j -> "#{" + j.getKey() + "}").collect(Collectors.joining(", "));
@@ -155,14 +155,14 @@ public class FunSQLClient {
                 sql);
     }
 
-    public Future<Resp<Long>> update(String sql, Map<String, Object> parameters) {
+    public Future<Resp<Long>> update(String sql, Map<String, Object> parameters, ProcessContext context) {
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .execute(parameters),
                 sql);
     }
 
-    public Future<Resp<Long>> update(String sql, List<Map<String, Object>> parameters) {
+    public Future<Resp<Long>> update(String sql, List<Map<String, Object>> parameters, ProcessContext context) {
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .executeBatch(parameters),
@@ -173,7 +173,7 @@ public class FunSQLClient {
     public <E extends IdEntity> Future<Resp<Long>> softDelete(String sql, Map<String, Object> parameters, Class<E> entityClazz, ProcessContext context) {
         Promise<Resp<Long>> promise = Promise.promise();
         var tableName = entityClazz.getDeclaredConstructor().newInstance().tableName();
-        select(sql, parameters, Map.class)
+        select(sql, parameters, Map.class, context)
                 .compose(selectR -> {
                     Promise<List<Map<String, Object>>> insertP = Promise.promise();
                     var deleteObjs = selectR.getBody();
@@ -197,14 +197,65 @@ public class FunSQLClient {
                             .onFailure(insertP::fail);
                     return insertP.future();
                 })
-                .compose(idR -> update("DELETE FROM " + tableName + " WHERE id = #{id}", idR))
+                .compose(idR -> update("DELETE FROM " + tableName + " WHERE id = #{id}", idR, context))
                 .onSuccess(promise::complete)
                 .onFailure(promise::fail);
         return promise.future();
     }
 
-    public Future<Resp<Long>> delete(String sql, Map<String, Object> parameters) {
-        return update(sql, parameters);
+    public Future<Resp<Long>> delete(String sql, Map<String, Object> parameters, ProcessContext context) {
+        return update(sql, parameters, context);
+    }
+
+    @SneakyThrows
+    public <E extends IdEntity> Future<Resp<E>> fetchById(Object id, Class<E> returnClazz, ProcessContext context) {
+        var tableName = returnClazz.getDeclaredConstructor().newInstance().tableName();
+        var sql = "SELECT * FROM " + tableName + " WHERE id = #{id}";
+        var parameters = new HashMap<String, Object>();
+        parameters.put("id", id);
+        Promise<Resp<E>> promise = Promise.promise();
+        SqlTemplate
+                .forQuery(client, sql)
+                .mapTo(Row::toJson)
+                .execute(parameters)
+                .onSuccess(record -> {
+                    if (record.iterator().hasNext()) {
+                        promise.complete(Resp.success(CaseFormatter.snakeToCamel(record.iterator().next()).mapTo(returnClazz)));
+                    } else {
+                        promise.complete(Resp.notFound(""));
+                    }
+                })
+                .onFailure(e -> {
+                    log.error("[SQL]Select [{}] error: {}", sql, e.getMessage(), e);
+                    promise.fail(e);
+                });
+        return promise.future();
+    }
+
+    public <E extends IdEntity> Future<Resp<Long>> updateById(Object id, E setItems, ProcessContext context) {
+        var tableName = setItems.tableName();
+        addSafeInfo(setItems, context, false);
+        var caseEntity = CaseFormatter.camelToSnake(JsonObject.mapFrom(setItems))
+                .stream()
+                .filter(j -> j.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        var sets = caseEntity.keySet()
+                .stream()
+                .map(o -> "SET " + o + " = #{" + o + "}").collect(Collectors.joining(", "));
+        caseEntity.put("id", id);
+        var sql = "UPDATE " + tableName + " " + sets + " WHERE id = #{id}";
+        return updateHandler(SqlTemplate
+                        .forUpdate(client, sql)
+                        .execute(caseEntity),
+                sql);
+    }
+
+    @SneakyThrows
+    public <E extends IdEntity> Future<Resp<Long>> deleteById(Object id, Class<E> entityClazz, ProcessContext context) {
+        var tableName = entityClazz.getDeclaredConstructor().newInstance().tableName();
+        var parameters = new HashMap<String, Object>();
+        parameters.put("id", id);
+        return delete("DELETE FROM " + tableName + " WHERE id = #{id}", parameters, context);
     }
 
     public <E> Future<E> tx(Function<FunSQLClient, Future<E>> function) {
@@ -238,15 +289,17 @@ public class FunSQLClient {
         return promise.future();
     }
 
-    private <E extends IdEntity> void addSafeInfo(E entity, ProcessContext context) {
+    private <E extends IdEntity> void addSafeInfo(E entity, ProcessContext context, Boolean insert) {
         if (context == null) {
             return;
         }
         if (entity instanceof SafeEntity) {
-            ((SafeEntity) entity).setCreateUser(
-                    context.req.identOptInfo.getAccountCode() != null
-                            ? (String) context.req.identOptInfo.getAccountCode() :
-                            "");
+            if (insert) {
+                ((SafeEntity) entity).setCreateUser(
+                        context.req.identOptInfo.getAccountCode() != null
+                                ? (String) context.req.identOptInfo.getAccountCode() :
+                                "");
+            }
             ((SafeEntity) entity).setUpdateUser(
                     context.req.identOptInfo.getAccountCode() != null
                             ? (String) context.req.identOptInfo.getAccountCode() :

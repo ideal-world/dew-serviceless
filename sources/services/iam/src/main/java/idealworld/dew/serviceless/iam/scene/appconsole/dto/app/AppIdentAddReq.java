@@ -38,16 +38,16 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加应用认证请求")
+// 添加应用认证请求")
 public class AppIdentAddReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 1000)
-    @Schema(title = "应用认证用途", required = true)
+    // 应用认证用途
     private String note;
 
-    @Schema(title = "应用认证有效时间")
+    // 应用认证有效时间")
     @Builder.Default
     private Date validTime = Constant.MAX_TIME;
 

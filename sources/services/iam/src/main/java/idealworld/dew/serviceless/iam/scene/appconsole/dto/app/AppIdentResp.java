@@ -39,23 +39,23 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(title = "应用认证响应")
+// 应用认证响应")
 public class AppIdentResp extends IdResp {
 
     @NotNull
     @NotBlank
     @Size(max = 1000)
-    @Schema(title = "应用认证用途", required = true)
+    // 应用认证用途
     private String note;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "应用认证名称", required = true)
+    // 应用认证名称
     private String ak;
 
     @NotNull
-    @Schema(title = "应用认证有效时间", required = true)
+    // 应用认证有效时间
     private Date validTime;
 
 

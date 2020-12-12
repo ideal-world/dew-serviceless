@@ -42,7 +42,7 @@ public class KeyHelper {
      *
      * @return the string
      */
-    public static String generateAK() {
+    public static String generateAk() {
         return $.field.createUUID().replaceAll("\\-", "");
     }
 
@@ -52,7 +52,7 @@ public class KeyHelper {
      * @param key the key
      * @return the string
      */
-    public static String generateSK(String key) {
+    public static String generateSk(String key) {
         return $.security.digest.digest(
                 key + $.field.createUUID().replaceAll("\\-", ""),
                 "SHA1"

@@ -20,7 +20,7 @@ import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SoftDelEntity;
 import idealworld.dew.framework.dto.CommonStatus;
-import idealworld.dew.framework.dto.IdentOptInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
 import idealworld.dew.framework.fun.test.DewTest;
@@ -93,7 +93,8 @@ public class FunSQLClientTest extends DewTest {
                                         put("open_id", "xxxx");
                                         put("status", "ENABLED");
                                     }
-                                })
+                                },
+                                null)
                 )
                 .compose(id ->
                         funSQLClient.update("update account set name = #{name} where id = #{id}",
@@ -102,7 +103,8 @@ public class FunSQLClientTest extends DewTest {
                                         put("name", "孤岛旭日_new");
                                         put("id", id.getBody());
                                     }
-                                })
+                                },
+                                null)
                 )
                 .compose(resp ->
                         funSQLClient.update("insert into account(name, open_id, status) values (#{name}, #{open_id}, #{status})",
@@ -123,10 +125,11 @@ public class FunSQLClientTest extends DewTest {
                                             }
                                         });
                                     }
-                                })
+                                },
+                                null)
                 )
                 .compose(resp ->
-                        funSQLClient.select("select * from account", new HashMap<>(), HashMap.class)
+                        funSQLClient.select("select * from account", new HashMap<>(), HashMap.class, null)
                 )
                 .onSuccess(resp -> {
                     Assertions.assertEquals(3, resp.getBody().size());
@@ -173,13 +176,32 @@ public class FunSQLClientTest extends DewTest {
                                 put("n2", "孤岛旭日5");
                                 put("n3", "孤岛旭日6");
                             }
-                        }, Account.class)
+                        }, Account.class, null)
                 )
                 .compose(resp -> {
                     Assertions.assertEquals(3, resp.getBody().size());
                     Assertions.assertEquals("孤岛旭日4", resp.getBody().get(0).name);
                     Assertions.assertEquals("yyyy", resp.getBody().get(0).openId);
                     Assertions.assertEquals(CommonStatus.ENABLED, resp.getBody().get(0).status);
+                    return Future.succeededFuture(resp.getBody().get(0).getId());
+                })
+                .compose(id ->
+                        funSQLClient.updateById(id, Account.builder().name("孤岛旭日4_new").build(), null)
+                )
+                .compose(resp ->
+                        funSQLClient.select("select * from account where name in (#{n1})", new HashMap<>() {
+                            {
+                                put("n1", "孤岛旭日4_new");
+                            }
+                        }, Account.class, null)
+                )
+                .compose(resp ->
+                        funSQLClient.fetchById(resp.getBody().get(0).getId(), Account.class, null)
+                )
+                .compose(resp -> {
+                    Assertions.assertEquals("孤岛旭日4_new", resp.getBody().name);
+                    Assertions.assertEquals("yyyy", resp.getBody().openId);
+                    Assertions.assertEquals(CommonStatus.ENABLED, resp.getBody().status);
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
@@ -189,27 +211,28 @@ public class FunSQLClientTest extends DewTest {
                             }
                         }, Account.class, ProcessContext.builder()
                                 .req(ProcessContext.Request.builder()
-                                        .identOptInfo(new IdentOptInfo()).build()).build())
+                                        .identOptInfo(new IdentOptCacheInfo()).build()).build())
                 )
                 .compose(resp ->
                         funSQLClient.delete("delete from account where name = #{n1}", new HashMap<>() {
-                            {
-                                put("n1", "孤岛旭日5");
-                            }
-                        })
+                                    {
+                                        put("n1", "孤岛旭日5");
+                                    }
+                                },
+                                null)
                 )
                 .compose(resp ->
-                        funSQLClient.select("select * from account", new HashMap<>(), Account.class)
+                        funSQLClient.select("select * from account", new HashMap<>(), Account.class, null)
                 )
                 .compose(resp -> {
                     Assertions.assertEquals(4, resp.getBody().size());
-                    Assertions.assertEquals("孤岛旭日4", resp.getBody().get(3).name);
+                    Assertions.assertEquals("孤岛旭日4_new", resp.getBody().get(3).name);
                     Assertions.assertEquals("yyyy", resp.getBody().get(3).openId);
                     Assertions.assertEquals(CommonStatus.ENABLED, resp.getBody().get(3).status);
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.select("select * from " + new SoftDelEntity().tableName(), new HashMap<>(), SoftDelEntity.class)
+                        funSQLClient.select("select * from " + new SoftDelEntity().tableName(), new HashMap<>(), SoftDelEntity.class, null)
                 )
                 .onSuccess(resp -> {
                     Assertions.assertEquals(1, resp.getBody().size());
@@ -246,7 +269,7 @@ public class FunSQLClientTest extends DewTest {
                                     {
                                         put("name", "idealworld%");
                                     }
-                                }, Account.class))
+                                }, Account.class, null))
         )
                 .onComplete(resp -> {
                     Assertions.assertEquals(2, resp.result().getBody().size());
@@ -255,7 +278,7 @@ public class FunSQLClientTest extends DewTest {
                         {
                             put("name", "idealworld%");
                         }
-                    }, Account.class)
+                    }, Account.class, null)
                             .onComplete(r -> {
                                 Assertions.assertEquals(2, r.result().getBody().size());
                                 Assertions.assertEquals("idealworld1", r.result().getBody().get(0).name);
@@ -292,7 +315,7 @@ public class FunSQLClientTest extends DewTest {
                                     {
                                         put("name", "idealworld%");
                                     }
-                                }, Account.class))
+                                }, Account.class, null))
         )
                 .onComplete(resp -> {
                     Assertions.assertTrue(resp.failed());
@@ -300,7 +323,7 @@ public class FunSQLClientTest extends DewTest {
                         {
                             put("name", "idealworld%");
                         }
-                    }, Account.class)
+                    }, Account.class, null)
                             .onComplete(r -> {
                                 Assertions.assertEquals(2, r.result().getBody().size());
                                 Assertions.assertEquals("idealworld1", r.result().getBody().get(0).name);

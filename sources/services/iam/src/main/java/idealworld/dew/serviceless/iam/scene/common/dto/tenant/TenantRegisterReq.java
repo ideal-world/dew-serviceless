@@ -36,45 +36,45 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "注册租户请求")
+// 注册租户请求")
 public class TenantRegisterReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "租户名称", required = true)
+    // 租户名称
     private String tenantName;
 
     @Size(max = 1000)
-    @Schema(title = "租户图标（路径）")
+    // 租户图标（路径）")
     @Builder.Default
     private String icon = "";
 
-    @Schema(title = "是否开放账号注册")
+    // 是否开放账号注册")
     @Builder.Default
     private Boolean allowAccountRegister = false;
 
     @Size(max = 5000)
-    @Schema(title = "租户扩展信息，Json格式")
+    // 租户扩展信息，Json格式")
     @Builder.Default
     private String parameters = "{}";
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "应用名称", required = true)
+    // 应用名称
     private String appName;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "租户管理员登录用户名", required = true)
+    // 租户管理员登录用户名
     private String accountUserName;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "租户管理员登录密钥", required = true)
+    // 租户管理员登录密钥
     private String accountPassword;
 
 }

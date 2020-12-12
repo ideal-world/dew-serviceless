@@ -36,22 +36,22 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加角色定义请求")
+// 添加角色定义请求")
 public class RoleDefAddReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色定义编码", required = true)
+    // 角色定义编码
     private String code;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色定义名称", required = true)
+    // 角色定义名称
     private String name;
 
-    @Schema(title = "显示排序，asc")
+    // 显示排序，asc")
     @Builder.Default
     private Integer sort = 0;
 

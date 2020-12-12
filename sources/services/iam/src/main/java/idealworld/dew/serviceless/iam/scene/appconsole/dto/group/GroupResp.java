@@ -40,40 +40,40 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(title = "群组响应")
+// 群组响应")
 public class GroupResp extends AppBasedResp {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "群组编码", required = true)
+    // 群组编码
     private String code;
 
     @NotNull
-    @Schema(title = "群组类型", required = true)
+    // 群组类型
     private GroupKind kind;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "群组名称", required = true)
+    // 群组名称
     private String name;
 
     @NotNull
     @Size(max = 1000)
-    @Schema(title = "群组图标（路径）", required = true)
+    // 群组图标（路径）
     private String icon;
 
     @NotNull
-    @Schema(title = "显示排序，asc", required = true)
+    // 显示排序，asc
     private Integer sort;
 
     @NotNull
-    @Schema(title = "关联群组Id，用于多树合成", required = true)
+    // 关联群组Id，用于多树合成
     private Long relGroupId;
 
     @NotNull
-    @Schema(title = "关联群起始组节点Id，用于多树合成", required = true)
+    // 关联群起始组节点Id，用于多树合成
     private Long relGroupNodeId;
 
 }

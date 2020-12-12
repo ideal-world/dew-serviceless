@@ -39,35 +39,35 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改权限策略请求")
+// 修改权限策略请求")
 public class AuthPolicyModifyReq implements Serializable {
 
-    @Schema(title = "关联权限主体类型")
+    // 关联权限主体类型")
     private AuthSubjectKind relSubjectKind;
 
     @Size(max = 10000)
-    @Schema(title = "关联权限主体Ids,有多个时逗号分隔")
+    // 关联权限主体Ids,有多个时逗号分隔")
     private String relSubjectIds;
 
-    @Schema(title = "关联权限主体运算类型")
+    // 关联权限主体运算类型")
     private AuthSubjectOperatorKind subjectOperator;
 
-    @Schema(title = "生效时间")
+    // 生效时间")
     protected Date effectiveTime;
 
-    @Schema(title = "失效时间")
+    // 失效时间")
     protected Date expiredTime;
 
-    @Schema(title = "关联资源Id")
+    // 关联资源Id")
     private Long relResourceId;
 
-    @Schema(title = "操作类型")
+    // 操作类型")
     private OptActionKind actionKind;
 
-    @Schema(title = "操作结果")
+    // 操作结果")
     private AuthResultKind resultKind;
 
-    @Schema(title = "是否排他")
+    // 是否排他")
     private Boolean exclusive;
 
 }

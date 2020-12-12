@@ -37,30 +37,30 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "添加群组节点请求")
+// 添加群组节点请求")
 public class GroupNodeAddReq implements Serializable {
 
     @Size(max = 1000)
-    @Schema(title = "业务编码")
+    // 业务编码")
     @Builder.Default
     private String busCode = "";
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "节点名称", required = true)
+    // 节点名称
     private String name;
 
     @Size(max = 2000)
-    @Schema(title = "节点扩展信息，Json格式")
+    // 节点扩展信息，Json格式")
     @Builder.Default
     private String parameters = "";
 
-    @Schema(title = "上级节点Id")
+    // 上级节点Id")
     @Builder.Default
     private Long parentId = Constant.OBJECT_UNDEFINED;
 
-    @Schema(title = "同级上一个节点Id")
+    // 同级上一个节点Id")
     @Builder.Default
     private Long siblingId = Constant.OBJECT_UNDEFINED;
 

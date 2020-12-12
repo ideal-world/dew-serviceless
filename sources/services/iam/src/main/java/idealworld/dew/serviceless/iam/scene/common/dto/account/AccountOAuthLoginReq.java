@@ -37,21 +37,21 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "OAuth注册/登录请求")
+// OAuth注册/登录请求")
 public class AccountOAuthLoginReq implements Serializable {
 
     @NotNull
-    @Schema(title = "认证类型", description = "只能是OAuth类型的认证", required = true)
+    // 认证类型", description = "只能是OAuth类型的认证
     private AccountIdentKind kind;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "授权码", required = true)
+    // 授权码
     private String code;
 
     @NotNull
-    @Schema(title = "关联应用Id", required = true)
+    // 关联应用Id
     private Long relAppId;
 
 }

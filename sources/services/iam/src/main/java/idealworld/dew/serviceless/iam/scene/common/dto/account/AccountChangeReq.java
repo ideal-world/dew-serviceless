@@ -34,19 +34,19 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改账号请求")
+// 修改账号请求")
 public class AccountChangeReq implements Serializable {
 
     @Size(max = 255)
-    @Schema(title = "账号名称")
+    // 账号名称")
     private String name;
 
     @Size(max = 1000)
-    @Schema(title = "账号头像（路径）")
+    // 账号头像（路径）")
     private String avatar;
 
     @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式")
+    // 账号扩展信息，Json格式")
     private String parameters;
 
 }

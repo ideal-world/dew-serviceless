@@ -43,53 +43,53 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(title = "权限策略响应")
+// 权限策略响应")
 public class AuthPolicyResp extends IdResp {
 
     @NotNull
-    @Schema(title = "关联权限主体类型名称", required = true)
+    // 关联权限主体类型名称
     private AuthSubjectKind relSubjectKind;
 
     @NotNull
     @NotBlank
     @Size(max = 10000)
-    @Schema(title = "关联权限主体Ids,有多个时逗号分隔", required = true)
+    // 关联权限主体Ids,有多个时逗号分隔
     private String relSubjectIds;
 
     @NotNull
-    @Schema(title = "关联权限主体运算类型名称", required = true)
+    // 关联权限主体运算类型名称
     private AuthSubjectOperatorKind subjectOperator;
 
     @NotNull
-    @Schema(title = "生效时间", required = true)
+    // 生效时间
     protected Date effectiveTime;
 
     @NotNull
-    @Schema(title = "失效时间", required = true)
+    // 失效时间
     protected Date expiredTime;
 
     @NotNull
-    @Schema(title = "关联资源Id", required = true)
+    // 关联资源Id
     private Long relResourceId;
 
     @NotNull
-    @Schema(title = "操作类型名称", required = true)
+    // 操作类型名称
     private OptActionKind actionKind;
 
     @NotNull
-    @Schema(title = "操作结果名称", required = true)
+    // 操作结果名称
     private AuthResultKind resultKind;
 
     @NotNull
-    @Schema(title = "是否排他", required = true)
+    // 是否排他
     private Boolean exclusive;
 
     @NotNull
-    @Schema(title = "所属应用Id", required = true)
+    // 所属应用Id
     private Long relAppId;
 
     @NotNull
-    @Schema(title = "所属租户Id", required = true)
+    // 所属租户Id
     private Long relTenantId;
 
 }

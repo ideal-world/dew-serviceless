@@ -38,31 +38,31 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(title = "群组节点响应")
+// 群组节点响应")
 public class GroupNodeResp extends IdResp {
 
     @NotNull
     @Size(max = 1000)
-    @Schema(title = "业务编码", required = true)
+    // 业务编码
     private String busCode;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "节点名称", required = true)
+    // 节点名称
     private String name;
 
     @NotNull
     @Size(max = 2000)
-    @Schema(title = "节点扩展信息，Json格式", required = true)
+    // 节点扩展信息，Json格式
     private String parameters;
 
     @NotNull
-    @Schema(title = "上级节点Id", required = true)
+    // 上级节点Id
     private Long parentId;
 
     @NotNull
-    @Schema(title = "关联群组Id", required = true)
+    // 关联群组Id
     private Long relGroupId;
 
 }

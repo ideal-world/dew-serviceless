@@ -38,23 +38,23 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(title = "角色定义响应")
+// 角色定义响应")
 public class RoleDefResp extends AppBasedResp {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色定义编码", required = true)
+    // 角色定义编码
     private String code;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "角色定义名称", required = true)
+    // 角色定义名称
     private String name;
 
     @NotNull
-    @Schema(title = "显示排序，asc", required = true)
+    // 显示排序，asc
     private Integer sort;
 
 }

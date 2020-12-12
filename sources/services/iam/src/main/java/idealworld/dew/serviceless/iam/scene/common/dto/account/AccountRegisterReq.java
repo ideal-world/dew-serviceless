@@ -37,43 +37,43 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "注册账号请求")
+// 注册账号请求")
 public class AccountRegisterReq implements Serializable {
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "账号名称", required = true)
+    // 账号名称
     private String name;
 
     @Size(max = 1000)
-    @Schema(title = "账号头像（路径）")
+    // 账号头像（路径）")
     @Builder.Default
     private String avatar = "";
 
     @Size(max = 2000)
-    @Schema(title = "账号扩展信息，Json格式")
+    // 账号扩展信息，Json格式")
     @Builder.Default
     private String parameters = "{}";
 
-    @Schema(title = "账号认证类型")
+    // 账号认证类型")
     @Builder.Default
     private AccountIdentKind kind = AccountIdentKind.USERNAME;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "账号认证名称", required = true)
+    // 账号认证名称
     private String ak;
 
     @NotNull
     @NotBlank
     @Size(max = 255)
-    @Schema(title = "账号认证密钥", required = true)
+    // 账号认证密钥
     private String sk;
 
     @NotNull
-    @Schema(title = "关联应用Id", required = true)
+    // 关联应用Id
     private Long relAppId;
 
 

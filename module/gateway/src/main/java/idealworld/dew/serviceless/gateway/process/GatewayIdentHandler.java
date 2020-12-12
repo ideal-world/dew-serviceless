@@ -21,7 +21,7 @@ import com.ecfront.dew.common.StandardCode;
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.dto.OptActionKind;
-import idealworld.dew.framework.fun.auth.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.cache.FunRedisClient;
 import idealworld.dew.framework.fun.httpserver.AuthHttpHandler;

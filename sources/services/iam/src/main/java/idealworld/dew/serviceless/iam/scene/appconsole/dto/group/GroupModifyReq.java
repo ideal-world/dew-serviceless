@@ -36,34 +36,34 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(title = "修改角色定义请求")
+// 修改角色定义请求")
 public class GroupModifyReq implements Serializable {
 
     @Size(max = 255)
-    @Schema(title = "群组编码")
+    // 群组编码")
     private String code;
 
-    @Schema(title = "群组类型")
+    // 群组类型")
     private GroupKind kind;
 
     @Size(max = 255)
-    @Schema(title = "群组名称")
+    // 群组名称")
     private String name;
 
     @Size(max = 1000)
-    @Schema(title = "群组图标（路径）")
+    // 群组图标（路径）")
     private String icon;
 
-    @Schema(title = "显示排序，asc")
+    // 显示排序，asc")
     private Integer sort;
 
-    @Schema(title = "关联群组Id，用于多树合成")
+    // 关联群组Id，用于多树合成")
     private Long relGroupId;
 
-    @Schema(title = "关联群起始组节点Id，用于多树合成")
+    // 关联群起始组节点Id，用于多树合成")
     private Long relGroupNodeId;
 
-    @Schema(title = "开放等级类型")
+    // 开放等级类型")
     private ExposeKind exposeKind;
 
 }
