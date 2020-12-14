@@ -16,10 +16,10 @@
 
 package idealworld.dew.framework.fun.eventbus;
 
-import com.ecfront.dew.common.Resp;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
+import idealworld.dew.framework.exception.BadRequestException;
 import idealworld.dew.framework.fun.cache.FunRedisClient;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
@@ -49,10 +49,10 @@ public class ReceiveProcessor {
         PROCESSORS.get(actionKind).put(pathPattern, processFun);
     }
 
-    public static Future<Resp<?>> chooseProcess(String moduleName, OptActionKind actionKind, String pathRequest, String query, Map<String, String> header, Buffer body) {
+    public static <E> Future<E> chooseProcess(String moduleName, OptActionKind actionKind, String pathRequest, String query, Map<String, String> header, Buffer body) {
         if (!PROCESSORS.containsKey(actionKind)) {
             log.warn("[EventBus]Can't found process by [{}] {}", actionKind.toString(), pathRequest);
-            return Future.succeededFuture(Resp.badRequest("找不到对应的处理器"));
+            throw new BadRequestException("找不到对应的处理器");
         }
         if (PROCESSORS.get(actionKind).containsKey(pathRequest)) {
             return PROCESSORS.get(actionKind).get(pathRequest).process(ProcessContext.builder()
@@ -78,7 +78,7 @@ public class ReceiveProcessor {
                 .findAny();
         if (matchedPathTemplate.isEmpty()) {
             log.warn("[EventBus]Can't found process by [{}] {}", actionKind.toString(), pathRequest);
-            return Future.succeededFuture(Resp.badRequest("找不到对应的处理器"));
+            throw new BadRequestException("找不到对应的处理器");
         } else {
             var pathPattern = matchedPathTemplate.get();
             var params = PATH_MATCHER.extractUriTemplateVariables(pathPattern, pathRequest);

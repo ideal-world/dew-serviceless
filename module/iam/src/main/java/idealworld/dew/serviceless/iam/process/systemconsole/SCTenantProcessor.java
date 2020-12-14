@@ -37,18 +37,15 @@ public class SCTenantProcessor {
 
     public ProcessFun<Long> addTenant() {
         return context -> {
-            var tenantAddReqR = context.helper.parseBody(context.req.body, TenantAddReq.class);
-            if (!tenantAddReqR.ok()) {
-                return context.helper.error(tenantAddReqR);
-            }
+            var tenantAddReq = context.helper.parseBody(context.req.body, TenantAddReq.class);
             var tenant = Tenant.builder()
-                    .name(tenantAddReqR.getBody().getName())
-                    .icon(tenantAddReqR.getBody().getIcon())
-                    .parameters(tenantAddReqR.getBody().getParameters())
-                    .allowAccountRegister(tenantAddReqR.getBody().getAllowAccountRegister())
+                    .name(tenantAddReq.getName())
+                    .icon(tenantAddReq.getIcon())
+                    .parameters(tenantAddReq.getParameters())
+                    .allowAccountRegister(tenantAddReq.getAllowAccountRegister())
                     .status(CommonStatus.ENABLED)
                     .build();
-            return context.fun.sql.insert(tenant, context);
+            return context.fun.sql.save(tenant, context);
         };
     }
 

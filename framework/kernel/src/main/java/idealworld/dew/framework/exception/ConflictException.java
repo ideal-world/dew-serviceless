@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package idealworld.dew.framework.fun.eventbus;
+package idealworld.dew.framework.exception;
 
-import idealworld.dew.framework.dto.OptActionKind;
-import io.vertx.core.Future;
-import io.vertx.core.buffer.Buffer;
+import com.ecfront.dew.common.exception.RTException;
 
-import java.net.URI;
-import java.util.Map;
+/**
+ * @author gudaoxuri
+ */
+public class ConflictException extends RTException {
 
-@FunctionalInterface
-public interface ConsumerFun<E> {
-
-    Future<E> consume(OptActionKind actionKind, URI uri, Map<String, String> header, Buffer body);
+    public ConflictException(String message) {
+        super(message);
+    }
 
 }

@@ -128,7 +128,7 @@ public class FunEventBus {
         );
     }
 
-    public void consumer(String moduleName, ConsumerFun fun) {
+    public <E> void consumer(String moduleName, ConsumerFun<E> fun) {
         eventBus.consumer(moduleName,
                 (Handler<Message<Buffer>>) event -> {
                     var header = new HashMap<String, String>();

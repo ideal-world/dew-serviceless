@@ -16,8 +16,6 @@
 
 package idealworld.dew.framework.test;
 
-import com.ecfront.dew.common.Resp;
-import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.eventbus.ProcessFun;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
@@ -29,15 +27,18 @@ import io.vertx.junit5.VertxTestContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import javax.validation.constraints.NotNull;
 import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
 
 public class ReceiveProcessorTest extends DewTest {
 
+    @SneakyThrows
     @Test
     public void testProcess(Vertx vertx, VertxTestContext testContext) {
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/app", MockProcessor1());
@@ -45,53 +46,61 @@ public class ReceiveProcessorTest extends DewTest {
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/app/{name}/{kind}", MockProcessor3());
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/app/{name}/{kind}/enabled", MockProcessor4());
 
+        var count = new CountDownLatch(3);
+
         Future.succeededFuture()
-                .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.MODIFY, "/app", "q=测试", new HashMap<>(), null))
-                .compose(resp -> {
-                    Assertions.assertEquals(StandardCode.BAD_REQUEST.toString(), resp.getCode());
-                    return Future.succeededFuture();
-                })
                 .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app", "q=测试", new HashMap<>(), null))
                 .compose(resp -> {
-                    Assertions.assertEquals("/app", resp.getBody());
+                    Assertions.assertEquals("/app", resp);
                     return Future.succeededFuture();
                 })
                 .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app/n1", "q=测试", new HashMap<>(), null))
                 .compose(resp -> {
-                    Assertions.assertEquals("/app/{name}", resp.getBody());
+                    Assertions.assertEquals("/app/{name}", resp);
                     return Future.succeededFuture();
                 })
                 .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app/n1/k1", "q=测试", new HashMap<>(), null))
                 .compose(resp -> {
-                    Assertions.assertEquals("/app/{name}/{kind}", resp.getBody());
+                    Assertions.assertEquals("/app/{name}/{kind}", resp);
                     return Future.succeededFuture();
                 })
                 .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app/n1/k1/enabled", "q=测试", new HashMap<>(),
                         JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer()))
                 .compose(resp -> {
-                    Assertions.assertEquals("/app/{name}/{kind}/enabled", resp.getBody());
+                    Assertions.assertEquals("/app/{name}/{kind}/enabled", resp);
                     return Future.succeededFuture();
                 })
+                .onSuccess(resp -> count.countDown())
+                .onFailure(testContext::failNow);
+
+        Future.succeededFuture()
+                .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.MODIFY, "/app", "q=测试", new HashMap<>(), null))
+                .onFailure(e -> {
+                    Assertions.assertEquals("找不到对应的处理器", e.getMessage());
+                    count.countDown();
+                });
+
+        Future.succeededFuture()
                 .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app/n1/k1/disabled", "q=测试", new HashMap<>(),
                         JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer()))
-                .compose(resp -> {
-                    Assertions.assertEquals(StandardCode.BAD_REQUEST.toString(), resp.getCode());
-                    return Future.succeededFuture();
-                })
-                .onSuccess(resp -> testContext.completeNow())
-                .onFailure(testContext::failNow);
+                .onFailure(e -> {
+                    Assertions.assertEquals("找不到对应的处理器", e.getMessage());
+                    count.countDown();
+                });
+        count.await();
+        testContext.completeNow();
     }
 
     private ProcessFun<String> MockProcessor1() {
         return context ->
-                Future.succeededFuture(Resp.success("/app"));
+                Future.succeededFuture("/app");
     }
 
     private ProcessFun<String> MockProcessor2() {
         return context -> {
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("测试", context.req.params.get("q"));
-            return Future.succeededFuture(Resp.success("/app/{name}"));
+            return Future.succeededFuture("/app/{name}");
         };
     }
 
@@ -100,18 +109,18 @@ public class ReceiveProcessorTest extends DewTest {
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));
             Assertions.assertEquals("测试", context.req.params.get("q"));
-            return Future.succeededFuture(Resp.success("/app/{name}/{kind}"));
+            return Future.succeededFuture("/app/{name}/{kind}");
         };
     }
 
     private ProcessFun<String> MockProcessor4() {
         return context -> {
-            var userR = context.helper.parseBody(context.req.body, User.class);
+            var user = context.helper.parseBody(context.req.body, User.class);
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));
             Assertions.assertEquals("测试", context.req.params.get("q"));
-            Assertions.assertEquals("孤岛旭日", userR.getBody().getName());
-            return Future.succeededFuture(Resp.success("/app/{name}/{kind}/enabled"));
+            Assertions.assertEquals("孤岛旭日", user.getName());
+            return Future.succeededFuture("/app/{name}/{kind}/enabled");
         };
     }
 

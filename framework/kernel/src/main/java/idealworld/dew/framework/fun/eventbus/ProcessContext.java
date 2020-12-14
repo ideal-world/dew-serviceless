@@ -37,7 +37,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class ProcessContext {
 
-    private static final ProcessHelper _helper = new ProcessHelper();
+    static final ProcessHelper _helper = new ProcessHelper();
 
     @Builder.Default
     public Request req = new Request();

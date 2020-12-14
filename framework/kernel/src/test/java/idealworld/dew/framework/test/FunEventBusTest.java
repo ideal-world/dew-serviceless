@@ -20,7 +20,6 @@ import com.ecfront.dew.common.Resp;
 import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
-import idealworld.dew.framework.fun.eventbus.ProcessHelper;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.test.DewTest;
 import io.vertx.core.Future;
@@ -52,16 +51,15 @@ public class FunEventBusTest extends DewTest {
     public void testComplexReqResp(Vertx vertx, VertxTestContext testContext) {
         var count = new CountDownLatch(4);
         ReceiveProcessor.addProcessor(OptActionKind.MODIFY, "/app/{name}/{kind}/enabled", context -> {
-            var userR = new ProcessHelper().parseBody(context.req.body, User.class);
             Assertions.assertEquals("xxxx", context.req.header.get("App-Id"));
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));
             Assertions.assertEquals("测试", context.req.params.get("q"));
-            Assertions.assertEquals("孤岛旭日", userR.getBody().getName());
-            Assertions.assertEquals("xxxx", userR.getBody().getOpenId());
-            if (userR.getBody().getDetail() != null) {
-                Assertions.assertEquals("中国", userR.getBody().getDetail().getAddr());
-                Assertions.assertEquals(30, userR.getBody().getDetail().getAge());
+            Assertions.assertEquals("孤岛旭日", ((User) (context.req.body)).getName());
+            Assertions.assertEquals("xxxx", ((User) (context.req.body)).getOpenId());
+            if (((User) (context.req.body)).getDetail() != null) {
+                Assertions.assertEquals("中国", ((User) (context.req.body)).getDetail().getAddr());
+                Assertions.assertEquals(30, ((User) (context.req.body)).getDetail().getAge());
             }
             count.countDown();
             return Future.succeededFuture(Resp.success("/app/{name}/{kind}/enabled"));
