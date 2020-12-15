@@ -29,7 +29,7 @@ public class IAMModule extends DewModule<IAMConfig> {
     @Override
     protected void start(IAMConfig config, Promise<Void> startPromise) {
         new SCTenantProcessor();
-        ReceiveProcessor.watch(getModuleName())
+        ReceiveProcessor.watch(getModuleName(), config)
                 .onSuccess(startResult -> startPromise.complete())
                 .onFailure(startPromise::fail);
     }

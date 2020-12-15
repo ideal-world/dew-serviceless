@@ -49,7 +49,7 @@ public class ReceiveProcessor {
         PROCESSORS.get(actionKind).put(pathPattern, processFun);
     }
 
-    public static <E> Future<E> chooseProcess(String moduleName, OptActionKind actionKind, String pathRequest, String query, Map<String, String> header, Buffer body) {
+    public static <E> Future<E> chooseProcess(String moduleName, Object config, OptActionKind actionKind, String pathRequest, String query, Map<String, String> header, Buffer body) {
         if (!PROCESSORS.containsKey(actionKind)) {
             log.warn("[EventBus]Can't found process by [{}] {}", actionKind.toString(), pathRequest);
             throw new BadRequestException("找不到对应的处理器");
@@ -65,9 +65,10 @@ public class ReceiveProcessor {
                                             ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptCacheInfo.class)
                                             : new IdentOptCacheInfo())
                             .build())
+                    .conf(config)
                     .fun(ProcessContext.Function.builder()
                             .sql(FunSQLClient.contains(moduleName) ? FunSQLClient.choose(moduleName) : null)
-                            .redis(FunRedisClient.contains(moduleName) ? FunRedisClient.choose(moduleName) : null)
+                            .cache(FunRedisClient.contains(moduleName) ? FunRedisClient.choose(moduleName) : null)
                             .http(FunHttpClient.contains(moduleName) ? FunHttpClient.choose(moduleName) : null)
                             .build())
                     .build());
@@ -93,18 +94,19 @@ public class ReceiveProcessor {
                                             ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptCacheInfo.class)
                                             : new IdentOptCacheInfo())
                             .build())
+                    .conf(config)
                     .fun(ProcessContext.Function.builder()
                             .sql(FunSQLClient.contains(moduleName) ? FunSQLClient.choose(moduleName) : null)
-                            .redis(FunRedisClient.contains(moduleName) ? FunRedisClient.choose(moduleName) : null)
+                            .cache(FunRedisClient.contains(moduleName) ? FunRedisClient.choose(moduleName) : null)
                             .http(FunHttpClient.contains(moduleName) ? FunHttpClient.choose(moduleName) : null)
                             .build())
                     .build());
         }
     }
 
-    public static Future<Void> watch(String moduleName) {
+    public static Future<Void> watch(String moduleName, Object config) {
         FunEventBus.choose(moduleName).consumer(moduleName, (actionKind, uri, header, body) ->
-                chooseProcess(moduleName, actionKind, uri.getPath(), uri.getQuery(), header, body));
+                chooseProcess(moduleName, config, actionKind, uri.getPath(), uri.getQuery(), header, body));
         return Future.succeededFuture();
     }
 

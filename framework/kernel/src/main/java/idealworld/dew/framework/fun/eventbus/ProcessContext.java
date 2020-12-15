@@ -45,6 +45,7 @@ public class ProcessContext {
     public Function fun = new Function();
     @Builder.Default
     public ProcessHelper helper = _helper;
+    public Object conf;
 
     @Data
     @Builder
@@ -66,7 +67,7 @@ public class ProcessContext {
     public static class Function {
 
         public FunSQLClient sql;
-        public FunRedisClient redis;
+        public FunRedisClient cache;
         public FunHttpClient http;
 
     }

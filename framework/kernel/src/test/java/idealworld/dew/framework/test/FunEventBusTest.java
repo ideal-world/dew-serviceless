@@ -65,7 +65,7 @@ public class FunEventBusTest extends DewTest {
             return Future.succeededFuture(Resp.success("/app/{name}/{kind}/enabled"));
         });
         FunEventBus.choose("").consumer("", (actionKind, uri, header, body) ->
-                ReceiveProcessor.chooseProcess("", actionKind, uri.getPath(), uri.getQuery(), header, body));
+                ReceiveProcessor.chooseProcess("",null, actionKind, uri.getPath(), uri.getQuery(), header, body));
 
         FunEventBus.choose("").request("", OptActionKind.MODIFY, "http://iam/app/n1/k1/enabled?q=测试",
                 JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer(), new HashMap<>() {

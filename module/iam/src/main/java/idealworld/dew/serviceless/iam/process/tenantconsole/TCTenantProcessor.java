@@ -43,28 +43,28 @@ public class TCTenantProcessor {
         // 获取当前租户信息
         ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant", getTenant());
         // 添加当前租户的认证
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/ident", addTenantIdent());
+        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/tenant/ident", addTenantIdent());
         // 修改当前租户的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/ident/{tenantIdentId}", modifyTenantIdent());
+        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/tenant/ident/{tenantIdentId}", modifyTenantIdent());
         // 获取当前租户的某个认证信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/ident/{tenantIdentId}", getTenantIdent());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/ident/{tenantIdentId}", getTenantIdent());
         // 获取当前租户的认证列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/ident", pageTenantIdents());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/ident", pageTenantIdents());
         // 删除当前租户的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/ident/{tenantIdentId}", deleteTenantIdent());
+        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/ident/{tenantIdentId}", deleteTenantIdent());
         // 添加当前租户的凭证
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/cert", addTenantCert());
+        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/tenant/cert", addTenantCert());
         // 修改当前租户的某个凭证
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/cert/{tenantCertId}", modifyTenantCert());
+        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/tenant/cert/{tenantCertId}", modifyTenantCert());
         // 获取当前租户的某个凭证信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/cert/{tenantCertId}", getTenantCert());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert/{tenantCertId}", getTenantCert());
         // 获取当前租户的某个凭证信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/cert/", pageTenantCerts());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert/", pageTenantCerts());
         // 删除当前租户的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/cert/{tenantCertId}", deleteTenantCert());
+        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/cert/{tenantCertId}", deleteTenantCert());
     }
 
-    public ProcessFun<Long> modifyTenant() {
+    public ProcessFun<Void> modifyTenant() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var tenantModifyReq = context.helper.parseBody(context.req.body, TenantModifyReq.class);
@@ -84,10 +84,9 @@ public class TCTenantProcessor {
     }
 
     public ProcessFun<TenantResp> getTenant() {
-        return context -> {
-            return context.fun.sql.getOne(context.req.identOptInfo.getTenantId(), Tenant.class, context)
-                    .compose(tenant -> context.helper.success(tenant, TenantResp.class));
-        };
+        return context ->
+                context.fun.sql.getOne(context.req.identOptInfo.getTenantId(), Tenant.class, context)
+               .compose(tenant -> context.helper.success(tenant, TenantResp.class));
     }
 
     // --------------------------------------------------------------------
@@ -105,8 +104,8 @@ public class TCTenantProcessor {
                     },
                     TenantIdent.class,
                     context)
-                    .compose(existsResult -> {
-                        if (existsResult) {
+                    .compose(existsTenantResult -> {
+                        if (existsTenantResult) {
                             return context.helper.error(new ConflictException("租户认证类型已存在"));
                         }
                         return context.helper.success(null);
@@ -119,7 +118,7 @@ public class TCTenantProcessor {
         };
     }
 
-    public ProcessFun<Long> modifyTenantIdent() {
+    public ProcessFun<Void> modifyTenantIdent() {
         return context -> {
             var tenantIdentModifyReq = context.helper.parseBody(context.req.body, TenantIdentModifyReq.class);
             var tenantIdent = context.helper.convert(tenantIdentModifyReq, TenantIdent.class);
@@ -151,11 +150,12 @@ public class TCTenantProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                TenantIdent.class, context)
+                TenantIdent.class,
+                context)
                 .compose(tenantIdents -> context.helper.success(tenantIdents, TenantIdentResp.class));
     }
 
-    public ProcessFun<Long> deleteTenantIdent() {
+    public ProcessFun<Void> deleteTenantIdent() {
         return context -> context.fun.sql.softDelete(
                 new HashMap<>() {
                     {
@@ -163,7 +163,8 @@ public class TCTenantProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                TenantIdent.class, context);
+                TenantIdent.class,
+                context);
     }
 
     // --------------------------------------------------------------------
@@ -195,7 +196,7 @@ public class TCTenantProcessor {
         };
     }
 
-    public ProcessFun<Long> modifyTenantCert() {
+    public ProcessFun<Void> modifyTenantCert() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var tenantCertModifyReq = context.helper.parseBody(context.req.body, TenantCertModifyReq.class);
@@ -259,7 +260,7 @@ public class TCTenantProcessor {
                 .compose(tenantCerts -> context.helper.success(tenantCerts, TenantCertResp.class));
     }
 
-    public ProcessFun<Long> deleteTenantCert() {
+    public ProcessFun<Void> deleteTenantCert() {
         return context -> context.fun.sql.softDelete(
                 new HashMap<>() {
                     {

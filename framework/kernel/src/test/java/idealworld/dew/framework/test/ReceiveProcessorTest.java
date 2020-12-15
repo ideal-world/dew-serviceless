@@ -49,22 +49,22 @@ public class ReceiveProcessorTest extends DewTest {
         var count = new CountDownLatch(3);
 
         Future.succeededFuture()
-                .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app", "q=测试", new HashMap<>(), null))
+                .compose(resp -> ReceiveProcessor.chooseProcess("", null, OptActionKind.CREATE, "/app", "q=测试", new HashMap<>(), null))
                 .compose(resp -> {
                     Assertions.assertEquals("/app", resp);
                     return Future.succeededFuture();
                 })
-                .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app/n1", "q=测试", new HashMap<>(), null))
+                .compose(resp -> ReceiveProcessor.chooseProcess("", null, OptActionKind.CREATE, "/app/n1", "q=测试", new HashMap<>(), null))
                 .compose(resp -> {
                     Assertions.assertEquals("/app/{name}", resp);
                     return Future.succeededFuture();
                 })
-                .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app/n1/k1", "q=测试", new HashMap<>(), null))
+                .compose(resp -> ReceiveProcessor.chooseProcess("",null, OptActionKind.CREATE, "/app/n1/k1", "q=测试", new HashMap<>(), null))
                 .compose(resp -> {
                     Assertions.assertEquals("/app/{name}/{kind}", resp);
                     return Future.succeededFuture();
                 })
-                .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app/n1/k1/enabled", "q=测试", new HashMap<>(),
+                .compose(resp -> ReceiveProcessor.chooseProcess("",null, OptActionKind.CREATE, "/app/n1/k1/enabled", "q=测试", new HashMap<>(),
                         JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer()))
                 .compose(resp -> {
                     Assertions.assertEquals("/app/{name}/{kind}/enabled", resp);
@@ -74,14 +74,14 @@ public class ReceiveProcessorTest extends DewTest {
                 .onFailure(testContext::failNow);
 
         Future.succeededFuture()
-                .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.MODIFY, "/app", "q=测试", new HashMap<>(), null))
+                .compose(resp -> ReceiveProcessor.chooseProcess("",null, OptActionKind.MODIFY, "/app", "q=测试", new HashMap<>(), null))
                 .onFailure(e -> {
                     Assertions.assertEquals("找不到对应的处理器", e.getMessage());
                     count.countDown();
                 });
 
         Future.succeededFuture()
-                .compose(resp -> ReceiveProcessor.chooseProcess("", OptActionKind.CREATE, "/app/n1/k1/disabled", "q=测试", new HashMap<>(),
+                .compose(resp -> ReceiveProcessor.chooseProcess("",null, OptActionKind.CREATE, "/app/n1/k1/disabled", "q=测试", new HashMap<>(),
                         JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer()))
                 .onFailure(e -> {
                     Assertions.assertEquals("找不到对应的处理器", e.getMessage());

@@ -23,6 +23,7 @@ import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SafeEntity;
 import idealworld.dew.framework.domain.SoftDelEntity;
 import idealworld.dew.framework.exception.BadRequestException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.util.CaseFormatter;
 import io.vertx.core.CompositeFuture;
@@ -137,10 +138,11 @@ public class FunSQLClient {
     @SneakyThrows
     public <E extends IdEntity> Future<E> getOne(Object id, Class<E> returnClazz, ProcessContext context) {
         return getOne(new HashMap<>() {
-            {
-                put("id", id);
-            }
-        }, returnClazz, context);
+                          {
+                              put("id", id);
+                          }
+                      }, returnClazz,
+                context);
     }
 
     @SneakyThrows
@@ -262,29 +264,36 @@ public class FunSQLClient {
                 sql);
     }
 
-    public Future<Long> update(String sql, Map<String, Object> parameters, ProcessContext context, Object... formatArgs) {
+    public <E extends IdEntity> Future<Void> update(E entity, ProcessContext context) {
+        return update(entity.getId(), entity, context);
+    }
+
+    public Future<Void> update(String sql, Map<String, Object> parameters, ProcessContext context, Object... formatArgs) {
         return updateHandler(SqlTemplate
                         .forUpdate(client, String.format(sql, formatArgs))
                         .execute(parameters),
-                sql);
+                sql)
+                .compose(resp -> Future.succeededFuture());
     }
 
-    public Future<Long> update(String sql, List<Map<String, Object>> parameters, ProcessContext context, Object... formatArgs) {
+    public Future<Void> update(String sql, List<Map<String, Object>> parameters, ProcessContext context, Object... formatArgs) {
         return updateHandler(SqlTemplate
                         .forUpdate(client, String.format(sql, formatArgs))
                         .executeBatch(parameters),
-                sql);
+                sql)
+                .compose(resp -> Future.succeededFuture());
     }
 
-    public <E extends IdEntity> Future<Long> update(Object id, E setItems, ProcessContext context) {
+    public <E extends IdEntity> Future<Void> update(Object id, E setItems, ProcessContext context) {
         return update(new HashMap<>() {
-            {
-                put("id", id);
-            }
-        }, setItems, context);
+                          {
+                              put("id", id);
+                          }
+                      }, setItems,
+                context);
     }
 
-    public <E extends IdEntity> Future<Long> update(Map<String, Object> whereParameters, E setItems, ProcessContext context) {
+    public <E extends IdEntity> Future<Void> update(Map<String, Object> whereParameters, E setItems, ProcessContext context) {
         var tableName = setItems.tableName();
         addSafeInfo(setItems, context, false);
         var caseEntity = CaseFormatter.camelToSnake(JsonObject.mapFrom(setItems))
@@ -299,41 +308,56 @@ public class FunSQLClient {
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .execute(caseEntity),
-                sql);
+                sql)
+                .compose(resp -> Future.succeededFuture());
     }
 
     @SneakyThrows
-    public <E extends IdEntity> Future<Long> delete(Object id, Class<E> entityClazz, ProcessContext context) {
+    public <E extends IdEntity> Future<Void> delete(Object id, Class<E> entityClazz, ProcessContext context) {
         return delete(new HashMap<>() {
-            {
-                put("id", id);
-            }
-        }, entityClazz, context);
+                          {
+                              put("id", id);
+                          }
+                      }, entityClazz,
+                context);
     }
 
     @SneakyThrows
-    public <E extends IdEntity> Future<Long> delete(Map<String, Object> whereParameters, Class<E> entityClazz, ProcessContext context) {
+    public <E extends IdEntity> Future<Void> delete(Map<String, Object> whereParameters, Class<E> entityClazz, ProcessContext context) {
         var sql = packageWhere("DELETE FROM " + entityClazz.getDeclaredConstructor().newInstance().tableName(), whereParameters);
         return delete(sql, whereParameters, context);
     }
 
 
-    public Future<Long> delete(String sql, Map<String, Object> parameters, ProcessContext context, Object... formatArgs) {
+    public Future<Void> delete(String sql, Map<String, Object> parameters, ProcessContext context, Object... formatArgs) {
         return update(String.format(sql, formatArgs), parameters, context);
     }
 
     @SneakyThrows
-    public <E extends IdEntity> Future<Long> softDelete(Map<String, Object> whereParameters, Class<E> entityClazz, ProcessContext context) {
+    public <E extends IdEntity> Future<Void> softDelete(Object id, Class<E> entityClazz, ProcessContext context) {
+        return softDelete(new HashMap<>() {
+                              {
+                                  put("id", id);
+                              }
+                          }, entityClazz,
+                context);
+    }
+
+    @SneakyThrows
+    public <E extends IdEntity> Future<Void> softDelete(Map<String, Object> whereParameters, Class<E> entityClazz, ProcessContext context) {
         var sql = packageWhere("SELECT * FROM " + entityClazz.getDeclaredConstructor().newInstance().tableName(), whereParameters);
         return softDelete(sql, whereParameters, entityClazz, context);
     }
 
     @SneakyThrows
-    public <E extends IdEntity> Future<Long> softDelete(String sql, Map<String, Object> parameters, Class<E> entityClazz, ProcessContext context, Object... formatArgs) {
+    public <E extends IdEntity> Future<Void> softDelete(String sql, Map<String, Object> parameters, Class<E> entityClazz, ProcessContext context, Object... formatArgs) {
         var tableName = entityClazz.getDeclaredConstructor().newInstance().tableName();
         return tx(client ->
                 client.list(String.format(sql, formatArgs), parameters, Map.class, context)
                         .compose(selectResp -> {
+                            if (selectResp.isEmpty()) {
+                                throw new NotFoundException("");
+                            }
                             Promise<List<Map<String, Object>>> insertP = Promise.promise();
                             var softDelEntities = selectResp.stream()
                                     .map(deleteObj -> SoftDelEntity.builder()
@@ -392,18 +416,21 @@ public class FunSQLClient {
 
     private String packageWhere(String sqlWithoutWhere, Map<String, Object> whereParameters) {
         var sql = sqlWithoutWhere + " WHERE 1 = 1";
-        var neKeys = new ArrayList<String>();
+        var optKeys = new ArrayList<String>();
         sql += whereParameters.keySet().stream()
                 .map(params -> {
-                    if (!params.startsWith("-")) {
-                        return " AND " + params + " = #{" + params + "}";
-                    } else {
-                        neKeys.add(params);
+                    if (params.startsWith("-")) {
+                        optKeys.add(params);
                         return " AND " + params.substring(1) + " != #{" + params.substring(1) + "}";
                     }
+                    if (params.startsWith("$")) {
+                        optKeys.add(params);
+                        return " AND " + params.substring(1) + " like #{" + params.substring(1) + "}";
+                    }
+                    return " AND " + params + " = #{" + params + "}";
                 })
                 .collect(Collectors.joining());
-        neKeys.forEach(neKey -> {
+        optKeys.forEach(neKey -> {
             whereParameters.put(neKey.substring(1), whereParameters.get(neKey));
             whereParameters.remove(neKey);
         });
