@@ -25,11 +25,11 @@ import idealworld.dew.framework.fun.eventbus.ProcessFun;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.domain.ident.TenantIdent;
+import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.iam.process.common.CommonProcessor;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppAddReq;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppModifyReq;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppResp;
-import io.vertx.core.Future;
 
 import java.util.HashMap;
 
@@ -54,22 +54,16 @@ public class TCAppProcessor {
     public ProcessFun<Long> addApp() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
-            var appAddReq = context.helper.parseBody(context.req.body, AppAddReq.class);
-            return context.fun.sql.exists(
-                    new HashMap<>() {
-                        {
-                            put("name", appAddReq.getName());
-                            put("rel_tenant_id", relTenantId);
-                        }
-                    },
-                    App.class,
-                    context)
-                    .compose(existsResult -> {
-                        if (existsResult) {
-                            return context.helper.error(new ConflictException("应用名称已存在"));
-                        }
-                        return context.helper.success(null);
-                    })
+            var appAddReq = context.req.body(AppAddReq.class);
+            return context.helper.existToError(
+                    context.fun.sql.exists(
+                            new HashMap<>() {
+                                {
+                                    put("name", appAddReq.getName());
+                                    put("rel_tenant_id", relTenantId);
+                                }
+                            },
+                            App.class), () -> new ConflictException("应用名称已存在"))
                     .compose(resp -> {
                         var app = $.bean.copyProperties(appAddReq, App.class);
                         var keys = $.security.asymmetric.generateKeys("RSA", 1024);
@@ -77,15 +71,12 @@ public class TCAppProcessor {
                         app.setPriKey(keys.get("PrivateKey"));
                         app.setRelTenantId(relTenantId);
                         app.setStatus(CommonStatus.ENABLED);
-                        return context.fun.sql.save(app, context);
+                        return context.fun.sql.save(app);
                     })
-                    .compose(appId -> {
-                        exchangeProcessor.enableApp(appId, relTenantId);
-                        return sendMQBySave(
-                                saveR,
-                                App.class
-                        );
-                    });
+                    .compose(appId ->
+                            ExchangeProcessor.enableApp(appId, relTenantId, context)
+                                    .compose(r ->
+                                            context.helper.success(appId)));
         };
     }
 
@@ -93,32 +84,26 @@ public class TCAppProcessor {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var appId = Long.parseLong(context.req.params.get("appId"));
-            var appModifyReq = context.helper.parseBody(context.req.body, AppModifyReq.class);
+            var appModifyReq = context.req.body(AppModifyReq.class);
             return CommonProcessor.checkAppMembership(appId, relTenantId, context)
                     .compose(resp ->
-                            context.fun.sql.update(new HashMap<>() {
-                                {
-                                    put("id", appId);
-                                    put("rel_tenant_id", relTenantId);
-                                }
-                            },
-                                    context.helper.convert(appModifyReq, App.class),
-                                    context)
-                    )
+                            context.fun.sql.update(
+                                    new HashMap<>() {
+                                        {
+                                            put("id", appId);
+                                            put("rel_tenant_id", relTenantId);
+                                        }
+                                    },
+                                    context.helper.convert(appModifyReq, App.class)))
                     .compose(resp -> {
-                        sendMQByUpdate(
-                                updateEntity(appUpdate),
-                                App.class,
-                                appId
-                        );
                         if (appModifyReq.getStatus() != null) {
                             if (appModifyReq.getStatus() == CommonStatus.ENABLED) {
-                                exchangeProcessor.enableApp(appId, relTenantId);
+                                return ExchangeProcessor.enableApp(appId, relTenantId, context);
                             } else {
-                                exchangeProcessor.disableApp(appId, relTenantId);
+                                return ExchangeProcessor.disableApp(appId, relTenantId, context);
                             }
                         }
-                        return Future.succeededFuture(resp);
+                        return context.helper.success(resp);
                     });
         };
     }
@@ -131,7 +116,7 @@ public class TCAppProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                App.class, context)
+                App.class)
                 .compose(app -> context.helper.success(app, AppResp.class));
     }
 
@@ -148,8 +133,9 @@ public class TCAppProcessor {
             }
             return context.fun.sql.page(
                     whereParameters,
-                    TenantIdent.class, context
-            )
+                    context.req.pageNumber(),
+                    context.req.pageSize(),
+                    TenantIdent.class)
                     .compose(apps -> context.helper.success(apps, AppResp.class));
         };
     }

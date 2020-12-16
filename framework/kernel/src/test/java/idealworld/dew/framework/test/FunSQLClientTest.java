@@ -227,7 +227,7 @@ public class FunSQLClientTest extends DewTest {
                 .compose(resp ->
                         funSQLClient.list(new HashMap<>() {
                             {
-                                put("-name", "孤岛旭日4");
+                                put("!name", "孤岛旭日4");
                             }
                         }, Account.class, null)
                 )

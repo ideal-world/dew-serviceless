@@ -18,7 +18,6 @@ package idealworld.dew.serviceless.iam.process.tenantconsole;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
-import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.CommonStatus;
@@ -87,80 +86,65 @@ public class TCAccountProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/role/{accountRoleId}", deleteAccountRole());
     }
 
-    public ProcessFun<Long> addAccount() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var accountAddReq = context.helper.parseBody(context.req.body, AccountAddReq.class);
-            return innerAddAccount(accountAddReq, relTenantId, context)
-                    .compose(account -> {
-                        sendMQBySave(
-                                Resp.success(addAccountR.getBody().getId()),
-                                Account.class
-                        );
-                        return Future.succeededFuture(account.getId());
-                    });
-        };
-    }
-
     public static Future<Account> innerAddAccount(AccountAddReq accountAddReq, Long relTenantId, ProcessContext context) {
         var account = context.helper.convert(accountAddReq, Account.class);
         account.setOpenId($.field.createUUID());
         account.setParentId(DewConstant.OBJECT_UNDEFINED);
         account.setRelTenantId(relTenantId);
         account.setStatus(CommonStatus.ENABLED);
-        return context.fun.sql.save(account, context)
+        return context.fun.sql.save(account)
                 .compose(accountId -> {
                     account.setId(accountId);
-                    return Future.succeededFuture(account);
+                    return context.helper.success(account);
                 });
     }
 
-    public ProcessFun<Void> modifyAccount() {
+    private ProcessFun<Long> addAccount() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
-            var accountId = Long.parseLong(context.req.params.get("accountId"));
-            var accountModifyReq = context.helper.parseBody(context.req.body, AccountModifyReq.class);
-            var future = Future.succeededFuture();
-            if (accountModifyReq.getParentId() != null) {
-                future.compose(resp ->
-                        CommonProcessor.checkAccountMembership(accountModifyReq.getParentId(), relTenantId, context)
-                );
-            }
-            return future
-                    .compose(resp ->
-                            context.fun.sql.update(new HashMap<>() {
-                                {
-                                    put("id", accountId);
-                                    put("rel_tenant_id", relTenantId);
-                                }
-                            },
-                                    context.helper.convert(accountModifyReq, Account.class),
-                                    context)
-                    )
-                    .compose(resp -> {
-                        sendMQByUpdate(
-                                updateEntity(accountUpdate),
-                                Account.class,
-                                accountId);
-                        return Future.succeededFuture();
-                    });
+            var accountAddReq = context.req.body(AccountAddReq.class);
+            return innerAddAccount(accountAddReq, relTenantId, context)
+                    .compose(account -> context.helper.success(account.getId()));
         };
     }
 
-    public ProcessFun<AccountResp> getAccount() {
-        return context -> context.fun.sql.getOne(
-                new HashMap<>() {
-                    {
-                        put("id", context.req.params.get("accountId"));
-                        put("rel_tenant_id", context.req.identOptInfo.getTenantId());
-                    }
-                },
-                Account.class,
-                context)
-                .compose(app -> context.helper.success(app, AccountResp.class));
+    private ProcessFun<Void> modifyAccount() {
+        return context -> {
+            var relTenantId = context.req.identOptInfo.getTenantId();
+            var accountId = Long.parseLong(context.req.params.get("accountId"));
+            var accountModifyReq = context.req.body(AccountModifyReq.class);
+            var future = context.helper.success();
+            if (accountModifyReq.getParentId() != null) {
+                future.compose(resp ->
+                        CommonProcessor.checkAccountMembership(accountModifyReq.getParentId(), relTenantId, context));
+            }
+            return future
+                    .compose(resp ->
+                            context.fun.sql.update(
+                                    new HashMap<>() {
+                                        {
+                                            put("id", accountId);
+                                            put("rel_tenant_id", relTenantId);
+                                        }
+                                    },
+                                    context.helper.convert(accountModifyReq, Account.class)));
+        };
     }
 
-    public ProcessFun<Page<AccountResp>> pageAccounts() {
+    private ProcessFun<AccountResp> getAccount() {
+        return context ->
+                context.fun.sql.getOne(
+                        new HashMap<>() {
+                            {
+                                put("id", context.req.params.get("accountId"));
+                                put("rel_tenant_id", context.req.identOptInfo.getTenantId());
+                            }
+                        },
+                        Account.class)
+                        .compose(app -> context.helper.success(app, AccountResp.class));
+    }
+
+    private ProcessFun<Page<AccountResp>> pageAccounts() {
         return context -> {
             var name = context.req.params.getOrDefault("name", null);
             var openId = context.req.params.getOrDefault("openId", null);
@@ -177,14 +161,14 @@ public class TCAccountProcessor {
             }
             return context.fun.sql.page(
                     whereParameters,
-                    Account.class,
-                    context
-            )
+                    context.req.pageNumber(),
+                    context.req.pageSize(),
+                    Account.class)
                     .compose(accounts -> context.helper.success(accounts, AccountResp.class));
         };
     }
 
-    public ProcessFun<Void> deleteAccount() {
+    private ProcessFun<Void> deleteAccount() {
         return context -> {
             var accountId = Long.parseLong(context.req.params.get("accountId"));
             return context.fun.sql.tx(client ->
@@ -195,89 +179,66 @@ public class TCAccountProcessor {
                                     put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                                 }
                             },
-                            Account.class,
-                            context)
+                            Account.class)
                             .compose(deleteNumber ->
-                                        CompositeFuture.all(
-                                                client.softDelete(
-                                                        new HashMap<>() {
-                                                            {
-                                                                put("rel_account_id", accountId);
-                                                            }
-                                                        },
-                                                        AccountIdent.class,
-                                                        context),
-                                                client.softDelete(
-                                                        new HashMap<>() {
-                                                            {
-                                                                put("rel_account_id", accountId);
-                                                            }
-                                                        },
-                                                        AccountRole.class,
-                                                        context),
-                                                client.softDelete(
-                                                        new HashMap<>() {
-                                                            {
-                                                                put("rel_account_id", accountId);
-                                                            }
-                                                        },
-                                                        AccountApp.class,
-                                                        context),
-                                                client.softDelete(
-                                                        new HashMap<>() {
-                                                            {
-                                                                put("rel_account_id", accountId);
-                                                            }
-                                                        },
-                                                        AccountGroup.class,
-                                                        context),
-                                                client.softDelete(
-                                                        new HashMap<>() {
-                                                            {
-                                                                put("rel_account_id", accountId);
-                                                            }
-                                                        },
-                                                        AccountBind.class,
-                                                        context)
-                                        )
-                                                .compose(resp -> Future.succeededFuture())
-                            )
-                            .compose(resp -> {
-                                sendMQByDelete(
-                                        deletedAccountR,
-                                        Account.class,
-                                        accountId
-                                );
-                                return Future.succeededFuture();
-                            })
-            );
+                                    CompositeFuture.all(
+                                            client.softDelete(
+                                                    new HashMap<>() {
+                                                        {
+                                                            put("rel_account_id", accountId);
+                                                        }
+                                                    },
+                                                    AccountIdent.class),
+                                            client.softDelete(
+                                                    new HashMap<>() {
+                                                        {
+                                                            put("rel_account_id", accountId);
+                                                        }
+                                                    },
+                                                    AccountRole.class),
+                                            client.softDelete(
+                                                    new HashMap<>() {
+                                                        {
+                                                            put("rel_account_id", accountId);
+                                                        }
+                                                    },
+                                                    AccountApp.class),
+                                            client.softDelete(
+                                                    new HashMap<>() {
+                                                        {
+                                                            put("rel_account_id", accountId);
+                                                        }
+                                                    },
+                                                    AccountGroup.class),
+                                            client.softDelete(
+                                                    new HashMap<>() {
+                                                        {
+                                                            put("rel_account_id", accountId);
+                                                        }
+                                                    },
+                                                    AccountBind.class))
+                                            .compose(resp -> context.helper.success())));
         };
     }
 
     // --------------------------------------------------------------------
 
-    public ProcessFun<Long> addAccountIdent() {
+    private ProcessFun<Long> addAccountIdent() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountId = Long.parseLong(context.req.params.get("accountId"));
-            var accountIdentAddReq = context.helper.parseBody(context.req.body, AccountIdentAddReq.class);
-            return context.fun.sql.exists(
-                    new HashMap<>() {
-                        {
-                            put("id", accountId);
-                            put("rel_tenant_id", relTenantId);
-                        }
-                    },
-                    Account.class,
-                    context)
-                    .compose(existsAccountResult -> {
-                        if (!existsAccountResult) {
-                            return context.helper.error(new ConflictException("关联账号不合法"));
-                        }
-                        return context.helper.success(null);
-                    })
+            var accountIdentAddReq = context.req.body(AccountIdentAddReq.class);
+            return context.helper.notExistToError(
+                    context.fun.sql.exists(
+                            new HashMap<>() {
+                                {
+                                    put("id", accountId);
+                                    put("rel_tenant_id", relTenantId);
+                                }
+                            },
+                            Account.class), () -> new UnAuthorizedException("关联账号不合法"))
                     .compose(resp ->
-                            context.fun.sql.exists(
+                            context.helper.existToError(context.fun.sql.exists(
                                     new HashMap<>() {
                                         {
                                             put("kind", accountIdentAddReq.getKind());
@@ -285,31 +246,23 @@ public class TCAccountProcessor {
                                             put("rel_tenant_id", relTenantId);
                                         }
                                     },
-                                    AccountIdent.class,
+                                    AccountIdent.class), () -> new ConflictException("账号认证类型与AK已存在")))
+                    .compose(resp ->
+                            CommonProcessor.validRuleAndGetValidEndTime(
+                                    accountIdentAddReq.getKind(),
+                                    accountIdentAddReq.getAk(),
+                                    accountIdentAddReq.getSk(),
+                                    relTenantId,
+                                    context))
+                    .compose(validEndTime ->
+                            CommonProcessor.processIdentSk(
+                                    accountIdentAddReq.getKind(),
+                                    accountIdentAddReq.getAk(),
+                                    accountIdentAddReq.getSk(),
+                                    null,
+                                    relTenantId,
                                     context)
-                    )
-                    .compose(existsAccountIdentResult -> {
-                        if (existsAccountIdentResult) {
-                            return context.helper.error(new ConflictException("账号认证类型与AK已存在"));
-                        }
-                        return CommonProcessor.validRuleAndGetValidEndTime(
-                                accountIdentAddReq.getKind(),
-                                accountIdentAddReq.getAk(),
-                                accountIdentAddReq.getSk(),
-                                relTenantId,
-                                context
-                        );
-                    })
-                    .compose(validEndTime -> CommonProcessor.processIdentSk(
-                            accountIdentAddReq.getKind(),
-                            accountIdentAddReq.getAk(),
-                            accountIdentAddReq.getSk(),
-                            null,
-                            relTenantId,
-                            context
-                            )
-                                    .compose(sk -> Future.succeededFuture(new Tuple2<>(validEndTime, sk)))
-                    )
+                                    .compose(sk -> context.helper.success(new Tuple2<>(validEndTime, sk))))
                     .compose(processInfo -> {
                         var accountIdent = context.helper.convert(accountIdentAddReq, AccountIdent.class);
                         accountIdent.setRelAccountId(accountId);
@@ -321,55 +274,45 @@ public class TCAccountProcessor {
                             accountIdent.setValidEndTime(processInfo._0);
                         }
                         accountIdent.setSk(processInfo._1);
-                        return context.fun.sql.save(accountIdent, context);
+                        return context.fun.sql.save(accountIdent);
                     });
         };
     }
 
-    public ProcessFun<Void> modifyAccountIdent() {
+    private ProcessFun<Void> modifyAccountIdent() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountIdentId = Long.parseLong(context.req.params.get("accountIdentId"));
-            var accountIdentModifyReq = context.helper.parseBody(context.req.body, AccountIdentModifyReq.class);
-            return context.fun.sql.getOne(
-                    new HashMap<>() {
-                        {
-                            put("id", accountIdentId);
-                            put("rel_tenant_id", relTenantId);
-                        }
-                    },
-                    AccountIdent.class,
-                    context
-            )
+            var accountIdentModifyReq = context.req.body(AccountIdentModifyReq.class);
+            return context.helper.notExistToError(
+                    context.fun.sql.getOne(
+                            new HashMap<>() {
+                                {
+                                    put("id", accountIdentId);
+                                    put("rel_tenant_id", relTenantId);
+                                }
+                            },
+                            AccountIdent.class), () -> new UnAuthorizedException("账号认证不合法"))
                     .compose(accountIdent -> {
-                        if (accountIdent == null) {
-                            throw new UnAuthorizedException("账号认证不合法");
-                        }
                         var accountIdentAk = accountIdentModifyReq.getAk() != null ? accountIdentModifyReq.getAk() : accountIdent.getAk();
-                        return context.fun.sql.exists(
-                                new HashMap<>() {
-                                    {
-                                        put("-id", accountIdentId);
-                                        put("rel_tenant_id", relTenantId);
-                                        put("kind", accountIdent.getKind());
-                                        put("ak", accountIdentAk);
-                                    }
-                                },
-                                AccountIdent.class,
-                                context
-                        )
-                                .compose(existsAccountIdentResult -> {
-                                    if (existsAccountIdentResult) {
-                                        throw new UnAuthorizedException("账号认证类型与AK已存在");
-                                    }
-                                    return CommonProcessor.validRuleAndGetValidEndTime(
-                                            accountIdent.getKind(),
-                                            accountIdentModifyReq.getAk(),
-                                            accountIdentModifyReq.getSk(),
-                                            relTenantId,
-                                            context
-                                    );
-                                })
+                        return context.helper.existToError(
+                                context.fun.sql.exists(
+                                        new HashMap<>() {
+                                            {
+                                                put("!id", accountIdentId);
+                                                put("kind", accountIdent.getKind());
+                                                put("ak", accountIdentAk);
+                                                put("rel_tenant_id", relTenantId);
+                                            }
+                                        },
+                                        AccountIdent.class), () -> new ConflictException("账号认证类型与AK已存在"))
+                                .compose(resp ->
+                                        CommonProcessor.validRuleAndGetValidEndTime(
+                                                accountIdent.getKind(),
+                                                accountIdentModifyReq.getAk(),
+                                                accountIdentModifyReq.getSk(),
+                                                relTenantId,
+                                                context))
                                 .compose(resp -> {
                                     if (accountIdentModifyReq.getSk() == null) {
                                         return CommonProcessor.processIdentSk(
@@ -378,29 +321,28 @@ public class TCAccountProcessor {
                                                 accountIdentModifyReq.getSk(),
                                                 null,
                                                 relTenantId,
-                                                context
-                                        );
+                                                context);
                                     }
-                                    return Future.succeededFuture(null);
+                                    return context.helper.success(null);
                                 });
                     })
                     .compose(inputSk -> {
                         if (inputSk != null) {
                             accountIdentModifyReq.setSk(inputSk);
                         }
-                        return context.fun.sql.update(new HashMap<>() {
-                            {
-                                put("id", accountIdentId);
-                                put("rel_tenant_id", relTenantId);
-                            }
-                        },
-                                context.helper.convert(accountIdentModifyReq, AccountIdent.class),
-                                context);
+                        return context.fun.sql.update(
+                                new HashMap<>() {
+                                    {
+                                        put("id", accountIdentId);
+                                        put("rel_tenant_id", relTenantId);
+                                    }
+                                },
+                                context.helper.convert(accountIdentModifyReq, AccountIdent.class));
                     });
         };
     }
 
-    public ProcessFun<List<AccountIdentResp>> findAccountIdents() {
+    private ProcessFun<List<AccountIdentResp>> findAccountIdents() {
         return context -> context.fun.sql.list(
                 new HashMap<>() {
                     {
@@ -408,11 +350,11 @@ public class TCAccountProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                AccountIdent.class, context)
+                AccountIdent.class)
                 .compose(accountIdents -> context.helper.success(accountIdents, AccountIdentResp.class));
     }
 
-    public ProcessFun<Void> deleteAccountIdent() {
+    private ProcessFun<Void> deleteAccountIdent() {
         return context ->
                 context.fun.sql.softDelete(
                         new HashMap<>() {
@@ -421,12 +363,12 @@ public class TCAccountProcessor {
                                 put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                             }
                         },
-                        AccountIdent.class, context);
+                        AccountIdent.class);
     }
 
     // --------------------------------------------------------------------
 
-    public ProcessFun<Long> addAccountApp() {
+    private ProcessFun<Long> addAccountApp() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountId = Long.parseLong(context.req.params.get("accountId"));
@@ -438,48 +380,41 @@ public class TCAccountProcessor {
                             context.fun.sql.save(AccountApp.builder()
                                     .relAccountId(accountId)
                                     .relAppId(appId)
-                                    .build(), context)
-                    );
+                                    .build()));
         };
     }
 
-    public ProcessFun<Void> deleteAccountApp() {
+    private ProcessFun<Void> deleteAccountApp() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountAppId = Long.parseLong(context.req.params.get("accountAppId"));
-            return context.fun.sql.getOne(
-                    new HashMap<>() {
-                        {
-                            put("id", accountAppId);
-                        }
-                    },
-                    AccountApp.class, context)
-                    .compose(fetchAccountAppResult -> {
-                        if (fetchAccountAppResult == null) {
-                            throw new UnAuthorizedException("账号应用关联不合法");
-                        }
-                        return CommonProcessor.checkAccountMembership(
-                                fetchAccountAppResult.getRelAccountId(),
-                                relTenantId,
-                                context
-                        )
-                                .compose(resp -> CommonProcessor.checkAppMembership(
-                                        fetchAccountAppResult.getRelAppId(),
-                                        relTenantId,
-                                        context
-                                ))
-                                .compose(resp -> context.fun.sql.softDelete(
-                                        fetchAccountAppResult.getId(),
-                                        AccountApp.class,
-                                        context
-                                ));
-                    });
+            return context.helper.notExistToError(
+                    context.fun.sql.getOne(
+                            new HashMap<>() {
+                                {
+                                    put("id", accountAppId);
+                                }
+                            },
+                            AccountApp.class), () -> new UnAuthorizedException("账号应用关联不合法"))
+                    .compose(fetchAccountAppResult ->
+                            CommonProcessor.checkAccountMembership(
+                                    fetchAccountAppResult.getRelAccountId(),
+                                    relTenantId,
+                                    context)
+                                    .compose(resp -> CommonProcessor.checkAppMembership(
+                                            fetchAccountAppResult.getRelAppId(),
+                                            relTenantId,
+                                            context
+                                    ))
+                                    .compose(resp -> context.fun.sql.softDelete(
+                                            fetchAccountAppResult.getId(),
+                                            AccountApp.class)));
         };
     }
 
     // --------------------------------------------------------------------
 
-    public ProcessFun<Long> addAccountGroup() {
+    private ProcessFun<Long> addAccountGroup() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountId = Long.parseLong(context.req.params.get("accountId"));
@@ -491,43 +426,37 @@ public class TCAccountProcessor {
                             context.fun.sql.save(AccountGroup.builder()
                                     .relAccountId(accountId)
                                     .relGroupNodeId(groupNodeId)
-                                    .build(), context)
+                                    .build())
                     );
         };
     }
 
-    public ProcessFun<Void> deleteAccountGroup() {
+    private ProcessFun<Void> deleteAccountGroup() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountGroupId = Long.parseLong(context.req.params.get("accountGroupId"));
-            return context.fun.sql.getOne(
-                    new HashMap<>() {
-                        {
-                            put("id", accountGroupId);
-                        }
-                    },
-                    AccountGroup.class, context)
-                    .compose(fetchAccountGroupResult -> {
-                        if (fetchAccountGroupResult == null) {
-                            throw new UnAuthorizedException("账号群组关联不合法");
-                        }
-                        return CommonProcessor.checkAccountMembership(
-                                fetchAccountGroupResult.getRelAccountId(),
-                                relTenantId,
-                                context
-                        )
-                                .compose(resp -> context.fun.sql.softDelete(
-                                        fetchAccountGroupResult.getId(),
-                                        AccountGroup.class,
-                                        context
-                                ));
-                    });
+            return context.helper.notExistToError(
+                    context.fun.sql.getOne(
+                            new HashMap<>() {
+                                {
+                                    put("id", accountGroupId);
+                                }
+                            },
+                            AccountGroup.class), () -> new UnAuthorizedException("账号群组关联不合法"))
+                    .compose(fetchAccountGroupResult ->
+                            CommonProcessor.checkAccountMembership(
+                                    fetchAccountGroupResult.getRelAccountId(),
+                                    relTenantId,
+                                    context)
+                                    .compose(resp -> context.fun.sql.softDelete(
+                                            fetchAccountGroupResult.getId(),
+                                            AccountGroup.class)));
         };
     }
 
     // --------------------------------------------------------------------
 
-    public ProcessFun<Long> addAccountRole() {
+    private ProcessFun<Long> addAccountRole() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountId = Long.parseLong(context.req.params.get("accountId"));
@@ -539,37 +468,30 @@ public class TCAccountProcessor {
                             context.fun.sql.save(AccountRole.builder()
                                     .relAccountId(accountId)
                                     .relRoleId(roleId)
-                                    .build(), context)
-                    );
+                                    .build()));
         };
     }
 
-    public ProcessFun<Void> deleteAccountRole() {
+    private ProcessFun<Void> deleteAccountRole() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountRoleId = Long.parseLong(context.req.params.get("accountRoleId"));
-            return context.fun.sql.getOne(
-                    new HashMap<>() {
-                        {
-                            put("id", accountRoleId);
-                        }
-                    },
-                    AccountRole.class, context)
-                    .compose(fetchAccountRoleResult -> {
-                        if (fetchAccountRoleResult == null) {
-                            throw new UnAuthorizedException("账号角色关联不合法");
-                        }
-                        return CommonProcessor.checkAccountMembership(
-                                fetchAccountRoleResult.getRelAccountId(),
-                                relTenantId,
-                                context
-                        )
-                                .compose(resp -> context.fun.sql.softDelete(
-                                        fetchAccountRoleResult.getId(),
-                                        AccountRole.class,
-                                        context
-                                ));
-                    });
+            return context.helper.notExistToError(
+                    context.fun.sql.getOne(
+                            new HashMap<>() {
+                                {
+                                    put("id", accountRoleId);
+                                }
+                            },
+                            AccountRole.class), () -> new UnAuthorizedException("账号角色关联不合法"))
+                    .compose(fetchAccountRoleResult ->
+                            CommonProcessor.checkAccountMembership(
+                                    fetchAccountRoleResult.getRelAccountId(),
+                                    relTenantId,
+                                    context)
+                                    .compose(resp -> context.fun.sql.softDelete(
+                                            fetchAccountRoleResult.getId(),
+                                            AccountRole.class)));
         };
     }
 

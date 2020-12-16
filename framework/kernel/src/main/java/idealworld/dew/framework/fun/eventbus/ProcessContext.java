@@ -16,6 +16,7 @@
 
 package idealworld.dew.framework.fun.eventbus;
 
+import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.cache.FunRedisClient;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
@@ -37,17 +38,21 @@ import java.util.Map;
 @AllArgsConstructor
 public class ProcessContext {
 
-    static final ProcessHelper _helper = new ProcessHelper();
+    public ProcessContext init() {
+        fun.sql.addEntityByInsertFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, true, this);
+        fun.sql.addEntityByUpdateFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, false, this);
+        return this;
+    }
 
     @Builder.Default
     public Request req = new Request();
     @Builder.Default
     public Function fun = new Function();
     @Builder.Default
-    public ProcessHelper helper = _helper;
+    public ProcessHelper helper = new ProcessHelper(this);
     public Object conf;
+    public String moduleName;
 
-    @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
@@ -55,8 +60,20 @@ public class ProcessContext {
 
         public Map<String, String> params;
         public Map<String, String> header;
-        public Buffer body;
+        private Buffer body;
         public IdentOptCacheInfo identOptInfo;
+
+        public Long pageNumber(){
+           return Long.parseLong(params.get("pageNumber"));
+        }
+
+        public Long pageSize(){
+            return Long.parseLong(params.get("pageSize"));
+        }
+
+        public <E> E body(Class<E> clazz) {
+            return ProcessHelper.parseBody(body, clazz);
+        }
 
     }
 
@@ -69,6 +86,7 @@ public class ProcessContext {
         public FunSQLClient sql;
         public FunRedisClient cache;
         public FunHttpClient http;
+        public FunEventBus eb;
 
     }
 

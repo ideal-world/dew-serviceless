@@ -35,9 +35,9 @@ public class SCTenantProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/system/tenant", addTenant());
     }
 
-    public ProcessFun<Long> addTenant() {
+    private ProcessFun<Long> addTenant() {
         return context -> {
-            var tenantAddReq = context.helper.parseBody(context.req.body, TenantAddReq.class);
+            var tenantAddReq = context.req.body(TenantAddReq.class);
             var tenant = Tenant.builder()
                     .name(tenantAddReq.getName())
                     .icon(tenantAddReq.getIcon())
@@ -45,7 +45,7 @@ public class SCTenantProcessor {
                     .allowAccountRegister(tenantAddReq.getAllowAccountRegister())
                     .status(CommonStatus.ENABLED)
                     .build();
-            return context.fun.sql.save(tenant, context);
+            return context.fun.sql.save(tenant);
         };
     }
 

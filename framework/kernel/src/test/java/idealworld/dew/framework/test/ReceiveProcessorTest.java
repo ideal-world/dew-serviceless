@@ -115,7 +115,7 @@ public class ReceiveProcessorTest extends DewTest {
 
     private ProcessFun<String> MockProcessor4() {
         return context -> {
-            var user = context.helper.parseBody(context.req.body, User.class);
+            var user = context.req.body(User.class);
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));
             Assertions.assertEquals("测试", context.req.params.get("q"));

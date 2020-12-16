@@ -66,12 +66,15 @@ public class ReceiveProcessor {
                                             : new IdentOptCacheInfo())
                             .build())
                     .conf(config)
+                    .moduleName(moduleName)
                     .fun(ProcessContext.Function.builder()
                             .sql(FunSQLClient.contains(moduleName) ? FunSQLClient.choose(moduleName) : null)
                             .cache(FunRedisClient.contains(moduleName) ? FunRedisClient.choose(moduleName) : null)
                             .http(FunHttpClient.contains(moduleName) ? FunHttpClient.choose(moduleName) : null)
+                            .eb(FunEventBus.contains(moduleName) ? FunEventBus.choose(moduleName) : null)
                             .build())
-                    .build());
+                    .build()
+                    .init());
         }
         var matchedPathTemplate = PROCESSORS.get(actionKind).keySet()
                 .stream()
@@ -95,12 +98,15 @@ public class ReceiveProcessor {
                                             : new IdentOptCacheInfo())
                             .build())
                     .conf(config)
+                    .moduleName(moduleName)
                     .fun(ProcessContext.Function.builder()
                             .sql(FunSQLClient.contains(moduleName) ? FunSQLClient.choose(moduleName) : null)
                             .cache(FunRedisClient.contains(moduleName) ? FunRedisClient.choose(moduleName) : null)
                             .http(FunHttpClient.contains(moduleName) ? FunHttpClient.choose(moduleName) : null)
+                            .eb(FunEventBus.contains(moduleName) ? FunEventBus.choose(moduleName) : null)
                             .build())
-                    .build());
+                    .build()
+                    .init());
         }
     }
 

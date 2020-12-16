@@ -17,7 +17,6 @@
 package idealworld.dew.serviceless.iam.process.appconsole;
 
 import com.ecfront.dew.common.Page;
-import com.ecfront.dew.common.Resp;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
@@ -70,25 +69,22 @@ public class ACRoleProcessor {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
-            var roleDefAddReq = context.helper.parseBody(context.req.body, RoleDefAddReq.class);
-            return context.fun.sql.exists(
-                    new HashMap<>() {
-                        {
-                            put("rel_tenant_id", relTenantId);
-                            put("rel_app_id", relAppId);
-                            put("code", roleDefAddReq.getCode());
-                        }
-                    },
-                    RoleDef.class,
-                    context)
+            var roleDefAddReq = context.req.body(RoleDefAddReq.class);
+            return context.helper.existToError(
+                    context.fun.sql.exists(
+                            new HashMap<>() {
+                                {
+                                    put("code", roleDefAddReq.getCode());
+                                    put("rel_app_id", relAppId);
+                                    put("rel_tenant_id", relTenantId);
+                                }
+                            },
+                            RoleDef.class), () -> new ConflictException("角色定义编码已存在"))
                     .compose(existsRoleDef -> {
-                        if (existsRoleDef) {
-                            throw new ConflictException("角色定义编码已存在");
-                        }
                         var roleDef = context.helper.convert(roleDefAddReq, RoleDef.class);
                         roleDef.setRelTenantId(relTenantId);
                         roleDef.setRelAppId(relAppId);
-                        return context.fun.sql.save(roleDef, context);
+                        return context.fun.sql.save(roleDef);
                     });
         };
     }
@@ -98,41 +94,34 @@ public class ACRoleProcessor {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
             var roleDefId = Long.parseLong(context.req.params.get("roleDefId"));
-            var roleDefModifyReq = context.helper.parseBody(context.req.body, RoleDefModifyReq.class);
+            var roleDefModifyReq = context.req.body(RoleDefModifyReq.class);
             var future = Future.succeededFuture();
             if (roleDefModifyReq.getCode() != null) {
                 future
                         .compose(resp ->
-                                context.fun.sql.exists(
-                                        new HashMap<>() {
-                                            {
-                                                put("rel_tenant_id", relTenantId);
-                                                put("rel_app_id", relAppId);
-                                                put("code", roleDefModifyReq.getCode());
-                                                put("-id", roleDefId);
-                                            }
-                                        },
-                                        RoleDef.class,
-                                        context)
-                                        .compose(existsRoleDef -> {
-                                            if (existsRoleDef) {
-                                                throw new ConflictException("角色定义编码已存在");
-                                            }
-                                            return Future.succeededFuture();
-                                        }));
+                                context.helper.existToError(
+                                        context.fun.sql.exists(
+                                                new HashMap<>() {
+                                                    {
+                                                        put("!id", roleDefId);
+                                                        put("code", roleDefModifyReq.getCode());
+                                                        put("rel_app_id", relAppId);
+                                                        put("rel_tenant_id", relTenantId);
+                                                    }
+                                                },
+                                                RoleDef.class), () -> new ConflictException("角色定义编码已存在")));
             }
             return future
                     .compose(resp ->
                             context.fun.sql.update(
                                     new HashMap<>() {
                                         {
-                                            put("rel_tenant_id", relTenantId);
-                                            put("rel_app_id", relAppId);
                                             put("id", roleDefId);
+                                            put("rel_app_id", relAppId);
+                                            put("rel_tenant_id", relTenantId);
                                         }
                                     },
-                                    context.helper.convert(roleDefModifyReq, RoleDef.class),
-                                    context)
+                                    context.helper.convert(roleDefModifyReq, RoleDef.class))
                     );
 
         };
@@ -146,14 +135,12 @@ public class ACRoleProcessor {
             return context.fun.sql.getOne(
                     new HashMap<>() {
                         {
-                            put("rel_tenant_id", relTenantId);
-                            put("rel_app_id", relAppId);
                             put("id", roleDefId);
+                            put("rel_app_id", relAppId);
+                            put("rel_tenant_id", relTenantId);
                         }
                     },
-                    RoleDef.class,
-                    context
-            )
+                    RoleDef.class)
                     .compose(roleDef -> context.helper.success(roleDef, RoleDefResp.class));
         };
     }
@@ -178,9 +165,9 @@ public class ACRoleProcessor {
             }
             return context.fun.sql.page(
                     whereParameters,
-                    RoleDef.class,
-                    context
-            )
+                    context.req.pageNumber(),
+                    context.req.pageSize(),
+                    RoleDef.class)
                     .compose(roleDefs -> context.helper.success(roleDefs, RoleDefResp.class));
         };
     }
@@ -190,29 +177,25 @@ public class ACRoleProcessor {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
             var roleDefId = Long.parseLong(context.req.params.get("roleDefId"));
-            return context.fun.sql.exists(
-                    new HashMap<>() {
-                        {
-                            put("rel_role_def_id", roleDefId);
-                        }
-                    },
-                    Role.class,
-                    context)
-                    .compose(existsRoleDefRel -> {
-                        if (existsRoleDefRel) {
-                            throw new ConflictException("请先删除关联的角色数据");
-                        }
-                        return context.fun.sql.softDelete(
-                                new HashMap<>() {
-                                    {
-                                        put("id", roleDefId);
-                                        put("rel_tenant_id", relTenantId);
-                                        put("rel_app_id", relAppId);
-                                    }
-                                },
-                                RoleDef.class,
-                                context);
-                    });
+            return context.helper.existToError(
+                    context.fun.sql.exists(
+                            new HashMap<>() {
+                                {
+                                    put("rel_role_def_id", roleDefId);
+                                }
+                            },
+                            Role.class), () -> new ConflictException("请先删除关联的角色数据"))
+                    .compose(existsRoleDefRel ->
+                            context.fun.sql.softDelete(
+                                    new HashMap<>() {
+                                        {
+                                            put("id", roleDefId);
+                                            put("rel_app_id", relAppId);
+                                            put("rel_tenant_id", relTenantId);
+                                        }
+                                    },
+                                    RoleDef.class)
+                    );
         };
     }
 
@@ -222,69 +205,60 @@ public class ACRoleProcessor {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
-            var roleAddReq = context.helper.parseBody(context.req.body, RoleAddReq.class);
-            return context.fun.sql.exists(
-                    new HashMap<>() {
-                        {
-                            put("rel_role_def_id", roleAddReq.getRelRoleDefId());
-                            put("rel_group_node_id", roleAddReq.getRelGroupNodeId();
-                        }
-                    },
-                    Role.class,
-                    context)
-                    .compose(existsRole -> {
-                        if (existsRole) {
-                            throw new ConflictException("角色已存在");
-                        }
-                        return context.fun.sql.getOne(
-                                new HashMap<>() {
-                                    {
-                                        put("id", roleAddReq.getRelRoleDefId());
-                                        put("rel_tenant_id", relTenantId);
-                                        put("rel_app_id", relAppId);
-                                    }
-                                },
-                                RoleDef.class,
-                                context);
-                    })
-                    .compose(fetchRoleDef ->{
-                        if(fetchRoleDef == null){
-                            throw new UnAuthorizedException("对应的角色定义不合法");
-                        }
+            var roleAddReq = context.req.body(RoleAddReq.class);
+            return context.helper.existToError(
+                    context.fun.sql.exists(
+                            new HashMap<>() {
+                                {
+                                    put("rel_role_def_id", roleAddReq.getRelRoleDefId());
+                                    put("rel_group_node_id", roleAddReq.getRelGroupNodeId());
+                                }
+                            },
+                            Role.class), () -> new ConflictException("角色已存在"))
+                    .compose(resp ->
+                            context.helper.notExistToError(
+                                    context.fun.sql.getOne(
+                                            new HashMap<>() {
+                                                {
+                                                    put("id", roleAddReq.getRelRoleDefId());
+                                                    put("rel_app_id", relAppId);
+                                                    put("rel_tenant_id", relTenantId);
+                                                }
+                                            },
+                                            RoleDef.class), () -> new UnAuthorizedException("对应的角色定义不合法"))
+                    )
+                    .compose(fetchRoleDef -> {
                         if (roleAddReq.getName() == null) {
                             if (roleAddReq.getRelGroupNodeId() != DewConstant.OBJECT_UNDEFINED) {
-                                return context.fun.sql.getOne(
-                                        "SELECT node.name FROM %s AS node" +
-                                                "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
-                                                "  WHERE node.id = #{rel_group_node_id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
-                                        new HashMap<>(){
-                                            {
-                                                put("rel_group_node_id", roleAddReq.getRelGroupNodeId());
-                                                put("rel_tenant_id", relTenantId);
-                                                put("rel_app_id", relAppId);
-                                            }
-                                        },
-                                        context,
-                                        new GroupNode().tableName(),new Group().tableName())
+                                return context.helper.notExistToError(
+                                        context.fun.sql.getOne(
+                                                String.format("SELECT node.name FROM %s AS node" +
+                                                                "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
+                                                                "  WHERE node.id = #{rel_group_node_id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
+                                                        new GroupNode().tableName(), new Group().tableName()),
+                                                new HashMap<>() {
+                                                    {
+                                                        put("rel_group_node_id", roleAddReq.getRelGroupNodeId());
+                                                        put("rel_app_id", relAppId);
+                                                        put("rel_tenant_id", relTenantId);
+                                                    }
+                                                }), () -> new UnAuthorizedException("对应的群组节点不合法"))
                                         .compose(fetchGroupNodeName -> {
-                                            if (fetchGroupNodeName == null) {
-                                                throw new UnAuthorizedException("对应的群组节点不合法");
-                                            }
                                             roleAddReq.setName(fetchGroupNodeName.getString("node.name") + " ");
-                                            return Future.succeededFuture();
+                                            return context.helper.success();
                                         });
                             } else {
                                 roleAddReq.setName("");
                             }
                             roleAddReq.setName(roleAddReq.getName() + fetchRoleDef.getName());
                         }
-                        return Future.succeededFuture();
+                        return context.helper.success();
                     })
                     .compose(resp -> {
                         var role = context.helper.convert(roleAddReq, Role.class);
                         role.setRelTenantId(relTenantId);
                         role.setRelAppId(relAppId);
-                        return context.fun.sql.save(role, context);
+                        return context.fun.sql.save(role);
                     });
         };
     }
@@ -294,17 +268,16 @@ public class ACRoleProcessor {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
             var roleId = Long.parseLong(context.req.params.get("roleId"));
-            var roleModifyReq = context.helper.parseBody(context.req.body, RoleModifyReq.class);
+            var roleModifyReq = context.req.body(RoleModifyReq.class);
             return context.fun.sql.update(
                     new HashMap<>() {
                         {
-                            put("rel_tenant_id", relTenantId);
-                            put("rel_app_id", relAppId);
                             put("id", roleId);
+                            put("rel_app_id", relAppId);
+                            put("rel_tenant_id", relTenantId);
                         }
                     },
-                    context.helper.convert(roleModifyReq, Role.class),
-                    context);
+                    context.helper.convert(roleModifyReq, Role.class));
         };
     }
 
@@ -316,14 +289,12 @@ public class ACRoleProcessor {
             return context.fun.sql.getOne(
                     new HashMap<>() {
                         {
-                            put("rel_tenant_id", relTenantId);
-                            put("rel_app_id", relAppId);
                             put("id", roleId);
+                            put("rel_app_id", relAppId);
+                            put("rel_tenant_id", relTenantId);
                         }
                     },
-                    RoleDef.class,
-                    context
-            )
+                    RoleDef.class)
                     .compose(role -> context.helper.success(role, RoleResp.class));
         };
     }
@@ -335,8 +306,8 @@ public class ACRoleProcessor {
             var name = context.req.params.getOrDefault("name", null);
             var whereParameters = new HashMap<String, Object>() {
                 {
-                    put("rel_tenant_id", relTenantId);
                     put("rel_app_id", relAppId);
+                    put("rel_tenant_id", relTenantId);
                 }
             };
             if (name != null && !name.isBlank()) {
@@ -344,9 +315,7 @@ public class ACRoleProcessor {
             }
             return context.fun.sql.list(
                     whereParameters,
-                    Role.class,
-                    context
-            )
+                    Role.class)
                     .compose(roles -> context.helper.success(roles, RoleResp.class));
         };
     }
@@ -366,14 +335,13 @@ public class ACRoleProcessor {
                 }
             };
             if (name != null && !name.isBlank()) {
-                sql+= " AND name like name #{name}";
+                sql += " AND name like name #{name}";
                 whereParameters.put("name", "%" + name + "%");
             }
-            return context.fun.sql.list(sql,
+            return context.fun.sql.list(
+                    String.format(sql,new Role().tableName()),
                     whereParameters,
-                    Role.class,
-                    context
-            )
+                    Role.class)
                     .compose(roles -> context.helper.success(roles, RoleResp.class));
         };
     }
@@ -383,74 +351,63 @@ public class ACRoleProcessor {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
             var roleId = Long.parseLong(context.req.params.get("roleId"));
-            return context.fun.sql.exists(
-                    new HashMap<>() {
-                        {
-                            put("rel_role_id", roleId);
-                        }
-                    },
-                    AccountRole.class,
-                    context)
-                    .compose(existsRoleRelByAccount -> {
-                                if (existsRoleRelByAccount) {
-                                    throw new ConflictException("请先删除关联的账号角色数据");
+            return context.helper.existToError(
+                    context.fun.sql.exists(
+                            new HashMap<>() {
+                                {
+                                    put("rel_role_id", roleId);
                                 }
-                                return context.fun.sql.exists(
-                                        new HashMap<>() {
-                                            {
-                                                put("rel_subject_kind", AuthSubjectKind.ROLE);
-                                                put("%rel_subject_ids", "%" + roleId + ",%");
-                                            }
-                                        },
-                                        AuthPolicy.class,
-                                        context);
-                            })
-                    .compose(existsRoleRelByPolicy -> {
-                        if (existsRoleRelByPolicy) {
-                            throw new ConflictException("请先删除关联的权限策略数据");
-                        }
-                        return context.fun.sql.softDelete(
-                                new HashMap<>() {
-                                    {
-                                        put("id", roleId);
-                                        put("rel_tenant_id", relTenantId);
-                                        put("rel_app_id", relAppId);
-                                    }
-                                },
-                                Role.class,
-                                context);
-                    });
+                            },
+                            AccountRole.class), () -> new ConflictException("请先删除关联的账号角色数据"))
+                    .compose(resp ->
+                            context.helper.existToError(
+                                    context.fun.sql.exists(
+                                            new HashMap<>() {
+                                                {
+                                                    put("rel_subject_kind", AuthSubjectKind.ROLE);
+                                                    put("%rel_subject_ids", "%" + roleId + ",%");
+                                                }
+                                            },
+                                            AuthPolicy.class), () -> new ConflictException("请先删除关联的权限策略数据")))
+                    .compose(existsRoleRelByPolicy ->
+                            context.fun.sql.softDelete(
+                                    new HashMap<>() {
+                                        {
+                                            put("id", roleId);
+                                            put("rel_tenant_id", relTenantId);
+                                            put("rel_app_id", relAppId);
+                                        }
+                                    },
+                                    Role.class));
         };
     }
 
     public static Future<Long> getTenantAdminRoleId(ProcessContext context) {
-       return context.fun.sql.getOne(
-                "SELECT role.id FROM %s AS role" +
-                        "  INNER JOIN %s def ON def.id = role.rel_role_def_id"+
+        return context.fun.sql.getOne(
+                String.format("SELECT role.id FROM %s AS role" +
+                        "  INNER JOIN %s def ON def.id = role.rel_role_def_id" +
                         "  WHERE def.code = #{role_def_code}" +
-                                "   ORDER BY def.create_time ASC",
+                        "   ORDER BY def.create_time ASC", new Role().tableName(), new RoleDef().tableName()),
                 new HashMap<>() {
                     {
-                        put("role_def_code", ((IAMConfig)context.conf).getSecurity().getTenantAdminRoleDefCode());
+                        put("role_def_code", ((IAMConfig) context.conf).getSecurity().getTenantAdminRoleDefCode());
                     }
-                },
-                context)
-                .compose(fetchRoleId -> Future.succeededFuture(fetchRoleId.getLong("role.id")));
+                })
+                .compose(fetchRoleId -> context.helper.success(fetchRoleId.getLong("role.id")));
     }
 
     public static Future<Long> getAppAdminRoleId(ProcessContext context) {
-        return  context.fun.sql.getOne(
-                "SELECT role.id FROM %s AS role" +
-                        "  INNER JOIN %s def ON def.id = role.rel_role_def_id"+
+        return context.fun.sql.getOne(
+                String.format("SELECT role.id FROM %s AS role" +
+                        "  INNER JOIN %s def ON def.id = role.rel_role_def_id" +
                         "  WHERE def.code = #{role_def_code}" +
-                        "   ORDER BY def.create_time ASC",
+                        "   ORDER BY def.create_time ASC", new Role().tableName(), new RoleDef().tableName()),
                 new HashMap<>() {
                     {
-                        put("role_def_code", ((IAMConfig)context.conf).getSecurity().getAppAdminRoleDefCode());
+                        put("role_def_code", ((IAMConfig) context.conf).getSecurity().getAppAdminRoleDefCode());
                     }
-                },
-                context)
-                .compose(fetchRoleId -> Future.succeededFuture(fetchRoleId.getLong("role.id")));
+                })
+                .compose(fetchRoleId -> context.helper.success(fetchRoleId.getLong("role.id")));
     }
 
 }

@@ -19,6 +19,7 @@ package idealworld.dew.framework.fun.eventbus;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.domain.IdEntity;
+import idealworld.dew.framework.domain.SafeEntity;
 import idealworld.dew.framework.dto.IdResp;
 import idealworld.dew.framework.exception.BadRequestException;
 import io.vertx.core.Future;
@@ -32,6 +33,7 @@ import javax.validation.ValidatorFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -42,16 +44,22 @@ public class ProcessHelper {
     private static final ValidatorFactory VALIDATOR_FACTORY = Validation.buildDefaultValidatorFactory();
     private static final Validator VALIDATOR = VALIDATOR_FACTORY.getValidator();
 
+    private ProcessContext context;
+
+    public ProcessHelper(ProcessContext context) {
+        this.context = context;
+    }
+
+    public Future<Void> success() {
+        return Future.succeededFuture();
+    }
+
     public <E> Future<E> success(E result) {
         return Future.succeededFuture(result);
     }
 
     public <E> Future<E> error(Throwable e) {
         return Future.failedFuture(e);
-    }
-
-    public <E> E convert(Object bean, Class<E> clazz) {
-        return $.bean.copyProperties(bean, clazz);
     }
 
     public <E extends IdResp, I extends IdEntity> Future<E> success(I entity, Class<E> clazz) {
@@ -77,7 +85,65 @@ public class ProcessHelper {
         return Future.succeededFuture(page);
     }
 
-    public <E> E parseBody(Buffer body, Class<E> bodyClazz, String... excludeKeys) {
+    public <E> E convert(Object bean, Class<E> clazz) {
+        return $.bean.copyProperties(bean, clazz);
+    }
+
+    public <E> Future<E> existToError(Future<E> existFuture, Supplier<Throwable> errorFun) {
+        return toError(existFuture, errorFun, true);
+    }
+
+    public <E> Future<E> notExistToError(Future<E> existFuture, Supplier<Throwable> errorFun) {
+        return toError(existFuture, errorFun, false);
+    }
+
+    private <E> Future<E> toError(Future<E> existFuture, Supplier<Throwable> errorFun, Boolean needExist) {
+        return existFuture
+                .compose(exists -> {
+                    if (exists instanceof Boolean) {
+                        if (((Boolean) exists)) {
+                            return needExist
+                                    ? context.helper.success(exists)
+                                    : context.helper.error(errorFun.get());
+                        } else {
+                            return !needExist
+                                    ? context.helper.success(exists)
+                                    : context.helper.error(errorFun.get());
+                        }
+                    } else {
+                        if (exists != null) {
+                            return needExist
+                                    ? context.helper.success(exists)
+                                    : context.helper.error(errorFun.get());
+                        } else {
+                            return !needExist
+                                    ? context.helper.success(exists)
+                                    : context.helper.error(errorFun.get());
+                        }
+                    }
+                });
+    }
+
+    static <E extends IdEntity> void addSafeInfo(E entity, Boolean insert, ProcessContext context) {
+        if (context == null) {
+            return;
+        }
+        if (entity instanceof SafeEntity) {
+            if (insert) {
+                ((SafeEntity) entity).setCreateUser(
+                        context.req.identOptInfo.getAccountCode() != null
+                                ? (String) context.req.identOptInfo.getAccountCode() :
+                                "");
+            }
+            ((SafeEntity) entity).setUpdateUser(
+                    context.req.identOptInfo.getAccountCode() != null
+                            ? (String) context.req.identOptInfo.getAccountCode() :
+                            "");
+        }
+    }
+
+
+    static <E> E parseBody(Buffer body, Class<E> bodyClazz, String... excludeKeys) {
         if (bodyClazz == Void.class) {
             return null;
         }
@@ -94,7 +160,7 @@ public class ProcessHelper {
         throw new BadRequestException(errorMsg);
     }
 
-    private void trimValues(JsonObject json, List<String> excludeKeys) {
+    private static void trimValues(JsonObject json, List<String> excludeKeys) {
         json.stream()
                 .filter(j -> !excludeKeys.contains(j.getKey()))
                 .forEach(j -> {

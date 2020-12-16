@@ -24,6 +24,7 @@ import idealworld.dew.framework.util.KeyHelper;
 import idealworld.dew.serviceless.iam.domain.ident.AccountIdent;
 import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.domain.ident.AppIdent;
+import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.app.AppIdentAddReq;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.app.AppIdentModifyReq;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.app.AppIdentResp;
@@ -60,16 +61,15 @@ public class ACAppProcessor {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
-            var appIdentAddReq = context.helper.parseBody(context.req.body, AppIdentAddReq.class);
+            var appIdentAddReq = context.req.body(AppIdentAddReq.class);
             var appIdent = context.helper.convert(appIdentAddReq, AppIdent.class);
             appIdent.setAk(KeyHelper.generateAk());
             appIdent.setSk(KeyHelper.generateSk(appIdent.getAk()));
             appIdent.setRelAppId(relAppId);
-            return context.fun.sql.save(appIdent, context)
-                    .compose(saveAppIdentId -> {
-                        exchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId);
-                        return Future.succeededFuture(saveAppIdentId);
-                    });
+            return context.fun.sql.save(appIdent)
+                    .compose(saveAppIdentId ->
+                            ExchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId, context)
+                                    .compose(r -> context.helper.success(saveAppIdentId)));
         };
     }
 
@@ -78,7 +78,7 @@ public class ACAppProcessor {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
             var appIdentId = Long.parseLong(context.req.params.get("appIdentId"));
-            var appIdentModifyReq = context.helper.parseBody(context.req.body, AppIdentModifyReq.class);
+            var appIdentModifyReq = context.req.body(AppIdentModifyReq.class);
             return context.fun.sql.update(
                     new HashMap<>() {
                         {
@@ -86,21 +86,16 @@ public class ACAppProcessor {
                             put("rel_app_id", relAppId);
                         }
                     },
-                    context.helper.convert(appIdentModifyReq, AppIdent.class),
-                    context)
+                    context.helper.convert(appIdentModifyReq, AppIdent.class))
                     .compose(resp ->
                             context.fun.sql.getOne(new HashMap<>() {
                                 {
                                     put("id", appIdentId);
                                     put("rel_app_id", relAppId);
                                 }
-                            }, AppIdent.class,
-                                    context)
-                    )
-                    .compose(appIdent -> {
-                        exchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId);
-                        return Future.succeededFuture();
-                    });
+                            }, AppIdent.class)
+                                    .compose(appIdent ->
+                                            ExchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId, context)));
         };
     }
 
@@ -118,9 +113,9 @@ public class ACAppProcessor {
             }
             return context.fun.sql.page(
                     whereParameters,
-                    AppIdent.class,
-                    context
-            )
+                    context.req.pageNumber(),
+                    context.req.pageSize(),
+                    AppIdent.class)
                     .compose(appIdents -> context.helper.success(appIdents, AppIdentResp.class));
         };
     }
@@ -136,8 +131,7 @@ public class ACAppProcessor {
                             put("rel_app_id", appIdentId);
                         }
                     },
-                    AppIdent.class,
-                    context)
+                    AppIdent.class)
                     .compose(fetchAppIdent ->
                             context.fun.sql.softDelete(
                                     new HashMap<>() {
@@ -146,13 +140,9 @@ public class ACAppProcessor {
                                             put("rel_app_id", appIdentId);
                                         }
                                     },
-                                    AppIdent.class,
-                                    context)
-                                    .compose(resp -> {
-                                        exchangeProcessor.deleteAppIdent(fetchAppIdent.getAk());
-                                        return Future.succeededFuture();
-                                    })
-                    );
+                                    AppIdent.class)
+                                    .compose(resp ->
+                                            ExchangeProcessor.deleteAppIdent(fetchAppIdent.getAk(), context)));
         };
     }
 
@@ -167,8 +157,7 @@ public class ACAppProcessor {
                             put("rel_app_id", appIdentId);
                         }
                     },
-                    AccountIdent.class,
-                    context)
+                    AccountIdent.class)
                     .compose(fetchAppIdent -> Future.succeededFuture(fetchAppIdent.getSk()));
         };
     }
@@ -182,8 +171,7 @@ public class ACAppProcessor {
                             put("id", relAppId);
                         }
                     },
-                    App.class,
-                    context)
+                    App.class)
                     .compose(fetchApp -> Future.succeededFuture(fetchApp.getPubKey()));
         };
     }
@@ -197,8 +185,7 @@ public class ACAppProcessor {
                             put("id", relAppId);
                         }
                     },
-                    App.class,
-                    context)
+                    App.class)
                     .compose(fetchApp -> Future.succeededFuture(fetchApp.getPriKey()));
         };
     }

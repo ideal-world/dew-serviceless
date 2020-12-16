@@ -16,7 +16,6 @@
 
 package idealworld.dew.serviceless.iam.process.tenantconsole;
 
-import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.OptActionKind;
@@ -26,6 +25,7 @@ import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.ident.Tenant;
 import idealworld.dew.serviceless.iam.domain.ident.TenantCert;
 import idealworld.dew.serviceless.iam.domain.ident.TenantIdent;
+import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.tenant.*;
 
 import java.util.HashMap;
@@ -67,15 +67,15 @@ public class TCTenantProcessor {
     public ProcessFun<Void> modifyTenant() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
-            var tenantModifyReq = context.helper.parseBody(context.req.body, TenantModifyReq.class);
+            var tenantModifyReq = context.req.body(TenantModifyReq.class);
             var tenant = context.helper.convert(tenantModifyReq, Tenant.class);
-            return context.fun.sql.update(relTenantId, tenant, context)
+            return context.fun.sql.update(relTenantId, tenant)
                     .compose(resp -> {
                         if (tenantModifyReq.getStatus() != null) {
                             if (tenantModifyReq.getStatus() == CommonStatus.ENABLED) {
-                                exchangeProcessor.enableTenant(relTenantId);
+                                return ExchangeProcessor.enableTenant(relTenantId, context);
                             } else {
-                                exchangeProcessor.disableTenant(relTenantId);
+                                return ExchangeProcessor.disableTenant(relTenantId, context);
                             }
                         }
                         return context.helper.success(resp);
@@ -85,8 +85,8 @@ public class TCTenantProcessor {
 
     public ProcessFun<TenantResp> getTenant() {
         return context ->
-                context.fun.sql.getOne(context.req.identOptInfo.getTenantId(), Tenant.class, context)
-               .compose(tenant -> context.helper.success(tenant, TenantResp.class));
+                context.fun.sql.getOne(context.req.identOptInfo.getTenantId(), Tenant.class)
+                        .compose(tenant -> context.helper.success(tenant, TenantResp.class));
     }
 
     // --------------------------------------------------------------------
@@ -94,40 +94,34 @@ public class TCTenantProcessor {
     public ProcessFun<Long> addTenantIdent() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
-            var tenantIdentAddReq = context.helper.parseBody(context.req.body, TenantIdentAddReq.class);
-            return context.fun.sql.exists(
-                    new HashMap<>() {
-                        {
-                            put("kind", tenantIdentAddReq.getKind());
-                            put("rel_tenant_id", relTenantId);
-                        }
-                    },
-                    TenantIdent.class,
-                    context)
-                    .compose(existsTenantResult -> {
-                        if (existsTenantResult) {
-                            return context.helper.error(new ConflictException("租户认证类型已存在"));
-                        }
-                        return context.helper.success(null);
-                    })
+            var tenantIdentAddReq = context.req.body(TenantIdentAddReq.class);
+            return context.helper.existToError(
+                    context.fun.sql.exists(
+                            new HashMap<>() {
+                                {
+                                    put("kind", tenantIdentAddReq.getKind());
+                                    put("rel_tenant_id", relTenantId);
+                                }
+                            },
+                            TenantIdent.class), () -> new ConflictException("租户认证类型已存在"))
                     .compose(resp -> {
-                        var tenantIdent = $.bean.copyProperties(tenantIdentAddReq, TenantIdent.class);
+                        var tenantIdent = context.helper.convert(tenantIdentAddReq, TenantIdent.class);
                         tenantIdent.setRelTenantId(relTenantId);
-                        return context.fun.sql.save(tenantIdent, context);
+                        return context.fun.sql.save(tenantIdent);
                     });
         };
     }
 
     public ProcessFun<Void> modifyTenantIdent() {
         return context -> {
-            var tenantIdentModifyReq = context.helper.parseBody(context.req.body, TenantIdentModifyReq.class);
+            var tenantIdentModifyReq = context.req.body(TenantIdentModifyReq.class);
             var tenantIdent = context.helper.convert(tenantIdentModifyReq, TenantIdent.class);
             return context.fun.sql.update(new HashMap<>() {
                 {
                     put("id", context.req.params.get("tenantIdentId"));
                     put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                 }
-            }, tenantIdent, context);
+            }, tenantIdent);
         };
     }
 
@@ -139,7 +133,7 @@ public class TCTenantProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                TenantIdent.class, context)
+                TenantIdent.class)
                 .compose(tenantIdent -> context.helper.success(tenantIdent, TenantIdentResp.class));
     }
 
@@ -150,8 +144,9 @@ public class TCTenantProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                TenantIdent.class,
-                context)
+                context.req.pageNumber(),
+                context.req.pageSize(),
+                TenantIdent.class)
                 .compose(tenantIdents -> context.helper.success(tenantIdents, TenantIdentResp.class));
     }
 
@@ -163,8 +158,7 @@ public class TCTenantProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                TenantIdent.class,
-                context);
+                TenantIdent.class);
     }
 
     // --------------------------------------------------------------------
@@ -172,26 +166,20 @@ public class TCTenantProcessor {
     public ProcessFun<Long> addTenantCert() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
-            var tenantCertAddReq = context.helper.parseBody(context.req.body, TenantCertAddReq.class);
-            return context.fun.sql.exists(
-                    new HashMap<>() {
-                        {
-                            put("category", tenantCertAddReq.getCategory());
-                            put("rel_tenant_id", relTenantId);
-                        }
-                    },
-                    TenantCert.class,
-                    context)
-                    .compose(existsResult -> {
-                        if (existsResult) {
-                            return context.helper.error(new ConflictException("租户凭证类型已存在"));
-                        }
-                        return context.helper.success(null);
-                    })
+            var tenantCertAddReq = context.req.body(TenantCertAddReq.class);
+            return context.helper.existToError(
+                    context.fun.sql.exists(
+                            new HashMap<>() {
+                                {
+                                    put("category", tenantCertAddReq.getCategory());
+                                    put("rel_tenant_id", relTenantId);
+                                }
+                            },
+                            TenantCert.class), () -> new ConflictException("租户凭证类型已存在"))
                     .compose(resp -> {
-                        var tenantCert = $.bean.copyProperties(tenantCertAddReq, TenantCert.class);
+                        var tenantCert = context.helper.convert(tenantCertAddReq, TenantCert.class);
                         tenantCert.setRelTenantId(relTenantId);
-                        return context.fun.sql.save(tenantCert, context);
+                        return context.fun.sql.save(tenantCert);
                     });
         };
     }
@@ -199,24 +187,18 @@ public class TCTenantProcessor {
     public ProcessFun<Void> modifyTenantCert() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
-            var tenantCertModifyReq = context.helper.parseBody(context.req.body, TenantCertModifyReq.class);
+            var tenantCertModifyReq = context.req.body(TenantCertModifyReq.class);
             if (tenantCertModifyReq.getCategory() != null) {
-                return context.fun.sql.exists(
-                        new HashMap<>() {
-                            {
-                                put("category", tenantCertModifyReq.getCategory());
-                                put("rel_tenant_id", relTenantId);
-                                put("-id", context.req.params.get("tenantCertId"));
-                            }
-                        },
-                        TenantCert.class,
-                        context)
-                        .compose(existsResult -> {
-                            if (existsResult) {
-                                return context.helper.error(new ConflictException("租户凭证类型已存在"));
-                            }
-                            return context.helper.success(null);
-                        })
+                return context.helper.existToError(
+                        context.fun.sql.exists(
+                                new HashMap<>() {
+                                    {
+                                        put("category", tenantCertModifyReq.getCategory());
+                                        put("rel_tenant_id", relTenantId);
+                                        put("!id", context.req.params.get("tenantCertId"));
+                                    }
+                                },
+                                TenantCert.class), () -> new ConflictException("租户凭证类型已存在"))
                         .compose(resp -> {
                             var tenantCert = context.helper.convert(tenantCertModifyReq, TenantCert.class);
                             return context.fun.sql.update(new HashMap<>() {
@@ -224,7 +206,7 @@ public class TCTenantProcessor {
                                     put("id", context.req.params.get("tenantCertId"));
                                     put("rel_tenant_id", relTenantId);
                                 }
-                            }, tenantCert, context);
+                            }, tenantCert);
                         });
             }
             var tenantCert = context.helper.convert(tenantCertModifyReq, TenantCert.class);
@@ -233,7 +215,7 @@ public class TCTenantProcessor {
                     put("id", context.req.params.get("tenantCertId"));
                     put("rel_tenant_id", relTenantId);
                 }
-            }, tenantCert, context);
+            }, tenantCert);
         };
     }
 
@@ -245,7 +227,7 @@ public class TCTenantProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                TenantCert.class, context)
+                TenantCert.class)
                 .compose(tenantCert -> context.helper.success(tenantCert, TenantCertResp.class));
     }
 
@@ -256,7 +238,9 @@ public class TCTenantProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                TenantCert.class, context)
+                context.req.pageNumber(),
+                context.req.pageSize(),
+                TenantCert.class)
                 .compose(tenantCerts -> context.helper.success(tenantCerts, TenantCertResp.class));
     }
 
@@ -268,7 +252,7 @@ public class TCTenantProcessor {
                         put("rel_tenant_id", context.req.identOptInfo.getTenantId());
                     }
                 },
-                TenantCert.class, context);
+                TenantCert.class);
     }
 
 }

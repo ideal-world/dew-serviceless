@@ -48,84 +48,81 @@ public class CommonProcessor {
     private static final Map<String, Pattern> VALID_RULES = new ConcurrentHashMap<>();
 
     public static Future<Long> getEnabledTenantIdByAppId(Long appId, Boolean registerAction, ProcessContext context) {
-        return context.fun.sql.getOne("SELECT rel_tenant_id FROM %s WHERE id = #{id} AND status = #{status}",
-                new HashMap<>() {
-                    {
-                        put("id", appId);
-                        put("status", CommonStatus.ENABLED);
-                    }
-                },
-                context,
-                new App().tableName())
+        return context.helper.notExistToError(
+                context.fun.sql.getOne(
+                        String.format("SELECT rel_tenant_id FROM %s" +
+                                        "  WHERE id = #{id} AND status = #{status}",
+                                new App().tableName()),
+                        new HashMap<>() {
+                            {
+                                put("id", appId);
+                                put("status", CommonStatus.ENABLED);
+                            }
+                        }), () -> new BadRequestException("应用[" + appId + "]不存在或未启用"))
                 .compose(fetchAppResult -> {
-                    if (fetchAppResult == null) {
-                        throw new BadRequestException("应用[" + appId + "]不存在或未启用");
-                    }
                     if (registerAction == null || !registerAction) {
-                        return context.fun.sql.getOne("SELECT id FROM %s WHERE id = #{id} AND status = #{status}",
+                        return context.fun.sql.getOne(
+                                String.format("SELECT id FROM %s" +
+                                                "  WHERE id = #{id} AND status = #{status}",
+                                        new Tenant().tableName()),
                                 new HashMap<>() {
                                     {
                                         put("id", fetchAppResult.getLong("rel_tenant_id"));
                                         put("status", CommonStatus.ENABLED);
                                     }
-                                },
-                                context,
-                                new Tenant().tableName());
+                                });
                     } else {
-                        return context.fun.sql.getOne("SELECT id FROM %s WHERE id = #{id} AND status = #{status} AND allow_account_register = #{allow_account_register}",
+                        return context.fun.sql.getOne(
+                                String.format("SELECT id FROM %s" +
+                                                "  WHERE id = #{id} AND status = #{status} AND allow_account_register = #{allow_account_register}",
+                                        new Tenant().tableName()),
                                 new HashMap<>() {
                                     {
                                         put("id", fetchAppResult.getLong("rel_tenant_id"));
                                         put("status", CommonStatus.ENABLED);
                                         put("allow_account_register", true);
                                     }
-                                },
-                                context,
-                                new Tenant().tableName());
+                                });
                     }
                 })
                 .compose(fetchTenantResult -> {
                     if (fetchTenantResult == null) {
                         if (registerAction == null || !registerAction) {
-                            throw new BadRequestException("应用[" + appId + "]对应租户不存在或未启用");
+                            context.helper.error(new BadRequestException("应用[" + appId + "]对应租户不存在或未启用"));
                         } else {
-                            throw new BadRequestException("应用[" + appId + "]对应租户不存在、未启用或禁止注册");
+                            context.helper.error(new BadRequestException("应用[" + appId + "]对应租户不存在、未启用或禁止注册"));
                         }
                     }
-                    return Future.succeededFuture(fetchTenantResult.getLong("id"));
+                    return context.helper.success(fetchTenantResult.getLong("id"));
                 });
     }
 
     public static Future<Long> getEnabledTenantIdByOpenId(String openId, ProcessContext context) {
-        return context.fun.sql.getOne("SELECT rel_tenant_id FROM %s WHERE open_id = #{open_id} AND status = #{status}",
-                new HashMap<>() {
-                    {
-                        put("open_id", openId);
-                        put("status", CommonStatus.ENABLED);
-                    }
-                },
-                context,
-                new Account().tableName())
-                .compose(fetchAccountResult -> {
-                    if (fetchAccountResult == null) {
-                        throw new BadRequestException("账号[" + openId + "]不存在或未启用");
-                    }
-                    return context.fun.sql.getOne("SELECT id FROM %s WHERE id = #{id} AND status = #{status}",
-                            new HashMap<>() {
-                                {
-                                    put("id", fetchAccountResult.getLong("rel_tenant_id"));
-                                    put("status", CommonStatus.ENABLED);
-                                }
-                            },
-                            context,
-                            new Tenant().tableName());
-                })
-                .compose(fetchTenantResult -> {
-                    if (fetchTenantResult == null) {
-                        throw new BadRequestException("账号[" + openId + "]对应租户不存在或未启用");
-                    }
-                    return Future.succeededFuture(fetchTenantResult.getLong("id"));
-                });
+        return context.helper.notExistToError(
+                context.fun.sql.getOne(
+                        String.format("SELECT rel_tenant_id FROM %s" +
+                                        "  WHERE open_id = #{open_id} AND status = #{status}",
+                                new Account().tableName()),
+                        new HashMap<>() {
+                            {
+                                put("open_id", openId);
+                                put("status", CommonStatus.ENABLED);
+                            }
+                        }), () -> new BadRequestException("账号[" + openId + "]不存在或未启用"))
+                .compose(fetchAccountResult ->
+                        context.helper.notExistToError(
+                                context.fun.sql.getOne(
+                                        String.format("SELECT id FROM %s" +
+                                                        "  WHERE id = #{id} AND status = #{status}",
+                                                new Tenant().tableName()),
+                                        new HashMap<>() {
+                                            {
+                                                put("id", fetchAccountResult.getLong("rel_tenant_id"));
+                                                put("status", CommonStatus.ENABLED);
+                                            }
+                                        }), () -> new BadRequestException("账号[" + openId + "]对应租户不存在或未启用")))
+                .compose(fetchTenantResult ->
+                        context.helper.success(fetchTenantResult.getLong("id")));
     }
 
     public static Future<String> processIdentSk(AccountIdentKind identKind, String ak, String sk, Long relAppId, Long relTenantId, ProcessContext context) {
@@ -135,49 +132,48 @@ public class CommonProcessor {
                 return context.fun.cache.get(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + relTenantId + ":" + ak)
                         .compose(tmpSk -> {
                             if (tmpSk == null) {
-                                throw new BadRequestException("验证码不存在或已过期");
+                                context.helper.error(new BadRequestException("验证码不存在或已过期"));
                             }
                             if (!tmpSk.equalsIgnoreCase(sk)) {
-                                throw new BadRequestException("验证码错误");
+                                context.helper.error(new BadRequestException("验证码错误"));
                             }
-                            return Future.succeededFuture("");
+                            return context.helper.success("");
                         });
             case USERNAME:
                 if (sk == null || sk.trim().isBlank()) {
-                    throw new BadRequestException("密码必填");
+                    context.helper.error(new BadRequestException("密码必填"));
                 }
-                return Future.succeededFuture($.security.digest.digest(ak + sk, "SHA-512"));
+                return context.helper.success($.security.digest.digest(ak + sk, "SHA-512"));
             case WECHAT_XCX:
                 // 需要关联AppId
                 return context.fun.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString())
                         .compose(accessToken -> {
                             if (accessToken == null) {
-                                throw new BadRequestException("Access Token不存在");
+                                context.helper.error(new BadRequestException("Access Token不存在"));
                             }
                             if (!accessToken.equalsIgnoreCase(sk)) {
-                                throw new BadRequestException("Access Token错误");
+                                context.helper.error(new BadRequestException("Access Token错误"));
                             }
-                            return Future.succeededFuture("");
+                            return context.helper.success("");
                         });
             default:
-                return Future.succeededFuture("");
+                return context.helper.success("");
         }
     }
 
     public static Future<Date> validRuleAndGetValidEndTime(AccountIdentKind kind, String ak, String sk, Long relTenantId, ProcessContext context) {
-        return context.fun.sql.getOne("SELECT valid_ak_rule, valid_sk_rule, valid_time_sec FROM %s WHERE kind = #{kind} AND rel_tenant_id = #{rel_tenant_id}",
-                new HashMap<>() {
-                    {
-                        put("kind", kind);
-                        put("rel_tenant_id", relTenantId);
-                    }
-                },
-                context,
-                new TenantIdent().tableName())
+        return context.helper.notExistToError(
+                context.fun.sql.getOne(
+                        String.format("SELECT valid_ak_rule, valid_sk_rule, valid_time_sec FROM %s" +
+                                        "  WHERE kind = #{kind} AND rel_tenant_id = #{rel_tenant_id}",
+                                new TenantIdent().tableName()),
+                        new HashMap<>() {
+                            {
+                                put("kind", kind);
+                                put("rel_tenant_id", relTenantId);
+                            }
+                        }), () -> new BadRequestException("认证类型不存在或已禁用"))
                 .compose(fetchTenantIdentResult -> {
-                    if (fetchTenantIdentResult == null) {
-                        throw new BadRequestException("认证类型不存在或已禁用");
-                    }
                     var validAkRule = fetchTenantIdentResult.getString("valid_ak_rule");
                     var validSkRule = fetchTenantIdentResult.getString("valid_sk_rule");
                     var validTimeSec = fetchTenantIdentResult.getLong("valid_time_sec");
@@ -186,7 +182,7 @@ public class CommonProcessor {
                             VALID_RULES.put(validAkRule, Pattern.compile(validAkRule));
                         }
                         if (!VALID_RULES.get(validAkRule).matcher(ak).matches()) {
-                            throw new BadRequestException("认证名规则不合法");
+                            context.helper.error(new BadRequestException("认证名规则不合法"));
                         }
                     }
                     if (sk != null && validSkRule != null && !validSkRule.isBlank()) {
@@ -194,10 +190,10 @@ public class CommonProcessor {
                             VALID_RULES.put(validSkRule, Pattern.compile(validSkRule));
                         }
                         if (!VALID_RULES.get(validSkRule).matcher(sk).matches()) {
-                            throw new BadRequestException("认证密钥规则不合法");
+                            context.helper.error(new BadRequestException("认证密钥规则不合法"));
                         }
                     }
-                    return Future.succeededFuture(
+                    return context.helper.success(
                             validTimeSec == null || validTimeSec.equals(DewConstant.OBJECT_UNDEFINED)
                                     ? DewConstant.MAX_TIME
                                     : new Date(System.currentTimeMillis() + validTimeSec * 1000)
@@ -206,21 +202,18 @@ public class CommonProcessor {
     }
 
     public static Future<Void> checkAccountMembership(Long accountId, Long tenantId, ProcessContext context) {
-        return context.fun.sql.exists("SELECT id FROM %s WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
-                new HashMap<>() {
-                    {
-                        put("id", accountId);
-                        put("rel_tenant_id", tenantId);
-                    }
-                },
-                context,
-                new Account().tableName())
-                .compose(existsAccountResult -> {
-                    if (!existsAccountResult) {
-                        throw new UnAuthorizedException("账号不合法");
-                    }
-                    return Future.succeededFuture();
-                });
+        return context.helper.notExistToError(
+                context.fun.sql.exists(
+                        String.format("SELECT id FROM %s" +
+                                        "  WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
+                                new Account().tableName()),
+                        new HashMap<>() {
+                            {
+                                put("id", accountId);
+                                put("rel_tenant_id", tenantId);
+                            }
+                        }), () -> new UnAuthorizedException("账号不合法"))
+                .compose(resp -> context.helper.success());
     }
 
     public static Future<Void> checkAccountMembership(List<Long> accountIds, Long appId, Long tenantId, ProcessContext context) {
@@ -234,36 +227,29 @@ public class CommonProcessor {
                 put("rel_app_id", appId);
             }
         });
-        return context.fun.sql.exists("SELECT acc.id FROM %s AS acc" +
-                        "  INNER JOIN %s AS accapp ON accapp.rel_account_id = acc.id" +
-                        "  WHERE acc.id in (" + accountsWhere + ") AND acc.rel_tenant_id = #{rel_tenant_id} AND accapp.rel_app_id = #{rel_app_id}",
-                whereParametersMap,
-                context,
-                new Account().tableName(), new AccountApp().tableName())
-                .compose(existsAccountResult -> {
-                    if (!existsAccountResult) {
-                        throw new UnAuthorizedException("账号不合法");
-                    }
-                    return Future.succeededFuture();
-                });
+        return context.helper.notExistToError(
+                context.fun.sql.exists(
+                        String.format("SELECT acc.id FROM %s AS acc" +
+                                        "  INNER JOIN %s AS accapp ON accapp.rel_account_id = acc.id" +
+                                        "  WHERE acc.id in (" + accountsWhere + ") AND acc.rel_tenant_id = #{rel_tenant_id} AND accapp.rel_app_id = #{rel_app_id}",
+                                new Account().tableName(), new AccountApp().tableName()),
+                        whereParametersMap), () -> new UnAuthorizedException("账号不合法"))
+                .compose(resp -> context.helper.success());
     }
 
     public static Future<Void> checkAppMembership(Long appId, Long tenantId, ProcessContext context) {
-        return context.fun.sql.exists("SELECT id FROM %s WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
-                new HashMap<>() {
-                    {
-                        put("id", appId);
-                        put("rel_tenant_id", tenantId);
-                    }
-                },
-                context,
-                new App().tableName())
-                .compose(existsAppResult -> {
-                    if (!existsAppResult) {
-                        throw new UnAuthorizedException("应用不合法");
-                    }
-                    return Future.succeededFuture();
-                });
+        return context.helper.notExistToError(
+                context.fun.sql.exists(
+                        String.format("SELECT id FROM %s" +
+                                        "  WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
+                                new App().tableName()),
+                        new HashMap<>() {
+                            {
+                                put("id", appId);
+                                put("rel_tenant_id", tenantId);
+                            }
+                        }), () -> new UnAuthorizedException("应用不合法"))
+                .compose(resp -> context.helper.success());
     }
 
     public static Future<Void> checkAppMembership(List<Long> appIds, Long tenantId, ProcessContext context) {
@@ -276,16 +262,13 @@ public class CommonProcessor {
                 put("rel_tenant_id", tenantId);
             }
         });
-        return context.fun.sql.exists("SELECT id FROM %s WHERE id in (" + appsWhere + ") AND rel_tenant_id = #{rel_tenant_id}",
-                whereParametersMap,
-                context,
-                new App().tableName())
-                .compose(existsAppResult -> {
-                    if (!existsAppResult) {
-                        throw new UnAuthorizedException("应用不合法");
-                    }
-                    return Future.succeededFuture();
-                });
+        return context.helper.notExistToError(
+                context.fun.sql.exists(
+                        String.format("SELECT id FROM %s" +
+                                        "  WHERE id in (" + appsWhere + ") AND rel_tenant_id = #{rel_tenant_id}",
+                                new App().tableName()),
+                        whereParametersMap), () -> new UnAuthorizedException("应用不合法"))
+                .compose(resp -> context.helper.success());
     }
 
     public static Future<Void> checkRoleMembership(Long roleId, Long tenantId, ProcessContext context) {
@@ -326,16 +309,11 @@ public class CommonProcessor {
                 put("rel_app_id", appId);
             }
         });
-        return context.fun.sql.exists(sql,
-                whereParametersMap,
-                context,
-                new Role().tableName())
-                .compose(existsRoleResult -> {
-                    if (!existsRoleResult) {
-                        throw new UnAuthorizedException("角色不合法");
-                    }
-                    return Future.succeededFuture();
-                });
+        return context.helper.notExistToError(
+                context.fun.sql.exists(
+                        String.format(sql, new Role().tableName()),
+                        whereParametersMap), () -> new UnAuthorizedException("角色不合法"))
+                .compose(resp -> context.helper.success());
     }
 
     public static Future<Void> checkGroupNodeMembership(Long groupNodeId, Long tenantId, ProcessContext context) {
@@ -377,65 +355,62 @@ public class CommonProcessor {
                 put("rel_app_id", appId);
             }
         });
-        return context.fun.sql.exists(sql,
-                whereParametersMap,
-                context,
-                new GroupNode().tableName(), new Group().tableName())
-                .compose(existsRoleResult -> {
-                    if (!existsRoleResult) {
-                        throw new UnAuthorizedException("群组节点不合法");
-                    }
-                    return Future.succeededFuture();
-                });
+        return context.helper.notExistToError(
+                context.fun.sql.exists(
+                        String.format(sql, new GroupNode().tableName(), new Group().tableName()),
+                        whereParametersMap), () -> new UnAuthorizedException("群组节点不合法"))
+                .compose(resp -> context.helper.success());
     }
 
     public static Future<Set<IdentOptInfo.RoleInfo>> findRoleInfo(Long accountId, ProcessContext context) {
-        return context.fun.sql.list("SELECT role.id, role.name FROM %s AS accrole" +
-                        "  INNER JOIN %s role ON role.id = accrole.rel_role_id" +
-                        "  WHERE accrole.rel_account_id = #{rel_account_id}",
+        return context.fun.sql.list(
+                String.format("SELECT role.id, role.name FROM %s AS accrole" +
+                                "  INNER JOIN %s role ON role.id = accrole.rel_role_id" +
+                                "  WHERE accrole.rel_account_id = #{rel_account_id}",
+                        new AccountRole().tableName(), new Role().tableName()),
                 new HashMap<>() {
                     {
                         put("rel_account_id", accountId);
                     }
-                },
-                context,
-                new AccountRole().tableName(), new Role().tableName())
+                })
                 .compose(fetchRolesResult -> {
-                    var roleInfos = fetchRolesResult.stream().map(info -> {
-                        var role = new IdentOptInfo.RoleInfo();
-                        role.setCode(info.getLong("id") + "");
-                        role.setName(info.getString("name"));
-                        return role;
-                    })
+                    var roleInfos = fetchRolesResult.stream()
+                            .map(info -> {
+                                var role = new IdentOptInfo.RoleInfo();
+                                role.setCode(info.getLong("id") + "");
+                                role.setName(info.getString("name"));
+                                return role;
+                            })
                             .collect(Collectors.toSet());
-                    return Future.succeededFuture(roleInfos);
+                    return context.helper.success(roleInfos);
                 });
     }
 
     public static Future<Set<IdentOptInfo.GroupInfo>> findGroupInfo(Long accountId, ProcessContext context) {
-        return context.fun.sql.list("SELECT group.code, group.name, node.code, node.name, node.bus_code FROM %s AS accgroup" +
-                        "  INNER JOIN %s node ON node.id = accgroup.rel_group_node_id" +
-                        "  INNER JOIN %s gorup ON group.id = node.rel_group_id" +
-                        "  WHERE accgroup.rel_account_id = #{rel_account_id}",
+        return context.fun.sql.list(
+                String.format("SELECT group.code, group.name, node.code, node.name, node.bus_code FROM %s AS accgroup" +
+                                "  INNER JOIN %s node ON node.id = accgroup.rel_group_node_id" +
+                                "  INNER JOIN %s gorup ON group.id = node.rel_group_id" +
+                                "  WHERE accgroup.rel_account_id = #{rel_account_id}",
+                        new AccountGroup().tableName(), new GroupNode().tableName(), new Group().tableName()),
                 new HashMap<>() {
                     {
                         put("rel_account_id", accountId);
                     }
-                },
-                context,
-                new AccountGroup().tableName(), new GroupNode().tableName(), new Group().tableName())
+                })
                 .compose(fetchGroupsResult -> {
-                    var groupInfos = fetchGroupsResult.stream().map(info ->
-                            IdentOptInfo.GroupInfo.builder()
-                                    .groupCode(info.getString("group.code"))
-                                    .groupName(info.getString("group.name"))
-                                    .groupNodeCode(info.getString("node.code"))
-                                    .groupNodeName(info.getString("node.name"))
-                                    .groupNodeBusCode(info.getString("node.bus_code"))
-                                    .build()
-                    )
+                    var groupInfos = fetchGroupsResult.stream()
+                            .map(info ->
+                                    IdentOptInfo.GroupInfo.builder()
+                                            .groupCode(info.getString("group.code"))
+                                            .groupName(info.getString("group.name"))
+                                            .groupNodeCode(info.getString("node.code"))
+                                            .groupNodeName(info.getString("node.name"))
+                                            .groupNodeBusCode(info.getString("node.bus_code"))
+                                            .build()
+                            )
                             .collect(Collectors.toSet());
-                    return Future.succeededFuture(groupInfos);
+                    return context.helper.success(groupInfos);
                 });
     }
 
