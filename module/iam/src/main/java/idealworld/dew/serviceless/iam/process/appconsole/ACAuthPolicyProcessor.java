@@ -30,7 +30,7 @@ import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.authpolicy.AuthPolicyAddReq;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.authpolicy.AuthPolicyModifyReq;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.authpolicy.AuthPolicyResp;
-import idealworld.dew.serviceless.iam.process.common.CommonProcessor;
+import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  */
 public class ACAuthPolicyProcessor {
 
-    {
+    static {
         // 添加当前应用的权限策略
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/authpolicy", addAuthPolicy());
         // 修改当前应用的某个权限策略
@@ -59,7 +59,7 @@ public class ACAuthPolicyProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/authpolicy/{authPolicyId}", deleteAuthPolicy());
     }
 
-    public ProcessFun<Void> addAuthPolicy() {
+    public static ProcessFun<Void> addAuthPolicy() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -95,13 +95,13 @@ public class ACAuthPolicyProcessor {
                         Future<Void> checkSubjectMembershipR = null;
                         switch (authPolicyAddReq.getRelSubjectKind()) {
                             case ROLE:
-                                checkSubjectMembershipR = CommonProcessor.checkRoleMembership(subjectIds, relAppId, relTenantId, context);
+                                checkSubjectMembershipR = IAMBasicProcessor.checkRoleMembership(subjectIds, relAppId, relTenantId, context);
                                 break;
                             case ACCOUNT:
-                                checkSubjectMembershipR = CommonProcessor.checkAccountMembership(subjectIds, relAppId, relTenantId, context);
+                                checkSubjectMembershipR = IAMBasicProcessor.checkAccountMembership(subjectIds, relAppId, relTenantId, context);
                                 break;
                             case APP:
-                                checkSubjectMembershipR = CommonProcessor.checkAppMembership(subjectIds, relTenantId, context);
+                                checkSubjectMembershipR = IAMBasicProcessor.checkAppMembership(subjectIds, relTenantId, context);
                                 break;
                             case TENANT:
                                 if (subjectIds.size() == 1 && subjectIds.get(0).longValue() == relTenantId) {
@@ -111,7 +111,7 @@ public class ACAuthPolicyProcessor {
                                 }
                                 break;
                             case GROUP_NODE:
-                                checkSubjectMembershipR = CommonProcessor.checkGroupNodeMembership(subjectIds, relAppId, relTenantId, context);
+                                checkSubjectMembershipR = IAMBasicProcessor.checkGroupNodeMembership(subjectIds, relAppId, relTenantId, context);
                                 break;
                         }
                         return checkSubjectMembershipR;
@@ -243,7 +243,7 @@ public class ACAuthPolicyProcessor {
         };
     }
 
-    public ProcessFun<Void> modifyAuthPolicy() {
+    public static ProcessFun<Void> modifyAuthPolicy() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -282,13 +282,13 @@ public class ACAuthPolicyProcessor {
                             Future<Void> checkSubjectMembershipR = null;
                             switch (authPolicyModifyReq.getRelSubjectKind()) {
                                 case ROLE:
-                                    checkSubjectMembershipR = CommonProcessor.checkRoleMembership(subjectIds, relAppId, relTenantId, context);
+                                    checkSubjectMembershipR = IAMBasicProcessor.checkRoleMembership(subjectIds, relAppId, relTenantId, context);
                                     break;
                                 case ACCOUNT:
-                                    checkSubjectMembershipR = CommonProcessor.checkAccountMembership(subjectIds, relAppId, relTenantId, context);
+                                    checkSubjectMembershipR = IAMBasicProcessor.checkAccountMembership(subjectIds, relAppId, relTenantId, context);
                                     break;
                                 case APP:
-                                    checkSubjectMembershipR = CommonProcessor.checkAppMembership(subjectIds, relTenantId, context);
+                                    checkSubjectMembershipR = IAMBasicProcessor.checkAppMembership(subjectIds, relTenantId, context);
                                     break;
                                 case TENANT:
                                     if (subjectIds.size() == 1 && subjectIds.get(0).longValue() == relTenantId) {
@@ -298,7 +298,7 @@ public class ACAuthPolicyProcessor {
                                     }
                                     break;
                                 case GROUP_NODE:
-                                    checkSubjectMembershipR = CommonProcessor.checkGroupNodeMembership(subjectIds, relAppId, relTenantId, context);
+                                    checkSubjectMembershipR = IAMBasicProcessor.checkGroupNodeMembership(subjectIds, relAppId, relTenantId, context);
                                     break;
                             }
                             return checkSubjectMembershipR;
@@ -378,7 +378,7 @@ public class ACAuthPolicyProcessor {
         };
     }
 
-    public ProcessFun<AuthPolicyResp> getAuthPolicy() {
+    public static ProcessFun<AuthPolicyResp> getAuthPolicy() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -396,7 +396,7 @@ public class ACAuthPolicyProcessor {
         };
     }
 
-    public ProcessFun<Page<AuthPolicyResp>> pageAuthPolicies() {
+    public static ProcessFun<Page<AuthPolicyResp>> pageAuthPolicies() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -420,7 +420,7 @@ public class ACAuthPolicyProcessor {
         };
     }
 
-    public ProcessFun<Void> deleteAuthPolicy() {
+    public static ProcessFun<Void> deleteAuthPolicy() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();

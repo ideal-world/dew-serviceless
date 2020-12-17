@@ -37,7 +37,7 @@ import java.util.HashMap;
  */
 public class TCTenantProcessor {
 
-    {
+    static {
         // 修改当前租户
         ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/tenant", modifyTenant());
         // 获取当前租户信息
@@ -64,7 +64,7 @@ public class TCTenantProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/cert/{tenantCertId}", deleteTenantCert());
     }
 
-    public ProcessFun<Void> modifyTenant() {
+    public static ProcessFun<Void> modifyTenant() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var tenantModifyReq = context.req.body(TenantModifyReq.class);
@@ -83,7 +83,7 @@ public class TCTenantProcessor {
         };
     }
 
-    public ProcessFun<TenantResp> getTenant() {
+    public static ProcessFun<TenantResp> getTenant() {
         return context ->
                 context.fun.sql.getOne(context.req.identOptInfo.getTenantId(), Tenant.class)
                         .compose(tenant -> context.helper.success(tenant, TenantResp.class));
@@ -91,7 +91,7 @@ public class TCTenantProcessor {
 
     // --------------------------------------------------------------------
 
-    public ProcessFun<Long> addTenantIdent() {
+    public static ProcessFun<Long> addTenantIdent() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var tenantIdentAddReq = context.req.body(TenantIdentAddReq.class);
@@ -112,7 +112,7 @@ public class TCTenantProcessor {
         };
     }
 
-    public ProcessFun<Void> modifyTenantIdent() {
+    public static ProcessFun<Void> modifyTenantIdent() {
         return context -> {
             var tenantIdentModifyReq = context.req.body(TenantIdentModifyReq.class);
             var tenantIdent = context.helper.convert(tenantIdentModifyReq, TenantIdent.class);
@@ -125,7 +125,7 @@ public class TCTenantProcessor {
         };
     }
 
-    public ProcessFun<TenantIdentResp> getTenantIdent() {
+    public static ProcessFun<TenantIdentResp> getTenantIdent() {
         return context -> context.fun.sql.getOne(
                 new HashMap<>() {
                     {
@@ -137,7 +137,7 @@ public class TCTenantProcessor {
                 .compose(tenantIdent -> context.helper.success(tenantIdent, TenantIdentResp.class));
     }
 
-    public ProcessFun<Page<TenantIdentResp>> pageTenantIdents() {
+    public static ProcessFun<Page<TenantIdentResp>> pageTenantIdents() {
         return context -> context.fun.sql.page(
                 new HashMap<>() {
                     {
@@ -150,7 +150,7 @@ public class TCTenantProcessor {
                 .compose(tenantIdents -> context.helper.success(tenantIdents, TenantIdentResp.class));
     }
 
-    public ProcessFun<Void> deleteTenantIdent() {
+    public static ProcessFun<Void> deleteTenantIdent() {
         return context -> context.fun.sql.softDelete(
                 new HashMap<>() {
                     {
@@ -163,7 +163,7 @@ public class TCTenantProcessor {
 
     // --------------------------------------------------------------------
 
-    public ProcessFun<Long> addTenantCert() {
+    public static ProcessFun<Long> addTenantCert() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var tenantCertAddReq = context.req.body(TenantCertAddReq.class);
@@ -184,7 +184,7 @@ public class TCTenantProcessor {
         };
     }
 
-    public ProcessFun<Void> modifyTenantCert() {
+    public static ProcessFun<Void> modifyTenantCert() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var tenantCertModifyReq = context.req.body(TenantCertModifyReq.class);
@@ -219,7 +219,7 @@ public class TCTenantProcessor {
         };
     }
 
-    public ProcessFun<TenantCertResp> getTenantCert() {
+    public static ProcessFun<TenantCertResp> getTenantCert() {
         return context -> context.fun.sql.getOne(
                 new HashMap<>() {
                     {
@@ -231,7 +231,7 @@ public class TCTenantProcessor {
                 .compose(tenantCert -> context.helper.success(tenantCert, TenantCertResp.class));
     }
 
-    public ProcessFun<Page<TenantCertResp>> pageTenantCerts() {
+    public static ProcessFun<Page<TenantCertResp>> pageTenantCerts() {
         return context -> context.fun.sql.page(
                 new HashMap<>() {
                     {
@@ -244,7 +244,7 @@ public class TCTenantProcessor {
                 .compose(tenantCerts -> context.helper.success(tenantCerts, TenantCertResp.class));
     }
 
-    public ProcessFun<Void> deleteTenantCert() {
+    public static ProcessFun<Void> deleteTenantCert() {
         return context -> context.fun.sql.softDelete(
                 new HashMap<>() {
                     {

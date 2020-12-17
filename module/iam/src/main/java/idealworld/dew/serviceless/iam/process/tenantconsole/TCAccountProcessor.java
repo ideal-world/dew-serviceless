@@ -33,7 +33,7 @@ import idealworld.dew.serviceless.iam.domain.ident.Account;
 import idealworld.dew.serviceless.iam.domain.ident.AccountApp;
 import idealworld.dew.serviceless.iam.domain.ident.AccountBind;
 import idealworld.dew.serviceless.iam.domain.ident.AccountIdent;
-import idealworld.dew.serviceless.iam.process.common.CommonProcessor;
+import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.account.*;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -49,7 +49,7 @@ import java.util.List;
  */
 public class TCAccountProcessor {
 
-    {
+    static {
         // 添加当前租户的账号
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/account", addAccount());
         // 修改当前租户的某个账号
@@ -99,7 +99,7 @@ public class TCAccountProcessor {
                 });
     }
 
-    private ProcessFun<Long> addAccount() {
+    public static ProcessFun<Long> addAccount() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountAddReq = context.req.body(AccountAddReq.class);
@@ -108,7 +108,7 @@ public class TCAccountProcessor {
         };
     }
 
-    private ProcessFun<Void> modifyAccount() {
+    public static ProcessFun<Void> modifyAccount() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountId = Long.parseLong(context.req.params.get("accountId"));
@@ -116,7 +116,7 @@ public class TCAccountProcessor {
             var future = context.helper.success();
             if (accountModifyReq.getParentId() != null) {
                 future.compose(resp ->
-                        CommonProcessor.checkAccountMembership(accountModifyReq.getParentId(), relTenantId, context));
+                        IAMBasicProcessor.checkAccountMembership(accountModifyReq.getParentId(), relTenantId, context));
             }
             return future
                     .compose(resp ->
@@ -131,7 +131,7 @@ public class TCAccountProcessor {
         };
     }
 
-    private ProcessFun<AccountResp> getAccount() {
+    public static ProcessFun<AccountResp> getAccount() {
         return context ->
                 context.fun.sql.getOne(
                         new HashMap<>() {
@@ -144,7 +144,7 @@ public class TCAccountProcessor {
                         .compose(app -> context.helper.success(app, AccountResp.class));
     }
 
-    private ProcessFun<Page<AccountResp>> pageAccounts() {
+    public static ProcessFun<Page<AccountResp>> pageAccounts() {
         return context -> {
             var name = context.req.params.getOrDefault("name", null);
             var openId = context.req.params.getOrDefault("openId", null);
@@ -168,7 +168,7 @@ public class TCAccountProcessor {
         };
     }
 
-    private ProcessFun<Void> deleteAccount() {
+    public static ProcessFun<Void> deleteAccount() {
         return context -> {
             var accountId = Long.parseLong(context.req.params.get("accountId"));
             return context.fun.sql.tx(client ->
@@ -223,7 +223,7 @@ public class TCAccountProcessor {
 
     // --------------------------------------------------------------------
 
-    private ProcessFun<Long> addAccountIdent() {
+    public static ProcessFun<Long> addAccountIdent() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountId = Long.parseLong(context.req.params.get("accountId"));
@@ -248,14 +248,14 @@ public class TCAccountProcessor {
                                     },
                                     AccountIdent.class), () -> new ConflictException("账号认证类型与AK已存在")))
                     .compose(resp ->
-                            CommonProcessor.validRuleAndGetValidEndTime(
+                            IAMBasicProcessor.validRuleAndGetValidEndTime(
                                     accountIdentAddReq.getKind(),
                                     accountIdentAddReq.getAk(),
                                     accountIdentAddReq.getSk(),
                                     relTenantId,
                                     context))
                     .compose(validEndTime ->
-                            CommonProcessor.processIdentSk(
+                            IAMBasicProcessor.processIdentSk(
                                     accountIdentAddReq.getKind(),
                                     accountIdentAddReq.getAk(),
                                     accountIdentAddReq.getSk(),
@@ -279,7 +279,7 @@ public class TCAccountProcessor {
         };
     }
 
-    private ProcessFun<Void> modifyAccountIdent() {
+    public static ProcessFun<Void> modifyAccountIdent() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountIdentId = Long.parseLong(context.req.params.get("accountIdentId"));
@@ -307,7 +307,7 @@ public class TCAccountProcessor {
                                         },
                                         AccountIdent.class), () -> new ConflictException("账号认证类型与AK已存在"))
                                 .compose(resp ->
-                                        CommonProcessor.validRuleAndGetValidEndTime(
+                                        IAMBasicProcessor.validRuleAndGetValidEndTime(
                                                 accountIdent.getKind(),
                                                 accountIdentModifyReq.getAk(),
                                                 accountIdentModifyReq.getSk(),
@@ -315,7 +315,7 @@ public class TCAccountProcessor {
                                                 context))
                                 .compose(resp -> {
                                     if (accountIdentModifyReq.getSk() == null) {
-                                        return CommonProcessor.processIdentSk(
+                                        return IAMBasicProcessor.processIdentSk(
                                                 accountIdent.getKind(),
                                                 accountIdentAk,
                                                 accountIdentModifyReq.getSk(),
@@ -342,7 +342,7 @@ public class TCAccountProcessor {
         };
     }
 
-    private ProcessFun<List<AccountIdentResp>> findAccountIdents() {
+    public static ProcessFun<List<AccountIdentResp>> findAccountIdents() {
         return context -> context.fun.sql.list(
                 new HashMap<>() {
                     {
@@ -354,7 +354,7 @@ public class TCAccountProcessor {
                 .compose(accountIdents -> context.helper.success(accountIdents, AccountIdentResp.class));
     }
 
-    private ProcessFun<Void> deleteAccountIdent() {
+    public static ProcessFun<Void> deleteAccountIdent() {
         return context ->
                 context.fun.sql.softDelete(
                         new HashMap<>() {
@@ -368,14 +368,14 @@ public class TCAccountProcessor {
 
     // --------------------------------------------------------------------
 
-    private ProcessFun<Long> addAccountApp() {
+    public static ProcessFun<Long> addAccountApp() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountId = Long.parseLong(context.req.params.get("accountId"));
             var appId = Long.parseLong(context.req.params.get("appId"));
-            return CommonProcessor.checkAccountMembership(accountId, relTenantId, context)
+            return IAMBasicProcessor.checkAccountMembership(accountId, relTenantId, context)
                     .compose(resp ->
-                            CommonProcessor.checkAppMembership(appId, relTenantId, context))
+                            IAMBasicProcessor.checkAppMembership(appId, relTenantId, context))
                     .compose(resp ->
                             context.fun.sql.save(AccountApp.builder()
                                     .relAccountId(accountId)
@@ -384,7 +384,7 @@ public class TCAccountProcessor {
         };
     }
 
-    private ProcessFun<Void> deleteAccountApp() {
+    public static ProcessFun<Void> deleteAccountApp() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountAppId = Long.parseLong(context.req.params.get("accountAppId"));
@@ -397,11 +397,11 @@ public class TCAccountProcessor {
                             },
                             AccountApp.class), () -> new UnAuthorizedException("账号应用关联不合法"))
                     .compose(fetchAccountAppResult ->
-                            CommonProcessor.checkAccountMembership(
+                            IAMBasicProcessor.checkAccountMembership(
                                     fetchAccountAppResult.getRelAccountId(),
                                     relTenantId,
                                     context)
-                                    .compose(resp -> CommonProcessor.checkAppMembership(
+                                    .compose(resp -> IAMBasicProcessor.checkAppMembership(
                                             fetchAccountAppResult.getRelAppId(),
                                             relTenantId,
                                             context
@@ -414,14 +414,14 @@ public class TCAccountProcessor {
 
     // --------------------------------------------------------------------
 
-    private ProcessFun<Long> addAccountGroup() {
+    public static ProcessFun<Long> addAccountGroup() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountId = Long.parseLong(context.req.params.get("accountId"));
             var groupNodeId = Long.parseLong(context.req.params.get("groupNodeId"));
-            return CommonProcessor.checkAccountMembership(accountId, relTenantId, context)
+            return IAMBasicProcessor.checkAccountMembership(accountId, relTenantId, context)
                     .compose(resp ->
-                            CommonProcessor.checkGroupNodeMembership(groupNodeId, relTenantId, context))
+                            IAMBasicProcessor.checkGroupNodeMembership(groupNodeId, relTenantId, context))
                     .compose(resp ->
                             context.fun.sql.save(AccountGroup.builder()
                                     .relAccountId(accountId)
@@ -431,7 +431,7 @@ public class TCAccountProcessor {
         };
     }
 
-    private ProcessFun<Void> deleteAccountGroup() {
+    public static ProcessFun<Void> deleteAccountGroup() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountGroupId = Long.parseLong(context.req.params.get("accountGroupId"));
@@ -444,7 +444,7 @@ public class TCAccountProcessor {
                             },
                             AccountGroup.class), () -> new UnAuthorizedException("账号群组关联不合法"))
                     .compose(fetchAccountGroupResult ->
-                            CommonProcessor.checkAccountMembership(
+                            IAMBasicProcessor.checkAccountMembership(
                                     fetchAccountGroupResult.getRelAccountId(),
                                     relTenantId,
                                     context)
@@ -456,14 +456,14 @@ public class TCAccountProcessor {
 
     // --------------------------------------------------------------------
 
-    private ProcessFun<Long> addAccountRole() {
+    public static ProcessFun<Long> addAccountRole() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountId = Long.parseLong(context.req.params.get("accountId"));
             var roleId = Long.parseLong(context.req.params.get("roleId"));
-            return CommonProcessor.checkAccountMembership(accountId, relTenantId, context)
+            return IAMBasicProcessor.checkAccountMembership(accountId, relTenantId, context)
                     .compose(resp ->
-                            CommonProcessor.checkRoleMembership(roleId, relTenantId, context))
+                            IAMBasicProcessor.checkRoleMembership(roleId, relTenantId, context))
                     .compose(resp ->
                             context.fun.sql.save(AccountRole.builder()
                                     .relAccountId(accountId)
@@ -472,7 +472,7 @@ public class TCAccountProcessor {
         };
     }
 
-    private ProcessFun<Void> deleteAccountRole() {
+    public static ProcessFun<Void> deleteAccountRole() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var accountRoleId = Long.parseLong(context.req.params.get("accountRoleId"));
@@ -485,7 +485,7 @@ public class TCAccountProcessor {
                             },
                             AccountRole.class), () -> new UnAuthorizedException("账号角色关联不合法"))
                     .compose(fetchAccountRoleResult ->
-                            CommonProcessor.checkAccountMembership(
+                            IAMBasicProcessor.checkAccountMembership(
                                     fetchAccountRoleResult.getRelAccountId(),
                                     relTenantId,
                                     context)

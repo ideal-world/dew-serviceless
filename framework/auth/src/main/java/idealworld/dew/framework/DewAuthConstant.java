@@ -21,9 +21,7 @@ package idealworld.dew.framework;
  *
  * @author gudaoxuri
  */
-public class DewAuthConstant extends DewConstant{
-
-    public static final String EVENT_NOTIFY_TOPIC_BY_IAM = "event:notify:iam";
+public class DewAuthConstant extends DewConstant {
 
     /**
      * 鉴权策略缓存
@@ -31,7 +29,13 @@ public class DewAuthConstant extends DewConstant{
     public static final String CACHE_AUTH_POLICY = "dew:iam:policy:";
     public static final String CACHE_APP_AK = "dew:iam:app:ak:";
     public static final String CACHE_APP_INFO = "dew:iam:app:info:";
+    // token存储key : <token>:<opt info>
+    public static final String CACHE_TOKEN_INFO_FLAG = "dew:iam:token:info:";
+    // AccountCode 关联 Tokens : <account code>:<token kind##current time>:<token>
+    public static final String CACHE_TOKEN_ID_REL_FLAG = "dew:iam:token:id:rel:";
 
     public static String GROUP_CODE_NODE_CODE_SPLIT = "#";
+
+    public static final String MODULE_IAM_NAME = "iam";
 
 }

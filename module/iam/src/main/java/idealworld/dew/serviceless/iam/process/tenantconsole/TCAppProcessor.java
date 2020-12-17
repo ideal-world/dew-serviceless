@@ -26,7 +26,7 @@ import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.domain.ident.TenantIdent;
 import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
-import idealworld.dew.serviceless.iam.process.common.CommonProcessor;
+import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppAddReq;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppModifyReq;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppResp;
@@ -40,7 +40,7 @@ import java.util.HashMap;
  */
 public class TCAppProcessor {
 
-    {
+    static {
         // 添加当前租户的应用
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/app", addApp());
         // 修改当前租户的某个应用
@@ -51,7 +51,7 @@ public class TCAppProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/app", pageApps());
     }
 
-    public ProcessFun<Long> addApp() {
+    public static ProcessFun<Long> addApp() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var appAddReq = context.req.body(AppAddReq.class);
@@ -80,12 +80,12 @@ public class TCAppProcessor {
         };
     }
 
-    public ProcessFun<Void> modifyApp() {
+    public static ProcessFun<Void> modifyApp() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var appId = Long.parseLong(context.req.params.get("appId"));
             var appModifyReq = context.req.body(AppModifyReq.class);
-            return CommonProcessor.checkAppMembership(appId, relTenantId, context)
+            return IAMBasicProcessor.checkAppMembership(appId, relTenantId, context)
                     .compose(resp ->
                             context.fun.sql.update(
                                     new HashMap<>() {
@@ -108,7 +108,7 @@ public class TCAppProcessor {
         };
     }
 
-    public ProcessFun<AppResp> getApp() {
+    public static ProcessFun<AppResp> getApp() {
         return context -> context.fun.sql.getOne(
                 new HashMap<>() {
                     {
@@ -120,7 +120,7 @@ public class TCAppProcessor {
                 .compose(app -> context.helper.success(app, AppResp.class));
     }
 
-    public ProcessFun<Page<AppResp>> pageApps() {
+    public static ProcessFun<Page<AppResp>> pageApps() {
         return context -> {
             var name = context.req.params.getOrDefault("name", null);
             var whereParameters = new HashMap<String, Object>() {

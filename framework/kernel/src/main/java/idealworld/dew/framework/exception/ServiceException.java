@@ -14,29 +14,17 @@
  * limitations under the License.
  */
 
-package idealworld.dew.framework.fun.auth.dto;
+package idealworld.dew.framework.exception;
 
-import idealworld.dew.framework.dto.OptActionKind;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Map;
+import com.ecfront.dew.common.exception.RTException;
 
 /**
  * @author gudaoxuri
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ExchangeData {
+public class ServiceException extends RTException {
 
-    private OptActionKind actionKind;
-    private String subjectCategory;
-    private String subjectId;
-    private String fetchUrl;
-    private Map<String, Object> detailData;
+    public ServiceException(String message) {
+        super(message);
+    }
 
 }

@@ -39,7 +39,7 @@ import java.util.HashMap;
  */
 public class ACAppProcessor {
 
-    {
+    static {
         // 添加当前应用的认证
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/app/ident", addAppIdent());
         // 修改当前应用的某个认证
@@ -57,7 +57,7 @@ public class ACAppProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/privateKey", showPrivateKey());
     }
 
-    public ProcessFun<Long> addAppIdent() {
+    public static ProcessFun<Long> addAppIdent() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -73,7 +73,7 @@ public class ACAppProcessor {
         };
     }
 
-    public ProcessFun<Void> modifyAppIdent() {
+    public static ProcessFun<Void> modifyAppIdent() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -99,7 +99,7 @@ public class ACAppProcessor {
         };
     }
 
-    public ProcessFun<Page<AppIdentResp>> pageAppIdents() {
+    public static ProcessFun<Page<AppIdentResp>> pageAppIdents() {
         return context -> {
             var relAppId = context.req.identOptInfo.getAppId();
             var note = context.req.params.getOrDefault("note", null);
@@ -120,7 +120,7 @@ public class ACAppProcessor {
         };
     }
 
-    public ProcessFun<Void> deleteAppIdent() {
+    public static ProcessFun<Void> deleteAppIdent() {
         return context -> {
             var relAppId = context.req.identOptInfo.getAppId();
             var appIdentId = Long.parseLong(context.req.params.get("appIdentId"));
@@ -146,7 +146,7 @@ public class ACAppProcessor {
         };
     }
 
-    public ProcessFun<String> showSk() {
+    public static ProcessFun<String> showSk() {
         return context -> {
             var relAppId = context.req.identOptInfo.getAppId();
             var appIdentId = Long.parseLong(context.req.params.get("appIdentId"));
@@ -162,7 +162,7 @@ public class ACAppProcessor {
         };
     }
 
-    public ProcessFun<String> showPublicKey() {
+    public static ProcessFun<String> showPublicKey() {
         return context -> {
             var relAppId = context.req.identOptInfo.getAppId();
             return context.fun.sql.getOne(
@@ -176,7 +176,7 @@ public class ACAppProcessor {
         };
     }
 
-    public ProcessFun<String> showPrivateKey() {
+    public static ProcessFun<String> showPrivateKey() {
         return context -> {
             var relAppId = context.req.identOptInfo.getAppId();
             return context.fun.sql.getOne(

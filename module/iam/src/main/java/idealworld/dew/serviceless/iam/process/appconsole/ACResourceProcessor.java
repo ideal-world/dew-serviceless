@@ -16,7 +16,6 @@
 
 package idealworld.dew.serviceless.iam.process.appconsole;
 
-import com.ecfront.dew.common.$;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.BadRequestException;
@@ -33,6 +32,7 @@ import idealworld.dew.serviceless.iam.domain.auth.AuthPolicy;
 import idealworld.dew.serviceless.iam.domain.auth.Resource;
 import idealworld.dew.serviceless.iam.domain.auth.ResourceSubject;
 import idealworld.dew.serviceless.iam.dto.ExposeKind;
+import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.resource.*;
 import io.vertx.core.Future;
 
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  */
 public class ACResourceProcessor {
 
-    {
+    static {
         // 添加当前应用的资源主体
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/resource/subject", addResourceSubject());
         // 修改当前应用的某个资源主体
@@ -72,7 +72,7 @@ public class ACResourceProcessor {
     }
 
 
-    public ProcessFun<Long> addResourceSubject() {
+    public static ProcessFun<Long> addResourceSubject() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -107,29 +107,32 @@ public class ACResourceProcessor {
                         resourceSubject.setCode(resourceCode);
                         resourceSubject.setRelTenantId(relTenantId);
                         resourceSubject.setRelAppId(relAppId);
-                        return context.fun.sql.save(resourceSubject)
-                                .compose(saveResourceSubjectId -> {
-                                    sendMQBySave(
-                                            saveEntity(resourceSubject),
-                                            ResourceSubject.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind().toString().toLowerCase(),
-                                            $.json.toMap(ResourceSubjectExchange.builder()
-                                                    .code(resourceSubject.getCode())
-                                                    .name(resourceSubject.getName())
-                                                    .kind(resourceSubject.getKind())
-                                                    .uri(resourceSubject.getUri())
-                                                    .ak(resourceSubject.getAk())
-                                                    .sk(resourceSubject.getSk())
-                                                    .platformAccount(resourceSubject.getPlatformAccount())
-                                                    .platformProjectId(resourceSubject.getPlatformProjectId())
-                                                    .timeoutMS(resourceSubject.getTimeoutMS())
-                                                    .build(), String.class, Object.class));
-                                    return context.helper.success(saveResourceSubjectId);
-                                });
+                        return context.fun.sql.save(resourceSubject);
+                    })
+                    .compose(resourceSubjectId -> context.fun.sql.getOne(resourceSubjectId, ResourceSubject.class))
+                    .compose(resourceSubject -> {
+                        ExchangeProcessor.publish(
+                                OptActionKind.CREATE,
+                                ResourceSubject.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind(),
+                                resourceSubject.getId(),
+                                ResourceSubjectExchange.builder()
+                                        .code(resourceSubject.getCode())
+                                        .name(resourceSubject.getName())
+                                        .kind(resourceSubject.getKind())
+                                        .uri(resourceSubject.getUri())
+                                        .ak(resourceSubject.getAk())
+                                        .sk(resourceSubject.getSk())
+                                        .platformAccount(resourceSubject.getPlatformAccount())
+                                        .platformProjectId(resourceSubject.getPlatformProjectId())
+                                        .timeoutMS(resourceSubject.getTimeoutMS())
+                                        .build(),
+                                context);
+                        return context.helper.success(resourceSubject.getId());
                     });
         };
     }
 
-    public ProcessFun<Void> modifyResourceSubject() {
+    public static ProcessFun<Void> modifyResourceSubject() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -185,12 +188,13 @@ public class ACResourceProcessor {
                                     },
                                     context.helper.convert(resourceSubjectModifyReq, ResourceSubject.class))
                     )
-                    .compose(resp -> {
-                        sendMQByUpdate(
-                                updateR,
-                                ResourceSubject.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind().toString().toLowerCase(),
-                                resourceSubjectId,
-                                $.json.toMap(ResourceSubjectExchange.builder()
+                    .compose(resp -> context.fun.sql.getOne(resourceSubjectId, ResourceSubject.class))
+                    .compose(resourceSubject -> {
+                        ExchangeProcessor.publish(
+                                OptActionKind.MODIFY,
+                                ResourceSubject.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind(),
+                                resourceSubject.getId(),
+                                ResourceSubjectExchange.builder()
                                         .code(resourceSubject.getCode())
                                         .name(resourceSubject.getName())
                                         .kind(resourceSubject.getKind())
@@ -200,14 +204,14 @@ public class ACResourceProcessor {
                                         .platformAccount(resourceSubject.getPlatformAccount())
                                         .platformProjectId(resourceSubject.getPlatformProjectId())
                                         .timeoutMS(resourceSubject.getTimeoutMS())
-                                        .build(), String.class, Object.class)
-                        );
+                                        .build(),
+                                context);
                         return context.helper.success();
                     });
         };
     }
 
-    public ProcessFun<ResourceSubjectResp> getResourceSubject() {
+    public static ProcessFun<ResourceSubjectResp> getResourceSubject() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -238,13 +242,11 @@ public class ACResourceProcessor {
                                             .timeoutMS(resourceSubject.getTimeoutMS())
                                             .relAppId(resourceSubject.getRelAppId())
                                             .relTenantId(resourceSubject.getRelTenantId())
-                                            .build()
-                            )
-                    );
+                                            .build()));
         };
     }
 
-    public ProcessFun<List<ResourceSubjectResp>> findResourceSubjects() {
+    public static ProcessFun<List<ResourceSubjectResp>> findResourceSubjects() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -290,13 +292,11 @@ public class ACResourceProcessor {
                                                             .relTenantId(resourceSubject.getRelTenantId())
                                                             .build()
                                             )
-                                            .collect(Collectors.toList())
-                            )
-                    );
+                                            .collect(Collectors.toList())));
         };
     }
 
-    public ProcessFun<Void> deleteResourceSubject() {
+    public static ProcessFun<Void> deleteResourceSubject() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -311,7 +311,7 @@ public class ACResourceProcessor {
                             Resource.class), () -> new ConflictException("请先删除关联的资源数据"))
                     .compose(resp ->
                             context.helper.notExistToError(
-                                    context.fun.sql.exists(
+                                    context.fun.sql.getOne(
                                             new HashMap<>() {
                                                 {
                                                     put("id", resourceSubjectId);
@@ -320,7 +320,7 @@ public class ACResourceProcessor {
                                                 }
                                             },
                                             ResourceSubject.class), () -> new BadRequestException("资源主题不存在")))
-                    .compose(resp ->
+                    .compose(storedResourceSubject ->
                             context.fun.sql.softDelete(
                                     new HashMap<>() {
                                         {
@@ -330,25 +330,33 @@ public class ACResourceProcessor {
                                         }
                                     },
                                     ResourceSubject.class)
-                                    .compose(r -> {
-                                        sendMQByDelete(
-                                                deleteR,
-                                                ResourceSubject.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind().toString().toLowerCase(),
-                                                resourceSubjectId,
-                                                new HashMap<>() {
-                                                    {
-                                                        put("code", resourceSubject.getCode());
-                                                    }
-                                                });
-                                        return context.helper.success();
-                                    })
-                    );
+                                    .compose(resp -> context.helper.success(storedResourceSubject)))
+                    .compose(storedResourceSubject -> {
+                        ExchangeProcessor.publish(
+                                OptActionKind.DELETE,
+                                ResourceSubject.class.getSimpleName().toLowerCase() + "." + storedResourceSubject.getKind(),
+                                storedResourceSubject.getId(),
+                                ResourceSubjectExchange.builder()
+                                        .code(storedResourceSubject.getCode())
+                                        .name(storedResourceSubject.getName())
+                                        .kind(storedResourceSubject.getKind())
+                                        .uri(storedResourceSubject.getUri())
+                                        .ak(storedResourceSubject.getAk())
+                                        .sk(storedResourceSubject.getSk())
+                                        .platformAccount(storedResourceSubject.getPlatformAccount())
+                                        .platformProjectId(storedResourceSubject.getPlatformProjectId())
+                                        .timeoutMS(storedResourceSubject.getTimeoutMS())
+                                        .build(),
+                                context
+                        );
+                        return context.helper.success();
+                    });
         };
     }
 
     // --------------------------------------------------------------------
 
-    public ProcessFun<Long> addResource() {
+    public static ProcessFun<Long> addResource() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -396,23 +404,25 @@ public class ACResourceProcessor {
                         resource.setUri(resourceAddReq.getPathAndQuery());
                         resource.setRelTenantId(relTenantId);
                         resource.setRelAppId(relAppId);
-                        return context.fun.sql.save(resource)
-                                .compose(r -> {
-                                    sendMQBySave(
-                                            saveEntity(resource),
-                                            Resource.class,
-                                            $.json.toMap(ResourceExchange.builder()
-                                                    .resourceActionKind(resource.getAction())
-                                                    .resourceUri(resource.getUri())
-                                                    .build(), String.class, Object.class)
-                                    );
-                                    return context.helper.success();
-                                });
+                        return context.fun.sql.save(resource);
+                    })
+                    .compose(resourceId -> context.fun.sql.getOne(resourceId, Resource.class))
+                    .compose(resource -> {
+                        ExchangeProcessor.publish(
+                                OptActionKind.CREATE,
+                                Resource.class.getSimpleName().toLowerCase(),
+                                resource.getId(),
+                                ResourceExchange.builder()
+                                        .resourceActionKind(resource.getAction())
+                                        .resourceUri(resource.getUri())
+                                        .build(),
+                                context);
+                        return context.helper.success(resource.getId());
                     });
         };
     }
 
-    public ProcessFun<Void> modifyResource() {
+    public static ProcessFun<Void> modifyResource() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -474,23 +484,25 @@ public class ACResourceProcessor {
                                 put("rel_tenant_id", relTenantId);
                             }
                         },
-                        resource)
-                        .compose(resp -> {
-                            sendMQByUpdate(
-                                    updateR,
-                                    Resource.class,
-                                    resourceId,
-                                    $.json.toMap(ResourceExchange.builder()
-                                            .resourceActionKind(resource.getAction())
-                                            .resourceUri(resource.getUri())
-                                            .build(), String.class, Object.class));
-                            return context.helper.success();
-                        });
-            });
+                        resource);
+            })
+                    .compose(resp -> context.fun.sql.getOne(resourceId, Resource.class))
+                    .compose(resource -> {
+                        ExchangeProcessor.publish(
+                                OptActionKind.MODIFY,
+                                Resource.class.getSimpleName().toLowerCase(),
+                                resource.getId(),
+                                ResourceExchange.builder()
+                                        .resourceActionKind(resource.getAction())
+                                        .resourceUri(resource.getUri())
+                                        .build(),
+                                context);
+                        return context.helper.success();
+                    });
         };
     }
 
-    public ProcessFun<ResourceResp> getResource() {
+    public static ProcessFun<ResourceResp> getResource() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -525,7 +537,7 @@ public class ACResourceProcessor {
         };
     }
 
-    public ProcessFun<List<ResourceResp>> findResources() {
+    public static ProcessFun<List<ResourceResp>> findResources() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -571,7 +583,7 @@ public class ACResourceProcessor {
         };
     }
 
-    public ProcessFun<List<ResourceResp>> findExposeResources() {
+    public static ProcessFun<List<ResourceResp>> findExposeResources() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -596,7 +608,7 @@ public class ACResourceProcessor {
                 whereParameters.put("%uri", "%" + uri + "%");
             }
             return context.fun.sql.list(
-                    String.format(sql,new Resource().tableName()),
+                    String.format(sql, new Resource().tableName()),
                     whereParameters,
                     Resource.class)
                     .compose(resources ->
@@ -624,7 +636,7 @@ public class ACResourceProcessor {
         };
     }
 
-    public ProcessFun<Void> deleteResource() {
+    public static ProcessFun<Void> deleteResource() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -638,28 +650,39 @@ public class ACResourceProcessor {
                             },
                             AuthPolicy.class), () -> new ConflictException("请先删除关联的权限策略数据"))
                     .compose(resp ->
-                            context.fun.sql.softDelete(
-                                    new HashMap<>() {
-                                        {
-                                            put("id", resourceId);
-                                            put("rel_app_id", relAppId);
-                                            put("rel_tenant_id", relTenantId);
-                                        }
-                                    },
-                                    Resource.class)
-                                    .compose(r -> {
-                                        sendMQByDelete(
-                                                softDelEntity(sqlBuilder
-                                                        .selectFrom(qResource)
-                                                        .where(qResource.id.in(deleteResourceIds))
-                                                        .where(qResource.relTenantId.eq(relTenantId))
-                                                        .where(qResource.relAppId.eq(relAppId))),
-                                                Resource.class,
-                                                deleteResourceIds
-                                        );
+                            context.helper.existToError(
+                                    context.fun.sql.getOne(
+                                            new HashMap<>() {
+                                                {
+                                                    put("id", resourceId);
+                                                    put("rel_app_id", relAppId);
+                                                    put("rel_tenant_id", relTenantId);
+                                                }
+                                            },
+                                            Resource.class), () -> new UnAuthorizedException("资源不存在"))
+                                    .compose(storedResource ->
+                                            context.fun.sql.softDelete(
+                                                    new HashMap<>() {
+                                                        {
+                                                            put("id", resourceId);
+                                                            put("rel_app_id", relAppId);
+                                                            put("rel_tenant_id", relTenantId);
+                                                        }
+                                                    },
+                                                    Resource.class)
+                                                    .compose(r -> context.helper.success(storedResource)))
+                                    .compose(storedResource -> {
+                                        ExchangeProcessor.publish(
+                                                OptActionKind.DELETE,
+                                                Resource.class.getSimpleName().toLowerCase(),
+                                                storedResource.getId(),
+                                                ResourceExchange.builder()
+                                                        .resourceActionKind(storedResource.getAction())
+                                                        .resourceUri(storedResource.getUri())
+                                                        .build(),
+                                                context);
                                         return context.helper.success();
-                                    })
-                    );
+                                    });
         };
     }
 

@@ -48,7 +48,7 @@ import java.util.stream.IntStream;
  */
 public class ACGroupProcessor {
 
-    {
+    static {
         // 添加当前应用的群组
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/group", addGroup());
         // 修改当前应用的某个群组
@@ -70,7 +70,7 @@ public class ACGroupProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}/node/{groupNodeId}", deleteGroupNode());
     }
 
-    public ProcessFun<Long> addGroup() {
+    public static ProcessFun<Long> addGroup() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -94,7 +94,7 @@ public class ACGroupProcessor {
         };
     }
 
-    public ProcessFun<Void> modifyGroup() {
+    public static ProcessFun<Void> modifyGroup() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -131,7 +131,7 @@ public class ACGroupProcessor {
         };
     }
 
-    public ProcessFun<GroupResp> getGroup() {
+    public static ProcessFun<GroupResp> getGroup() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -149,7 +149,7 @@ public class ACGroupProcessor {
         };
     }
 
-    public ProcessFun<List<GroupResp>> findGroups() {
+    public static ProcessFun<List<GroupResp>> findGroups() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -178,7 +178,7 @@ public class ACGroupProcessor {
         };
     }
 
-    public ProcessFun<List<GroupResp>> findExposeGroups() {
+    public static ProcessFun<List<GroupResp>> findExposeGroups() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var code = context.req.params.getOrDefault("code", null);
@@ -214,7 +214,7 @@ public class ACGroupProcessor {
         };
     }
 
-    public ProcessFun<Void> deleteGroup() {
+    public static ProcessFun<Void> deleteGroup() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -242,7 +242,7 @@ public class ACGroupProcessor {
 
     // --------------------------------------------------------------------
 
-    public ProcessFun<Long> addGroupNode() {
+    public static ProcessFun<Long> addGroupNode() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -282,7 +282,7 @@ public class ACGroupProcessor {
         };
     }
 
-    public ProcessFun<Void> modifyGroupNode() {
+    public static ProcessFun<Void> modifyGroupNode() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -333,7 +333,7 @@ public class ACGroupProcessor {
         };
     }
 
-    public ProcessFun<List<GroupNodeResp>> findGroupNodes() {
+    public static ProcessFun<List<GroupNodeResp>> findGroupNodes() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -375,7 +375,7 @@ public class ACGroupProcessor {
         };
     }
 
-    public ProcessFun<Void> deleteGroupNode() {
+    public static ProcessFun<Void> deleteGroupNode() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();

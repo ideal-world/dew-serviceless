@@ -16,8 +16,10 @@
 
 package idealworld.dew.framework.fun.cache;
 
+import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.framework.DewConfig;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -31,7 +33,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * @author gudaoxuri
@@ -40,7 +44,12 @@ import java.util.function.Consumer;
 public class FunRedisClient {
 
     private static final String CACHE_KEY_PREFIX = "redis:";
+    private static final String CACHE_KEY_ELECTION_PREFIX = "dew:cluster:election:";
     private static final Map<String, FunRedisClient> REDIS_CLIENTS = new HashMap<>();
+    private final String instanceId = $.field.createUUID();
+    private String code;
+    private Integer electionPeriodSec;
+    protected AtomicBoolean leader = new AtomicBoolean(false);
     private Vertx innerVertx;
     private RedisAPI redisAPI;
     private Redis subRedis;
@@ -54,7 +63,9 @@ public class FunRedisClient {
         if (config.getPassword() != null && config.getPassword().isBlank()) {
             config.setPassword(null);
         }
+        redisClient.code = code;
         redisClient.innerVertx = vertx;
+        redisClient.electionPeriodSec = config.getElectionPeriodSec();
         var redis = Redis.createClient(
                 vertx,
                 new RedisOptions()
@@ -100,17 +111,15 @@ public class FunRedisClient {
                     log.error("[Redis]Publish connection error: {}", conn.cause().getMessage(), conn.cause());
                     throw new RTException(conn.cause());
                 });
+        redisClient.election();
         REDIS_CLIENTS.put(code, redisClient);
         return promise.future();
     }
 
-    public static Future<Void> destroy() {
-        REDIS_CLIENTS.forEach((key, value) -> {
-            value.redisAPI.close();
-            value.subRedis.close();
-            value.pubRedis.close();
-        });
-        return Future.succeededFuture();
+    public static CompositeFuture destroy() {
+        return CompositeFuture.all(REDIS_CLIENTS.values().stream()
+                .map(FunRedisClient::close)
+                .collect(Collectors.toList()));
     }
 
     public static FunRedisClient choose(String code) {
@@ -125,6 +134,29 @@ public class FunRedisClient {
         REDIS_CLIENTS.remove(code);
     }
 
+    public Future<Void> close() {
+        return redisAPI.get(CACHE_KEY_ELECTION_PREFIX + code)
+                .compose(getResult -> {
+                    // 如果当前是领导者则执行销毁
+                    if (getResult != null
+                            && getResult.toString(StandardCharsets.UTF_8).equalsIgnoreCase(instanceId)) {
+                        return redisAPI.del(new ArrayList<>() {
+                            {
+                                add(CACHE_KEY_ELECTION_PREFIX + code);
+                            }
+                        });
+                    } else {
+                        return Future.succeededFuture();
+                    }
+                })
+                .compose(resp -> {
+                    redisAPI.close();
+                    subRedis.close();
+                    pubRedis.close();
+                    return Future.succeededFuture();
+                });
+    }
+
     // ---------------------------- String ----------------------------
 
     public Future<Void> expire(String key, Long expireSec) {
@@ -137,7 +169,6 @@ public class FunRedisClient {
                 })
         );
     }
-
 
     public Future<Void> set(String key, String value) {
         return Future.future(promise ->
@@ -161,6 +192,17 @@ public class FunRedisClient {
                         promise.complete()
                 ).onFailure(e -> {
                     log.error("[Redis]Setex [{}:{}] error: {}", key, value, e.getMessage(), e);
+                    promise.fail(e.getCause());
+                })
+        );
+    }
+
+    public Future<Boolean> setnx(String key, String value) {
+        return Future.future(promise ->
+                redisAPI.setnx(key, value).onSuccess(response ->
+                        promise.complete(response.toInteger() > 0)
+                ).onFailure(e -> {
+                    log.error("[Redis]Setnx [{}:{}] error: {}", key, value, e.getMessage(), e);
                     promise.fail(e.getCause());
                 })
         );
@@ -358,6 +400,47 @@ public class FunRedisClient {
                 doScan(newCursor, key, fun);
             }
         }).onFailure(e -> log.error("[Redis]Scan [{}] error: {}", key, e.getMessage(), e));
+    }
+
+    public Boolean isLeader() {
+        return leader.get();
+    }
+
+    private void election() {
+        innerVertx.setPeriodic(electionPeriodSec * 1000, event -> doElection());
+    }
+
+    private void doElection() {
+        log.trace("[Redis]Electing...");
+        redisAPI.set(new ArrayList<>() {
+            {
+                add(CACHE_KEY_ELECTION_PREFIX + code);
+                add(instanceId);
+                add("EX");
+                add((electionPeriodSec * 2 + 2) + "");
+                add("NX");
+            }
+        })
+                .onSuccess(setResult -> {
+                    if (setResult != null && setResult.toString().equalsIgnoreCase("ok")) {
+                        leader.set(true);
+                    } else {
+                        redisAPI.get(CACHE_KEY_ELECTION_PREFIX + code)
+                                .onSuccess(getResult -> {
+                                    if (getResult == null) {
+                                        doElection();
+                                    } else {
+                                        leader.set(getResult.toString(StandardCharsets.UTF_8).equalsIgnoreCase(instanceId));
+                                    }
+                                })
+                                .onFailure(e ->
+                                        log.error("[Redis]Election [{}] error: {}", CACHE_KEY_ELECTION_PREFIX + code, e.getMessage(), e)
+                                );
+                    }
+                })
+                .onFailure(e ->
+                        log.error("[Redis]Election [{}] error: {}", CACHE_KEY_ELECTION_PREFIX + code, e.getMessage(), e)
+                );
     }
 
 }

@@ -18,7 +18,12 @@ package idealworld.dew.serviceless.iam;
 
 import idealworld.dew.framework.DewModule;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
+import idealworld.dew.serviceless.iam.process.appconsole.*;
+import idealworld.dew.serviceless.iam.process.common.CommonProcessor;
 import idealworld.dew.serviceless.iam.process.systemconsole.SCTenantProcessor;
+import idealworld.dew.serviceless.iam.process.tenantconsole.TCAccountProcessor;
+import idealworld.dew.serviceless.iam.process.tenantconsole.TCAppProcessor;
+import idealworld.dew.serviceless.iam.process.tenantconsole.TCTenantProcessor;
 import io.vertx.core.Promise;
 
 /**
@@ -28,7 +33,16 @@ public class IAMModule extends DewModule<IAMConfig> {
 
     @Override
     protected void start(IAMConfig config, Promise<Void> startPromise) {
+        new CommonProcessor();
         new SCTenantProcessor();
+        new TCTenantProcessor();
+        new TCAppProcessor();
+        new TCAccountProcessor();
+        new ACAppProcessor();
+        new ACRoleProcessor();
+        new ACGroupProcessor();
+        new ACResourceProcessor();
+        new ACAuthPolicyProcessor();
         ReceiveProcessor.watch(getModuleName(), config)
                 .onSuccess(startResult -> startPromise.complete())
                 .onFailure(startPromise::fail);
@@ -51,7 +65,7 @@ public class IAMModule extends DewModule<IAMConfig> {
 
     @Override
     protected boolean enabledHttpClientFun() {
-        return false;
+        return true;
     }
 
     @Override

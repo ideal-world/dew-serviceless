@@ -55,11 +55,11 @@ public class FunEventBusTest extends DewTest {
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));
             Assertions.assertEquals("测试", context.req.params.get("q"));
-            Assertions.assertEquals("孤岛旭日", ((User) (context.req.body)).getName());
-            Assertions.assertEquals("xxxx", ((User) (context.req.body)).getOpenId());
-            if (((User) (context.req.body)).getDetail() != null) {
-                Assertions.assertEquals("中国", ((User) (context.req.body)).getDetail().getAddr());
-                Assertions.assertEquals(30, ((User) (context.req.body)).getDetail().getAge());
+            Assertions.assertEquals("孤岛旭日", context.req.body(User.class).getName());
+            Assertions.assertEquals("xxxx", context.req.body(User.class).getOpenId());
+            if (context.req.body(User.class).getDetail() != null) {
+                Assertions.assertEquals("中国", context.req.body(User.class).getDetail().getAddr());
+                Assertions.assertEquals(30, context.req.body(User.class).getDetail().getAge());
             }
             count.countDown();
             return Future.succeededFuture(Resp.success("/app/{name}/{kind}/enabled"));

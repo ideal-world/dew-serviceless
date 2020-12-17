@@ -30,12 +30,12 @@ import idealworld.dew.serviceless.iam.process.systemconsole.dto.TenantAddReq;
  */
 public class SCTenantProcessor {
 
-    {
+    static {
         // 添加租户
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/system/tenant", addTenant());
     }
 
-    private ProcessFun<Long> addTenant() {
+    public static ProcessFun<Long> addTenant() {
         return context -> {
             var tenantAddReq = context.req.body(TenantAddReq.class);
             var tenant = Tenant.builder()

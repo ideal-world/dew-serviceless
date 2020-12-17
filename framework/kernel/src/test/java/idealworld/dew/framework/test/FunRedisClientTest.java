@@ -21,9 +21,11 @@ import idealworld.dew.framework.fun.cache.FunRedisClient;
 import idealworld.dew.framework.fun.test.DewTest;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Slf4j
 public class FunRedisClientTest extends DewTest {
 
     static {
@@ -250,6 +253,49 @@ public class FunRedisClientTest extends DewTest {
                     return Future.succeededFuture();
                 })
                 .onSuccess(resp -> testContext.completeNow());
+    }
+
+    @Test
+    public void testElection(Vertx vertx, VertxTestContext testContext) {
+        final FunRedisClient[] funRedisClient1 = {null};
+        FunRedisClient.init("election", vertx, DewConfig.FunConfig.RedisConfig.builder()
+                .uri("redis://localhost:" + redisConfig.getFirstMappedPort())
+                .electionPeriodSec(1)
+                .build())
+                .compose(resp -> {
+                    var promise = Promise.promise();
+                    vertx.setTimer(1000, t -> promise.complete());
+                    return promise.future();
+                })
+                .compose(resp -> {
+                    funRedisClient1[0] = FunRedisClient.choose("election");
+                    Assertions.assertTrue(funRedisClient1[0].isLeader());
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        FunRedisClient.init("election", vertx, DewConfig.FunConfig.RedisConfig.builder()
+                                .uri("redis://localhost:" + redisConfig.getFirstMappedPort())
+                                .electionPeriodSec(1)
+                                .build()))
+                .compose(resp -> {
+                    var promise = Promise.promise();
+                    vertx.setTimer(1000, t -> promise.complete());
+                    return promise.future();
+                })
+                .compose(resp -> {
+                    Assertions.assertFalse(FunRedisClient.choose("election").isLeader());
+                    return funRedisClient1[0].close();
+                })
+                .compose(resp -> {
+                    var promise = Promise.promise();
+                    vertx.setTimer(1000, t -> promise.complete());
+                    return promise.future();
+                })
+                .onSuccess(resp -> {
+                    Assertions.assertTrue(FunRedisClient.choose("election").isLeader());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
     }
 
 }

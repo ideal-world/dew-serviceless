@@ -16,12 +16,12 @@
 
 package idealworld.dew.serviceless.iam.process.common.service.oauthimpl;
 
-import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.tuple.Tuple2;
-import group.idealworld.dew.Dew;
-import idealworld.dew.serviceless.common.resp.StandardResp;
+import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.serviceless.iam.IAMConstant;
-import idealworld.dew.serviceless.iam.process.common.service.OAuthService;
+import idealworld.dew.serviceless.iam.process.common.service.OAuthProcessor;
+import io.vertx.core.Future;
+
 
 /**
  * Platform api.
@@ -32,33 +32,27 @@ public interface PlatformAPI {
 
     String getPlatformFlag();
 
-    Resp<OAuthService.OAuthUserInfo> doGetUserInfo(String code, String ak, String sk);
+    Future<OAuthProcessor.OAuthUserInfo> doGetUserInfo(String code, String ak, String sk, ProcessContext context);
 
-    default Resp<Tuple2<String, OAuthService.OAuthUserInfo>> getUserInfo(String code, String ak, String sk, Long appId) {
-        var userInfoR = doGetUserInfo(code, ak, sk);
-        if (userInfoR.ok()) {
-            var accessTokenR = getAccessToken(ak, sk, appId);
-            if (accessTokenR.ok()) {
-                return Resp.success(new Tuple2<>(accessTokenR.getBody(), userInfoR.getBody()));
-            }
-            return Resp.error(accessTokenR);
-        }
-        return Resp.error(userInfoR);
+    default Future<Tuple2<String, OAuthProcessor.OAuthUserInfo>> getUserInfo(String code, String ak, String sk, Long appId, ProcessContext context) {
+        return doGetUserInfo(code, ak, sk, context)
+                .compose(userInfo -> getAccessToken(ak, sk, appId, context)
+                        .compose(accessToken -> context.helper.success(new Tuple2<>(accessToken, userInfo))));
     }
 
-    Resp<Tuple2<String, Long>> doGetAccessToken(String ak, String sk);
+    Future<Tuple2<String, Long>> doGetAccessToken(String ak, String sk, ProcessContext context);
 
-    default Resp<String> getAccessToken(String ak, String sk, Long appId) {
-        var accessToken = Dew.cluster.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag());
-        if (accessToken != null) {
-            return StandardResp.success(accessToken);
-        }
-        var getR = doGetAccessToken(ak, sk);
-        if (!getR.ok()) {
-            return StandardResp.error(getR);
-        }
-        Dew.cluster.cache.setex(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag(), getR.getBody()._0, getR.getBody()._1 - 10);
-        return StandardResp.success(getR.getBody()._0);
+    default Future<String> getAccessToken(String ak, String sk, Long appId, ProcessContext context) {
+        return context.fun.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag())
+                .compose(accessToken -> {
+                    if (accessToken != null) {
+                        return context.helper.success(accessToken);
+                    }
+                    return doGetAccessToken(ak, sk, context)
+                            .compose(getAccessToken ->
+                                    context.fun.cache.setex(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag(), getAccessToken._0, getAccessToken._1 - 10)
+                                            .compose(resp -> context.helper.success(getAccessToken._0)));
+                });
     }
 
 }

@@ -255,6 +255,20 @@ public class FunSQLClient {
                 sql);
     }
 
+    public Future<Long> save(String sql, Map<String, Object> parameters) {
+        return updateHandler(SqlTemplate
+                        .forUpdate(client, sql)
+                        .execute(parameters),
+                sql);
+    }
+
+    public Future<Long> save(String sql, List<Map<String, Object>> parameters) {
+        return updateHandler(SqlTemplate
+                        .forUpdate(client, sql)
+                        .executeBatch(parameters),
+                sql);
+    }
+
     public <E extends IdEntity> Future<Void> update(E entity) {
         return update(entity.getId(), entity);
     }
@@ -399,6 +413,8 @@ public class FunSQLClient {
     private FunSQLClient txInstance(SqlConnection client) {
         var txClient = new FunSQLClient();
         txClient.client = client;
+        txClient.addEntityByInsertFun = this.addEntityByInsertFun;
+        txClient.addEntityByUpdateFun = this.addEntityByUpdateFun;
         return txClient;
     }
 
@@ -442,10 +458,10 @@ public class FunSQLClient {
         return promise.future();
     }
 
-    public Consumer addEntityByInsertFun= o -> {
+    public Consumer addEntityByInsertFun = o -> {
 
     };
-    public Consumer addEntityByUpdateFun= o -> {
+    public Consumer addEntityByUpdateFun = o -> {
 
     };
 

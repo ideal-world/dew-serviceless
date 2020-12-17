@@ -46,23 +46,31 @@ import java.util.stream.Collectors;
  * @author gudaoxuri
  */
 @Slf4j
-@Component
 public class ExchangeProcessor {
 
+    public static void publish(OptActionKind actionKind, String subjectCategory, Object subjectId, Object detailData, ProcessContext context) {
+        context.fun.eb.publish(
+                IAMConstant.MODULE_GATEWAY_NAME,
+                actionKind,
+                "http://" + context.moduleName + "/" + subjectCategory + "/" + subjectId,
+                JsonObject.mapFrom(detailData).toString(),
+                new HashMap<>());
+    }
+
     public static Future<Void> cacheAppIdents(ProcessContext context) {
-        if (!ELECTION.isLeader()) {
-            return;
+        if (!context.fun.cache.isLeader()) {
+            return context.helper.success();
         }
         return context.fun.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
                                 "  INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
                                 "  INNER JOIN %s tenant ON tenant.id = app.rel_tenant_id AND tenant.status = #{status}" +
                                 "  WHERE ident.valid_time > #{valid_time}",
-                        new AppIdent().tableName(),new App().tableName(),new Tenant().tableName()),
-                new HashMap<>(){
+                        new AppIdent().tableName(), new App().tableName(), new Tenant().tableName()),
+                new HashMap<>() {
                     {
-                        put("status",CommonStatus.ENABLED);
-                        put("valid_time",new Date());
+                        put("status", CommonStatus.ENABLED);
+                        put("valid_time", new Date());
                     }
                 })
                 .compose(appIdents ->
@@ -73,7 +81,7 @@ public class ExchangeProcessor {
                                     var appId = appIdent.getLong("ident.rel_app_id");
                                     var validTime = Date.from(appIdent.getInstant("ident.valid_time"));
                                     var tenantId = appIdent.getLong("app.rel_tenant_id");
-                                    return changeAppIdent(ak,sk,validTime,appId,tenantId,context);
+                                    return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
                                 })
                                 .collect(Collectors.toList())))
                 .compose(resp -> context.helper.success());
@@ -82,14 +90,14 @@ public class ExchangeProcessor {
     public static Future<Void> enableTenant(Long tenantId, ProcessContext context) {
         return context.fun.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time FROM %s AS ident" +
-                        "  INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
-                        "  WHERE app.rel_tenant_id = #{rel_tenant_id} AND ident.valid_time > #{valid_time}",
-                        new AppIdent().tableName(),new App().tableName()),
-                new HashMap<>(){
+                                "  INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
+                                "  WHERE app.rel_tenant_id = #{rel_tenant_id} AND ident.valid_time > #{valid_time}",
+                        new AppIdent().tableName(), new App().tableName()),
+                new HashMap<>() {
                     {
-                        put("status",CommonStatus.ENABLED);
-                        put("rel_tenant_id",tenantId);
-                        put("valid_time",new Date());
+                        put("status", CommonStatus.ENABLED);
+                        put("rel_tenant_id", tenantId);
+                        put("valid_time", new Date());
                     }
                 })
                 .compose(appIdents ->
@@ -99,27 +107,27 @@ public class ExchangeProcessor {
                                     var sk = appIdent.getString("ident.sk");
                                     var appId = appIdent.getLong("ident.rel_app_id");
                                     var validTime = Date.from(appIdent.getInstant("ident.valid_time"));
-                                    return changeAppIdent(ak,sk,validTime,appId,tenantId,context);
+                                    return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
                                 })
                                 .collect(Collectors.toList())))
                 .compose(resp -> context.helper.success());
     }
 
     public static Future<Void> disableTenant(Long tenantId, ProcessContext context) {
-       return context.fun.sql.list(
+        return context.fun.sql.list(
                 String.format("SELECT ident.ak FROM %s AS ident" +
                         "  INNER JOIN %s app ON app.id = ident.rel_app_id" +
-                        "  WHERE app.rel_tenant_id = #{rel_tenant_id}",new AppIdent().tableName(),new App().tableName()),
-                new HashMap<>(){
+                        "  WHERE app.rel_tenant_id = #{rel_tenant_id}", new AppIdent().tableName(), new App().tableName()),
+                new HashMap<>() {
                     {
-                        put("rel_tenant_id",tenantId);
+                        put("rel_tenant_id", tenantId);
                     }
                 })
                 .compose(appIdents ->
                         CompositeFuture.all(appIdents.stream()
                                 .map(appIdent -> {
                                     var ak = appIdent.getString("ident.ak");
-                                    return deleteAppIdent(ak,context);
+                                    return deleteAppIdent(ak, context);
                                 })
                                 .collect(Collectors.toList())))
                 .compose(resp -> context.helper.success());
@@ -127,50 +135,50 @@ public class ExchangeProcessor {
 
     public static Future<Void> enableApp(Long appId, Long tenantId, ProcessContext context) {
         return context.fun.sql.getOne(
-                new HashMap<>(){
+                new HashMap<>() {
                     {
-                        put("id",appId);
+                        put("id", appId);
                     }
                 },
                 App.class)
                 .compose(app -> {
                     var publicKey = app.getPubKey();
                     var privateKey = app.getPriKey();
-                   return context.fun.cache.set(IAMConstant.CACHE_APP_INFO + appId, tenantId + "\n" + publicKey + "\n" + privateKey);
+                    return context.fun.cache.set(IAMConstant.CACHE_APP_INFO + appId, tenantId + "\n" + publicKey + "\n" + privateKey);
                 })
                 .compose(resp ->
                         context.fun.sql.list(
                                 String.format("SELECT ak, sk, valid_time FROM %s" +
-                                        "  WHERE rel_app_id = #{rel_app_id} AND valid_time > #{valid_time}",new AppIdent().tableName()),
-                                new HashMap<>(){
+                                        "  WHERE rel_app_id = #{rel_app_id} AND valid_time > #{valid_time}", new AppIdent().tableName()),
+                                new HashMap<>() {
                                     {
-                                        put("rel_app_id",appId);
-                                        put("valid_time",new Date());
+                                        put("rel_app_id", appId);
+                                        put("valid_time", new Date());
                                     }
                                 }))
-                .compose(appIdents->
-                    CompositeFuture.all(appIdents.stream()
-                            .map(appIdent -> {
-                        var ak = appIdent.getString("ak");
-                        var sk = appIdent.getString("sk");
-                        var validTime = Date.from(appIdent.getInstant("valid_time"));
-                       return changeAppIdent(ak, sk, validTime, appId, tenantId,context);
-                    })
-                    .collect(Collectors.toList())))
+                .compose(appIdents ->
+                        CompositeFuture.all(appIdents.stream()
+                                .map(appIdent -> {
+                                    var ak = appIdent.getString("ak");
+                                    var sk = appIdent.getString("sk");
+                                    var validTime = Date.from(appIdent.getInstant("valid_time"));
+                                    return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
+                                })
+                                .collect(Collectors.toList())))
                 .compose(resp -> context.helper.success());
     }
 
     public static Future<Void> disableApp(Long appId, Long tenantId, ProcessContext context) {
         return context.fun.sql.list(
-                new HashMap<>(){
+                new HashMap<>() {
                     {
-                        put("rel_app_id",appId);
+                        put("rel_app_id", appId);
                     }
                 },
                 AppIdent.class)
                 .compose(appIdents ->
-                                CompositeFuture.all(appIdents.stream().map(appIdent -> deleteAppIdent(appIdent.getAk(),context)).collect(Collectors.toList()))
-                        )
+                        CompositeFuture.all(appIdents.stream().map(appIdent -> deleteAppIdent(appIdent.getAk(), context)).collect(Collectors.toList()))
+                )
                 .compose(resp -> context.fun.cache.del(IAMConstant.CACHE_APP_INFO + appId));
     }
 

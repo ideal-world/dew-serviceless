@@ -17,17 +17,19 @@
 package idealworld.dew.framework.fun.auth.exchange;
 
 import com.ecfront.dew.common.$;
+import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewAuthConfig;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.dto.OptActionKind;
-import idealworld.dew.framework.fun.auth.dto.ExchangeData;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceSubjectExchange;
-import idealworld.dew.framework.fun.cache.FunRedisClient;
+import idealworld.dew.framework.fun.eventbus.ConsumerFun;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
@@ -42,8 +44,6 @@ import java.util.function.Consumer;
 @Slf4j
 public class ExchangeHelper {
 
-    private static final String QUICK_CHECK_SPLIT = "#";
-
     public static Future<Void> loadAndWatchResourceSubject(String moduleName, DewAuthConfig config, ResourceKind kind, Consumer<ResourceSubjectExchange> addFun, Consumer<String> removeFun) {
         var header = new HashMap<String, String>();
         var identOptInfo = IdentOptCacheInfo.builder()
@@ -53,46 +53,42 @@ public class ExchangeHelper {
         header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64($.json.toJsonString(identOptInfo), StandardCharsets.UTF_8));
         FunEventBus.choose(moduleName).request(config.getIam().getModuleName(), OptActionKind.FETCH, "/console/app/resource/subject?qKind=" + kind.toString(), null, header)
                 .onSuccess(result -> {
-                    var resourceSubjects = $.json.toList(
-                            $.json.toJson(result._0.toString(StandardCharsets.UTF_8)).get("body"),
-                            ResourceSubjectExchange.class);
+                    var resourceSubjects = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
                     for (var resourceSubject : resourceSubjects) {
-                        addFun.accept(resourceSubject);
-                        log.info("[Exchange]Init [resourceSubject.code={}] data", resourceSubject.getCode());
+                        var resourceSubjectExchange = ((JsonObject)resourceSubject).mapTo(ResourceSubjectExchange.class);
+                        addFun.accept(resourceSubjectExchange);
+                        log.info("[Exchange]Init [resourceSubject.code={}] data", resourceSubjectExchange.getCode());
                     }
                 })
                 .onFailure(e -> log.error("[Exchange]Init resourceSubjects error: {}", e.getMessage(), e.getCause()));
         return watch(moduleName, new HashSet<>() {
             {
-                add("resourcesubject." + kind.toString().toLowerCase());
+                add("http://"+DewAuthConstant.MODULE_IAM_NAME+"/resourcesubject." + kind.toString().toLowerCase());
             }
-        }, exchangeData -> {
-            if (exchangeData.getActionKind() == OptActionKind.CREATE
-                    || exchangeData.getActionKind() == OptActionKind.MODIFY) {
-                var resourceSubject = $.json.toObject(exchangeData.getDetailData(), ResourceSubjectExchange.class);
-                removeFun.accept(resourceSubject.getCode());
-                addFun.accept(resourceSubject);
-                log.info("[Exchange]Updated [resourceSubject.code={}] data", resourceSubject.getCode());
-            } else if (exchangeData.getActionKind() == OptActionKind.DELETE) {
-                var code = (String) exchangeData.getDetailData().get("code");
-                removeFun.accept(code);
-                log.error("[Exchange]Removed [resourceSubject.code={}]", code);
+        }, exchangeInfo -> {
+            var resourceSubjectExchange = JsonObject.mapFrom(exchangeInfo._1).mapTo(ResourceSubjectExchange.class);
+            if (exchangeInfo._0 == OptActionKind.CREATE
+                    || exchangeInfo._0 == OptActionKind.MODIFY) {
+                removeFun.accept(resourceSubjectExchange.getCode());
+                addFun.accept(resourceSubjectExchange);
+                log.info("[Exchange]Updated [resourceSubject.code={}] data", resourceSubjectExchange.getCode());
+            } else if (exchangeInfo._0 == OptActionKind.DELETE) {
+                removeFun.accept(resourceSubjectExchange.getCode());
+                log.error("[Exchange]Removed [resourceSubject.code={}]", resourceSubjectExchange.getCode());
             }
         });
     }
 
-    public static Future<Void> watch(String moduleName, Set<String> subjectCategories, Consumer<ExchangeData> fun) {
-        Promise<Void> promise = Promise.promise();
-        FunRedisClient.choose(moduleName).subscribe(DewAuthConstant.EVENT_NOTIFY_TOPIC_BY_IAM, message -> {
-            var quickCheckSplit = message.split(QUICK_CHECK_SPLIT);
-            var subjectCategory = quickCheckSplit[0];
-            if (subjectCategories.stream().noneMatch(subjectCategory::startsWith)) {
-                return;
+    public static Future<Void> watch(String moduleName, Set<String> uris, Consumer<Tuple2<OptActionKind,Buffer>> fun) {
+        FunEventBus.choose(moduleName).consumer(moduleName, (ConsumerFun<Void>) (actionKind, uri, header, body) -> {
+            var strUri = uri.toString().toLowerCase();
+            if(uris.stream().anyMatch(u -> u.toLowerCase().startsWith(strUri))){
+                log.trace("[Exchange]Received {}", body.toString());
+                fun.accept(new Tuple2<>(actionKind,body));
             }
-            log.trace("[Exchange]Received {}", message);
-            fun.accept($.json.toObject(quickCheckSplit[1], ExchangeData.class));
-        }).onSuccess(response -> promise.complete());
-        return promise.future();
+            return Future.succeededFuture();
+        });
+        return Future.succeededFuture();
     }
 
 }

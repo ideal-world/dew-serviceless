@@ -24,7 +24,6 @@ import idealworld.dew.framework.fun.sql.FunSQLClient;
 import io.vertx.core.buffer.Buffer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Map;
@@ -32,15 +31,17 @@ import java.util.Map;
 /**
  * @author gudaoxuri
  */
-@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProcessContext {
 
     public ProcessContext init() {
-        fun.sql.addEntityByInsertFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, true, this);
-        fun.sql.addEntityByUpdateFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, false, this);
+        helper = new ProcessHelper(this);
+        if (fun.sql != null) {
+            fun.sql.addEntityByInsertFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, true, this);
+            fun.sql.addEntityByUpdateFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, false, this);
+        }
         return this;
     }
 
@@ -48,8 +49,7 @@ public class ProcessContext {
     public Request req = new Request();
     @Builder.Default
     public Function fun = new Function();
-    @Builder.Default
-    public ProcessHelper helper = new ProcessHelper(this);
+    public ProcessHelper helper;
     public Object conf;
     public String moduleName;
 
@@ -60,24 +60,28 @@ public class ProcessContext {
 
         public Map<String, String> params;
         public Map<String, String> header;
-        private Buffer body;
+        private Object body;
         public IdentOptCacheInfo identOptInfo;
 
-        public Long pageNumber(){
-           return Long.parseLong(params.get("pageNumber"));
+        public Long pageNumber() {
+            return Long.parseLong(params.get("pageNumber"));
         }
 
-        public Long pageSize(){
+        public Long pageSize() {
             return Long.parseLong(params.get("pageSize"));
         }
 
         public <E> E body(Class<E> clazz) {
-            return ProcessHelper.parseBody(body, clazz);
+            if (body == null) {
+                return null;
+            } else if (body instanceof Buffer) {
+                return ProcessHelper.parseBody((Buffer) body, clazz);
+            }
+            return (E) body;
         }
 
     }
 
-    @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor

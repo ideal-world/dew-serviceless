@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class ACRoleProcessor {
 
-    {
+    static {
         // 添加当前应用的角色定义
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/role/def", addRoleDef());
         // 修改当前应用的某个角色定义
@@ -65,7 +65,7 @@ public class ACRoleProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/role/{roleId}", deleteRole());
     }
 
-    public ProcessFun<Long> addRoleDef() {
+    public static ProcessFun<Long> addRoleDef() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -89,7 +89,7 @@ public class ACRoleProcessor {
         };
     }
 
-    public ProcessFun<Void> modifyRoleDef() {
+    public static ProcessFun<Void> modifyRoleDef() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -127,7 +127,7 @@ public class ACRoleProcessor {
         };
     }
 
-    public ProcessFun<RoleDefResp> getRoleDef() {
+    public static ProcessFun<RoleDefResp> getRoleDef() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -145,7 +145,7 @@ public class ACRoleProcessor {
         };
     }
 
-    public ProcessFun<Page<RoleDefResp>> pageRoleDef() {
+    public static ProcessFun<Page<RoleDefResp>> pageRoleDef() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -172,7 +172,7 @@ public class ACRoleProcessor {
         };
     }
 
-    public ProcessFun<Void> deleteRoleDef() {
+    public static ProcessFun<Void> deleteRoleDef() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -201,7 +201,7 @@ public class ACRoleProcessor {
 
     // --------------------------------------------------------------------
 
-    public ProcessFun<Long> addRole() {
+    public static ProcessFun<Long> addRole() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -263,7 +263,7 @@ public class ACRoleProcessor {
         };
     }
 
-    public ProcessFun<Void> modifyRole() {
+    public static ProcessFun<Void> modifyRole() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -281,7 +281,7 @@ public class ACRoleProcessor {
         };
     }
 
-    public ProcessFun<RoleResp> getRole() {
+    public static ProcessFun<RoleResp> getRole() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -299,7 +299,7 @@ public class ACRoleProcessor {
         };
     }
 
-    public ProcessFun<List<RoleResp>> findRoles() {
+    public static ProcessFun<List<RoleResp>> findRoles() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
@@ -320,7 +320,7 @@ public class ACRoleProcessor {
         };
     }
 
-    public ProcessFun<List<RoleResp>> findExposeRoles() {
+    public static ProcessFun<List<RoleResp>> findExposeRoles() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var name = context.req.params.getOrDefault("name", null);
@@ -346,7 +346,7 @@ public class ACRoleProcessor {
         };
     }
 
-    public ProcessFun<Void> deleteRole() {
+    public static ProcessFun<Void> deleteRole() {
         return context -> {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();

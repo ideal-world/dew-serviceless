@@ -16,26 +16,24 @@
 
 package idealworld.dew.serviceless.iam.process.common.service.oauthimpl;
 
-import com.ecfront.dew.common.$;
-import com.ecfront.dew.common.HttpHelper;
-import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.tuple.Tuple2;
-import com.fasterxml.jackson.databind.JsonNode;
-import idealworld.dew.serviceless.common.resp.StandardResp;
+import idealworld.dew.framework.exception.ServiceException;
+import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
-import idealworld.dew.serviceless.iam.process.common.service.IAMBasicService;
-import idealworld.dew.serviceless.iam.process.common.service.OAuthService;
+import idealworld.dew.serviceless.iam.process.common.service.OAuthProcessor;
+import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 /**
  * Wechat mini program service.
  *
  * @author gudaoxuri
  */
-@Service
 @Slf4j
-public class WechatXCXAPI extends IAMBasicService implements PlatformAPI {
+public class WechatXCXAPI implements PlatformAPI {
 
     @Override
     public String getPlatformFlag() {
@@ -43,44 +41,47 @@ public class WechatXCXAPI extends IAMBasicService implements PlatformAPI {
     }
 
     @Override
-    public Resp<OAuthService.OAuthUserInfo> doGetUserInfo(String code, String ak, String sk) {
-        HttpHelper.ResponseWrap response = $.http.postWrap(
-                "https://api.weixin.qq.com/sns/jscode2session?appid="
-                        + ak + "&secret="
-                        + sk + "&js_code="
-                        + code
-                        + "&grant_type=authorization_code", "", "application/json");
-        if (response.statusCode != 200) {
-            return StandardResp.custom(String.valueOf(response.statusCode), BUSINESS_OAUTH, "微信接口调用异常");
-        }
-        log.trace("Wechat response : {}", response.result);
-        var userInfoResp = $.json.toJson(response.result);
-        // 0成功，-1系统繁忙，40029 code无效，45011 访问次数限制（100次/分钟）
-        if (userInfoResp.has("errcode")
-                && !userInfoResp.get("errcode").asText().equalsIgnoreCase("0")) {
-            return StandardResp.custom(userInfoResp.get("errcode").asText(), BUSINESS_OAUTH, userInfoResp.get("errmsg").asText());
-        }
-        return StandardResp.success($.json.toObject(response.result, OAuthService.OAuthUserInfo.class));
+    public Future<OAuthProcessor.OAuthUserInfo> doGetUserInfo(String code, String ak, String sk, ProcessContext context) {
+        return context.fun.http.request(HttpMethod.POST, "https://api.weixin.qq.com/sns/jscode2session?appid="
+                + ak + "&secret="
+                + sk + "&js_code="
+                + code
+                + "&grant_type=authorization_code", Buffer.buffer(""))
+                .compose(response -> {
+                    if (response.statusCode() != 200) {
+                        return context.helper.error(new ServiceException("微信接口调用异常"));
+                    }
+                    var body = response.body().toString();
+                    log.trace("Wechat response : {}", body);
+                    var userInfoResp = new JsonObject(body);
+                    // 0成功，-1系统繁忙，40029 code无效，45011 访问次数限制（100次/分钟）
+                    if (userInfoResp.containsKey("errcode")
+                            && !userInfoResp.getString("errcode").equalsIgnoreCase("0")) {
+                        return context.helper.error(new ServiceException("[" + userInfoResp.getString("errcode") + "]" + userInfoResp.getString("errmsg")));
+                    }
+                    return context.helper.success(userInfoResp.mapTo(OAuthProcessor.OAuthUserInfo.class));
+                });
     }
 
     @Override
-    public Resp<Tuple2<String, Long>> doGetAccessToken(String ak, String sk) {
-        HttpHelper.ResponseWrap response = $.http.getWrap(
-                "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="
-                        + ak
-                        + "&secret="
-                        + sk);
-        if (response.statusCode != 200) {
-            return StandardResp.custom(String.valueOf(response.statusCode), BUSINESS_OAUTH, "微信接口调用异常");
-        }
-        JsonNode jsonNode = $.json.toJson(response.result);
-        if (jsonNode.has("access_token")) {
-            var accessToken = jsonNode.get("access_token").asText();
-            var expiresIn = jsonNode.get("expires_in").asLong();
-            return StandardResp.success(new Tuple2<>(accessToken, expiresIn));
-        } else {
-            return StandardResp.custom(jsonNode.get("errcode").asText(), BUSINESS_OAUTH, "微信接口调用异常");
-        }
+    public Future<Tuple2<String, Long>> doGetAccessToken(String ak, String sk, ProcessContext context) {
+        return context.fun.http.request(HttpMethod.GET, "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="
+                + ak
+                + "&secret="
+                + sk)
+                .compose(response -> {
+                    if (response.statusCode() != 200) {
+                        return context.helper.error(new ServiceException("微信接口调用异常"));
+                    }
+                    var accountToken = new JsonObject(response.body());
+                    if (accountToken.containsKey("access_token")) {
+                        var accessToken = accountToken.getString("access_token");
+                        var expiresIn = accountToken.getLong("expires_in");
+                        return context.helper.success(new Tuple2<>(accessToken, expiresIn));
+                    } else {
+                        return context.helper.error(new ServiceException("[" + accountToken.getString("errcode") + "]微信接口调用异常"));
+                    }
+                });
     }
 
 }

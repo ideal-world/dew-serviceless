@@ -83,6 +83,8 @@ public abstract class DewConfig {
             private Integer maxPoolSize = 100;
             @Builder.Default
             private Integer maxPoolWaiting = 1000;
+            @Builder.Default
+            private Integer electionPeriodSec =60;
 
         }
 

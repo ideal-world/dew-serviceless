@@ -21,6 +21,7 @@ import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SafeEntity;
 import idealworld.dew.framework.dto.IdResp;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.exception.BadRequestException;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
@@ -33,6 +34,7 @@ import javax.validation.ValidatorFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -122,6 +124,45 @@ public class ProcessHelper {
                         }
                     }
                 });
+    }
+
+    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body) {
+        return invoke(fun, body, context.req.params, context.req.identOptInfo);
+    }
+
+    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body, IdentOptCacheInfo identOptCacheInfo) {
+        return invoke(fun, body, context.req.params, identOptCacheInfo);
+    }
+
+    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body,Map<String, String> params) {
+        return invoke(fun, body, params, context.req.identOptInfo);
+    }
+
+    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body, Map<String, String> params, IdentOptCacheInfo identOptCacheInfo) {
+        return fun.process(newContext(body, params, identOptCacheInfo));
+    }
+
+    public ProcessContext newContext(Object body) {
+        return newContext(body, context.req.params, context.req.identOptInfo);
+    }
+
+    public ProcessContext newContext(Object body, IdentOptCacheInfo identOptCacheInfo) {
+        return newContext(body, context.req.params, identOptCacheInfo);
+    }
+
+    public ProcessContext newContext(Object body, Map<String, String> params, IdentOptCacheInfo identOptCacheInfo) {
+        return ProcessContext.builder()
+                .req(ProcessContext.Request.builder()
+                        .header(context.req.header)
+                        .params(params)
+                        .body(body)
+                        .identOptInfo(identOptCacheInfo)
+                        .build())
+                .conf(context.conf)
+                .moduleName(context.moduleName)
+                .fun(context.fun)
+                .build()
+                .init();
     }
 
     static <E extends IdEntity> void addSafeInfo(E entity, Boolean insert, ProcessContext context) {
