@@ -30,17 +30,22 @@ import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.eventbus.ProcessFun;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.util.KeyHelper;
+import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.iam.IAMConfig;
 import idealworld.dew.serviceless.iam.IAMConstant;
+import idealworld.dew.serviceless.iam.domain.auth.Resource;
+import idealworld.dew.serviceless.iam.domain.auth.ResourceSubject;
 import idealworld.dew.serviceless.iam.domain.ident.Account;
 import idealworld.dew.serviceless.iam.domain.ident.AccountApp;
 import idealworld.dew.serviceless.iam.domain.ident.AccountIdent;
 import idealworld.dew.serviceless.iam.domain.ident.TenantIdent;
 import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
+import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
 import idealworld.dew.serviceless.iam.process.appconsole.ACAppProcessor;
 import idealworld.dew.serviceless.iam.process.appconsole.ACRoleProcessor;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.app.AppIdentAddReq;
+import idealworld.dew.serviceless.iam.process.appconsole.dto.resource.ResourceResp;
 import idealworld.dew.serviceless.iam.process.common.dto.account.AccountChangeReq;
 import idealworld.dew.serviceless.iam.process.common.dto.account.AccountIdentChangeReq;
 import idealworld.dew.serviceless.iam.process.common.dto.account.AccountLoginReq;
@@ -62,6 +67,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 公共函数服务.
@@ -88,6 +95,8 @@ public class CommonProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/common/account/ident", changeIdent());
         // 注销账号
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/common/account", unRegister());
+        // 获取资源
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/common/resource", findResources());
     }
 
     public static ProcessFun<IdentOptInfo> registerTenant() {
@@ -99,8 +108,7 @@ public class CommonProcessor {
             var tenantRegisterReq = context.req.body(TenantRegisterReq.class);
             var tempIdentOptInfo = IdentOptCacheInfo.builder().build();
             // 初始化租户
-            // TODO 事务处理
-            return context.fun.sql.tx(client ->
+            return context.fun.sql.tx(context, () ->
                     context.helper.invoke(
                             SCTenantProcessor.addTenant(),
                             TenantAddReq.builder()
@@ -224,11 +232,11 @@ public class CommonProcessor {
         return context -> {
             var accountRegisterReq = context.req.body(AccountRegisterReq.class);
             var openId = $.field.createUUID();
-            return context.fun.sql.tx(client ->
+            return context.fun.sql.tx(context, () ->
                     IAMBasicProcessor.getEnabledTenantIdByAppId(accountRegisterReq.getRelAppId(), true, context)
                             .compose(tenantId ->
                                     context.helper.existToError(
-                                            client.exists(
+                                            context.fun.sql.exists(
                                                     new HashMap<>() {
                                                         {
                                                             put("ak", accountRegisterReq.getAk());
@@ -239,7 +247,7 @@ public class CommonProcessor {
                                                     AccountIdent.class
                                             ), () -> new ConflictException("账号凭证[" + accountRegisterReq.getAk() + "]已存在"))
                                             .compose(resp ->
-                                                    client.save(Account.builder()
+                                                    context.fun.sql.save(Account.builder()
                                                             .name(accountRegisterReq.getName())
                                                             .avatar(accountRegisterReq.getAvatar())
                                                             .parameters(accountRegisterReq.getParameters())
@@ -264,7 +272,7 @@ public class CommonProcessor {
                                                                             tenantId,
                                                                             context)
                                                                             .compose(processIdentSk ->
-                                                                                    client.save(AccountIdent.builder()
+                                                                                    context.fun.sql.save(AccountIdent.builder()
                                                                                             .kind(accountRegisterReq.getKind())
                                                                                             .ak(accountRegisterReq.getAk())
                                                                                             .sk(processIdentSk)
@@ -274,7 +282,7 @@ public class CommonProcessor {
                                                                                             .relTenantId(tenantId)
                                                                                             .build()))
                                                                             .compose(resp ->
-                                                                                    client.save(AccountApp.builder()
+                                                                                    context.fun.sql.save(AccountApp.builder()
                                                                                             .relAccountId(tenantId)
                                                                                             .relAppId(accountRegisterReq.getRelAppId())
                                                                                             .build()))
@@ -443,6 +451,47 @@ public class CommonProcessor {
                                 .build());
     }
 
+    public static ProcessFun<List<ResourceResp>> findResources() {
+        return context ->
+                //  TODO 根据 identOptCacheInfo 过滤
+                context.fun.sql.list(
+                        String.format("SELECT resource.* FROM %s AS resource" +
+                                "  INNER JOIN %s AS subject ON subject.id = resource,rel_resource_subject_id" +
+                                "  WHERE ( ( resource.rel_tenant_id = #{rel_tenant_id} AND resource.rel_app_id = #{rel_app_id} )" +
+                                "    OR ( resource.expose_kind = #{expose_kind_tenant} AND resource.rel_tenant_id = #{rel_tenant_id} )" +
+                                "    OR resource.expose_kind = #{expose_kind_global} )" +
+                                "    AND subject.kind = #{kind}" +
+                                "  ORDER BY resource.sort ASC",
+                                new Resource().tableName(),new ResourceSubject().tableName()),
+                        new HashMap<>() {
+                            {
+                                put("kind",context.req.params.get("kind"));
+                                put("expose_kind_tenant", ExposeKind.TENANT);
+                                put("expose_kind_global", ExposeKind.GLOBAL);
+                                put("rel_app_id", context.req.identOptInfo.getAppId());
+                                put("rel_tenant_id", context.req.identOptInfo.getTenantId());
+                            }
+                        })
+                .compose(resourceInfos ->
+                    context.helper.success(resourceInfos.stream()
+                            .map(resourceInfo -> ResourceResp.builder()
+                                   .id(resourceInfo.getLong("resource.id"))
+                                   .name(resourceInfo.getString("resource.name"))
+                                   .pathAndQuery(URIHelper.getPathAndQuery(resourceInfo.getString("resource.uri")))
+                                   .name(resourceInfo.getString("resource.name"))
+                                   .icon(resourceInfo.getString("resource.icon"))
+                                   .action(resourceInfo.getString("resource.action"))
+                                   .sort(resourceInfo.getInteger("resource.sort"))
+                                   .resGroup(resourceInfo.getBoolean("resource.resGroup"))
+                                   .parentId(resourceInfo.getLong("resource.parentId"))
+                                   .relResourceSubjectId(resourceInfo.getLong("resource.relResourceSubjectId"))
+                                   .exposeKind(ExposeKind.parse(resourceInfo.getString("resource.exposeKind")))
+                                   .relAppId(resourceInfo.getLong("resource.relAppId"))
+                                   .relTenantId(resourceInfo.getLong("resource.relTenantId"))
+                                    .build())
+                            .collect(Collectors.toList()))
+                );
+    }
 
     private static Future<Void> validateSK(AccountIdentKind identKind,
                                            String ak, String inputSk, String storageSk, Long relAppId, Long tenantId, ProcessContext context) {

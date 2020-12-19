@@ -682,23 +682,31 @@ public class ACResourceProcessor {
                                                         .build(),
                                                 context);
                                         return context.helper.success();
-                                    });
+                                    }));
         };
     }
 
     private Future<List<Long>> findResourceAndGroups(Long resourceParentId, Long relAppId, Long relTenantId, ProcessContext context) {
-        TODO 递归封装
-        /*var qResource = QResource.resource;
-        return sqlBuilder
-                .select(qResource.id)
-                .from(qResource)
-                .where(qResource.parentId.eq(resourceParentId))
-                .where(qResource.relTenantId.eq(relTenantId))
-                .where(qResource.relAppId.eq(relAppId))
-                .fetch()
-                .stream()
-                .flatMap(resId -> findResourceAndGroups(resId, relAppId, relTenantId).stream())
-                .collect(Collectors.toList());*/
+        return context.helper.findWithRecursion(resourceParentId, id -> doFindResourceAndGroups(id, relAppId, relTenantId, context));
+    }
+
+    private Future<List<Long>> doFindResourceAndGroups(Long resourceParentId, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.fun.sql.list(
+                String.format("SELECT id FROM %s" +
+                                "  WHERE parent_id = #{resource_parent_id} AND rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id}",
+                        new Resource().tableName()),
+                new HashMap<>() {
+                    {
+                        put("resource_parent_id", resourceParentId);
+                        put("rel_app_id", relAppId);
+                        put("rel_tenant_id", relTenantId);
+                    }
+                })
+                .compose(fetchResourceIds -> context.helper.success(
+                        fetchResourceIds.stream()
+                                .map(id -> id.getLong("id"))
+                                .collect(Collectors.toList())
+                ));
     }
 
     public static Future<Long> getTenantAdminRoleResourceId(ProcessContext context) {

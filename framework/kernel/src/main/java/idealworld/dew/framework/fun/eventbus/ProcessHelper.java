@@ -24,6 +24,7 @@ import idealworld.dew.framework.dto.IdResp;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.exception.BadRequestException;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -32,9 +33,11 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -134,7 +137,7 @@ public class ProcessHelper {
         return invoke(fun, body, context.req.params, identOptCacheInfo);
     }
 
-    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body,Map<String, String> params) {
+    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body, Map<String, String> params) {
         return invoke(fun, body, params, context.req.identOptInfo);
     }
 
@@ -164,6 +167,27 @@ public class ProcessHelper {
                 .build()
                 .init();
     }
+
+    public <E> Future<List<E>> findWithRecursion(E initObj, Function<E, Future<List<E>>> recursionFun) {
+        var result = new ArrayList<E>();
+        Promise<List<E>> promise = Promise.promise();
+        findWithRecursion(result, initObj, recursionFun, promise);
+        return promise.future();
+    }
+
+    private <E> void findWithRecursion(List<E> result, E obj, Function<E, Future<List<E>>> recursionFun, Promise<List<E>> promise) {
+        recursionFun.apply(obj)
+                .onSuccess(objs -> {
+                    if (objs.isEmpty()) {
+                        promise.complete(result);
+                    } else {
+                        result.addAll(objs);
+                        objs.forEach(o -> findWithRecursion(result, o, recursionFun, promise));
+                    }
+                })
+                .onFailure(promise::fail);
+    }
+
 
     static <E extends IdEntity> void addSafeInfo(E entity, Boolean insert, ProcessContext context) {
         if (context == null) {

@@ -23,6 +23,7 @@ import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SoftDelEntity;
 import idealworld.dew.framework.exception.BadRequestException;
 import idealworld.dew.framework.exception.NotFoundException;
+import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.util.CaseFormatter;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -384,6 +386,36 @@ public class FunSQLClient {
         );
     }
 
+    public <E> Future<E> tx(ProcessContext context, Supplier<Future<E>> function) {
+        Promise<E> promise = Promise.promise();
+        if (client instanceof SqlConnection) {
+            function.get()
+                    .onComplete(result -> {
+                        if (result.failed()) {
+                            log.error("[SQL]Transaction [{}] error: {}", result.cause().getMessage(), result.cause());
+                            promise.fail(result.cause());
+                        } else {
+                            promise.complete(result.result());
+                        }
+                    });
+        } else {
+            ((Pool) client).withTransaction(client -> {
+                context.fun.sql = txInstance(client);
+                return function.get();
+            })
+                    .onComplete(result -> {
+                        context.fun.sql = this;
+                        if (result.failed()) {
+                            log.error("[SQL]Transaction [{}] error: {}", result.cause().getMessage(), result.cause());
+                            promise.fail(result.cause());
+                        } else {
+                            promise.complete(result.result());
+                        }
+                    });
+        }
+        return promise.future();
+    }
+
     public <E> Future<E> tx(Function<FunSQLClient, Future<E>> function) {
         Promise<E> promise = Promise.promise();
         if (client instanceof SqlConnection) {
@@ -458,17 +490,13 @@ public class FunSQLClient {
         return promise.future();
     }
 
-    public Consumer addEntityByInsertFun = o -> {
-
-    };
-    public Consumer addEntityByUpdateFun = o -> {
-
-    };
+    public Consumer addEntityByInsertFun;
+    public Consumer addEntityByUpdateFun;
 
     private <E extends IdEntity> void addSafeInfo(E entity, Boolean insert) {
-        if (insert) {
+        if (insert && addEntityByInsertFun!=null) {
             addEntityByInsertFun.accept(entity);
-        } else {
+        } else if(addEntityByUpdateFun!=null) {
             addEntityByUpdateFun.accept(entity);
         }
     }

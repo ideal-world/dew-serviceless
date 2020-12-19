@@ -26,6 +26,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -38,9 +39,23 @@ public class ProcessContext {
 
     public ProcessContext init() {
         helper = new ProcessHelper(this);
-        if (fun.sql != null) {
-            fun.sql.addEntityByInsertFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, true, this);
-            fun.sql.addEntityByUpdateFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, false, this);
+        if (FunSQLClient.contains(moduleName)) {
+            fun.sql = FunSQLClient.choose(moduleName);
+            if (fun.sql.addEntityByInsertFun == null) {
+                fun.sql.addEntityByInsertFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, true, this);
+            }
+            if (fun.sql.addEntityByUpdateFun == null) {
+                fun.sql.addEntityByUpdateFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, false, this);
+            }
+        }
+        if (FunRedisClient.contains(moduleName)) {
+            fun.cache = FunRedisClient.choose(moduleName);
+        }
+        if (FunHttpClient.contains(moduleName)) {
+            fun.http = FunHttpClient.choose(moduleName);
+        }
+        if (FunEventBus.contains(moduleName)) {
+            fun.eb = FunEventBus.choose(moduleName);
         }
         return this;
     }
@@ -58,10 +73,13 @@ public class ProcessContext {
     @AllArgsConstructor
     public static class Request {
 
-        public Map<String, String> params;
-        public Map<String, String> header;
+        @Builder.Default
+        public Map<String, String> params = new HashMap<>();
+        @Builder.Default
+        public Map<String, String> header = new HashMap<>();
         private Object body;
-        public IdentOptCacheInfo identOptInfo;
+        @Builder.Default
+        public IdentOptCacheInfo identOptInfo = IdentOptCacheInfo.builder().build();
 
         public Long pageNumber() {
             return Long.parseLong(params.get("pageNumber"));
@@ -82,7 +100,6 @@ public class ProcessContext {
 
     }
 
-    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Function {

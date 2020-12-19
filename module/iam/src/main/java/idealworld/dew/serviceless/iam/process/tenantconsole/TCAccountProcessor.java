@@ -171,8 +171,8 @@ public class TCAccountProcessor {
     public static ProcessFun<Void> deleteAccount() {
         return context -> {
             var accountId = Long.parseLong(context.req.params.get("accountId"));
-            return context.fun.sql.tx(client ->
-                    client.softDelete(
+            return context.fun.sql.tx(context, () ->
+                    context.fun.sql.softDelete(
                             new HashMap<>() {
                                 {
                                     put("id", accountId);
@@ -182,35 +182,35 @@ public class TCAccountProcessor {
                             Account.class)
                             .compose(deleteNumber ->
                                     CompositeFuture.all(
-                                            client.softDelete(
+                                            context.fun.sql.softDelete(
                                                     new HashMap<>() {
                                                         {
                                                             put("rel_account_id", accountId);
                                                         }
                                                     },
                                                     AccountIdent.class),
-                                            client.softDelete(
+                                            context.fun.sql.softDelete(
                                                     new HashMap<>() {
                                                         {
                                                             put("rel_account_id", accountId);
                                                         }
                                                     },
                                                     AccountRole.class),
-                                            client.softDelete(
+                                            context.fun.sql.softDelete(
                                                     new HashMap<>() {
                                                         {
                                                             put("rel_account_id", accountId);
                                                         }
                                                     },
                                                     AccountApp.class),
-                                            client.softDelete(
+                                            context.fun.sql.softDelete(
                                                     new HashMap<>() {
                                                         {
                                                             put("rel_account_id", accountId);
                                                         }
                                                     },
                                                     AccountGroup.class),
-                                            client.softDelete(
+                                            context.fun.sql.softDelete(
                                                     new HashMap<>() {
                                                         {
                                                             put("rel_account_id", accountId);

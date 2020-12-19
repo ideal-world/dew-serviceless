@@ -20,9 +20,6 @@ import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.BadRequestException;
-import idealworld.dew.framework.fun.cache.FunRedisClient;
-import idealworld.dew.framework.fun.httpclient.FunHttpClient;
-import idealworld.dew.framework.fun.sql.FunSQLClient;
 import idealworld.dew.framework.util.AntPathMatcher;
 import idealworld.dew.framework.util.URIHelper;
 import io.vertx.core.Future;
@@ -58,7 +55,6 @@ public class ReceiveProcessor {
             return PROCESSORS.get(actionKind).get(pathRequest).process(ProcessContext.builder()
                     .req(ProcessContext.Request.builder()
                             .header(header)
-                            .params(new HashMap<>())
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
@@ -67,12 +63,6 @@ public class ReceiveProcessor {
                             .build())
                     .conf(config)
                     .moduleName(moduleName)
-                    .fun(ProcessContext.Function.builder()
-                            .sql(FunSQLClient.contains(moduleName) ? FunSQLClient.choose(moduleName) : null)
-                            .cache(FunRedisClient.contains(moduleName) ? FunRedisClient.choose(moduleName) : null)
-                            .http(FunHttpClient.contains(moduleName) ? FunHttpClient.choose(moduleName) : null)
-                            .eb(FunEventBus.contains(moduleName) ? FunEventBus.choose(moduleName) : null)
-                            .build())
                     .build()
                     .init());
         }
@@ -99,12 +89,6 @@ public class ReceiveProcessor {
                             .build())
                     .conf(config)
                     .moduleName(moduleName)
-                    .fun(ProcessContext.Function.builder()
-                            .sql(FunSQLClient.contains(moduleName) ? FunSQLClient.choose(moduleName) : null)
-                            .cache(FunRedisClient.contains(moduleName) ? FunRedisClient.choose(moduleName) : null)
-                            .http(FunHttpClient.contains(moduleName) ? FunHttpClient.choose(moduleName) : null)
-                            .eb(FunEventBus.contains(moduleName) ? FunEventBus.choose(moduleName) : null)
-                            .build())
                     .build()
                     .init());
         }

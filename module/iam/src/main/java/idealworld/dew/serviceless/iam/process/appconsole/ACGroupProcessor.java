@@ -248,9 +248,9 @@ public class ACGroupProcessor {
             var relAppId = context.req.identOptInfo.getAppId();
             var groupId = Long.parseLong(context.req.params.get("groupId"));
             var groupNodeAddReq = context.req.body(GroupNodeAddReq.class);
-            return context.fun.sql.tx(client ->
+            return context.fun.sql.tx(context, () ->
                     context.helper.notExistToError(
-                            client.exists(
+                            context.fun.sql.exists(
                                     new HashMap<>() {
                                         {
                                             put("id", groupId);
@@ -261,10 +261,10 @@ public class ACGroupProcessor {
                                     Group.class), () -> new ConflictException("关联群组不合法"))
                             .compose(resp ->
                                     packageGroupNodeCode(groupId, groupNodeAddReq.getParentId(), groupNodeAddReq.getSiblingId(), null,
-                                            (IAMConfig) context.getConf(), client, context)
+                                            (IAMConfig) context.conf, context.fun.sql, context)
                                             .compose(fetchGroupNodeCode ->
                                                     context.helper.existToError(
-                                                            client.exists(
+                                                            context.fun.sql.exists(
                                                                     new HashMap<>() {
                                                                         {
                                                                             put("code", fetchGroupNodeCode);
@@ -276,7 +276,7 @@ public class ACGroupProcessor {
                                                                 var groupNode = context.helper.convert(groupNodeAddReq, GroupNode.class);
                                                                 groupNode.setRelGroupId(groupId);
                                                                 groupNode.setCode(fetchGroupNodeCode);
-                                                                return client.save(groupNode);
+                                                                return context.fun.sql.save(groupNode);
                                                             })))
             );
         };
@@ -289,9 +289,9 @@ public class ACGroupProcessor {
             var groupNodeId = Long.parseLong(context.req.params.get("groupNodeId"));
             var groupNodeModifyReq = context.req.body(GroupNodeModifyReq.class);
             var groupNodeSets = context.helper.convert(groupNodeModifyReq, GroupNode.class);
-            return context.fun.sql.tx(client ->
+            return context.fun.sql.tx(context, () ->
                     context.helper.notExistToError(
-                            client.getOne(
+                            context.fun.sql.getOne(
                                     String.format("SELECT node.* FROM %s AS node" +
                                                     "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
                                                     "  WHERE node.id = #{id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
@@ -307,10 +307,10 @@ public class ACGroupProcessor {
                             .compose(fetchGroupNode -> {
                                 if (groupNodeModifyReq.getParentId() != DewConstant.OBJECT_UNDEFINED || groupNodeModifyReq.getSiblingId() != DewConstant.OBJECT_UNDEFINED) {
                                     return packageGroupNodeCode(fetchGroupNode.getRelGroupId(), groupNodeModifyReq.getParentId(),
-                                            groupNodeModifyReq.getSiblingId(), fetchGroupNode.getCode(), (IAMConfig) context.conf, client, context)
+                                            groupNodeModifyReq.getSiblingId(), fetchGroupNode.getCode(), (IAMConfig) context.conf, context.fun.sql, context)
                                             .compose(fetchGroupNodeCode ->
                                                     context.helper.existToError(
-                                                            client.exists(
+                                                            context.fun.sql.exists(
                                                                     new HashMap<>() {
                                                                         {
                                                                             put("!id", groupNodeId);
@@ -328,7 +328,7 @@ public class ACGroupProcessor {
                                     return context.helper.success();
                                 }
                             })
-                            .compose(resp -> client.update(groupNodeId, groupNodeSets))
+                            .compose(resp -> context.fun.sql.update(groupNodeId, groupNodeSets))
             );
         };
     }
@@ -380,9 +380,9 @@ public class ACGroupProcessor {
             var relTenantId = context.req.identOptInfo.getTenantId();
             var relAppId = context.req.identOptInfo.getAppId();
             var groupNodeId = Long.parseLong(context.req.params.get("groupNodeId"));
-            return context.fun.sql.tx(client ->
+            return context.fun.sql.tx(context,() ->
                     context.helper.existToError(
-                            client.exists(
+                            context.fun.sql.exists(
                                     new HashMap<>() {
                                         {
                                             put("rel_group_node_id", groupNodeId);
@@ -391,7 +391,7 @@ public class ACGroupProcessor {
                                     AccountGroup.class), () -> new ConflictException("请先删除关联的账号群组数据"))
                             .compose(resp ->
                                     context.helper.existToError(
-                                            client.exists(
+                                            context.fun.sql.exists(
                                                     new HashMap<>() {
                                                         {
                                                             put("rel_subject_kind", AuthSubjectKind.GROUP_NODE);
@@ -400,7 +400,7 @@ public class ACGroupProcessor {
                                                     },
                                                     AuthPolicy.class), () -> new ConflictException("请先删除关联的权限策略数据"))
                                             .compose(r ->
-                                                    client.getOne(
+                                                    context.fun.sql.getOne(
                                                             String.format("SELECT node.* FROM %s AS node" +
                                                                             "  INNER JOIN %s group ON group.id = node.rel_group_id" +
                                                                             "  WHERE node.id = #{node_id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
@@ -414,9 +414,9 @@ public class ACGroupProcessor {
                                                             },
                                                             GroupNode.class)
                                                             .compose(fetchGroupNode ->
-                                                                    client.softDelete(fetchGroupNode.getId(), GroupNode.class)
+                                                                    context.fun.sql.softDelete(fetchGroupNode.getId(), GroupNode.class)
                                                                             .compose(re -> updateOtherGroupNodeCode(fetchGroupNode.getRelGroupId(), fetchGroupNode.getCode(), true, null,
-                                                                                    (IAMConfig) context.conf, client, context))
+                                                                                    (IAMConfig) context.conf, context.fun.sql, context))
                                                             ))));
         };
     }

@@ -39,6 +39,7 @@ import idealworld.dew.serviceless.iam.process.common.dto.account.AccountRegister
 import idealworld.dew.serviceless.iam.process.common.service.oauthimpl.PlatformAPI;
 import idealworld.dew.serviceless.iam.process.common.service.oauthimpl.WechatXCXAPI;
 import io.vertx.core.Future;
+import io.vertx.mysqlclient.MySQLException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -103,10 +104,9 @@ public class OAuthProcessor {
                                                                                     .relAppId(accountOAuthLoginReq.getRelAppId())
                                                                                     .build())
                                                                             .onFailure(e -> {
-                                                                                // TODO 确定异常
-                                                                                if (e instanceof NonUniqueObjectException) {
+                                                                                if (e instanceof MySQLException && e.getMessage().startsWith("Duplicate entry")) {
                                                                                     log.info("OAuth Login : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), $.json.toJsonString(accountOAuthLoginReq));
-                                                                                    return context.helper.invoke(
+                                                                                    context.helper.invoke(
                                                                                             CommonProcessor.login(),
                                                                                             AccountLoginReq.builder()
                                                                                                     .kind(accountOAuthLoginReq.getKind())
@@ -115,8 +115,9 @@ public class OAuthProcessor {
                                                                                                     .relAppId(accountOAuthLoginReq.getRelAppId())
                                                                                                     .build()
                                                                                     );
+                                                                                }else {
+                                                                                    context.helper.error(e);
                                                                                 }
-                                                                                return context.helper.error(e);
                                                                             })
                                                                             .onSuccess(identOptInfo -> context.helper.success(identOptInfo));
                                                                 } else {
