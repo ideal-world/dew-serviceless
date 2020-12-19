@@ -21,6 +21,6 @@ import io.vertx.core.Future;
 @FunctionalInterface
 public interface ProcessFun<OUT> {
 
-    Future<OUT> process(ProcessContext context);
+    Future<OUT> process(EventBusContext eventBusContext);
 
 }

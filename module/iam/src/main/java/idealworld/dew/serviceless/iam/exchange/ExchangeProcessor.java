@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 public class ExchangeProcessor {
 
     public static void publish(OptActionKind actionKind, String subjectCategory, Object subjectId, Object detailData, ProcessContext context) {
-        context.fun.eb.publish(
+        context.eb.publish(
                 IAMConstant.MODULE_GATEWAY_NAME,
                 actionKind,
                 "http://" + context.moduleName + "/" + subjectCategory + "/" + subjectId,
@@ -58,10 +58,10 @@ public class ExchangeProcessor {
     }
 
     public static Future<Void> cacheAppIdents(ProcessContext context) {
-        if (!context.fun.cache.isLeader()) {
+        if (!context.cache.isLeader()) {
             return context.helper.success();
         }
-        return context.fun.sql.list(
+        return context.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
                                 "  INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
                                 "  INNER JOIN %s tenant ON tenant.id = app.rel_tenant_id AND tenant.status = #{status}" +
@@ -88,7 +88,7 @@ public class ExchangeProcessor {
     }
 
     public static Future<Void> enableTenant(Long tenantId, ProcessContext context) {
-        return context.fun.sql.list(
+        return context.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time FROM %s AS ident" +
                                 "  INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
                                 "  WHERE app.rel_tenant_id = #{rel_tenant_id} AND ident.valid_time > #{valid_time}",
@@ -114,7 +114,7 @@ public class ExchangeProcessor {
     }
 
     public static Future<Void> disableTenant(Long tenantId, ProcessContext context) {
-        return context.fun.sql.list(
+        return context.sql.list(
                 String.format("SELECT ident.ak FROM %s AS ident" +
                         "  INNER JOIN %s app ON app.id = ident.rel_app_id" +
                         "  WHERE app.rel_tenant_id = #{rel_tenant_id}", new AppIdent().tableName(), new App().tableName()),
@@ -134,7 +134,7 @@ public class ExchangeProcessor {
     }
 
     public static Future<Void> enableApp(Long appId, Long tenantId, ProcessContext context) {
-        return context.fun.sql.getOne(
+        return context.sql.getOne(
                 new HashMap<>() {
                     {
                         put("id", appId);
@@ -144,10 +144,10 @@ public class ExchangeProcessor {
                 .compose(app -> {
                     var publicKey = app.getPubKey();
                     var privateKey = app.getPriKey();
-                    return context.fun.cache.set(IAMConstant.CACHE_APP_INFO + appId, tenantId + "\n" + publicKey + "\n" + privateKey);
+                    return context.cache.set(IAMConstant.CACHE_APP_INFO + appId, tenantId + "\n" + publicKey + "\n" + privateKey);
                 })
                 .compose(resp ->
-                        context.fun.sql.list(
+                        context.sql.list(
                                 String.format("SELECT ak, sk, valid_time FROM %s" +
                                         "  WHERE rel_app_id = #{rel_app_id} AND valid_time > #{valid_time}", new AppIdent().tableName()),
                                 new HashMap<>() {
@@ -169,7 +169,7 @@ public class ExchangeProcessor {
     }
 
     public static Future<Void> disableApp(Long appId, Long tenantId, ProcessContext context) {
-        return context.fun.sql.list(
+        return context.sql.list(
                 new HashMap<>() {
                     {
                         put("rel_app_id", appId);
@@ -179,7 +179,7 @@ public class ExchangeProcessor {
                 .compose(appIdents ->
                         CompositeFuture.all(appIdents.stream().map(appIdent -> deleteAppIdent(appIdent.getAk(), context)).collect(Collectors.toList()))
                 )
-                .compose(resp -> context.fun.cache.del(IAMConstant.CACHE_APP_INFO + appId));
+                .compose(resp -> context.cache.del(IAMConstant.CACHE_APP_INFO + appId));
     }
 
     public static Future<Void> changeAppIdent(AppIdent appIdent, Long appId, Long tenantId, ProcessContext context) {
@@ -187,16 +187,16 @@ public class ExchangeProcessor {
     }
 
     public static Future<Void> deleteAppIdent(String ak, ProcessContext context) {
-        return context.fun.cache.del(IAMConstant.CACHE_APP_AK + ak);
+        return context.cache.del(IAMConstant.CACHE_APP_AK + ak);
     }
 
     private static Future<Void> changeAppIdent(String ak, String sk, Date validTime, Long appId, Long tenantId, ProcessContext context) {
-        return context.fun.cache.del(IAMConstant.CACHE_APP_AK + ak)
+        return context.cache.del(IAMConstant.CACHE_APP_AK + ak)
                 .compose(resp -> {
                     if (validTime == null) {
-                        return context.fun.cache.set(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId);
+                        return context.cache.set(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId);
                     } else {
-                        return context.fun.cache.setex(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId,
+                        return context.cache.setex(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId,
                                 (validTime.getTime() - System.currentTimeMillis()) / 1000);
                     }
                 });
@@ -212,7 +212,7 @@ public class ExchangeProcessor {
         var key = IAMConstant.CACHE_AUTH_POLICY
                 + policyInfo.getResourceUri().replace("//", "") + ":"
                 + policyInfo.getActionKind().toString().toLowerCase();
-        return context.fun.cache.get(key)
+        return context.cache.get(key)
                 .compose(strPolicyValue -> {
                     var policyValue = strPolicyValue != null ? new JsonObject(strPolicyValue) : new JsonObject();
                     if (!policyValue.containsKey(policyInfo.subjectOperator.toString().toLowerCase())) {
@@ -222,7 +222,7 @@ public class ExchangeProcessor {
                         policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).put(policyInfo.subjectKind.toString().toLowerCase(), new JsonArray());
                     }
                     policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).getJsonArray(policyInfo.subjectKind.toString().toLowerCase()).add(policyInfo.getSubjectId());
-                    return context.fun.cache.set(key, policyValue.toString());
+                    return context.cache.set(key, policyValue.toString());
                 });
     }
 
@@ -231,7 +231,7 @@ public class ExchangeProcessor {
         var key = IAMConstant.CACHE_AUTH_POLICY
                 + policyInfo.getResourceUri().replace("//", "") + ":"
                 + policyInfo.getActionKind().toString().toLowerCase();
-        return context.fun.cache.get(key)
+        return context.cache.get(key)
                 .compose(strPolicyValue -> {
                     if (strPolicyValue == null) {
                         return context.helper.success();
@@ -242,7 +242,7 @@ public class ExchangeProcessor {
                         return context.helper.success();
                     }
                     policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).getJsonObject(policyInfo.subjectKind.toString().toLowerCase()).remove(policyInfo.getSubjectId());
-                    return context.fun.cache.set(key, policyValue.toString());
+                    return context.cache.set(key, policyValue.toString());
                 });
     }
 
@@ -251,7 +251,7 @@ public class ExchangeProcessor {
         var key = IAMConstant.CACHE_AUTH_POLICY
                 + resourceUri.replace("//", "") + ":"
                 + actionKind.toString().toLowerCase();
-        return context.fun.cache.del(key);
+        return context.cache.del(key);
     }
 
     @Data

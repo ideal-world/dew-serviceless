@@ -21,6 +21,7 @@ import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SafeEntity;
 import idealworld.dew.framework.domain.SoftDelEntity;
 import idealworld.dew.framework.dto.CommonStatus;
+import idealworld.dew.framework.fun.eventbus.EventBusContext;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
 import idealworld.dew.framework.fun.test.DewTest;
@@ -431,25 +432,25 @@ public class FunSQLClientTest extends DewTest {
     @Test
     @Order(7)
     public void testTXSuccessByContext(Vertx vertx, VertxTestContext testContext) {
-        var context = ProcessContext.builder().moduleName("").build().init();
-        context.fun.sql.tx(context, () ->
+        var eventBusContext = EventBusContext.builder().context(ProcessContext.builder().moduleName("").build()).build().init();
+        eventBusContext.context.sql.tx(eventBusContext.context, () ->
                 Future.succeededFuture()
                         .compose(resp ->
-                                context.fun.sql.save(
+                                eventBusContext.context.sql.save(
                                         Account.builder()
                                                 .name("dew1")
                                                 .openId("yyyy")
                                                 .status(CommonStatus.DISABLED)
                                                 .build()))
                         .compose(id ->
-                                context.fun.sql.save(
+                                eventBusContext.context.sql.save(
                                         Account.builder()
                                                 .name("dew2")
                                                 .openId("yyyy")
                                                 .status(CommonStatus.DISABLED)
                                                 .build()))
                         .compose(resp ->
-                                context.fun.sql.list("select * from account where name like #{name}", new HashMap<>() {
+                                eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
                                     {
                                         put("name", "dew%");
                                     }
@@ -458,7 +459,7 @@ public class FunSQLClientTest extends DewTest {
                 .onComplete(resp -> {
                     Assertions.assertEquals(2, resp.result().size());
                     Assertions.assertEquals("dew1", resp.result().get(0).name);
-                    context.fun.sql.list("select * from account where name like #{name}", new HashMap<>() {
+                    eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
                         {
                             put("name", "dew%");
                         }
@@ -475,25 +476,25 @@ public class FunSQLClientTest extends DewTest {
     @Test
     @Order(8)
     public void testTXFailByContext(Vertx vertx, VertxTestContext testContext) {
-        var context = ProcessContext.builder().moduleName("").build().init();
-        context.fun.sql.tx(context, () ->
+        var eventBusContext = EventBusContext.builder().context(ProcessContext.builder().moduleName("").build()).build().init();
+        eventBusContext.context.sql.tx(eventBusContext.context, () ->
                 Future.succeededFuture()
                         .compose(resp ->
-                                context.fun.sql.save(
+                                eventBusContext.context.sql.save(
                                         Account.builder()
                                                 .name("dew3")
                                                 .openId("yyyy")
                                                 .status(CommonStatus.DISABLED)
                                                 .build()))
                         .compose(id ->
-                                context.fun.sql.save(
+                                eventBusContext.context.sql.save(
                                         Account.builder()
                                                 .name("dew3")
                                                 .openId("yyyy")
                                                 .status(CommonStatus.DISABLED)
                                                 .build()))
                         .compose(resp ->
-                                context.fun.sql.list("select * from account where name like #{name}", new HashMap<>() {
+                                eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
                                     {
                                         put("name", "dew%");
                                     }
@@ -501,7 +502,7 @@ public class FunSQLClientTest extends DewTest {
         )
                 .onComplete(resp -> {
                     Assertions.assertTrue(resp.failed());
-                    context.fun.sql.list("select * from account where name like #{name}", new HashMap<>() {
+                    eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
                         {
                             put("name", "dew%");
                         }
@@ -518,19 +519,19 @@ public class FunSQLClientTest extends DewTest {
     @Test
     @Order(9)
     public void testTXFailReentrantByContext(Vertx vertx, VertxTestContext testContext) {
-        var context = ProcessContext.builder().moduleName("").build().init();
-        context.fun.sql.tx(context, () ->
+        var eventBusContext = EventBusContext.builder().context(ProcessContext.builder().moduleName("").build()).build().init();
+        eventBusContext.context.sql.tx(eventBusContext.context, () ->
                 Future.succeededFuture()
                         .compose(resp ->
-                                context.fun.sql.save(
+                                eventBusContext.context.sql.save(
                                         Account.builder()
                                                 .name("dew3")
                                                 .openId("yyyy")
                                                 .status(CommonStatus.DISABLED)
                                                 .build()))
                         .compose(id ->
-                                context.fun.sql.tx(context, () ->
-                                        context.fun.sql.save(
+                                eventBusContext.context.sql.tx(eventBusContext.context, () ->
+                                        eventBusContext.context.sql.save(
                                                 Account.builder()
                                                         .name("dew3")
                                                         .openId("yyyy")
@@ -538,7 +539,7 @@ public class FunSQLClientTest extends DewTest {
                                                         .build()))
                         )
                         .compose(resp ->
-                                context.fun.sql.list("select * from account where name like #{name}", new HashMap<>() {
+                                eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
                                     {
                                         put("name", "dew%");
                                     }
@@ -546,7 +547,7 @@ public class FunSQLClientTest extends DewTest {
         )
                 .onComplete(resp -> {
                     Assertions.assertTrue(resp.failed());
-                    context.fun.sql.list("select * from account where name like #{name}", new HashMap<>() {
+                    eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
                         {
                             put("name", "dew%");
                         }

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package idealworld.dew.serviceless.iam.process.common.service.oauthimpl;
+package idealworld.dew.serviceless.iam.process.common.oauthimpl;
 
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.exception.ServiceException;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
-import idealworld.dew.serviceless.iam.process.common.service.OAuthProcessor;
+import idealworld.dew.serviceless.iam.process.common.OAuthProcessor;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
@@ -42,7 +42,7 @@ public class WechatXCXAPI implements PlatformAPI {
 
     @Override
     public Future<OAuthProcessor.OAuthUserInfo> doGetUserInfo(String code, String ak, String sk, ProcessContext context) {
-        return context.fun.http.request(HttpMethod.POST, "https://api.weixin.qq.com/sns/jscode2session?appid="
+        return context.http.request(HttpMethod.POST, "https://api.weixin.qq.com/sns/jscode2session?appid="
                 + ak + "&secret="
                 + sk + "&js_code="
                 + code
@@ -65,7 +65,7 @@ public class WechatXCXAPI implements PlatformAPI {
 
     @Override
     public Future<Tuple2<String, Long>> doGetAccessToken(String ak, String sk, ProcessContext context) {
-        return context.fun.http.request(HttpMethod.GET, "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="
+        return context.http.request(HttpMethod.GET, "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="
                 + ak
                 + "&secret="
                 + sk)

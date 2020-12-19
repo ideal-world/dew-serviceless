@@ -264,7 +264,7 @@ public class FunRedisClientTest extends DewTest {
                 .build())
                 .compose(resp -> {
                     var promise = Promise.promise();
-                    vertx.setTimer(1000, t -> promise.complete());
+                    vertx.setTimer(3000, t -> promise.complete());
                     return promise.future();
                 })
                 .compose(resp -> {

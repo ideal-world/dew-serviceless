@@ -19,9 +19,7 @@ package idealworld.dew.framework.fun.eventbus;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.domain.IdEntity;
-import idealworld.dew.framework.domain.SafeEntity;
 import idealworld.dew.framework.dto.IdResp;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.exception.BadRequestException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -36,7 +34,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -48,12 +45,6 @@ public class ProcessHelper {
 
     private static final ValidatorFactory VALIDATOR_FACTORY = Validation.buildDefaultValidatorFactory();
     private static final Validator VALIDATOR = VALIDATOR_FACTORY.getValidator();
-
-    private ProcessContext context;
-
-    public ProcessHelper(ProcessContext context) {
-        this.context = context;
-    }
 
     public Future<Void> success() {
         return Future.succeededFuture();
@@ -108,64 +99,25 @@ public class ProcessHelper {
                     if (exists instanceof Boolean) {
                         if (((Boolean) exists)) {
                             return needExist
-                                    ? context.helper.success(exists)
-                                    : context.helper.error(errorFun.get());
+                                    ? Future.succeededFuture(exists)
+                                    : Future.failedFuture(errorFun.get());
                         } else {
                             return !needExist
-                                    ? context.helper.success(exists)
-                                    : context.helper.error(errorFun.get());
+                                    ? Future.succeededFuture(exists)
+                                    : Future.failedFuture(errorFun.get());
                         }
                     } else {
                         if (exists != null) {
                             return needExist
-                                    ? context.helper.success(exists)
-                                    : context.helper.error(errorFun.get());
+                                    ? Future.succeededFuture(exists)
+                                    : Future.failedFuture(errorFun.get());
                         } else {
                             return !needExist
-                                    ? context.helper.success(exists)
-                                    : context.helper.error(errorFun.get());
+                                    ? Future.succeededFuture(exists)
+                                    : Future.failedFuture(errorFun.get());
                         }
                     }
                 });
-    }
-
-    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body) {
-        return invoke(fun, body, context.req.params, context.req.identOptInfo);
-    }
-
-    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body, IdentOptCacheInfo identOptCacheInfo) {
-        return invoke(fun, body, context.req.params, identOptCacheInfo);
-    }
-
-    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body, Map<String, String> params) {
-        return invoke(fun, body, params, context.req.identOptInfo);
-    }
-
-    public <OUT> Future<OUT> invoke(ProcessFun<OUT> fun, Object body, Map<String, String> params, IdentOptCacheInfo identOptCacheInfo) {
-        return fun.process(newContext(body, params, identOptCacheInfo));
-    }
-
-    public ProcessContext newContext(Object body) {
-        return newContext(body, context.req.params, context.req.identOptInfo);
-    }
-
-    public ProcessContext newContext(Object body, IdentOptCacheInfo identOptCacheInfo) {
-        return newContext(body, context.req.params, identOptCacheInfo);
-    }
-
-    public ProcessContext newContext(Object body, Map<String, String> params, IdentOptCacheInfo identOptCacheInfo) {
-        return ProcessContext.builder()
-                .req(ProcessContext.Request.builder()
-                        .header(context.req.header)
-                        .params(params)
-                        .body(body)
-                        .identOptInfo(identOptCacheInfo)
-                        .build())
-                .conf(context.conf)
-                .moduleName(context.moduleName)
-                .fun(context.fun)
-                .build()
-                .init();
     }
 
     public <E> Future<List<E>> findWithRecursion(E initObj, Function<E, Future<List<E>>> recursionFun) {
@@ -186,25 +138,6 @@ public class ProcessHelper {
                     }
                 })
                 .onFailure(promise::fail);
-    }
-
-
-    static <E extends IdEntity> void addSafeInfo(E entity, Boolean insert, ProcessContext context) {
-        if (context == null) {
-            return;
-        }
-        if (entity instanceof SafeEntity) {
-            if (insert) {
-                ((SafeEntity) entity).setCreateUser(
-                        context.req.identOptInfo.getAccountCode() != null
-                                ? (String) context.req.identOptInfo.getAccountCode() :
-                                "");
-            }
-            ((SafeEntity) entity).setUpdateUser(
-                    context.req.identOptInfo.getAccountCode() != null
-                            ? (String) context.req.identOptInfo.getAccountCode() :
-                            "");
-        }
     }
 
 

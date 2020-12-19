@@ -49,7 +49,7 @@ public class IAMBasicProcessor {
 
     public static Future<Long> getEnabledTenantIdByAppId(Long appId, Boolean registerAction, ProcessContext context) {
         return context.helper.notExistToError(
-                context.fun.sql.getOne(
+                context.sql.getOne(
                         String.format("SELECT rel_tenant_id FROM %s" +
                                         "  WHERE id = #{id} AND status = #{status}",
                                 new App().tableName()),
@@ -61,7 +61,7 @@ public class IAMBasicProcessor {
                         }), () -> new BadRequestException("应用[" + appId + "]不存在或未启用"))
                 .compose(fetchAppResult -> {
                     if (registerAction == null || !registerAction) {
-                        return context.fun.sql.getOne(
+                        return context.sql.getOne(
                                 String.format("SELECT id FROM %s" +
                                                 "  WHERE id = #{id} AND status = #{status}",
                                         new Tenant().tableName()),
@@ -72,7 +72,7 @@ public class IAMBasicProcessor {
                                     }
                                 });
                     } else {
-                        return context.fun.sql.getOne(
+                        return context.sql.getOne(
                                 String.format("SELECT id FROM %s" +
                                                 "  WHERE id = #{id} AND status = #{status} AND allow_account_register = #{allow_account_register}",
                                         new Tenant().tableName()),
@@ -99,7 +99,7 @@ public class IAMBasicProcessor {
 
     public static Future<Long> getEnabledTenantIdByOpenId(String openId, ProcessContext context) {
         return context.helper.notExistToError(
-                context.fun.sql.getOne(
+                context.sql.getOne(
                         String.format("SELECT rel_tenant_id FROM %s" +
                                         "  WHERE open_id = #{open_id} AND status = #{status}",
                                 new Account().tableName()),
@@ -111,7 +111,7 @@ public class IAMBasicProcessor {
                         }), () -> new BadRequestException("账号[" + openId + "]不存在或未启用"))
                 .compose(fetchAccountResult ->
                         context.helper.notExistToError(
-                                context.fun.sql.getOne(
+                                context.sql.getOne(
                                         String.format("SELECT id FROM %s" +
                                                         "  WHERE id = #{id} AND status = #{status}",
                                                 new Tenant().tableName()),
@@ -129,7 +129,7 @@ public class IAMBasicProcessor {
         switch (identKind) {
             case EMAIL:
             case PHONE:
-                return context.fun.cache.get(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + relTenantId + ":" + ak)
+                return context.cache.get(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + relTenantId + ":" + ak)
                         .compose(tmpSk -> {
                             if (tmpSk == null) {
                                 context.helper.error(new BadRequestException("验证码不存在或已过期"));
@@ -146,7 +146,7 @@ public class IAMBasicProcessor {
                 return context.helper.success($.security.digest.digest(ak + sk, "SHA-512"));
             case WECHAT_XCX:
                 // 需要关联AppId
-                return context.fun.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString())
+                return context.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString())
                         .compose(accessToken -> {
                             if (accessToken == null) {
                                 context.helper.error(new BadRequestException("Access Token不存在"));
@@ -163,7 +163,7 @@ public class IAMBasicProcessor {
 
     public static Future<Date> validRuleAndGetValidEndTime(AccountIdentKind kind, String ak, String sk, Long relTenantId, ProcessContext context) {
         return context.helper.notExistToError(
-                context.fun.sql.getOne(
+                context.sql.getOne(
                         String.format("SELECT valid_ak_rule, valid_sk_rule, valid_time_sec FROM %s" +
                                         "  WHERE kind = #{kind} AND rel_tenant_id = #{rel_tenant_id}",
                                 new TenantIdent().tableName()),
@@ -203,7 +203,7 @@ public class IAMBasicProcessor {
 
     public static Future<Void> checkAccountMembership(Long accountId, Long tenantId, ProcessContext context) {
         return context.helper.notExistToError(
-                context.fun.sql.exists(
+                context.sql.exists(
                         String.format("SELECT id FROM %s" +
                                         "  WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
                                 new Account().tableName()),
@@ -228,7 +228,7 @@ public class IAMBasicProcessor {
             }
         });
         return context.helper.notExistToError(
-                context.fun.sql.exists(
+                context.sql.exists(
                         String.format("SELECT acc.id FROM %s AS acc" +
                                         "  INNER JOIN %s AS accapp ON accapp.rel_account_id = acc.id" +
                                         "  WHERE acc.id in (" + accountsWhere + ") AND acc.rel_tenant_id = #{rel_tenant_id} AND accapp.rel_app_id = #{rel_app_id}",
@@ -239,7 +239,7 @@ public class IAMBasicProcessor {
 
     public static Future<Void> checkAppMembership(Long appId, Long tenantId, ProcessContext context) {
         return context.helper.notExistToError(
-                context.fun.sql.exists(
+                context.sql.exists(
                         String.format("SELECT id FROM %s" +
                                         "  WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
                                 new App().tableName()),
@@ -263,7 +263,7 @@ public class IAMBasicProcessor {
             }
         });
         return context.helper.notExistToError(
-                context.fun.sql.exists(
+                context.sql.exists(
                         String.format("SELECT id FROM %s" +
                                         "  WHERE id in (" + appsWhere + ") AND rel_tenant_id = #{rel_tenant_id}",
                                 new App().tableName()),
@@ -310,7 +310,7 @@ public class IAMBasicProcessor {
             }
         });
         return context.helper.notExistToError(
-                context.fun.sql.exists(
+                context.sql.exists(
                         String.format(sql, new Role().tableName()),
                         whereParametersMap), () -> new UnAuthorizedException("角色不合法"))
                 .compose(resp -> context.helper.success());
@@ -356,14 +356,14 @@ public class IAMBasicProcessor {
             }
         });
         return context.helper.notExistToError(
-                context.fun.sql.exists(
+                context.sql.exists(
                         String.format(sql, new GroupNode().tableName(), new Group().tableName()),
                         whereParametersMap), () -> new UnAuthorizedException("群组节点不合法"))
                 .compose(resp -> context.helper.success());
     }
 
     public static Future<Set<IdentOptInfo.RoleInfo>> findRoleInfo(Long accountId, ProcessContext context) {
-        return context.fun.sql.list(
+        return context.sql.list(
                 String.format("SELECT role.id, role.name FROM %s AS accrole" +
                                 "  INNER JOIN %s role ON role.id = accrole.rel_role_id" +
                                 "  WHERE accrole.rel_account_id = #{rel_account_id}",
@@ -387,7 +387,7 @@ public class IAMBasicProcessor {
     }
 
     public static Future<Set<IdentOptInfo.GroupInfo>> findGroupInfo(Long accountId, ProcessContext context) {
-        return context.fun.sql.list(
+        return context.sql.list(
                 String.format("SELECT group.code, group.name, node.code, node.name, node.bus_code FROM %s AS accgroup" +
                                 "  INNER JOIN %s node ON node.id = accgroup.rel_group_node_id" +
                                 "  INNER JOIN %s gorup ON group.id = node.rel_group_id" +

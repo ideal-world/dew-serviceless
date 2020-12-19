@@ -400,11 +400,11 @@ public class FunSQLClient {
                     });
         } else {
             ((Pool) client).withTransaction(client -> {
-                context.fun.sql = txInstance(client);
+                context.sql = txInstance(client);
                 return function.get();
             })
                     .onComplete(result -> {
-                        context.fun.sql = this;
+                        context.sql = this;
                         if (result.failed()) {
                             log.error("[SQL]Transaction [{}] error: {}", result.cause().getMessage(), result.cause());
                             promise.fail(result.cause());
@@ -494,9 +494,9 @@ public class FunSQLClient {
     public Consumer addEntityByUpdateFun;
 
     private <E extends IdEntity> void addSafeInfo(E entity, Boolean insert) {
-        if (insert && addEntityByInsertFun!=null) {
+        if (insert && addEntityByInsertFun != null) {
             addEntityByInsertFun.accept(entity);
-        } else if(addEntityByUpdateFun!=null) {
+        } else if (addEntityByUpdateFun != null) {
             addEntityByUpdateFun.accept(entity);
         }
     }

@@ -17,17 +17,14 @@
 package idealworld.dew.framework.fun.eventbus;
 
 import idealworld.dew.framework.domain.IdEntity;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.domain.SafeEntity;
+import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.framework.fun.cache.FunRedisClient;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
-import io.vertx.core.buffer.Buffer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author gudaoxuri
@@ -37,79 +34,53 @@ import java.util.Map;
 @AllArgsConstructor
 public class ProcessContext {
 
-    public ProcessContext init() {
-        helper = new ProcessHelper(this);
+    private IdentOptInfo identOptInfo;
+
+    public ProcessContext init(IdentOptInfo identOptInfo) {
+        this.identOptInfo = identOptInfo;
         if (FunSQLClient.contains(moduleName)) {
-            fun.sql = FunSQLClient.choose(moduleName);
-            if (fun.sql.addEntityByInsertFun == null) {
-                fun.sql.addEntityByInsertFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, true, this);
+            sql = FunSQLClient.choose(moduleName);
+            if (sql.addEntityByInsertFun == null) {
+                sql.addEntityByInsertFun = o -> addSafeInfo((IdEntity) o, true);
             }
-            if (fun.sql.addEntityByUpdateFun == null) {
-                fun.sql.addEntityByUpdateFun = o -> ProcessHelper.addSafeInfo((IdEntity) o, false, this);
+            if (sql.addEntityByUpdateFun == null) {
+                sql.addEntityByUpdateFun = o -> addSafeInfo((IdEntity) o, false);
             }
         }
         if (FunRedisClient.contains(moduleName)) {
-            fun.cache = FunRedisClient.choose(moduleName);
+            cache = FunRedisClient.choose(moduleName);
         }
         if (FunHttpClient.contains(moduleName)) {
-            fun.http = FunHttpClient.choose(moduleName);
+            http = FunHttpClient.choose(moduleName);
         }
         if (FunEventBus.contains(moduleName)) {
-            fun.eb = FunEventBus.choose(moduleName);
+            eb = FunEventBus.choose(moduleName);
         }
         return this;
     }
 
     @Builder.Default
-    public Request req = new Request();
-    @Builder.Default
-    public Function fun = new Function();
-    public ProcessHelper helper;
+    public ProcessHelper helper = new ProcessHelper();
     public Object conf;
     public String moduleName;
+    public FunSQLClient sql;
+    public FunRedisClient cache;
+    public FunHttpClient http;
+    public FunEventBus eb;
 
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Request {
-
-        @Builder.Default
-        public Map<String, String> params = new HashMap<>();
-        @Builder.Default
-        public Map<String, String> header = new HashMap<>();
-        private Object body;
-        @Builder.Default
-        public IdentOptCacheInfo identOptInfo = IdentOptCacheInfo.builder().build();
-
-        public Long pageNumber() {
-            return Long.parseLong(params.get("pageNumber"));
-        }
-
-        public Long pageSize() {
-            return Long.parseLong(params.get("pageSize"));
-        }
-
-        public <E> E body(Class<E> clazz) {
-            if (body == null) {
-                return null;
-            } else if (body instanceof Buffer) {
-                return ProcessHelper.parseBody((Buffer) body, clazz);
+    private <E extends IdEntity> void addSafeInfo(E entity, Boolean insert) {
+        if (entity instanceof SafeEntity) {
+            if (insert) {
+                ((SafeEntity) entity).setCreateUser(
+                        identOptInfo.getAccountCode() != null
+                                ? (String) identOptInfo.getAccountCode() :
+                                "");
             }
-            return (E) body;
+            ((SafeEntity) entity).setUpdateUser(
+                    identOptInfo.getAccountCode() != null
+                            ? (String) identOptInfo.getAccountCode() :
+                            "");
         }
-
     }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Function {
-
-        public FunSQLClient sql;
-        public FunRedisClient cache;
-        public FunHttpClient http;
-        public FunEventBus eb;
-
-    }
-
 
 }

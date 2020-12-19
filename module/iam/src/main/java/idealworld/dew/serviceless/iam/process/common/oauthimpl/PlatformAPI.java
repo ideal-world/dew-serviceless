@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package idealworld.dew.serviceless.iam.process.common.service.oauthimpl;
+package idealworld.dew.serviceless.iam.process.common.oauthimpl;
 
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.serviceless.iam.IAMConstant;
-import idealworld.dew.serviceless.iam.process.common.service.OAuthProcessor;
+import idealworld.dew.serviceless.iam.process.common.OAuthProcessor;
 import io.vertx.core.Future;
 
 

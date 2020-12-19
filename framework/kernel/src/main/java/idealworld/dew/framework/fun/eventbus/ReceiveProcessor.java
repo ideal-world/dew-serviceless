@@ -52,8 +52,8 @@ public class ReceiveProcessor {
             throw new BadRequestException("找不到对应的处理器");
         }
         if (PROCESSORS.get(actionKind).containsKey(pathRequest)) {
-            return PROCESSORS.get(actionKind).get(pathRequest).process(ProcessContext.builder()
-                    .req(ProcessContext.Request.builder()
+            return PROCESSORS.get(actionKind).get(pathRequest).process(EventBusContext.builder()
+                    .req(EventBusContext.Request.builder()
                             .header(header)
                             .body(body)
                             .identOptInfo(
@@ -61,8 +61,10 @@ public class ReceiveProcessor {
                                             ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptCacheInfo.class)
                                             : new IdentOptCacheInfo())
                             .build())
-                    .conf(config)
-                    .moduleName(moduleName)
+                    .context(ProcessContext.builder()
+                            .conf(config)
+                            .moduleName(moduleName)
+                            .build())
                     .build()
                     .init());
         }
@@ -77,8 +79,8 @@ public class ReceiveProcessor {
             var pathPattern = matchedPathTemplate.get();
             var params = PATH_MATCHER.extractUriTemplateVariables(pathPattern, pathRequest);
             params.putAll(URIHelper.getSingleValueQuery(query));
-            return PROCESSORS.get(actionKind).get(pathPattern).process(ProcessContext.builder()
-                    .req(ProcessContext.Request.builder()
+            return PROCESSORS.get(actionKind).get(pathPattern).process(EventBusContext.builder()
+                    .req(EventBusContext.Request.builder()
                             .header(header)
                             .params(params)
                             .body(body)
@@ -87,8 +89,10 @@ public class ReceiveProcessor {
                                             ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptCacheInfo.class)
                                             : new IdentOptCacheInfo())
                             .build())
-                    .conf(config)
-                    .moduleName(moduleName)
+                    .context(ProcessContext.builder()
+                            .conf(config)
+                            .moduleName(moduleName)
+                            .build())
                     .build()
                     .init());
         }

@@ -22,7 +22,6 @@ import idealworld.dew.framework.exception.ConflictException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ProcessFun;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
 import idealworld.dew.serviceless.iam.IAMConfig;
@@ -50,375 +49,327 @@ public class ACGroupProcessor {
 
     static {
         // 添加当前应用的群组
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/group", addGroup());
+        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/group", eventBusContext ->
+                addGroup(eventBusContext.req.body(GroupAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个群组
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}", modifyGroup());
+        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}", eventBusContext ->
+                modifyGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.body(GroupModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个群组信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}", getGroup());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}", eventBusContext ->
+                getGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的群组列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group", findGroups());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group", eventBusContext ->
+                findGroups(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用的某个群组
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}", deleteGroup());
+        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}", eventBusContext ->
+                deleteGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前应用某个群组的节点
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/group/{groupId}/node", addGroupNode());
+        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/group/{groupId}/node", eventBusContext ->
+                addGroupNode(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.body(GroupNodeAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用某个群组的节点
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}/node/{groupNodeId}", modifyGroupNode());
+        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}/node/{groupNodeId}", eventBusContext ->
+                modifyGroupNode(Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.body(GroupNodeModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用某个群组的节点列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}/node", findGroupNodes());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}/node", eventBusContext ->
+                findGroupNodes(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用某个群组的节点
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}/node/{groupNodeId}", deleteGroupNode());
+        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}/node/{groupNodeId}", eventBusContext ->
+                deleteGroupNode(Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 
-    public static ProcessFun<Long> addGroup() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var groupAddReq = context.req.body(GroupAddReq.class);
-            return context.helper.existToError(
-                    context.fun.sql.exists(
-                            new HashMap<>() {
-                                {
-                                    put("code", groupAddReq.getCode());
-                                    put("rel_app_id", relAppId);
-                                    put("rel_tenant_id", relTenantId);
-                                }
-                            },
-                            Group.class), () -> new ConflictException("群组编码已存在"))
-                    .compose(resp -> {
-                        var group = context.helper.convert(groupAddReq, Group.class);
-                        group.setRelTenantId(relTenantId);
-                        group.setRelAppId(relAppId);
-                        return context.fun.sql.save(group);
-                    });
-        };
+    public static Future<Long> addGroup(GroupAddReq groupAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.helper.existToError(
+                context.sql.exists(
+                        new HashMap<>() {
+                            {
+                                put("code", groupAddReq.getCode());
+                                put("rel_app_id", relAppId);
+                                put("rel_tenant_id", relTenantId);
+                            }
+                        },
+                        Group.class), () -> new ConflictException("群组编码已存在"))
+                .compose(resp -> {
+                    var group = context.helper.convert(groupAddReq, Group.class);
+                    group.setRelTenantId(relTenantId);
+                    group.setRelAppId(relAppId);
+                    return context.sql.save(group);
+                });
     }
 
-    public static ProcessFun<Void> modifyGroup() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var groupId = Long.parseLong(context.req.params.get("groupId"));
-            var groupModifyReq = context.req.body(GroupModifyReq.class);
-            var future = context.helper.success();
-            if (groupModifyReq.getCode() != null) {
-                future
-                        .compose(resp ->
-                                context.helper.existToError(
-                                        context.fun.sql.exists(
-                                                new HashMap<>() {
-                                                    {
-                                                        put("!id", groupId);
-                                                        put("code", groupModifyReq.getCode());
-                                                        put("rel_app_id", relAppId);
-                                                        put("rel_tenant_id", relTenantId);
-                                                    }
-                                                },
-                                                Group.class), () -> new ConflictException("群组编码已存在")));
-            }
-            return future
+    public static Future<Void> modifyGroup(Long groupId, GroupModifyReq groupModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
+        var future = context.helper.success();
+        if (groupModifyReq.getCode() != null) {
+            future
                     .compose(resp ->
-                            context.fun.sql.update(
-                                    new HashMap<>() {
-                                        {
-                                            put("id", groupId);
-                                            put("rel_app_id", relAppId);
-                                            put("rel_tenant_id", relTenantId);
-                                        }
-                                    },
-                                    context.helper.convert(groupModifyReq, Group.class)));
-
-        };
+                            context.helper.existToError(
+                                    context.sql.exists(
+                                            new HashMap<>() {
+                                                {
+                                                    put("!id", groupId);
+                                                    put("code", groupModifyReq.getCode());
+                                                    put("rel_app_id", relAppId);
+                                                    put("rel_tenant_id", relTenantId);
+                                                }
+                                            },
+                                            Group.class), () -> new ConflictException("群组编码已存在")));
+        }
+        return future
+                .compose(resp ->
+                        context.sql.update(
+                                new HashMap<>() {
+                                    {
+                                        put("id", groupId);
+                                        put("rel_app_id", relAppId);
+                                        put("rel_tenant_id", relTenantId);
+                                    }
+                                },
+                                context.helper.convert(groupModifyReq, Group.class)));
     }
 
-    public static ProcessFun<GroupResp> getGroup() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var groupId = Long.parseLong(context.req.params.get("groupId"));
-            return context.fun.sql.getOne(
-                    new HashMap<>() {
-                        {
-                            put("id", groupId);
-                            put("rel_app_id", relAppId);
-                            put("rel_tenant_id", relTenantId);
-                        }
-                    },
-                    Group.class)
-                    .compose(group -> context.helper.success(group, GroupResp.class));
-        };
+    public static Future<GroupResp> getGroup(Long groupId, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.sql.getOne(
+                new HashMap<>() {
+                    {
+                        put("id", groupId);
+                        put("rel_app_id", relAppId);
+                        put("rel_tenant_id", relTenantId);
+                    }
+                },
+                Group.class)
+                .compose(group -> context.helper.success(group, GroupResp.class));
     }
 
-    public static ProcessFun<List<GroupResp>> findGroups() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var code = context.req.params.getOrDefault("code", null);
-            var name = context.req.params.getOrDefault("name", null);
-            var kind = context.req.params.getOrDefault("kind", null);
-            var whereParameters = new HashMap<String, Object>() {
-                {
-                    put("rel_app_id", relAppId);
-                    put("rel_tenant_id", relTenantId);
-                }
-            };
-            if (code != null && !code.isBlank()) {
-                whereParameters.put("%code", "%" + code + "%");
+    public static Future<List<GroupResp>> findGroups(String code, String name, String kind, Long relAppId, Long relTenantId, ProcessContext context) {
+        var whereParameters = new HashMap<String, Object>() {
+            {
+                put("rel_app_id", relAppId);
+                put("rel_tenant_id", relTenantId);
             }
-            if (name != null && !name.isBlank()) {
-                whereParameters.put("%name", "%" + name + "%");
-            }
-            if (kind != null && !kind.isBlank()) {
-                whereParameters.put("%kind", "%" + kind + "%");
-            }
-            return context.fun.sql.list(
-                    whereParameters,
-                    Group.class)
-                    .compose(groups -> context.helper.success(groups, GroupResp.class));
         };
+        if (code != null && !code.isBlank()) {
+            whereParameters.put("%code", "%" + code + "%");
+        }
+        if (name != null && !name.isBlank()) {
+            whereParameters.put("%name", "%" + name + "%");
+        }
+        if (kind != null && !kind.isBlank()) {
+            whereParameters.put("%kind", "%" + kind + "%");
+        }
+        return context.sql.list(
+                whereParameters,
+                Group.class)
+                .compose(groups -> context.helper.success(groups, GroupResp.class));
     }
 
-    public static ProcessFun<List<GroupResp>> findExposeGroups() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var code = context.req.params.getOrDefault("code", null);
-            var name = context.req.params.getOrDefault("name", null);
-            var kind = context.req.params.getOrDefault("kind", null);
-            var sql = "SELECT * FROM %s" +
-                    "  WHERE ( expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
-                    "    OR expose_kind = #{expose_kind_global} )";
-            var whereParameters = new HashMap<String, Object>() {
-                {
-                    put("expose_kind_tenant", ExposeKind.TENANT);
-                    put("rel_tenant_id", relTenantId);
-                    put("expose_kind_global", ExposeKind.GLOBAL);
-                }
-            };
-            if (code != null && !code.isBlank()) {
-                sql += " AND code = #{code}";
-                whereParameters.put("%code", "%" + code + "%");
+    public static Future<List<GroupResp>> findExposeGroups(String code, String name, String kind, Long relAppId, Long relTenantId, ProcessContext context) {
+        var sql = "SELECT * FROM %s" +
+                "  WHERE ( expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
+                "    OR expose_kind = #{expose_kind_global} )";
+        var whereParameters = new HashMap<String, Object>() {
+            {
+                put("expose_kind_tenant", ExposeKind.TENANT);
+                put("rel_tenant_id", relTenantId);
+                put("expose_kind_global", ExposeKind.GLOBAL);
             }
-            if (name != null && !name.isBlank()) {
-                sql += " AND name = #{name}";
-                whereParameters.put("%name", "%" + name + "%");
-            }
-            if (kind != null && !kind.isBlank()) {
-                sql += " AND kind = #{kind}";
-                whereParameters.put("%kind", "%" + kind + "%");
-            }
-            return context.fun.sql.list(
-                    String.format(sql, new Group().tableName()),
-                    whereParameters,
-                    Group.class)
-                    .compose(groups -> context.helper.success(groups, GroupResp.class));
         };
+        if (code != null && !code.isBlank()) {
+            sql += " AND code = #{code}";
+            whereParameters.put("%code", "%" + code + "%");
+        }
+        if (name != null && !name.isBlank()) {
+            sql += " AND name = #{name}";
+            whereParameters.put("%name", "%" + name + "%");
+        }
+        if (kind != null && !kind.isBlank()) {
+            sql += " AND kind = #{kind}";
+            whereParameters.put("%kind", "%" + kind + "%");
+        }
+        return context.sql.list(
+                String.format(sql, new Group().tableName()),
+                whereParameters,
+                Group.class)
+                .compose(groups -> context.helper.success(groups, GroupResp.class));
     }
 
-    public static ProcessFun<Void> deleteGroup() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var groupId = Long.parseLong(context.req.params.get("groupId"));
-            return context.helper.existToError(
-                    context.fun.sql.exists(
-                            new HashMap<>() {
-                                {
-                                    put("rel_group_id", groupId);
-                                }
-                            },
-                            GroupNode.class), () -> new ConflictException("请先删除关联的群组节点数据"))
-                    .compose(resp ->
-                            context.fun.sql.softDelete(
-                                    new HashMap<>() {
-                                        {
-                                            put("id", groupId);
-                                            put("rel_app_id", relAppId);
-                                            put("rel_tenant_id", relTenantId);
-                                        }
-                                    },
-                                    Group.class));
-        };
+    public static Future<Void> deleteGroup(Long groupId, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.helper.existToError(
+                context.sql.exists(
+                        new HashMap<>() {
+                            {
+                                put("rel_group_id", groupId);
+                            }
+                        },
+                        GroupNode.class), () -> new ConflictException("请先删除关联的群组节点数据"))
+                .compose(resp ->
+                        context.sql.softDelete(
+                                new HashMap<>() {
+                                    {
+                                        put("id", groupId);
+                                        put("rel_app_id", relAppId);
+                                        put("rel_tenant_id", relTenantId);
+                                    }
+                                },
+                                Group.class));
     }
 
     // --------------------------------------------------------------------
 
-    public static ProcessFun<Long> addGroupNode() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var groupId = Long.parseLong(context.req.params.get("groupId"));
-            var groupNodeAddReq = context.req.body(GroupNodeAddReq.class);
-            return context.fun.sql.tx(context, () ->
-                    context.helper.notExistToError(
-                            context.fun.sql.exists(
-                                    new HashMap<>() {
-                                        {
-                                            put("id", groupId);
-                                            put("rel_tenant_id", relTenantId);
-                                            put("rel_app_id", relAppId);
-                                        }
-                                    },
-                                    Group.class), () -> new ConflictException("关联群组不合法"))
-                            .compose(resp ->
-                                    packageGroupNodeCode(groupId, groupNodeAddReq.getParentId(), groupNodeAddReq.getSiblingId(), null,
-                                            (IAMConfig) context.conf, context.fun.sql, context)
-                                            .compose(fetchGroupNodeCode ->
-                                                    context.helper.existToError(
-                                                            context.fun.sql.exists(
-                                                                    new HashMap<>() {
-                                                                        {
-                                                                            put("code", fetchGroupNodeCode);
-                                                                            put("rel_group_id", groupId);
-                                                                        }
-                                                                    },
-                                                                    GroupNode.class), () -> new ConflictException("群组节点编码已存在"))
-                                                            .compose(r -> {
-                                                                var groupNode = context.helper.convert(groupNodeAddReq, GroupNode.class);
-                                                                groupNode.setRelGroupId(groupId);
-                                                                groupNode.setCode(fetchGroupNodeCode);
-                                                                return context.fun.sql.save(groupNode);
-                                                            })))
-            );
-        };
+    public static Future<Long> addGroupNode(Long groupId, GroupNodeAddReq groupNodeAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.sql.tx(context, () ->
+                context.helper.notExistToError(
+                        context.sql.exists(
+                                new HashMap<>() {
+                                    {
+                                        put("id", groupId);
+                                        put("rel_tenant_id", relTenantId);
+                                        put("rel_app_id", relAppId);
+                                    }
+                                },
+                                Group.class), () -> new ConflictException("关联群组不合法"))
+                        .compose(resp ->
+                                packageGroupNodeCode(groupId, groupNodeAddReq.getParentId(), groupNodeAddReq.getSiblingId(), null,
+                                        (IAMConfig) context.conf, context.sql, context)
+                                        .compose(fetchGroupNodeCode ->
+                                                context.helper.existToError(
+                                                        context.sql.exists(
+                                                                new HashMap<>() {
+                                                                    {
+                                                                        put("code", fetchGroupNodeCode);
+                                                                        put("rel_group_id", groupId);
+                                                                    }
+                                                                },
+                                                                GroupNode.class), () -> new ConflictException("群组节点编码已存在"))
+                                                        .compose(r -> {
+                                                            var groupNode = context.helper.convert(groupNodeAddReq, GroupNode.class);
+                                                            groupNode.setRelGroupId(groupId);
+                                                            groupNode.setCode(fetchGroupNodeCode);
+                                                            return context.sql.save(groupNode);
+                                                        })))
+        );
     }
 
-    public static ProcessFun<Void> modifyGroupNode() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var groupNodeId = Long.parseLong(context.req.params.get("groupNodeId"));
-            var groupNodeModifyReq = context.req.body(GroupNodeModifyReq.class);
-            var groupNodeSets = context.helper.convert(groupNodeModifyReq, GroupNode.class);
-            return context.fun.sql.tx(context, () ->
-                    context.helper.notExistToError(
-                            context.fun.sql.getOne(
-                                    String.format("SELECT node.* FROM %s AS node" +
-                                                    "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
-                                                    "  WHERE node.id = #{id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
-                                            new GroupNode().tableName(), new Group().tableName()),
-                                    new HashMap<>() {
-                                        {
-                                            put("id", groupNodeId);
-                                            put("rel_app_id", relAppId);
-                                            put("rel_tenant_id", relTenantId);
-                                        }
-                                    },
-                                    GroupNode.class), () -> new UnAuthorizedException("关联群组不合法"))
-                            .compose(fetchGroupNode -> {
-                                if (groupNodeModifyReq.getParentId() != DewConstant.OBJECT_UNDEFINED || groupNodeModifyReq.getSiblingId() != DewConstant.OBJECT_UNDEFINED) {
-                                    return packageGroupNodeCode(fetchGroupNode.getRelGroupId(), groupNodeModifyReq.getParentId(),
-                                            groupNodeModifyReq.getSiblingId(), fetchGroupNode.getCode(), (IAMConfig) context.conf, context.fun.sql, context)
-                                            .compose(fetchGroupNodeCode ->
-                                                    context.helper.existToError(
-                                                            context.fun.sql.exists(
-                                                                    new HashMap<>() {
-                                                                        {
-                                                                            put("!id", groupNodeId);
-                                                                            put("code", fetchGroupNodeCode);
-                                                                            put("rel_group_id", fetchGroupNode.getRelGroupId());
-                                                                        }
-                                                                    },
-                                                                    GroupNode.class), () -> new ConflictException("群组节点编码已存在"))
-                                                            .compose(resp -> {
-                                                                groupNodeSets.setCode(fetchGroupNodeCode);
-                                                                return context.helper.success();
-                                                            })
-                                            );
-                                } else {
-                                    return context.helper.success();
-                                }
+    public static Future<Void> modifyGroupNode(Long groupNodeId, GroupNodeModifyReq groupNodeModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
+        var groupNodeSets = context.helper.convert(groupNodeModifyReq, GroupNode.class);
+        return context.sql.tx(context, () ->
+                context.helper.notExistToError(
+                        context.sql.getOne(
+                                String.format("SELECT node.* FROM %s AS node" +
+                                                "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
+                                                "  WHERE node.id = #{id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
+                                        new GroupNode().tableName(), new Group().tableName()),
+                                new HashMap<>() {
+                                    {
+                                        put("id", groupNodeId);
+                                        put("rel_app_id", relAppId);
+                                        put("rel_tenant_id", relTenantId);
+                                    }
+                                },
+                                GroupNode.class), () -> new UnAuthorizedException("关联群组不合法"))
+                        .compose(fetchGroupNode -> {
+                            if (groupNodeModifyReq.getParentId() != DewConstant.OBJECT_UNDEFINED || groupNodeModifyReq.getSiblingId() != DewConstant.OBJECT_UNDEFINED) {
+                                return packageGroupNodeCode(fetchGroupNode.getRelGroupId(), groupNodeModifyReq.getParentId(),
+                                        groupNodeModifyReq.getSiblingId(), fetchGroupNode.getCode(), (IAMConfig) context.conf, context.sql, context)
+                                        .compose(fetchGroupNodeCode ->
+                                                context.helper.existToError(
+                                                        context.sql.exists(
+                                                                new HashMap<>() {
+                                                                    {
+                                                                        put("!id", groupNodeId);
+                                                                        put("code", fetchGroupNodeCode);
+                                                                        put("rel_group_id", fetchGroupNode.getRelGroupId());
+                                                                    }
+                                                                },
+                                                                GroupNode.class), () -> new ConflictException("群组节点编码已存在"))
+                                                        .compose(resp -> {
+                                                            groupNodeSets.setCode(fetchGroupNodeCode);
+                                                            return context.helper.success();
+                                                        })
+                                        );
+                            } else {
+                                return context.helper.success();
+                            }
+                        })
+                        .compose(resp -> context.sql.update(groupNodeId, groupNodeSets))
+        );
+    }
+
+    public static Future<List<GroupNodeResp>> findGroupNodes(Long groupId, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.sql.list(
+                String.format("SELECT node.* FROM %s AS node" +
+                                "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
+                                "  WHERE group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id} AND node.rel_group_id = #{rel_group_id}" +
+                                "  ORDER BY node.code ASC",
+                        new GroupNode().tableName(), new Group().tableName()),
+                new HashMap<>() {
+                    {
+                        put("rel_group_id", groupId);
+                        put("rel_app_id", relAppId);
+                        put("rel_tenant_id", relTenantId);
+                    }
+                },
+                GroupNode.class)
+                .compose(fetchGroupNodes -> {
+                    var nodeLength = ((IAMConfig) context.conf).getApp().getInitNodeCode().length();
+                    List<GroupNodeResp> roleNodeRespList = fetchGroupNodes.stream()
+                            .map(node -> {
+                                var parentCode = node.getCode().substring(0, node.getCode().length() - nodeLength);
+                                var parentId = parentCode.isEmpty()
+                                        ? DewConstant.OBJECT_UNDEFINED
+                                        : fetchGroupNodes.stream().filter(n -> n.getCode().equals(parentCode)).findAny().get().getId();
+                                return GroupNodeResp.builder()
+                                        .id(node.getId())
+                                        .busCode(node.getBusCode())
+                                        .name(node.getName())
+                                        .parameters(node.getParameters())
+                                        .relGroupId(node.getRelGroupId())
+                                        .parentId(parentId)
+                                        .build();
                             })
-                            .compose(resp -> context.fun.sql.update(groupNodeId, groupNodeSets))
-            );
-        };
+                            .collect(Collectors.toList());
+                    return context.helper.success(roleNodeRespList);
+                });
     }
 
-    public static ProcessFun<List<GroupNodeResp>> findGroupNodes() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var groupId = context.req.params.get("groupId");
-            return context.fun.sql.list(
-                    String.format("SELECT node.* FROM %s AS node" +
-                                    "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
-                                    "  WHERE group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id} AND node.rel_group_id = #{rel_group_id}" +
-                                    "  ORDER BY node.code ASC",
-                            new GroupNode().tableName(), new Group().tableName()),
-                    new HashMap<>() {
-                        {
-                            put("rel_group_id", groupId);
-                            put("rel_app_id", relAppId);
-                            put("rel_tenant_id", relTenantId);
-                        }
-                    },
-                    GroupNode.class)
-                    .compose(fetchGroupNodes -> {
-                        var nodeLength = ((IAMConfig) context.conf).getApp().getInitNodeCode().length();
-                        List<GroupNodeResp> roleNodeRespList = fetchGroupNodes.stream()
-                                .map(node -> {
-                                    var parentCode = node.getCode().substring(0, node.getCode().length() - nodeLength);
-                                    var parentId = parentCode.isEmpty()
-                                            ? DewConstant.OBJECT_UNDEFINED
-                                            : fetchGroupNodes.stream().filter(n -> n.getCode().equals(parentCode)).findAny().get().getId();
-                                    return GroupNodeResp.builder()
-                                            .id(node.getId())
-                                            .busCode(node.getBusCode())
-                                            .name(node.getName())
-                                            .parameters(node.getParameters())
-                                            .relGroupId(node.getRelGroupId())
-                                            .parentId(parentId)
-                                            .build();
-                                })
-                                .collect(Collectors.toList());
-                        return context.helper.success(roleNodeRespList);
-                    });
-        };
-    }
-
-    public static ProcessFun<Void> deleteGroupNode() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var groupNodeId = Long.parseLong(context.req.params.get("groupNodeId"));
-            return context.fun.sql.tx(context,() ->
-                    context.helper.existToError(
-                            context.fun.sql.exists(
-                                    new HashMap<>() {
-                                        {
-                                            put("rel_group_node_id", groupNodeId);
-                                        }
-                                    },
-                                    AccountGroup.class), () -> new ConflictException("请先删除关联的账号群组数据"))
-                            .compose(resp ->
-                                    context.helper.existToError(
-                                            context.fun.sql.exists(
-                                                    new HashMap<>() {
-                                                        {
-                                                            put("rel_subject_kind", AuthSubjectKind.GROUP_NODE);
-                                                            put("%rel_subject_ids", "%" + groupNodeId + ",%");
-                                                        }
-                                                    },
-                                                    AuthPolicy.class), () -> new ConflictException("请先删除关联的权限策略数据"))
-                                            .compose(r ->
-                                                    context.fun.sql.getOne(
-                                                            String.format("SELECT node.* FROM %s AS node" +
-                                                                            "  INNER JOIN %s group ON group.id = node.rel_group_id" +
-                                                                            "  WHERE node.id = #{node_id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
-                                                                    new GroupNode().tableName(), new Group().tableName()),
-                                                            new HashMap<>() {
-                                                                {
-                                                                    put("node_id", groupNodeId);
-                                                                    put("rel_tenant_id", relTenantId);
-                                                                    put("rel_app_id", relAppId);
-                                                                }
-                                                            },
-                                                            GroupNode.class)
-                                                            .compose(fetchGroupNode ->
-                                                                    context.fun.sql.softDelete(fetchGroupNode.getId(), GroupNode.class)
-                                                                            .compose(re -> updateOtherGroupNodeCode(fetchGroupNode.getRelGroupId(), fetchGroupNode.getCode(), true, null,
-                                                                                    (IAMConfig) context.conf, context.fun.sql, context))
-                                                            ))));
-        };
+    public static Future<Void> deleteGroupNode(Long groupNodeId, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.sql.tx(context, () ->
+                context.helper.existToError(
+                        context.sql.exists(
+                                new HashMap<>() {
+                                    {
+                                        put("rel_group_node_id", groupNodeId);
+                                    }
+                                },
+                                AccountGroup.class), () -> new ConflictException("请先删除关联的账号群组数据"))
+                        .compose(resp ->
+                                context.helper.existToError(
+                                        context.sql.exists(
+                                                new HashMap<>() {
+                                                    {
+                                                        put("rel_subject_kind", AuthSubjectKind.GROUP_NODE);
+                                                        put("%rel_subject_ids", "%" + groupNodeId + ",%");
+                                                    }
+                                                },
+                                                AuthPolicy.class), () -> new ConflictException("请先删除关联的权限策略数据"))
+                                        .compose(r ->
+                                                context.sql.getOne(
+                                                        String.format("SELECT node.* FROM %s AS node" +
+                                                                        "  INNER JOIN %s group ON group.id = node.rel_group_id" +
+                                                                        "  WHERE node.id = #{node_id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
+                                                                new GroupNode().tableName(), new Group().tableName()),
+                                                        new HashMap<>() {
+                                                            {
+                                                                put("node_id", groupNodeId);
+                                                                put("rel_tenant_id", relTenantId);
+                                                                put("rel_app_id", relAppId);
+                                                            }
+                                                        },
+                                                        GroupNode.class)
+                                                        .compose(fetchGroupNode ->
+                                                                context.sql.softDelete(fetchGroupNode.getId(), GroupNode.class)
+                                                                        .compose(re -> updateOtherGroupNodeCode(fetchGroupNode.getRelGroupId(), fetchGroupNode.getCode(), true, null,
+                                                                                (IAMConfig) context.conf, context.sql, context))
+                                                        ))));
     }
 
     private static Future<String> packageGroupNodeCode(Long groupId, Long parentId, Long siblingId, String originalGroupNodeCode, IAMConfig config, FunSQLClient client, ProcessContext context) {

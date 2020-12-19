@@ -57,11 +57,10 @@ public class IAMEventBusTest extends DewTest {
                         .build()).toBuffer(), new HashMap<>())
                 .onSuccess(resp -> {
                     Assertions.assertEquals(1, Resp.generic(resp._0.toString(StandardCharsets.UTF_8), Long.class).getBody());
-                    FunSQLClient.choose(moduleName).select("select * from " + new Tenant().tableName(), new HashMap<>(), Tenant.class)
-                            .onSuccess(tenantsR -> {
-                                Assertions.assertEquals("200", tenantsR.getCode());
-                                Assertions.assertEquals(1, tenantsR.getBody().size());
-                                Assertions.assertEquals("租户1", tenantsR.getBody().get(0).getName());
+                    FunSQLClient.choose(moduleName).list("select * from " + new Tenant().tableName(), new HashMap<>(), Tenant.class)
+                            .onSuccess(tenants -> {
+                                Assertions.assertEquals(1, tenants.size());
+                                Assertions.assertEquals("租户1", tenants.get(0).getName());
                                 testContext.completeNow();
                             });
                 });

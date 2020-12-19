@@ -29,6 +29,7 @@ public class IAMConstant extends DewConstant {
     public static final String CACHE_ACCOUNT_VCODE_TMP_REL = "dew:iam:account:vocde:tmprel:";
     public static final String CACHE_ACCOUNT_VCODE_ERROR_TIMES = "dew:iam:account:vocde:errortimes:";
 
+    // TODO remove
     public static final String CONFIG_TENANT_REGISTER_ALLOW = "dew:iam:tenant:register:allow";
     public static final String CONFIG_ACCOUNT_VCODE_EXPIRE_SEC = "dew:iam:account:vcode:expiresec";
     public static final String CONFIG_ACCOUNT_VCODE_ERROR_TIMES = "dew:iam:account:vcode:errortimes";

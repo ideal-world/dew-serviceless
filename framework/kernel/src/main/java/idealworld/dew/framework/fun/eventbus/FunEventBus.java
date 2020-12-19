@@ -30,6 +30,7 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -128,7 +129,7 @@ public class FunEventBus {
         );
     }
 
-    public <E> void consumer(String moduleName, ConsumerFun<E> fun) {
+    public <E> void consumer(String moduleName, ConsumerFun<E> consumerFun) {
         eventBus.consumer(moduleName,
                 (Handler<Message<Buffer>>) event -> {
                     var header = new HashMap<String, String>();
@@ -136,7 +137,7 @@ public class FunEventBus {
                     var actionKind = OptActionKind.parse(event.headers().get(DewConstant.REQUEST_RESOURCE_ACTION_FLAG));
                     var uri = URIHelper.newURI(event.headers().get(DewConstant.REQUEST_RESOURCE_URI_FLAG));
                     log.trace("[EventBus]Receive data [{}]{}", actionKind, uri.toString());
-                    var processF = fun.consume(actionKind, uri, header, event.body());
+                    var processF = consumerFun.consume(actionKind, uri, header, event.body());
                     if (!event.headers().contains(DewConstant.REQUEST_WITHOUT_RESP_FLAG)) {
                         processF
                                 .onSuccess(processResult -> event.reply(JsonObject.mapFrom(processResult).toBuffer()))
@@ -147,6 +148,13 @@ public class FunEventBus {
                     }
                 }
         );
+    }
+
+    @FunctionalInterface
+    public interface ConsumerFun<E> {
+
+        Future<E> consume(OptActionKind actionKind, URI uri, Map<String, String> header, Buffer body);
+
     }
 
 }

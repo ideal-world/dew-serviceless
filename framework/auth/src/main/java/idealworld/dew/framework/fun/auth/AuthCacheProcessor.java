@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class AuthCacheProcessor {
 
     public static Future<Optional<IdentOptCacheInfo>> getOptInfo(String token, ProcessContext context) {
-        return context.fun.cache.get(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token)
+        return context.cache.get(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token)
                 .compose(optInfoStr -> {
                     if (optInfoStr != null && !optInfoStr.isEmpty()) {
                         return context.helper.success(Optional.of(new JsonObject(optInfoStr).mapTo(IdentOptCacheInfo.class)));
@@ -50,7 +50,7 @@ public class AuthCacheProcessor {
         return getOptInfo(token, context)
                 .compose(tokenInfoOpt -> {
                     if (tokenInfoOpt.isPresent()) {
-                        return context.fun.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token)
+                        return context.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token)
                                 .compose(resp ->
                                         removeOldToken(tokenInfoOpt.get().getAccountCode(),
                                                 tokenInfoOpt.get().getTokenKind(), context));
@@ -61,22 +61,22 @@ public class AuthCacheProcessor {
     }
 
     public static Future<Void> setOptInfo(IdentOptCacheInfo optInfo, Long expireSec, ProcessContext context) {
-        return context.fun.cache.setnx(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(),
+        return context.cache.setnx(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(),
                 JsonObject.mapFrom(optInfo).toString())
                 .compose(success -> {
                     if (!success) {
                         return context.helper.success();
                     }
                     if (expireSec == DewAuthConstant.OBJECT_UNDEFINED) {
-                        return context.fun.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
+                        return context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
                                 optInfo.getTokenKind() + "##" + System.currentTimeMillis(),
                                 optInfo.getToken())
                                 .compose(resp -> removeOldToken(optInfo.getAccountCode(),
                                         optInfo.getTokenKind(), context));
                     }
-                    return context.fun.cache.expire(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(), expireSec)
+                    return context.cache.expire(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(), expireSec)
                             .compose(resp ->
-                                    context.fun.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
+                                    context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
                                             optInfo.getTokenKind() + "##" + System.currentTimeMillis(),
                                             optInfo.getToken()))
                             .compose(resp -> removeOldToken(optInfo.getAccountCode(),
@@ -89,20 +89,20 @@ public class AuthCacheProcessor {
         // TODO
         int revisionHistoryLimit = 0;
         // 当前 account code 关联的所有 token
-        return context.fun.cache.hgetall(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode)
+        return context.cache.hgetall(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode)
                 .compose(tokenKinds ->
                         CompositeFuture.all(tokenKinds.entrySet().stream()
                                 .map(entry ->
-                                        context.fun.cache.exists(entry.getValue())
+                                        context.cache.exists(entry.getValue())
                                                 .compose(exists -> {
                                                     if (!exists) {
                                                         // 删除过期的关联token
-                                                        return context.fun.cache.hdel(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode, entry.getKey());
+                                                        return context.cache.hdel(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode, entry.getKey());
                                                     }
                                                     return context.helper.success(null);
                                                 }))
                                 .collect(Collectors.toList())))
-                .compose(resp -> context.fun.cache.hgetall(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode))
+                .compose(resp -> context.cache.hgetall(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode))
                 .compose(tokenKinds ->
                         CompositeFuture.all(tokenKinds.keySet().stream()
                                 .filter(key -> key.split("##")[0].equalsIgnoreCase(tokenKind))
@@ -112,9 +112,9 @@ public class AuthCacheProcessor {
                                 .skip(revisionHistoryLimit)
                                 .map(key ->
                                         // 删除多余版本
-                                        context.fun.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + tokenKinds.get(key))
+                                        context.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + tokenKinds.get(key))
                                                 .compose(r ->
-                                                        context.fun.cache.hdel(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode, key)))
+                                                        context.cache.hdel(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode, key)))
                                 .collect(Collectors.toList())))
                 .compose(rsp -> context.helper.success());
     }

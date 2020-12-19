@@ -18,7 +18,7 @@ package idealworld.dew.serviceless.iam.process.appconsole;
 
 import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.dto.OptActionKind;
-import idealworld.dew.framework.fun.eventbus.ProcessFun;
+import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.util.KeyHelper;
 import idealworld.dew.serviceless.iam.domain.ident.AccountIdent;
@@ -41,153 +41,131 @@ public class ACAppProcessor {
 
     static {
         // 添加当前应用的认证
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/app/ident", addAppIdent());
+        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/app/ident", eventBusContext ->
+                addAppIdent(eventBusContext.req.body(AppIdentAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/app/ident/{appIdentId}", modifyAppIdent());
+        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/app/ident/{appIdentId}", eventBusContext ->
+                modifyAppIdent(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.body(AppIdentModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的认证列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident", pageAppIdents());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident", eventBusContext ->
+                pageAppIdents(eventBusContext.req.params.getOrDefault("note", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/app/ident/{appIdentId}", deleteAppIdent());
+        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/app/ident/{appIdentId}", eventBusContext ->
+                deleteAppIdent(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 获取当前应用的某个认证SK
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/sk", showSk());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/sk", eventBusContext ->
+                showSk(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的公钥
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/publicKey", showPublicKey());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/publicKey", eventBusContext ->
+                showPublicKey(eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的私钥
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/privateKey", showPrivateKey());
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/privateKey", eventBusContext ->
+                showPrivateKey(eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 
-    public static ProcessFun<Long> addAppIdent() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var appIdentAddReq = context.req.body(AppIdentAddReq.class);
-            var appIdent = context.helper.convert(appIdentAddReq, AppIdent.class);
-            appIdent.setAk(KeyHelper.generateAk());
-            appIdent.setSk(KeyHelper.generateSk(appIdent.getAk()));
-            appIdent.setRelAppId(relAppId);
-            return context.fun.sql.save(appIdent)
-                    .compose(saveAppIdentId ->
-                            ExchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId, context)
-                                    .compose(r -> context.helper.success(saveAppIdentId)));
-        };
+    public static Future<Long> addAppIdent(AppIdentAddReq appIdentAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
+        var appIdent = context.helper.convert(appIdentAddReq, AppIdent.class);
+        appIdent.setAk(KeyHelper.generateAk());
+        appIdent.setSk(KeyHelper.generateSk(appIdent.getAk()));
+        appIdent.setRelAppId(relAppId);
+        return context.sql.save(appIdent)
+                .compose(saveAppIdentId ->
+                        ExchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId, context)
+                                .compose(r -> context.helper.success(saveAppIdentId)));
     }
 
-    public static ProcessFun<Void> modifyAppIdent() {
-        return context -> {
-            var relTenantId = context.req.identOptInfo.getTenantId();
-            var relAppId = context.req.identOptInfo.getAppId();
-            var appIdentId = Long.parseLong(context.req.params.get("appIdentId"));
-            var appIdentModifyReq = context.req.body(AppIdentModifyReq.class);
-            return context.fun.sql.update(
-                    new HashMap<>() {
-                        {
-                            put("id", appIdentId);
-                            put("rel_app_id", relAppId);
-                        }
-                    },
-                    context.helper.convert(appIdentModifyReq, AppIdent.class))
-                    .compose(resp ->
-                            context.fun.sql.getOne(new HashMap<>() {
-                                {
-                                    put("id", appIdentId);
-                                    put("rel_app_id", relAppId);
-                                }
-                            }, AppIdent.class)
-                                    .compose(appIdent ->
-                                            ExchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId, context)));
-        };
+    public static Future<Void> modifyAppIdent(Long appIdentId, AppIdentModifyReq appIdentModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.sql.update(
+                new HashMap<>() {
+                    {
+                        put("id", appIdentId);
+                        put("rel_app_id", relAppId);
+                    }
+                },
+                context.helper.convert(appIdentModifyReq, AppIdent.class))
+                .compose(resp ->
+                        context.sql.getOne(new HashMap<>() {
+                            {
+                                put("id", appIdentId);
+                                put("rel_app_id", relAppId);
+                            }
+                        }, AppIdent.class)
+                                .compose(appIdent ->
+                                        ExchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId, context)));
     }
 
-    public static ProcessFun<Page<AppIdentResp>> pageAppIdents() {
-        return context -> {
-            var relAppId = context.req.identOptInfo.getAppId();
-            var note = context.req.params.getOrDefault("note", null);
-            var whereParameters = new HashMap<String, Object>() {
-                {
-                    put("rel_app_id", relAppId);
-                }
-            };
-            if (note != null && !note.isBlank()) {
-                whereParameters.put("%note", "%" + note + "%");
+    public static Future<Page<AppIdentResp>> pageAppIdents(String note, Long pageNumber, Long pageSize, Long relAppId, Long relTenantId, ProcessContext context) {
+        var whereParameters = new HashMap<String, Object>() {
+            {
+                put("rel_app_id", relAppId);
             }
-            return context.fun.sql.page(
-                    whereParameters,
-                    context.req.pageNumber(),
-                    context.req.pageSize(),
-                    AppIdent.class)
-                    .compose(appIdents -> context.helper.success(appIdents, AppIdentResp.class));
         };
+        if (note != null && !note.isBlank()) {
+            whereParameters.put("%note", "%" + note + "%");
+        }
+        return context.sql.page(
+                whereParameters,
+                pageNumber,
+                pageSize,
+                AppIdent.class)
+                .compose(appIdents -> context.helper.success(appIdents, AppIdentResp.class));
     }
 
-    public static ProcessFun<Void> deleteAppIdent() {
-        return context -> {
-            var relAppId = context.req.identOptInfo.getAppId();
-            var appIdentId = Long.parseLong(context.req.params.get("appIdentId"));
-            return context.fun.sql.getOne(
-                    new HashMap<>() {
-                        {
-                            put("id", relAppId);
-                            put("rel_app_id", appIdentId);
-                        }
-                    },
-                    AppIdent.class)
-                    .compose(fetchAppIdent ->
-                            context.fun.sql.softDelete(
-                                    new HashMap<>() {
-                                        {
-                                            put("id", relAppId);
-                                            put("rel_app_id", appIdentId);
-                                        }
-                                    },
-                                    AppIdent.class)
-                                    .compose(resp ->
-                                            ExchangeProcessor.deleteAppIdent(fetchAppIdent.getAk(), context)));
-        };
+    public static Future<Void> deleteAppIdent(Long appIdentId, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.sql.getOne(
+                new HashMap<>() {
+                    {
+                        put("id", relAppId);
+                        put("rel_app_id", appIdentId);
+                    }
+                },
+                AppIdent.class)
+                .compose(fetchAppIdent ->
+                        context.sql.softDelete(
+                                new HashMap<>() {
+                                    {
+                                        put("id", relAppId);
+                                        put("rel_app_id", appIdentId);
+                                    }
+                                },
+                                AppIdent.class)
+                                .compose(resp ->
+                                        ExchangeProcessor.deleteAppIdent(fetchAppIdent.getAk(), context)));
     }
 
-    public static ProcessFun<String> showSk() {
-        return context -> {
-            var relAppId = context.req.identOptInfo.getAppId();
-            var appIdentId = Long.parseLong(context.req.params.get("appIdentId"));
-            return context.fun.sql.getOne(
-                    new HashMap<>() {
-                        {
-                            put("id", relAppId);
-                            put("rel_app_id", appIdentId);
-                        }
-                    },
-                    AccountIdent.class)
-                    .compose(fetchAppIdent -> Future.succeededFuture(fetchAppIdent.getSk()));
-        };
+    public static Future<String> showSk(Long appIdentId, Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.sql.getOne(
+                new HashMap<>() {
+                    {
+                        put("id", relAppId);
+                        put("rel_app_id", appIdentId);
+                    }
+                },
+                AccountIdent.class)
+                .compose(fetchAppIdent -> Future.succeededFuture(fetchAppIdent.getSk()));
     }
 
-    public static ProcessFun<String> showPublicKey() {
-        return context -> {
-            var relAppId = context.req.identOptInfo.getAppId();
-            return context.fun.sql.getOne(
-                    new HashMap<>() {
-                        {
-                            put("id", relAppId);
-                        }
-                    },
-                    App.class)
-                    .compose(fetchApp -> Future.succeededFuture(fetchApp.getPubKey()));
-        };
+    public static Future<String> showPublicKey(Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.sql.getOne(
+                new HashMap<>() {
+                    {
+                        put("id", relAppId);
+                    }
+                },
+                App.class)
+                .compose(fetchApp -> Future.succeededFuture(fetchApp.getPubKey()));
     }
 
-    public static ProcessFun<String> showPrivateKey() {
-        return context -> {
-            var relAppId = context.req.identOptInfo.getAppId();
-            return context.fun.sql.getOne(
-                    new HashMap<>() {
-                        {
-                            put("id", relAppId);
-                        }
-                    },
-                    App.class)
-                    .compose(fetchApp -> Future.succeededFuture(fetchApp.getPriKey()));
-        };
+    public static Future<String> showPrivateKey(Long relAppId, Long relTenantId, ProcessContext context) {
+        return context.sql.getOne(
+                new HashMap<>() {
+                    {
+                        put("id", relAppId);
+                    }
+                },
+                App.class)
+                .compose(fetchApp -> Future.succeededFuture(fetchApp.getPriKey()));
     }
 
 }

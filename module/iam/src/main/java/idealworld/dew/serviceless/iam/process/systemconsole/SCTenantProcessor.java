@@ -18,10 +18,11 @@ package idealworld.dew.serviceless.iam.process.systemconsole;
 
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.OptActionKind;
-import idealworld.dew.framework.fun.eventbus.ProcessFun;
+import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.ident.Tenant;
 import idealworld.dew.serviceless.iam.process.systemconsole.dto.TenantAddReq;
+import io.vertx.core.Future;
 
 /**
  * 系统控制台下的租户控制器.
@@ -32,21 +33,19 @@ public class SCTenantProcessor {
 
     static {
         // 添加租户
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/system/tenant", addTenant());
+        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/system/tenant", eventBusContext ->
+                addTenant(eventBusContext.req.body(TenantAddReq.class), eventBusContext.context));
     }
 
-    public static ProcessFun<Long> addTenant() {
-        return context -> {
-            var tenantAddReq = context.req.body(TenantAddReq.class);
-            var tenant = Tenant.builder()
-                    .name(tenantAddReq.getName())
-                    .icon(tenantAddReq.getIcon())
-                    .parameters(tenantAddReq.getParameters())
-                    .allowAccountRegister(tenantAddReq.getAllowAccountRegister())
-                    .status(CommonStatus.ENABLED)
-                    .build();
-            return context.fun.sql.save(tenant);
-        };
+    public static Future<Long> addTenant(TenantAddReq tenantAddReq, ProcessContext context) {
+        var tenant = Tenant.builder()
+                .name(tenantAddReq.getName())
+                .icon(tenantAddReq.getIcon())
+                .parameters(tenantAddReq.getParameters())
+                .allowAccountRegister(tenantAddReq.getAllowAccountRegister())
+                .status(CommonStatus.ENABLED)
+                .build();
+        return context.sql.save(tenant);
     }
 
 }
