@@ -77,6 +77,6 @@ public class ResourceSubjectAddReq implements Serializable {
     private String platformProjectId = "";
     // 执行超时
     @Builder.Default
-    private Long timeoutMS = 0L;
+    private Long timeoutMs = 0L;
 
 }

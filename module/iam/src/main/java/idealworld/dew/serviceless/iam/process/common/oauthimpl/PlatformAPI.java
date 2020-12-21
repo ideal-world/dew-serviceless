@@ -43,14 +43,14 @@ public interface PlatformAPI {
     Future<Tuple2<String, Long>> doGetAccessToken(String ak, String sk, ProcessContext context);
 
     default Future<String> getAccessToken(String ak, String sk, Long appId, ProcessContext context) {
-        return context.fun.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag())
+        return context.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag())
                 .compose(accessToken -> {
                     if (accessToken != null) {
                         return context.helper.success(accessToken);
                     }
                     return doGetAccessToken(ak, sk, context)
                             .compose(getAccessToken ->
-                                    context.fun.cache.setex(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag(), getAccessToken._0, getAccessToken._1 - 10)
+                                    context.cache.setex(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag(), getAccessToken._0, getAccessToken._1 - 10)
                                             .compose(resp -> context.helper.success(getAccessToken._0)));
                 });
     }

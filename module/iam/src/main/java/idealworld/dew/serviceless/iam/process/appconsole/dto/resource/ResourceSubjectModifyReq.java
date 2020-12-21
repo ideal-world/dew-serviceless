@@ -62,6 +62,6 @@ public class ResourceSubjectModifyReq implements Serializable {
     @Size(max = 1000)
     private String platformProjectId;
     // 执行超时
-    private Long timeoutMS;
+    private Long timeoutMs;
 
 }

@@ -22,7 +22,6 @@ import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SoftDelEntity;
 import idealworld.dew.framework.exception.BadRequestException;
-import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.util.CaseFormatter;
 import io.vertx.core.CompositeFuture;
@@ -114,17 +113,27 @@ public class FunSQLClient {
     }
 
     public <E> Future<List<E>> list(String sql, Map<String, Object> parameters, Class<E> returnClazz) {
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]List\r\n--------------\r\n {} \r\n{}", sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         Promise<List<E>> promise = Promise.promise();
         SqlTemplate
                 .forQuery(client, sql)
                 .mapTo(Row::toJson)
                 .execute(parameters)
-                .onSuccess(records -> promise.complete(
-                        $.fun.stream(records.iterator())
+                .onSuccess(records -> {
+                    try {
+                        var result = $.fun.stream(records.iterator())
                                 .map(rowJson -> returnClazz == JsonObject.class
-                                        ? (E) CaseFormatter.snakeToCamel(rowJson)
+                                        ? (E) rowJson
                                         : CaseFormatter.snakeToCamel(rowJson).mapTo(returnClazz))
-                                .collect(Collectors.toList())))
+                                .collect(Collectors.toList());
+                        promise.complete(result);
+                    } catch (Exception e) {
+                        log.error("[SQL]Select [{}] convert error: {}", sql, e.getMessage(), e);
+                        promise.fail(e);
+                    }
+                })
                 .onFailure(e -> {
                     log.error("[SQL]Select [{}] error: {}", sql, e.getMessage(), e);
                     promise.fail(e);
@@ -182,7 +191,10 @@ public class FunSQLClient {
     }
 
     public Future<Long> count(String sql, Map<String, Object> parameters) {
-        var countSql = "SELECT COUNT(1) _count FROM (" + sql + ") _" + System.currentTimeMillis();
+        var countSql = "SELECT COUNT(1) AS _count FROM (" + sql + ") AS _" + System.currentTimeMillis();
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]Count\r\n--------------\r\n {} \r\n{}", countSql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         Promise<Long> promise = Promise.promise();
         SqlTemplate
                 .forQuery(client, countSql)
@@ -190,7 +202,7 @@ public class FunSQLClient {
                 .execute(parameters)
                 .onSuccess(records -> promise.complete(records.iterator().next().getLong("_count")))
                 .onFailure(e -> {
-                    log.error("[SQL]Select [{}] error: {}", countSql, e.getMessage(), e);
+                    log.error("[SQL]Count [{}] error: {}", countSql, e.getMessage(), e);
                     promise.fail(e);
                 });
         return promise.future();
@@ -208,6 +220,9 @@ public class FunSQLClient {
 
     public <E> Future<Page<E>> page(String sql, Map<String, Object> parameters, Long pageNumber, Long pageSize, Class<E> returnClazz) {
         var pageSql = sql + " LIMIT " + (pageNumber - 1) * pageSize + ", " + pageSize;
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]Page\r\n--------------\r\n {} \r\n{}", pageSql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         Promise<Page<E>> promise = Promise.promise();
         Page<E> page = new Page<>();
         page.setPageNumber(pageNumber);
@@ -229,11 +244,13 @@ public class FunSQLClient {
 
     public <E extends IdEntity> Future<Long> save(E entity) {
         var tableName = entity.tableName();
-        addSafeInfo(entity, true);
-        var caseEntity = CaseFormatter.camelToSnake(JsonObject.mapFrom(entity));
+        var caseEntity = CaseFormatter.camelToSnake(convertToJson(entity, true));
         var columns = caseEntity.stream().map(Map.Entry::getKey).collect(Collectors.joining(", "));
         var values = caseEntity.stream().map(j -> "#{" + j.getKey() + "}").collect(Collectors.joining(", "));
         var sql = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + values + ")";
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]Save\r\n--------------\r\n {} \r\n{}", sql, caseEntity.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .mapFrom(TupleMapper.jsonObject())
@@ -243,21 +260,27 @@ public class FunSQLClient {
 
     public <E extends IdEntity> Future<Long> save(List<E> entities) {
         var tableName = entities.get(0).tableName();
-        entities.forEach(entity -> addSafeInfo(entity, true));
-        var caseEntity = CaseFormatter.camelToSnake(JsonObject.mapFrom(entities.get(0)));
+        var jsonEntities = entities.stream().map(entity -> convertToJson(entity, true)).collect(Collectors.toList());
+        var caseEntity = CaseFormatter.camelToSnake(jsonEntities.get(0));
         var columns = caseEntity.stream().map(Map.Entry::getKey).collect(Collectors.joining(", "));
         var values = caseEntity.stream().map(j -> "#{" + j.getKey() + "}").collect(Collectors.joining(", "));
         var sql = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + values + ")";
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]Save Batch(" + jsonEntities.size() + ") , first record\r\n--------------\r\n {} \r\n{}", sql, caseEntity.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .mapFrom(TupleMapper.jsonObject())
-                        .executeBatch(entities.stream()
-                                .map(entity -> CaseFormatter.camelToSnake(JsonObject.mapFrom(entity)))
+                        .executeBatch(jsonEntities.stream()
+                                .map(CaseFormatter::camelToSnake)
                                 .collect(Collectors.toList())),
                 sql);
     }
 
     public Future<Long> save(String sql, Map<String, Object> parameters) {
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]Save\r\n--------------\r\n {} \r\n{}", sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .execute(parameters),
@@ -265,6 +288,9 @@ public class FunSQLClient {
     }
 
     public Future<Long> save(String sql, List<Map<String, Object>> parameters) {
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]Save Batch(" + parameters.size() + ") , first record\r\n--------------\r\n {} \r\n{}", sql, parameters.get(0).entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .executeBatch(parameters),
@@ -276,6 +302,9 @@ public class FunSQLClient {
     }
 
     public Future<Void> update(String sql, Map<String, Object> parameters) {
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]Update\r\n--------------\r\n {} \r\n{}", sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .execute(parameters),
@@ -284,6 +313,9 @@ public class FunSQLClient {
     }
 
     public Future<Void> update(String sql, List<Map<String, Object>> parameters) {
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]Update Batch(" + parameters.size() + ") , first record\r\n--------------\r\n {} \r\n{}", sql, parameters.get(0).entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .executeBatch(parameters),
@@ -301,16 +333,18 @@ public class FunSQLClient {
 
     public <E extends IdEntity> Future<Void> update(Map<String, Object> whereParameters, E setItems) {
         var tableName = setItems.tableName();
-        addSafeInfo(setItems, false);
-        var caseEntity = CaseFormatter.camelToSnake(JsonObject.mapFrom(setItems))
+        var caseEntity = CaseFormatter.camelToSnake(convertToJson(setItems, false))
                 .stream()
                 .filter(j -> j.getValue() != null)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         var sets = caseEntity.keySet()
                 .stream()
-                .map(o -> "SET " + o + " = #{" + o + "}").collect(Collectors.joining(", "));
-        var sql = packageWhere("UPDATE " + tableName + " " + sets, whereParameters);
+                .map(o -> o + " = #{" + o + "}").collect(Collectors.joining(", "));
+        var sql = packageWhere("UPDATE " + tableName + " SET " + sets, whereParameters);
         caseEntity.putAll(whereParameters);
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]Update\r\n--------------\r\n {} \r\n{}", sql, caseEntity.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         return updateHandler(SqlTemplate
                         .forUpdate(client, sql)
                         .execute(caseEntity),
@@ -356,11 +390,14 @@ public class FunSQLClient {
     @SneakyThrows
     public <E extends IdEntity> Future<Void> softDelete(String sql, Map<String, Object> parameters, Class<E> entityClazz) {
         var tableName = entityClazz.getDeclaredConstructor().newInstance().tableName();
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL]SoftDelete\r\n--------------\r\n {} \r\n{}", sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
         return tx(client ->
                 client.list(sql, parameters, Map.class)
                         .compose(selectResp -> {
                             if (selectResp.isEmpty()) {
-                                throw new NotFoundException("");
+                                return Future.succeededFuture(null);
                             }
                             Promise<List<Map<String, Object>>> insertP = Promise.promise();
                             var softDelEntities = selectResp.stream()
@@ -382,7 +419,12 @@ public class FunSQLClient {
                                     .onFailure(insertP::fail);
                             return insertP.future();
                         })
-                        .compose(idR -> client.update("DELETE FROM " + tableName + " WHERE id = #{id}", idR))
+                        .compose(ids -> {
+                            if (ids == null) {
+                                return Future.succeededFuture();
+                            }
+                            return client.update("DELETE FROM " + tableName + " WHERE id = #{id}", ids);
+                        })
         );
     }
 
@@ -484,7 +526,7 @@ public class FunSQLClient {
                     }
                 })
                 .onFailure(e -> {
-                    log.error("[SQL]Update [{}] error: {}", sql, e.getMessage(), e);
+                    log.error("[SQL]SaveOrUpdate [{}] error: {}", sql, e.getMessage(), e);
                     promise.fail(e);
                 });
         return promise.future();
@@ -493,12 +535,16 @@ public class FunSQLClient {
     public Consumer addEntityByInsertFun;
     public Consumer addEntityByUpdateFun;
 
-    private <E extends IdEntity> void addSafeInfo(E entity, Boolean insert) {
+    private <E extends IdEntity> JsonObject convertToJson(E entity, Boolean insert) {
         if (insert && addEntityByInsertFun != null) {
             addEntityByInsertFun.accept(entity);
         } else if (addEntityByUpdateFun != null) {
             addEntityByUpdateFun.accept(entity);
         }
+        var json = JsonObject.mapFrom(entity);
+        json.remove("createTime");
+        json.remove("updateTime");
+        return json;
     }
 
 }

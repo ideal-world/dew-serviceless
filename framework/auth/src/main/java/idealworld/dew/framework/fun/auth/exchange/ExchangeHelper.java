@@ -24,7 +24,6 @@ import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceSubjectExchange;
-import idealworld.dew.framework.fun.eventbus.ConsumerFun;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
@@ -80,7 +79,7 @@ public class ExchangeHelper {
     }
 
     public static Future<Void> watch(String moduleName, Set<String> uris, Consumer<Tuple2<OptActionKind,Buffer>> fun) {
-        FunEventBus.choose(moduleName).consumer(moduleName, (ConsumerFun<Void>) (actionKind, uri, header, body) -> {
+        FunEventBus.choose(moduleName).consumer(moduleName, (FunEventBus.ConsumerFun<Void>) (actionKind, uri, header, body) -> {
             var strUri = uri.toString().toLowerCase();
             if(uris.stream().anyMatch(u -> u.toLowerCase().startsWith(strUri))){
                 log.trace("[Exchange]Received {}", body.toString());

@@ -80,13 +80,13 @@ public class FunHttpClient {
     }
 
     public Future<HttpResponse<Buffer>> requestByResourceSubject(HttpMethod httpMethod, String pathAndQuery, Buffer body, Map<String, String> header) {
-        return request(httpMethod, URIHelper.formatUri(httpClientConfig.getUri(), pathAndQuery), body, header, httpClientConfig.getTimeoutMS());
+        return request(httpMethod, URIHelper.formatUri(httpClientConfig.getUri(), pathAndQuery), body, header, httpClientConfig.getTimeoutMs());
     }
 
-    public Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header, Long timeoutMS) {
+    public Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header, Long timeoutMs) {
         var request = webClient.requestAbs(httpMethod, url);
-        if (timeoutMS != null) {
-            request.timeout(timeoutMS);
+        if (timeoutMs != null) {
+            request.timeout(timeoutMs);
         }
         if (header == null) {
             header = new HashMap<>();
@@ -104,10 +104,10 @@ public class FunHttpClient {
     }
 
     public Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String host, Integer port, String path, String query,
-                                                Buffer body, Map<String, String> header, Long timeoutMS) {
+                                                Buffer body, Map<String, String> header, Long timeoutMs) {
         var request = webClient.request(httpMethod, port, host, path);
-        if (timeoutMS != null) {
-            request.timeout(timeoutMS);
+        if (timeoutMs != null) {
+            request.timeout(timeoutMs);
         }
         if (query != null) {
             URIHelper.getSingleValueQuery(query)

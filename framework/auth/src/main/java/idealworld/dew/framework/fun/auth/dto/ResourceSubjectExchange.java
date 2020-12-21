@@ -38,6 +38,6 @@ public class ResourceSubjectExchange {
     private String sk;
     private String platformAccount;
     private String platformProjectId;
-    private Long timeoutMS;
+    private Long timeoutMs;
 
 }

@@ -16,6 +16,8 @@
 
 package idealworld.dew.framework.fun.test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.vertx.junit5.VertxExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.GenericContainer;
@@ -29,10 +31,17 @@ import java.io.File;
 @ExtendWith(VertxExtension.class)
 public abstract class DewTest {
 
+    static {
+        System.getProperties().put("dew.profile", "test");
+        ObjectMapper mapper = io.vertx.core.json.jackson.DatabindCodec.mapper();
+        mapper.registerModule(new JavaTimeModule());
+    }
+
     protected static void enableRedis() {
         redisConfig = new GenericContainer("redis:6-alpine")
                 .withExposedPorts(6379);
         redisConfig.start();
+        System.out.println("Test Redis port: " + redisConfig.getFirstMappedPort());
         System.getProperties().put("dew.config.funs.redis.uri", "redis://localhost:" + redisConfig.getFirstMappedPort());
     }
 
@@ -43,6 +52,7 @@ public abstract class DewTest {
             mysqlConfig.withInitScript("sql/init.sql");
         }
         mysqlConfig.start();
+        System.out.println("Test mysql port: " + mysqlConfig.getFirstMappedPort() + ", username: " + mysqlConfig.getUsername() + ", password: " + mysqlConfig.getPassword());
         System.getProperties().put("dew.config.funs.sql.host", mysqlConfig.getHost());
         System.getProperties().put("dew.config.funs.sql.port", mysqlConfig.getFirstMappedPort());
         System.getProperties().put("dew.config.funs.sql.db", mysqlConfig.getDatabaseName());

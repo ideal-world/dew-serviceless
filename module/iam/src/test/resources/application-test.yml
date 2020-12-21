@@ -8,6 +8,8 @@ funs:
     userName:
     password:
 modules:
-  -
-    clazzPackage: idealworld.dew.serviceless.iam.IAMModule
+  - clazzPackage: idealworld.dew.serviceless.iam.IAMModule
     config:
+      allowTenantRegister: true
+      app:
+        iamAdminPwd: TestPwd1d

@@ -164,8 +164,8 @@ public class ACGroupProcessor {
 
     public static Future<List<GroupResp>> findExposeGroups(String code, String name, String kind, Long relAppId, Long relTenantId, ProcessContext context) {
         var sql = "SELECT * FROM %s" +
-                "  WHERE ( expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
-                "    OR expose_kind = #{expose_kind_global} )";
+                " WHERE (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
+                " OR expose_kind = #{expose_kind_global} )";
         var whereParameters = new HashMap<String, Object>() {
             {
                 put("expose_kind_tenant", ExposeKind.TENANT);
@@ -255,8 +255,8 @@ public class ACGroupProcessor {
                 context.helper.notExistToError(
                         context.sql.getOne(
                                 String.format("SELECT node.* FROM %s AS node" +
-                                                "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
-                                                "  WHERE node.id = #{id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
+                                                " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
+                                                " WHERE node.id = #{id} AND _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id}",
                                         new GroupNode().tableName(), new Group().tableName()),
                                 new HashMap<>() {
                                     {
@@ -297,9 +297,9 @@ public class ACGroupProcessor {
     public static Future<List<GroupNodeResp>> findGroupNodes(Long groupId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.list(
                 String.format("SELECT node.* FROM %s AS node" +
-                                "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
-                                "  WHERE group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id} AND node.rel_group_id = #{rel_group_id}" +
-                                "  ORDER BY node.code ASC",
+                                " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
+                                " WHERE _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id} AND node.rel_group_id = #{rel_group_id}" +
+                                " ORDER BY node.code ASC",
                         new GroupNode().tableName(), new Group().tableName()),
                 new HashMap<>() {
                     {
@@ -354,8 +354,8 @@ public class ACGroupProcessor {
                                         .compose(r ->
                                                 context.sql.getOne(
                                                         String.format("SELECT node.* FROM %s AS node" +
-                                                                        "  INNER JOIN %s group ON group.id = node.rel_group_id" +
-                                                                        "  WHERE node.id = #{node_id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
+                                                                        " INNER JOIN %s _group ON _group.id = node.rel_group_id" +
+                                                                        " WHERE node.id = #{node_id} AND _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id}",
                                                                 new GroupNode().tableName(), new Group().tableName()),
                                                         new HashMap<>() {
                                                             {
@@ -381,7 +381,7 @@ public class ACGroupProcessor {
         if (siblingId == DewConstant.OBJECT_UNDEFINED) {
             return client.getOne(
                     String.format("SELECT code FROM %s" +
-                                    "  WHERE rel_group_id = #{rel_group_id} AND id = #{id}",
+                                    " WHERE rel_group_id = #{rel_group_id} AND id = #{id}",
                             new GroupNode().tableName()),
                     new HashMap<>() {
                         {
@@ -397,7 +397,7 @@ public class ACGroupProcessor {
         }
         return client.getOne(
                 String.format("SELECT code FROM %s" +
-                                "  WHERE id = #{id}",
+                                " WHERE id = #{id}",
                         new GroupNode().tableName()),
                 new HashMap<>() {
                     {
@@ -429,9 +429,9 @@ public class ACGroupProcessor {
             future.compose(resp ->
                     client.list(
                             String.format("SELECT * FROM %s" +
-                                            "  WHERE rel_group_id = #{rel_group_id} AND code like #{code} AND code >= #{code_goe}",
+                                            " WHERE rel_group_id = #{rel_group_id} AND code like #{code} AND code >= #{code_goe}",
                                     new GroupNode().tableName()),
-                            new HashMap<>() {
+                            new HashMap<String,Object>() {
                                 {
                                     put("rel_group_id", groupId);
                                     put("code", originalParentNodeCode + "%");
@@ -446,7 +446,7 @@ public class ACGroupProcessor {
         }
         return future.compose(resp -> {
             var updateSql = "SELECT * FROM %s" +
-                    "  WHERE rel_group_id = #{rel_group_id} AND code like #{code} AND code >= #{code_goe}";
+                    " WHERE rel_group_id = #{rel_group_id} AND code like #{code} AND code >= #{code_goe}";
             var parameters = new HashMap<String, Object>() {
                 {
                     put("rel_group_id", groupId);

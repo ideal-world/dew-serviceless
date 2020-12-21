@@ -141,7 +141,7 @@ public class ResourceSubject extends SafeEntity {
     private String platformProjectId;
     // 执行超时
     @NotNull
-    private Long timeoutMS;
+    private Long timeoutMs;
     // 关联应用Id
     @NotNull
     private Long relAppId;

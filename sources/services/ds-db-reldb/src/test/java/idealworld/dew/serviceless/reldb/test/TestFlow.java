@@ -102,8 +102,7 @@ public class TestFlow extends BasicTest {
                                 "\topen_id varchar(100) not null comment 'Open Id',\n" +
                                 "\tstatus varchar(50) not null comment '账号状态'\n" +
                                 ")\n" +
-                                "comment '账号'")
-                )
+                                "comment '账号'"))
                 .compose(resp ->
                         MysqlClient.choose("subjectCodexx").exec("insert into iam_account(name, open_id, status) values (?, ?, ?)", "孤岛旭日1", "xxxx", "ENABLED")
                 )

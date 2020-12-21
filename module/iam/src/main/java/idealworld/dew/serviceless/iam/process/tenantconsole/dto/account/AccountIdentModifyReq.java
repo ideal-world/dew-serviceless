@@ -23,7 +23,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * 修改账号认证请求.
@@ -45,9 +44,9 @@ public class AccountIdentModifyReq implements Serializable {
     private String sk;
 
     // 账号认证有效开始时间")
-    private Date validStartTime;
+    private Long validStartTime;
 
     // 账号认证有效结束时间")
-    private Date validEndTime;
+    private Long validEndTime;
 
 }

@@ -63,9 +63,9 @@ public class ExchangeProcessor {
         }
         return context.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
-                                "  INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
-                                "  INNER JOIN %s tenant ON tenant.id = app.rel_tenant_id AND tenant.status = #{status}" +
-                                "  WHERE ident.valid_time > #{valid_time}",
+                                " INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
+                                " INNER JOIN %s tenant ON tenant.id = app.rel_tenant_id AND tenant.status = #{status}" +
+                                " WHERE ident.valid_time > #{valid_time}",
                         new AppIdent().tableName(), new App().tableName(), new Tenant().tableName()),
                 new HashMap<>() {
                     {
@@ -76,11 +76,11 @@ public class ExchangeProcessor {
                 .compose(appIdents ->
                         CompositeFuture.all(appIdents.stream()
                                 .map(appIdent -> {
-                                    var ak = appIdent.getString("ident.ak");
-                                    var sk = appIdent.getString("ident.sk");
-                                    var appId = appIdent.getLong("ident.rel_app_id");
-                                    var validTime = Date.from(appIdent.getInstant("ident.valid_time"));
-                                    var tenantId = appIdent.getLong("app.rel_tenant_id");
+                                    var ak = appIdent.getString("ak");
+                                    var sk = appIdent.getString("sk");
+                                    var appId = appIdent.getLong("rel_app_id");
+                                    var validTime = appIdent.getLong("valid_time");
+                                    var tenantId = appIdent.getLong("rel_tenant_id");
                                     return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
                                 })
                                 .collect(Collectors.toList())))
@@ -90,8 +90,8 @@ public class ExchangeProcessor {
     public static Future<Void> enableTenant(Long tenantId, ProcessContext context) {
         return context.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time FROM %s AS ident" +
-                                "  INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
-                                "  WHERE app.rel_tenant_id = #{rel_tenant_id} AND ident.valid_time > #{valid_time}",
+                                " INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
+                                " WHERE app.rel_tenant_id = #{rel_tenant_id} AND ident.valid_time > #{valid_time}",
                         new AppIdent().tableName(), new App().tableName()),
                 new HashMap<>() {
                     {
@@ -103,10 +103,10 @@ public class ExchangeProcessor {
                 .compose(appIdents ->
                         CompositeFuture.all(appIdents.stream()
                                 .map(appIdent -> {
-                                    var ak = appIdent.getString("ident.ak");
-                                    var sk = appIdent.getString("ident.sk");
-                                    var appId = appIdent.getLong("ident.rel_app_id");
-                                    var validTime = Date.from(appIdent.getInstant("ident.valid_time"));
+                                    var ak = appIdent.getString("ak");
+                                    var sk = appIdent.getString("sk");
+                                    var appId = appIdent.getLong("rel_app_id");
+                                    var validTime = appIdent.getLong("valid_time");
                                     return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
                                 })
                                 .collect(Collectors.toList())))
@@ -116,8 +116,8 @@ public class ExchangeProcessor {
     public static Future<Void> disableTenant(Long tenantId, ProcessContext context) {
         return context.sql.list(
                 String.format("SELECT ident.ak FROM %s AS ident" +
-                        "  INNER JOIN %s app ON app.id = ident.rel_app_id" +
-                        "  WHERE app.rel_tenant_id = #{rel_tenant_id}", new AppIdent().tableName(), new App().tableName()),
+                        " INNER JOIN %s app ON app.id = ident.rel_app_id" +
+                        " WHERE app.rel_tenant_id = #{rel_tenant_id}", new AppIdent().tableName(), new App().tableName()),
                 new HashMap<>() {
                     {
                         put("rel_tenant_id", tenantId);
@@ -126,7 +126,7 @@ public class ExchangeProcessor {
                 .compose(appIdents ->
                         CompositeFuture.all(appIdents.stream()
                                 .map(appIdent -> {
-                                    var ak = appIdent.getString("ident.ak");
+                                    var ak = appIdent.getString("ak");
                                     return deleteAppIdent(ak, context);
                                 })
                                 .collect(Collectors.toList())))
@@ -149,7 +149,7 @@ public class ExchangeProcessor {
                 .compose(resp ->
                         context.sql.list(
                                 String.format("SELECT ak, sk, valid_time FROM %s" +
-                                        "  WHERE rel_app_id = #{rel_app_id} AND valid_time > #{valid_time}", new AppIdent().tableName()),
+                                        " WHERE rel_app_id = #{rel_app_id} AND valid_time > #{valid_time}", new AppIdent().tableName()),
                                 new HashMap<>() {
                                     {
                                         put("rel_app_id", appId);
@@ -161,7 +161,7 @@ public class ExchangeProcessor {
                                 .map(appIdent -> {
                                     var ak = appIdent.getString("ak");
                                     var sk = appIdent.getString("sk");
-                                    var validTime = Date.from(appIdent.getInstant("valid_time"));
+                                    var validTime = appIdent.getLong("ident.valid_time");
                                     return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
                                 })
                                 .collect(Collectors.toList())))
@@ -190,14 +190,14 @@ public class ExchangeProcessor {
         return context.cache.del(IAMConstant.CACHE_APP_AK + ak);
     }
 
-    private static Future<Void> changeAppIdent(String ak, String sk, Date validTime, Long appId, Long tenantId, ProcessContext context) {
+    private static Future<Void> changeAppIdent(String ak, String sk, Long validTime, Long appId, Long tenantId, ProcessContext context) {
         return context.cache.del(IAMConstant.CACHE_APP_AK + ak)
                 .compose(resp -> {
                     if (validTime == null) {
                         return context.cache.set(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId);
                     } else {
                         return context.cache.setex(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId,
-                                (validTime.getTime() - System.currentTimeMillis()) / 1000);
+                                (validTime - System.currentTimeMillis()) / 1000);
                     }
                 });
     }
@@ -206,7 +206,7 @@ public class ExchangeProcessor {
         if ((policyInfo.getSubjectOperator() == AuthSubjectOperatorKind.INCLUDE
                 || policyInfo.getSubjectOperator() == AuthSubjectOperatorKind.LIKE)
                 && policyInfo.subjectKind != AuthSubjectKind.GROUP_NODE) {
-            return context.helper.error(new BadRequestException("权限主体运算类型为INCLUDE/LIKE时权限主体只能为GROUP_NODE"));
+            context.helper.error(new BadRequestException("权限主体运算类型为INCLUDE/LIKE时权限主体只能为GROUP_NODE"));
         }
         policyInfo.setResourceUri(URIHelper.formatUri(policyInfo.getResourceUri()));
         var key = IAMConstant.CACHE_AUTH_POLICY

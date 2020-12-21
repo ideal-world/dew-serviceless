@@ -49,7 +49,7 @@ public class WechatXCXAPI implements PlatformAPI {
                 + "&grant_type=authorization_code", Buffer.buffer(""))
                 .compose(response -> {
                     if (response.statusCode() != 200) {
-                        return context.helper.error(new ServiceException("微信接口调用异常"));
+                        context.helper.error(new ServiceException("微信接口调用异常"));
                     }
                     var body = response.body().toString();
                     log.trace("Wechat response : {}", body);
@@ -57,7 +57,7 @@ public class WechatXCXAPI implements PlatformAPI {
                     // 0成功，-1系统繁忙，40029 code无效，45011 访问次数限制（100次/分钟）
                     if (userInfoResp.containsKey("errcode")
                             && !userInfoResp.getString("errcode").equalsIgnoreCase("0")) {
-                        return context.helper.error(new ServiceException("[" + userInfoResp.getString("errcode") + "]" + userInfoResp.getString("errmsg")));
+                        context.helper.error(new ServiceException("[" + userInfoResp.getString("errcode") + "]" + userInfoResp.getString("errmsg")));
                     }
                     return context.helper.success(userInfoResp.mapTo(OAuthProcessor.OAuthUserInfo.class));
                 });
@@ -71,16 +71,15 @@ public class WechatXCXAPI implements PlatformAPI {
                 + sk)
                 .compose(response -> {
                     if (response.statusCode() != 200) {
-                        return context.helper.error(new ServiceException("微信接口调用异常"));
+                        context.helper.error(new ServiceException("微信接口调用异常"));
                     }
                     var accountToken = new JsonObject(response.body());
-                    if (accountToken.containsKey("access_token")) {
-                        var accessToken = accountToken.getString("access_token");
-                        var expiresIn = accountToken.getLong("expires_in");
-                        return context.helper.success(new Tuple2<>(accessToken, expiresIn));
-                    } else {
-                        return context.helper.error(new ServiceException("[" + accountToken.getString("errcode") + "]微信接口调用异常"));
+                    if (!accountToken.containsKey("access_token")) {
+                        context.helper.error(new ServiceException("[" + accountToken.getString("errcode") + "]微信接口调用异常"));
                     }
+                    var accessToken = accountToken.getString("access_token");
+                    var expiresIn = accountToken.getLong("expires_in");
+                    return context.helper.success(new Tuple2<>(accessToken, expiresIn));
                 });
     }
 

@@ -51,7 +51,7 @@ public class IAMBasicProcessor {
         return context.helper.notExistToError(
                 context.sql.getOne(
                         String.format("SELECT rel_tenant_id FROM %s" +
-                                        "  WHERE id = #{id} AND status = #{status}",
+                                        " WHERE id = #{id} AND status = #{status}",
                                 new App().tableName()),
                         new HashMap<>() {
                             {
@@ -63,7 +63,7 @@ public class IAMBasicProcessor {
                     if (registerAction == null || !registerAction) {
                         return context.sql.getOne(
                                 String.format("SELECT id FROM %s" +
-                                                "  WHERE id = #{id} AND status = #{status}",
+                                                " WHERE id = #{id} AND status = #{status}",
                                         new Tenant().tableName()),
                                 new HashMap<>() {
                                     {
@@ -74,7 +74,7 @@ public class IAMBasicProcessor {
                     } else {
                         return context.sql.getOne(
                                 String.format("SELECT id FROM %s" +
-                                                "  WHERE id = #{id} AND status = #{status} AND allow_account_register = #{allow_account_register}",
+                                                " WHERE id = #{id} AND status = #{status} AND allow_account_register = #{allow_account_register}",
                                         new Tenant().tableName()),
                                 new HashMap<>() {
                                     {
@@ -101,7 +101,7 @@ public class IAMBasicProcessor {
         return context.helper.notExistToError(
                 context.sql.getOne(
                         String.format("SELECT rel_tenant_id FROM %s" +
-                                        "  WHERE open_id = #{open_id} AND status = #{status}",
+                                        " WHERE open_id = #{open_id} AND status = #{status}",
                                 new Account().tableName()),
                         new HashMap<>() {
                             {
@@ -113,7 +113,7 @@ public class IAMBasicProcessor {
                         context.helper.notExistToError(
                                 context.sql.getOne(
                                         String.format("SELECT id FROM %s" +
-                                                        "  WHERE id = #{id} AND status = #{status}",
+                                                        " WHERE id = #{id} AND status = #{status}",
                                                 new Tenant().tableName()),
                                         new HashMap<>() {
                                             {
@@ -161,11 +161,11 @@ public class IAMBasicProcessor {
         }
     }
 
-    public static Future<Date> validRuleAndGetValidEndTime(AccountIdentKind kind, String ak, String sk, Long relTenantId, ProcessContext context) {
+    public static Future<Long> validRuleAndGetValidEndTime(AccountIdentKind kind, String ak, String sk, Long relTenantId, ProcessContext context) {
         return context.helper.notExistToError(
                 context.sql.getOne(
                         String.format("SELECT valid_ak_rule, valid_sk_rule, valid_time_sec FROM %s" +
-                                        "  WHERE kind = #{kind} AND rel_tenant_id = #{rel_tenant_id}",
+                                        " WHERE kind = #{kind} AND rel_tenant_id = #{rel_tenant_id}",
                                 new TenantIdent().tableName()),
                         new HashMap<>() {
                             {
@@ -196,7 +196,7 @@ public class IAMBasicProcessor {
                     return context.helper.success(
                             validTimeSec == null || validTimeSec.equals(DewConstant.OBJECT_UNDEFINED)
                                     ? DewConstant.MAX_TIME
-                                    : new Date(System.currentTimeMillis() + validTimeSec * 1000)
+                                    : new Date(System.currentTimeMillis() + validTimeSec * 1000).getTime()
                     );
                 });
     }
@@ -205,7 +205,7 @@ public class IAMBasicProcessor {
         return context.helper.notExistToError(
                 context.sql.exists(
                         String.format("SELECT id FROM %s" +
-                                        "  WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
+                                        " WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
                                 new Account().tableName()),
                         new HashMap<>() {
                             {
@@ -230,8 +230,8 @@ public class IAMBasicProcessor {
         return context.helper.notExistToError(
                 context.sql.exists(
                         String.format("SELECT acc.id FROM %s AS acc" +
-                                        "  INNER JOIN %s AS accapp ON accapp.rel_account_id = acc.id" +
-                                        "  WHERE acc.id in (" + accountsWhere + ") AND acc.rel_tenant_id = #{rel_tenant_id} AND accapp.rel_app_id = #{rel_app_id}",
+                                        " INNER JOIN %s AS accapp ON accapp.rel_account_id = acc.id" +
+                                        " WHERE acc.id in (" + accountsWhere + ") AND acc.rel_tenant_id = #{rel_tenant_id} AND accapp.rel_app_id = #{rel_app_id}",
                                 new Account().tableName(), new AccountApp().tableName()),
                         whereParametersMap), () -> new UnAuthorizedException("账号不合法"))
                 .compose(resp -> context.helper.success());
@@ -241,7 +241,7 @@ public class IAMBasicProcessor {
         return context.helper.notExistToError(
                 context.sql.exists(
                         String.format("SELECT id FROM %s" +
-                                        "  WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
+                                        " WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
                                 new App().tableName()),
                         new HashMap<>() {
                             {
@@ -265,7 +265,7 @@ public class IAMBasicProcessor {
         return context.helper.notExistToError(
                 context.sql.exists(
                         String.format("SELECT id FROM %s" +
-                                        "  WHERE id in (" + appsWhere + ") AND rel_tenant_id = #{rel_tenant_id}",
+                                        " WHERE id in (" + appsWhere + ") AND rel_tenant_id = #{rel_tenant_id}",
                                 new App().tableName()),
                         whereParametersMap), () -> new UnAuthorizedException("应用不合法"))
                 .compose(resp -> context.helper.success());
@@ -293,13 +293,16 @@ public class IAMBasicProcessor {
                 .collect(Collectors.toMap(i -> (String) i[0], i -> i[1]));
         var rolesWhere = whereParametersMap.keySet().stream().map(role -> "#{" + role + "}").collect(Collectors.joining(", "));
 
-        var sql = "SELECT id FROM %s" +
-                "  WHERE id in (" + rolesWhere + ") AND " +
-                "    (expose_kind in (#{expose_kind_app}, #{expose_kind_tenant}) AND rel_tenant_id = #{rel_tenant_id} " +
-                "       OR expose_kind = (#{expose_kind_global})";
-        if (appId != DewConstant.OBJECT_UNDEFINED) {
-            sql += " AND rel_app_id = #{rel_app_id}";
-        }
+        var sql = appId == DewConstant.OBJECT_UNDEFINED
+                ? "SELECT id FROM %s" +
+                " WHERE id in (" + rolesWhere + ")" +
+                " AND (expose_kind in (#{expose_kind_app}, #{expose_kind_tenant}) AND rel_tenant_id = #{rel_tenant_id}" +
+                " OR expose_kind = #{expose_kind_global})"
+                : "SELECT id FROM %s" +
+                " WHERE id in (" + rolesWhere + ")" +
+                " AND (rel_app_id = #{rel_app_id} AND expose_kind = #{expose_kind_app}" +
+                " OR rel_tenant_id = #{rel_tenant_id} AND expose_kind = #{expose_kind_tenant}" +
+                " OR expose_kind = #{expose_kind_global})";
         whereParametersMap.putAll(new HashMap<>() {
             {
                 put("expose_kind_app", ExposeKind.APP);
@@ -338,21 +341,25 @@ public class IAMBasicProcessor {
                 .collect(Collectors.toMap(i -> (String) i[0], i -> i[1]));
         var groupNodesWhere = whereParametersMap.keySet().stream().map(node -> "#{" + node + "}").collect(Collectors.joining(", "));
 
-        var sql = "SELECT group.id FROM %s AS group" +
-                "  INNER JOIN %s AS node ON node.rel_group_id  = group.id " +
-                "  WHERE node.id in (" + groupNodesWhere + ") AND " +
-                "    (group.expose_kind in (#{expose_kind_app}, #{expose_kind_tenant}) AND group.rel_tenant_id = #{rel_tenant_id} " +
-                "       OR group.expose_kind = (#{expose_kind_global})";
-        if (appId != DewConstant.OBJECT_UNDEFINED) {
-            sql += " AND group.rel_app_id = #{rel_app_id}";
-        }
+        var sql = appId == DewConstant.OBJECT_UNDEFINED
+                ? "SELECT node.id FROM %s AS node" +
+                " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
+                " WHERE node.id in (" + groupNodesWhere + ") AND" +
+                " (_group.expose_kind in (#{expose_kind_app}, #{expose_kind_tenant}) AND _group.rel_tenant_id = #{rel_tenant_id}" +
+                " OR _group.expose_kind = #{expose_kind_global})"
+                : "SELECT node.id FROM %s AS node" +
+                " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
+                " WHERE node.id in (" + groupNodesWhere + ") AND" +
+                " (_group.rel_app_id = #{rel_app_id} AND _group.expose_kind = #{expose_kind_app}" +
+                " OR _group.rel_tenant_id = #{rel_tenant_id} AND _group.expose_kind = #{expose_kind_tenant}" +
+                " OR _group.expose_kind = #{expose_kind_global})";
         whereParametersMap.putAll(new HashMap<>() {
             {
                 put("expose_kind_app", ExposeKind.APP);
                 put("expose_kind_tenant", ExposeKind.TENANT);
                 put("expose_kind_global", ExposeKind.GLOBAL);
-                put("rel_tenant_id", tenantId);
                 put("rel_app_id", appId);
+                put("rel_tenant_id", tenantId);
             }
         });
         return context.helper.notExistToError(
@@ -365,8 +372,8 @@ public class IAMBasicProcessor {
     public static Future<Set<IdentOptInfo.RoleInfo>> findRoleInfo(Long accountId, ProcessContext context) {
         return context.sql.list(
                 String.format("SELECT role.id, role.name FROM %s AS accrole" +
-                                "  INNER JOIN %s role ON role.id = accrole.rel_role_id" +
-                                "  WHERE accrole.rel_account_id = #{rel_account_id}",
+                                " INNER JOIN %s role ON role.id = accrole.rel_role_id" +
+                                " WHERE accrole.rel_account_id = #{rel_account_id}",
                         new AccountRole().tableName(), new Role().tableName()),
                 new HashMap<>() {
                     {
@@ -388,10 +395,10 @@ public class IAMBasicProcessor {
 
     public static Future<Set<IdentOptInfo.GroupInfo>> findGroupInfo(Long accountId, ProcessContext context) {
         return context.sql.list(
-                String.format("SELECT group.code, group.name, node.code, node.name, node.bus_code FROM %s AS accgroup" +
-                                "  INNER JOIN %s node ON node.id = accgroup.rel_group_node_id" +
-                                "  INNER JOIN %s gorup ON group.id = node.rel_group_id" +
-                                "  WHERE accgroup.rel_account_id = #{rel_account_id}",
+                String.format("SELECT _group.code AS group_code, _group.name AS group_name, node.code AS node_code, node.name AS node_name, node.bus_code FROM %s AS accgroup" +
+                                " INNER JOIN %s node ON node.id = accgroup.rel_group_node_id" +
+                                " INNER JOIN %s _group ON _group.id = node.rel_group_id" +
+                                " WHERE accgroup.rel_account_id = #{rel_account_id}",
                         new AccountGroup().tableName(), new GroupNode().tableName(), new Group().tableName()),
                 new HashMap<>() {
                     {
@@ -402,11 +409,11 @@ public class IAMBasicProcessor {
                     var groupInfos = fetchGroupsResult.stream()
                             .map(info ->
                                     IdentOptInfo.GroupInfo.builder()
-                                            .groupCode(info.getString("group.code"))
-                                            .groupName(info.getString("group.name"))
-                                            .groupNodeCode(info.getString("node.code"))
-                                            .groupNodeName(info.getString("node.name"))
-                                            .groupNodeBusCode(info.getString("node.bus_code"))
+                                            .groupCode(info.getString("group_code"))
+                                            .groupName(info.getString("group_name"))
+                                            .groupNodeCode(info.getString("node_code"))
+                                            .groupNodeName(info.getString("node_name"))
+                                            .groupNodeBusCode(info.getString("bus_code"))
                                             .build()
                             )
                             .collect(Collectors.toSet());

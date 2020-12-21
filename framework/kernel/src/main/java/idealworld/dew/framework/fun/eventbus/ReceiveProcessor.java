@@ -16,6 +16,7 @@
 
 package idealworld.dew.framework.fun.eventbus;
 
+import com.ecfront.dew.common.$;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
@@ -27,6 +28,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,10 +57,11 @@ public class ReceiveProcessor {
             return PROCESSORS.get(actionKind).get(pathRequest).process(EventBusContext.builder()
                     .req(EventBusContext.Request.builder()
                             .header(header)
+                            .params(URIHelper.getSingleValueQuery(query,false))
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
-                                            ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptCacheInfo.class)
+                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptCacheInfo.class)
                                             : new IdentOptCacheInfo())
                             .build())
                     .context(ProcessContext.builder()
@@ -78,7 +81,7 @@ public class ReceiveProcessor {
         } else {
             var pathPattern = matchedPathTemplate.get();
             var params = PATH_MATCHER.extractUriTemplateVariables(pathPattern, pathRequest);
-            params.putAll(URIHelper.getSingleValueQuery(query));
+            params.putAll(URIHelper.getSingleValueQuery(query,false));
             return PROCESSORS.get(actionKind).get(pathPattern).process(EventBusContext.builder()
                     .req(EventBusContext.Request.builder()
                             .header(header)
@@ -86,7 +89,7 @@ public class ReceiveProcessor {
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
-                                            ? new JsonObject(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG)).mapTo(IdentOptCacheInfo.class)
+                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG),StandardCharsets.UTF_8)).mapTo(IdentOptCacheInfo.class)
                                             : new IdentOptCacheInfo())
                             .build())
                     .context(ProcessContext.builder()

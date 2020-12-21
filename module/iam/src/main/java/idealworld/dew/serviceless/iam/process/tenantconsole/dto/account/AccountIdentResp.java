@@ -27,7 +27,6 @@ import lombok.experimental.SuperBuilder;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.util.Date;
 
 /**
  * 账号认证响应.
@@ -51,10 +50,10 @@ public class AccountIdentResp extends IdResp {
     private String ak;
     // 账号认证有效开始时间
     @NotNull
-    private Date validStartTime;
+    private Long validStartTime;
     // 账号认证有效结束时间
     @NotNull
-    private Date validEndTime;
+    private Long validEndTime;
     // 关联账号Id
     @NotNull
     private Long relAccountId;

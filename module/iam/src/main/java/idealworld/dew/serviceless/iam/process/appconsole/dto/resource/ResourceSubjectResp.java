@@ -85,6 +85,6 @@ public class ResourceSubjectResp extends AppBasedResp {
     private String platformProjectId;
     // 执行超时
     @NotNull
-    private Long timeoutMS;
+    private Long timeoutMs;
 
 }

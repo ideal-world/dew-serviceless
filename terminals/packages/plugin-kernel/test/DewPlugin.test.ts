@@ -28,7 +28,7 @@ test('Test check and replace', async () => {
     `)).not.toContain('select')
     expect(checkAndReplace(
         "Hi.sql('xxx',`select * from main\n" +
-        "  left join org on org.id = main.orgId`)"
+        " left join org on org.id = main.orgId`)"
     )).not.toContain('select')
     // TODO 支持拼接
 

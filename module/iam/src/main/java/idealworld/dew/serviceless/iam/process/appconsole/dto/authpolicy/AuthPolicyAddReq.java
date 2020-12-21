@@ -30,7 +30,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * 添加权限策略请求.
@@ -56,10 +55,10 @@ public class AuthPolicyAddReq implements Serializable {
     private AuthSubjectOperatorKind subjectOperator;
     // 生效时间
     @Builder.Default
-    protected Date effectiveTime = DewConstant.MIN_TIME;
+    protected Long effectiveTime = DewConstant.MIN_TIME;
     // 失效时间
     @Builder.Default
-    protected Date expiredTime = DewConstant.MAX_TIME;
+    protected Long expiredTime = DewConstant.MAX_TIME;
     // 关联资源Id
     @NotNull
     private Long relResourceId;

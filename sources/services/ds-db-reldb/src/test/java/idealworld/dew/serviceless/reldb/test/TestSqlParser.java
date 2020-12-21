@@ -42,8 +42,8 @@ public class TestSqlParser extends BasicTest {
 
         sqlAst = SqlParser.parse("delete from main " +
                 "where age > ? and main.name != ? and status in (?, ?) " +
-                "   or main.addr <> ? and org_code = (select t2.code from org t2 where t2.id = ?)" +
-                "   or xx between ? and ?");
+                " or main.addr <> ? and org_code = (select t2.code from org t2 where t2.id = ?)" +
+                " or xx between ? and ?");
         Assertions.assertEquals(sqlAst.get(0).getActionKind(), OptActionKind.FETCH);
         Assertions.assertEquals(sqlAst.get(0).getTable(), "org");
         Assertions.assertEquals(sqlAst.get(0).getReturnFields().get(0), "code");

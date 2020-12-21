@@ -17,9 +17,11 @@
 package idealworld.dew.framework.test;
 
 import com.ecfront.dew.common.Resp;
+import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
+import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.test.DewTest;
 import io.vertx.core.Future;
@@ -37,6 +39,7 @@ import javax.validation.constraints.NotNull;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FunEventBusTest extends DewTest {
 
@@ -65,7 +68,7 @@ public class FunEventBusTest extends DewTest {
             return Future.succeededFuture(Resp.success("/app/{name}/{kind}/enabled"));
         });
         FunEventBus.choose("").consumer("", (actionKind, uri, header, body) ->
-                ReceiveProcessor.chooseProcess("",null, actionKind, uri.getPath(), uri.getQuery(), header, body));
+                ReceiveProcessor.chooseProcess("", null, actionKind, uri.getPath(), uri.getQuery(), header, body));
 
         FunEventBus.choose("").request("", OptActionKind.MODIFY, "http://iam/app/n1/k1/enabled?q=测试",
                 JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer(), new HashMap<>() {
@@ -95,6 +98,35 @@ public class FunEventBusTest extends DewTest {
                 });
         count.await();
         testContext.completeNow();
+    }
+
+    @Test
+    public void testError(Vertx vertx, VertxTestContext testContext) {
+        var count = new AtomicInteger();
+        var context = ProcessContext.builder().build();
+        Future.succeededFuture()
+                .compose(r -> {
+                    count.addAndGet(1);
+                    return context.helper.success();
+                })
+                .compose(r -> {
+                    count.addAndGet(1);
+                    context.helper.error(new RTException(""));
+                    count.addAndGet(10);
+                    return context.helper.success();
+                })
+                .compose(r -> {
+                    count.addAndGet(1);
+                    return context.helper.success();
+                })
+                .onSuccess(r -> {
+                    Assertions.fail();
+                    testContext.failNow("");
+                })
+                .onFailure(r -> {
+                    Assertions.assertEquals(2, count.get());
+                    testContext.completeNow();
+                });
     }
 
     @Data

@@ -128,7 +128,7 @@ public class ACResourceProcessor {
                                         .sk(resourceSubject.getSk())
                                         .platformAccount(resourceSubject.getPlatformAccount())
                                         .platformProjectId(resourceSubject.getPlatformProjectId())
-                                        .timeoutMS(resourceSubject.getTimeoutMS())
+                                        .timeoutMs(resourceSubject.getTimeoutMs())
                                         .build(),
                                 context);
                         return context.helper.success(resourceSubject.getId());
@@ -201,7 +201,7 @@ public class ACResourceProcessor {
                                         .sk(resourceSubject.getSk())
                                         .platformAccount(resourceSubject.getPlatformAccount())
                                         .platformProjectId(resourceSubject.getPlatformProjectId())
-                                        .timeoutMS(resourceSubject.getTimeoutMS())
+                                        .timeoutMs(resourceSubject.getTimeoutMs())
                                         .build(),
                                 context);
                         return context.helper.success();
@@ -232,7 +232,7 @@ public class ACResourceProcessor {
                                             .sk(resourceSubject.getSk())
                                             .platformAccount(resourceSubject.getPlatformAccount())
                                             .platformProjectId(resourceSubject.getPlatformProjectId())
-                                            .timeoutMS(resourceSubject.getTimeoutMS())
+                                            .timeoutMs(resourceSubject.getTimeoutMs())
                                             .relAppId(resourceSubject.getRelAppId())
                                             .relTenantId(resourceSubject.getRelTenantId())
                                             .build()));
@@ -273,7 +273,7 @@ public class ACResourceProcessor {
                                                             .sk(resourceSubject.getSk())
                                                             .platformAccount(resourceSubject.getPlatformAccount())
                                                             .platformProjectId(resourceSubject.getPlatformProjectId())
-                                                            .timeoutMS(resourceSubject.getTimeoutMS())
+                                                            .timeoutMs(resourceSubject.getTimeoutMs())
                                                             .relAppId(resourceSubject.getRelAppId())
                                                             .relTenantId(resourceSubject.getRelTenantId())
                                                             .build()
@@ -293,7 +293,7 @@ public class ACResourceProcessor {
                     .compose(resp ->
                             context.helper.notExistToError(
                                     context.sql.getOne(
-                                            new HashMap<>() {
+                                            new HashMap<String,Object>() {
                                                 {
                                                     put("id", resourceSubjectId);
                                                     put("rel_app_id", relAppId);
@@ -326,7 +326,7 @@ public class ACResourceProcessor {
                                         .sk(storedResourceSubject.getSk())
                                         .platformAccount(storedResourceSubject.getPlatformAccount())
                                         .platformProjectId(storedResourceSubject.getPlatformProjectId())
-                                        .timeoutMS(storedResourceSubject.getTimeoutMS())
+                                        .timeoutMs(storedResourceSubject.getTimeoutMs())
                                         .build(),
                                 context
                         );
@@ -404,8 +404,8 @@ public class ACResourceProcessor {
                         .compose(resp ->
                                 context.sql.getOne(
                                         String.format("SELECT subject.uri FROM %s AS resource" +
-                                                        "  INNER JOIN %s AS subject ON subject.id = resource.rel_resource_subject_id" +
-                                                        "  WHERE resource.id = #{id}",
+                                                        " INNER JOIN %s AS subject ON subject.id = resource.rel_resource_subject_id" +
+                                                        " WHERE resource.id = #{id}",
                                                 new Resource().tableName(), new ResourceSubject().tableName()),
                                         new HashMap<>() {
                                             {
@@ -418,7 +418,7 @@ public class ACResourceProcessor {
                                                                 new HashMap<>() {
                                                                     {
                                                                         put("id", resourceId);
-                                                                        put("uri", fetchResourceSubjectUri.getString("subject.uri"));
+                                                                        put("uri", fetchResourceSubjectUri.getString("uri"));
                                                                         put("rel_app_id", relAppId);
                                                                         put("rel_tenant_id", relTenantId);
                                                                     }
@@ -543,8 +543,8 @@ public class ACResourceProcessor {
 
     public static Future<List<ResourceResp>> findExposeResources(String name,String uri,  Long relAppId, Long relTenantId, ProcessContext context) {
             var sql = "SELECT * FROM %s" +
-                    "  WHERE ( expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
-                    "    OR expose_kind = #{expose_kind_global} )";
+                    " WHERE (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
+                    " OR expose_kind = #{expose_kind_global} )";
             var whereParameters = new HashMap<String, Object>() {
                 {
                     put("expose_kind_tenant", ExposeKind.TENANT);
@@ -640,7 +640,7 @@ public class ACResourceProcessor {
     private Future<List<Long>> doFindResourceAndGroups(Long resourceParentId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.list(
                 String.format("SELECT id FROM %s" +
-                                "  WHERE parent_id = #{resource_parent_id} AND rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id}",
+                                " WHERE parent_id = #{resource_parent_id} AND rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id}",
                         new Resource().tableName()),
                 new HashMap<>() {
                     {
@@ -659,8 +659,8 @@ public class ACResourceProcessor {
     public static Future<Long> getTenantAdminRoleResourceId(ProcessContext context) {
         return context.sql.getOne(
                 String.format("SELECT id FROM %s" +
-                                "  WHERE uri = #{uri}" +
-                                "   ORDER BY create_time ASC",
+                                " WHERE uri = #{uri}" +
+                                " ORDER BY create_time ASC",
                         new Resource().tableName()),
                 new HashMap<>() {
                     {
@@ -673,8 +673,8 @@ public class ACResourceProcessor {
     public static Future<Long> getAppAdminRoleResourceId(ProcessContext context) {
         return context.sql.getOne(
                 String.format("SELECT id FROM %s" +
-                                "  WHERE uri = #{uri}" +
-                                "   ORDER BY create_time ASC",
+                                " WHERE uri = #{uri}" +
+                                " ORDER BY create_time ASC",
                         new Resource().tableName()),
                 new HashMap<>() {
                     {

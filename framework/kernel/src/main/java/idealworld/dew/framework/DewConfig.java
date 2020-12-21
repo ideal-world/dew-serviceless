@@ -119,7 +119,7 @@ public abstract class DewConfig {
         public static class HttpClientConfig {
 
             private String uri;
-            private Long timeoutMS;
+            private Long timeoutMs;
 
         }
 
@@ -129,7 +129,7 @@ public abstract class DewConfig {
         @AllArgsConstructor
         public static class EventBusConfig {
 
-            private Long timeoutMS;
+            private Long timeoutMs;
 
         }
 

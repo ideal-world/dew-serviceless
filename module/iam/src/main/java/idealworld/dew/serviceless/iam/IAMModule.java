@@ -119,250 +119,250 @@ public class IAMModule extends DewModule<IAMConfig> {
         log.info("[Startup]Initializing IAM application");
         var dto = new InitDataDTO();
         // 初始化租户
-        return context.sql.tx(context, () ->
-                        SCTenantProcessor.addTenant( TenantAddReq.builder()
-                                .name(iamConfig.getApp().getIamTenantName())
-                                .build(),context)
+        return context.sql.tx(context, ()->
+                SCTenantProcessor.addTenant(TenantAddReq.builder()
+                        .name(iamConfig.getApp().getIamTenantName())
+                        .build(), context)
                         // 初始化租户认证
                         .compose(tenantId -> {
                             dto.tenantId = tenantId;
                             return TCTenantProcessor.addTenantIdent(TenantIdentAddReq.builder()
-                                            .kind(AccountIdentKind.USERNAME)
-                                            .validAkRuleNote(iamConfig.getSecurity().getDefaultValidAkRuleNote())
-                                            .validAkRule(iamConfig.getSecurity().getDefaultValidAkRule())
-                                            .validSkRuleNote(iamConfig.getSecurity().getDefaultValidSkRuleNote())
-                                            .validSkRule(iamConfig.getSecurity().getDefaultValidSkRule())
-                                            .validTimeSec(DewConstant.OBJECT_UNDEFINED)
-                                            .build(),dto.tenantId,context);
+                                    .kind(AccountIdentKind.USERNAME)
+                                    .validAkRuleNote(iamConfig.getSecurity().getDefaultValidAkRuleNote())
+                                    .validAkRule(iamConfig.getSecurity().getDefaultValidAkRule())
+                                    .validSkRuleNote(iamConfig.getSecurity().getDefaultValidSkRuleNote())
+                                    .validSkRule(iamConfig.getSecurity().getDefaultValidSkRule())
+                                    .validTimeSec(DewConstant.OBJECT_UNDEFINED)
+                                    .build(), dto.tenantId, context);
                         })
                         // 初始化租户凭证
                         .compose(resp ->
-                                        TCTenantProcessor.addTenantCert(TenantCertAddReq.builder()
-                                                .category("")
-                                                .version(1)
-                                                .build(),dto.tenantId,context))
+                                TCTenantProcessor.addTenantCert(TenantCertAddReq.builder()
+                                        .category("")
+                                        .version(1)
+                                        .build(), dto.tenantId, context))
                         // 初始化应用
                         .compose(resp ->
-                                        TCAppProcessor.addApp(AppAddReq.builder()
-                                                .name(iamConfig.getApp().getIamAppName())
-                                                .build(),dto.tenantId,context))
+                                TCAppProcessor.addApp(AppAddReq.builder()
+                                        .name(iamConfig.getApp().getIamAppName())
+                                        .build(), dto.tenantId, context))
                         // 初始化应用认证
                         .compose(appId -> {
                             dto.appId = appId;
-                                  return   ACAppProcessor.addAppIdent(AppIdentAddReq.builder()
-                                            .note("")
-                                            .build(),dto.appId,dto.tenantId,context);
+                            return ACAppProcessor.addAppIdent(AppIdentAddReq.builder()
+                                    .note("")
+                                    .build(), dto.appId, dto.tenantId, context);
                         })
                         // 初始化角色定义
                         .compose(resp ->
-                                        ACRoleProcessor.addRoleDef(RoleDefAddReq.builder()
-                                                .code(iamConfig.getSecurity().getSystemAdminRoleDefCode())
-                                                .name(iamConfig.getSecurity().getSystemAdminRoleDefName())
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(systemRoleAdminId -> {
-                            dto.systemRoleAdminId = systemRoleAdminId;
+                                ACRoleProcessor.addRoleDef(RoleDefAddReq.builder()
+                                        .code(iamConfig.getSecurity().getSystemAdminRoleDefCode())
+                                        .name(iamConfig.getSecurity().getSystemAdminRoleDefName())
+                                        .build(), dto.appId, dto.tenantId, context))
+                        .compose(systemRoleDefAdminId -> {
+                            dto.systemRoleDefAdminId = systemRoleDefAdminId;
                             return Future.succeededFuture();
                         })
                         .compose(resp ->
-                                        ACRoleProcessor.addRoleDef(RoleDefAddReq.builder()
-                                                .code(iamConfig.getSecurity().getTenantAdminRoleDefCode())
-                                                .name(iamConfig.getSecurity().getTenantAdminRoleDefName())
-                                                .build(),dto.appId,dto.tenantId,context))
+                                ACRoleProcessor.addRoleDef(RoleDefAddReq.builder()
+                                        .code(iamConfig.getSecurity().getTenantAdminRoleDefCode())
+                                        .name(iamConfig.getSecurity().getTenantAdminRoleDefName())
+                                        .build(), dto.appId, dto.tenantId, context))
                         .compose(tenantRoleDefAdminId -> {
                             dto.tenantRoleDefAdminId = tenantRoleDefAdminId;
                             return Future.succeededFuture();
                         })
                         .compose(resp ->
-                                        ACRoleProcessor.addRoleDef(RoleDefAddReq.builder()
-                                                .code(iamConfig.getSecurity().getAppAdminRoleDefCode())
-                                                .name(iamConfig.getSecurity().getAppAdminRoleDefName())
-                                                .build(),dto.appId,dto.tenantId,context))
+                                ACRoleProcessor.addRoleDef(RoleDefAddReq.builder()
+                                        .code(iamConfig.getSecurity().getAppAdminRoleDefCode())
+                                        .name(iamConfig.getSecurity().getAppAdminRoleDefName())
+                                        .build(), dto.appId, dto.tenantId, context))
                         .compose(appRoleDefAdminId -> {
                             dto.appRoleDefAdminId = appRoleDefAdminId;
                             return Future.succeededFuture();
                         })
                         // 初始化角色
                         .compose(resp ->
-                                        ACRoleProcessor.addRole(RoleAddReq.builder()
-                                                .relRoleDefId(dto.systemRoleDefAdminId)
-                                                .build(),dto.appId,dto.tenantId,context))
+                                ACRoleProcessor.addRole(RoleAddReq.builder()
+                                        .relRoleDefId(dto.systemRoleDefAdminId)
+                                        .build(), dto.appId, dto.tenantId, context))
                         .compose(systemRoleAdminId -> {
                             dto.systemRoleAdminId = systemRoleAdminId;
                             return Future.succeededFuture();
                         })
                         .compose(resp ->
-                                        ACRoleProcessor.addRole(RoleAddReq.builder()
-                                                .relRoleDefId(dto.tenantRoleDefAdminId)
-                                                .exposeKind(ExposeKind.GLOBAL)
-                                                .build(),dto.appId,dto.tenantId,context))
+                                ACRoleProcessor.addRole(RoleAddReq.builder()
+                                        .relRoleDefId(dto.tenantRoleDefAdminId)
+                                        .exposeKind(ExposeKind.GLOBAL)
+                                        .build(), dto.appId, dto.tenantId, context))
                         .compose(tenantRoleAdminId -> {
                             dto.tenantRoleAdminId = tenantRoleAdminId;
                             return Future.succeededFuture();
                         })
                         .compose(resp ->
-                                        ACRoleProcessor.addRole(RoleAddReq.builder()
-                                                .relRoleDefId(dto.appRoleDefAdminId)
-                                                .exposeKind(ExposeKind.GLOBAL)
-                                                .build(),dto.appId,dto.tenantId,context))
+                                ACRoleProcessor.addRole(RoleAddReq.builder()
+                                        .relRoleDefId(dto.appRoleDefAdminId)
+                                        .exposeKind(ExposeKind.GLOBAL)
+                                        .build(), dto.appId, dto.tenantId, context))
                         .compose(appRoleAdminId -> {
                             dto.appRoleAdminId = appRoleAdminId;
                             return Future.succeededFuture();
                         })
                         // 初始化群组
                         .compose(resp ->
-                                        ACGroupProcessor.addGroup(GroupAddReq.builder()
-                                                .code("default")
-                                                .kind(GroupKind.ADMINISTRATION)
-                                                .name("默认")
-                                                .build(),dto.appId,dto.tenantId,context))
+                                ACGroupProcessor.addGroup(GroupAddReq.builder()
+                                        .code("default")
+                                        .kind(GroupKind.ADMINISTRATION)
+                                        .name("默认")
+                                        .build(), dto.appId, dto.tenantId, context))
                         .compose(groupId -> {
                             dto.groupId = groupId;
                             return Future.succeededFuture();
                         })
                         // 初始化群组节点
                         .compose(resp ->
-                                        ACGroupProcessor.addGroupNode(dto.groupId,
-                                                GroupNodeAddReq.builder()
+                                ACGroupProcessor.addGroupNode(dto.groupId,
+                                        GroupNodeAddReq.builder()
                                                 .name("默认节点")
-                                                .build(),dto.appId,dto.tenantId,context))
+                                                .build(), dto.appId, dto.tenantId, context))
                         // 初始化账号
                         .compose(resp ->
-                                        TCAccountProcessor.addAccount(AccountAddReq.builder()
-                                                .name(iamConfig.getApp().getIamAdminName())
-                                                .build(),dto.tenantId,context))
-                                        .compose(iamAccountId -> {
-                                            dto.iamAccountId = iamAccountId;
-                                            return Future.succeededFuture();
-                                        }))
-                        // 初始化账号认证
-                        .compose(resp ->
-                                        TCAccountProcessor.addAccountIdent( dto.iamAccountId,
-                                                AccountIdentAddReq.builder()
-                                                .kind(AccountIdentKind.USERNAME)
-                                                .ak(iamConfig.getApp().getIamAdminName())
-                                                .sk(iamConfig.getApp().getIamAdminPwd())
-                                                .build(),dto.tenantId,context))
-                        //  初始化账号应用
-                        .compose(resp ->
-                                        TCAccountProcessor.addAccountApp(dto.iamAccountId,dto.appId,dto.tenantId,context))
-                        //  初始化账号角色
-                        .compose(resp ->
-                                        TCAccountProcessor.addAccountRole(dto.iamAccountId,dto.systemRoleAdminId,dto.tenantId,context))
-                        .compose(resp ->
-                                TCAccountProcessor.addAccountRole(dto.iamAccountId,dto.tenantRoleAdminId,dto.tenantId,context))
-                        .compose(resp ->
-                                TCAccountProcessor.addAccountRole(dto.iamAccountId,dto.appRoleAdminId,dto.tenantId,context))
-                        // 初始化资源主体
-                        .compose(resp ->
-                                        ACResourceProcessor.addResourceSubject(ResourceSubjectAddReq.builder()
-                                                .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
-                                                .name(iamConfig.getApp().getIamAppName() + " APIs")
-                                                .uri("http://" + getModuleName())
-                                                .kind(ResourceKind.HTTP)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(iamAPIResourceSubjectId -> {
-                            dto.iamAPIResourceSubjectId = iamAPIResourceSubjectId;
+                                TCAccountProcessor.addAccount(AccountAddReq.builder()
+                                        .name(iamConfig.getApp().getIamAdminName())
+                                        .build(), dto.tenantId, context))
+                        .compose(iamAccountId -> {
+                            dto.iamAccountId = iamAccountId;
                             return Future.succeededFuture();
                         })
-                        .compose(resp ->
-                                        ACResourceProcessor.addResourceSubject(ResourceSubjectAddReq.builder()
-                                                .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
-                                                .name(iamConfig.getApp().getIamAppName() + "Menus")
-                                                .uri("menu://" + getModuleName())
-                                                .kind(ResourceKind.MENU)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(iamMenuResourceSubjectId -> {
-                            dto.iamMenuResourceSubjectId = iamMenuResourceSubjectId;
-                            return Future.succeededFuture();
-                        })
-                        // 初始化资源
-                        .compose(resp ->
-                                        ACResourceProcessor.addResource(ResourceAddReq.builder()
-                                                .name("系统控制台资源")
-                                                .pathAndQuery("/console/system/**")
-                                                .relResourceSubjectId(dto.iamAPIResourceSubjectId)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(systemAPIResourceId -> {
-                            dto.systemAPIResourceId = systemAPIResourceId;
-                            return Future.succeededFuture();
-                        })
-                        .compose(resp ->
-                                        ACResourceProcessor.addResource(ResourceAddReq.builder()
-                                                .name("租户控制台资源")
-                                                .pathAndQuery("/console/tenant/**")
-                                                .relResourceSubjectId(dto.iamAPIResourceSubjectId)
-                                                .exposeKind(ExposeKind.GLOBAL)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(tenantAPIResourceId -> {
-                            dto.tenantAPIResourceId = tenantAPIResourceId;
-                            return Future.succeededFuture();
-                        })
-                        .compose(resp ->
-                                        ACResourceProcessor.addResource(ResourceAddReq.builder()
-                                                .name("应用控制台资源")
-                                                .pathAndQuery("/console/app/**")
-                                                .relResourceSubjectId(dto.iamAPIResourceSubjectId)
-                                                .exposeKind(ExposeKind.GLOBAL)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(appAPIResourceId -> {
-                            dto.appAPIResourceId = appAPIResourceId;
-                            return Future.succeededFuture();
-                        })
-                        .compose(resp ->
-                                        ACResourceProcessor.addResource(ResourceAddReq.builder()
-                                                .name("应用控制台菜单")
-                                                .pathAndQuery("/app")
-                                                .relResourceSubjectId(dto.iamMenuResourceSubjectId)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(iamMenuResourceSubjectId -> {
-                            dto.iamMenuResourceSubjectId = iamMenuResourceSubjectId;
-                            return Future.succeededFuture();
-                        })
-                        // 初始化权限策略
-                        .compose(resp ->
-                                        ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
-                                                .relSubjectKind(AuthSubjectKind.ROLE)
-                                                .relSubjectIds(dto.systemRoleAdminId + ",")
-                                                .subjectOperator(AuthSubjectOperatorKind.EQ)
-                                                .relResourceId(dto.systemAPIResourceId)
-                                                .resultKind(AuthResultKind.ACCEPT)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(resp ->
-                                        ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
-                                                .relSubjectKind(AuthSubjectKind.ROLE)
-                                                .relSubjectIds(dto.tenantRoleAdminId + ",")
-                                                .subjectOperator(AuthSubjectOperatorKind.EQ)
-                                                .relResourceId(dto.tenantAPIResourceId)
-                                                .resultKind(AuthResultKind.ACCEPT)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(resp ->
-                                        ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
-                                                .relSubjectKind(AuthSubjectKind.ROLE)
-                                                .relSubjectIds(dto.appRoleAdminId + ",")
-                                                .subjectOperator(AuthSubjectOperatorKind.EQ)
-                                                .relResourceId(dto.appAPIResourceId)
-                                                .resultKind(AuthResultKind.ACCEPT)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(resp ->
-                                        ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
-                                                .relSubjectKind(AuthSubjectKind.ROLE)
-                                                .relSubjectIds(dto.appRoleAdminId + ",")
-                                                .subjectOperator(AuthSubjectOperatorKind.EQ)
-                                                .relResourceId(dto.appMenuResourceId)
-                                                .resultKind(AuthResultKind.ACCEPT)
-                                                .build(),dto.appId,dto.tenantId,context))
-                        .compose(resp -> {
-                            log.info("[Startup]Initialization complete.\n" +
-                                            "##################################\n" +
-                                            " System administrator information:\n" +
-                                            " appId = {}\n" +
-                                            " username = {}\n" +
-                                            " temporary password= {}\n" +
-                                            " please change it in time.\n" +
-                                            "##################################",
-                                    dto.appId, iamConfig.getApp().getIamAdminName(), iamConfig.getApp().getIamAdminPwd());
-                            return Future.succeededFuture();
-                        });
+                // 初始化账号认证
+                .compose(resp ->
+                        TCAccountProcessor.addAccountIdent(dto.iamAccountId,
+                                AccountIdentAddReq.builder()
+                                        .kind(AccountIdentKind.USERNAME)
+                                        .ak(iamConfig.getApp().getIamAdminName())
+                                        .sk(iamConfig.getApp().getIamAdminPwd())
+                                        .build(), dto.tenantId, context))
+                //  初始化账号应用
+                .compose(resp ->
+                        TCAccountProcessor.addAccountApp(dto.iamAccountId, dto.appId, dto.tenantId, context))
+                //  初始化账号角色
+                .compose(resp ->
+                        TCAccountProcessor.addAccountRole(dto.iamAccountId, dto.systemRoleAdminId, dto.tenantId, context))
+                .compose(resp ->
+                        TCAccountProcessor.addAccountRole(dto.iamAccountId, dto.tenantRoleAdminId, dto.tenantId, context))
+                .compose(resp ->
+                        TCAccountProcessor.addAccountRole(dto.iamAccountId, dto.appRoleAdminId, dto.tenantId, context))
+                // 初始化资源主体
+                .compose(resp ->
+                        ACResourceProcessor.addResourceSubject(ResourceSubjectAddReq.builder()
+                                .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
+                                .name(iamConfig.getApp().getIamAppName() + " APIs")
+                                .uri("http://" + getModuleName())
+                                .kind(ResourceKind.HTTP)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(iamAPIResourceSubjectId -> {
+                    dto.iamAPIResourceSubjectId = iamAPIResourceSubjectId;
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        ACResourceProcessor.addResourceSubject(ResourceSubjectAddReq.builder()
+                                .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
+                                .name(iamConfig.getApp().getIamAppName() + "Menus")
+                                .uri("menu://" + getModuleName())
+                                .kind(ResourceKind.MENU)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(iamMenuResourceSubjectId -> {
+                    dto.iamMenuResourceSubjectId = iamMenuResourceSubjectId;
+                    return Future.succeededFuture();
+                })
+                // 初始化资源
+                .compose(resp ->
+                        ACResourceProcessor.addResource(ResourceAddReq.builder()
+                                .name("系统控制台资源")
+                                .pathAndQuery("/console/system/**")
+                                .relResourceSubjectId(dto.iamAPIResourceSubjectId)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(systemAPIResourceId -> {
+                    dto.systemAPIResourceId = systemAPIResourceId;
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        ACResourceProcessor.addResource(ResourceAddReq.builder()
+                                .name("租户控制台资源")
+                                .pathAndQuery("/console/tenant/**")
+                                .relResourceSubjectId(dto.iamAPIResourceSubjectId)
+                                .exposeKind(ExposeKind.GLOBAL)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(tenantAPIResourceId -> {
+                    dto.tenantAPIResourceId = tenantAPIResourceId;
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        ACResourceProcessor.addResource(ResourceAddReq.builder()
+                                .name("应用控制台资源")
+                                .pathAndQuery("/console/app/**")
+                                .relResourceSubjectId(dto.iamAPIResourceSubjectId)
+                                .exposeKind(ExposeKind.GLOBAL)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(appAPIResourceId -> {
+                    dto.appAPIResourceId = appAPIResourceId;
+                    return Future.succeededFuture();
+                })
+                .compose(resp ->
+                        ACResourceProcessor.addResource(ResourceAddReq.builder()
+                                .name("应用控制台菜单")
+                                .pathAndQuery("/common/resource")
+                                .relResourceSubjectId(dto.iamMenuResourceSubjectId)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(appMenuResourceId -> {
+                    dto.appMenuResourceId = appMenuResourceId;
+                    return Future.succeededFuture();
+                })
+                // 初始化权限策略
+                .compose(resp ->
+                        ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
+                                .relSubjectKind(AuthSubjectKind.ROLE)
+                                .relSubjectIds(dto.systemRoleAdminId + ",")
+                                .subjectOperator(AuthSubjectOperatorKind.EQ)
+                                .relResourceId(dto.systemAPIResourceId)
+                                .resultKind(AuthResultKind.ACCEPT)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(resp ->
+                        ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
+                                .relSubjectKind(AuthSubjectKind.ROLE)
+                                .relSubjectIds(dto.tenantRoleAdminId + ",")
+                                .subjectOperator(AuthSubjectOperatorKind.EQ)
+                                .relResourceId(dto.tenantAPIResourceId)
+                                .resultKind(AuthResultKind.ACCEPT)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(resp ->
+                        ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
+                                .relSubjectKind(AuthSubjectKind.ROLE)
+                                .relSubjectIds(dto.appRoleAdminId + ",")
+                                .subjectOperator(AuthSubjectOperatorKind.EQ)
+                                .relResourceId(dto.appAPIResourceId)
+                                .resultKind(AuthResultKind.ACCEPT)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(resp ->
+                        ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
+                                .relSubjectKind(AuthSubjectKind.ROLE)
+                                .relSubjectIds(dto.appRoleAdminId + ",")
+                                .subjectOperator(AuthSubjectOperatorKind.EQ)
+                                .relResourceId(dto.appMenuResourceId)
+                                .resultKind(AuthResultKind.ACCEPT)
+                                .build(), dto.appId, dto.tenantId, context))
+                .compose(resp -> {
+                    log.info("[Startup]Initialization complete.\n" +
+                                    "##################################\n" +
+                                    " System administrator information:\n" +
+                                    " appId = {}\n" +
+                                    " username = {}\n" +
+                                    " temporary password= {}\n" +
+                                    " please change it in time.\n" +
+                                    "##################################",
+                            dto.appId, iamConfig.getApp().getIamAdminName(), iamConfig.getApp().getIamAdminPwd());
+                    return Future.succeededFuture();
+                }));
     }
 
     @Override

@@ -94,22 +94,6 @@ create index IDXd5pbls2wrseb56lie3woxi6ak
 create index IDXvlkusrg2ubeq6vskcmxp08qp
 	on iam_account_bind (from_tenant_id);
 
-create table if not exists iam_account_cert
-(
-	id bigint auto_increment
-		primary key,
-	create_time timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-	create_user varchar(255) not null comment '创建者OpenId',
-	update_time timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
-	update_user varchar(255) not null comment '最后一次修改者OpenId',
-	category varchar(255) not null comment '凭证类型名称',
-	rel_tenant_id bigint not null comment '关联租户Id',
-	version tinyint not null comment '凭证保留的版本数量',
-	constraint UKkxsomgbfhpvdtpo5w39sy6oyw
-		unique (rel_tenant_id, category)
-)
-comment '租户凭证配置';
-
 create table if not exists iam_account_group
 (
 	id bigint auto_increment
@@ -141,8 +125,8 @@ create table if not exists iam_account_ident
 	rel_account_id bigint not null comment '关联账号Id',
 	rel_tenant_id bigint not null comment '关联租户Id',
 	sk varchar(255) not null comment '账号认证密钥',
-	valid_end_time datetime(6) not null comment '账号认证有效结束时间',
-	valid_start_time datetime(6) not null comment '账号认证有效开始时间',
+	valid_end_time bigint not null comment '账号认证有效结束时间',
+	valid_start_time bigint not null comment '账号认证有效开始时间',
 	constraint UKfq7m36t7wu1x64w3xhon4pf9v
 		unique (rel_tenant_id, kind, ak)
 )
@@ -210,7 +194,7 @@ create table if not exists iam_app_ident
 	note varchar(1000) not null comment '应用认证用途',
 	rel_app_id bigint not null comment '关联应用Id',
 	sk varchar(1000) not null comment '应用认证密钥（Secret Access Key）',
-	valid_time datetime(6) not null comment '应用认证有效时间',
+	valid_time bigint not null comment '应用认证有效时间',
 	constraint UKljeojtvy3u0scc3mp39hr0874
 		unique (ak)
 )
@@ -228,9 +212,9 @@ create table if not exists iam_auth_policy
 	update_time timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
 	update_user varchar(255) not null comment '最后一次修改者OpenId',
 	action_kind varchar(100) not null comment '操作类型名称',
-	effective_time timestamp not null comment '生效时间',
+	effective_time bigint not null comment '生效时间',
 	exclusive tinyint(1) not null comment '是否排他',
-	expired_time timestamp not null comment '失效时间',
+	expired_time bigint not null comment '失效时间',
 	rel_app_id bigint not null comment '关联应用Id',
 	rel_resource_id bigint not null comment '关联资源Id',
 	rel_subject_ids varchar(10000) not null comment '关联权限主体Ids,有多个时逗号分隔,注意必须存在最后一个逗号',
@@ -329,7 +313,7 @@ create table if not exists iam_resource_subject
 	rel_tenant_id bigint not null comment '关联租户Id',
 	sk varchar(1000) not null comment 'SK，部分类型支持写到URI中',
 	sort int not null comment '资源主体显示排序，asc',
-	timeoutms int not null comment '执行超时',
+	timeout_ms int not null comment '执行超时',
 	uri varchar(5000) not null comment '资源主体连接URI',
 	constraint UKqha1627a3vy6hscmfnw28viwg
 		unique (code)
@@ -409,13 +393,28 @@ create table if not exists iam_tenant_ident
 	update_user varchar(255) not null comment '最后一次修改者OpenId',
 	kind varchar(100) not null comment '租户认证类型名称',
 	rel_tenant_id bigint not null comment '关联租户Id',
-	validakrule varchar(2000) not null comment '认证AK校验正则规则',
-	validakrule_note varchar(2000) not null comment '认证AK校验正则规则说明',
-	validskrule varchar(2000) not null comment '认证SK校验正则规则',
-	validskrule_note varchar(2000) not null comment '认证SK校验正则规则说明',
+	valid_ak_rule varchar(2000) not null comment '认证AK校验正则规则',
+	valid_ak_rule_note varchar(2000) not null comment '认证AK校验正则规则说明',
+	valid_sk_rule varchar(2000) not null comment '认证SK校验正则规则',
+	valid_sk_rule_note varchar(2000) not null comment '认证SK校验正则规则说明',
 	valid_time_sec bigint not null comment '认证有效时间（秒）',
 	constraint UKcuj2mhpkb8x6brgrk61psetvl
 		unique (rel_tenant_id, kind)
 )
 comment '租户认证配置';
 
+create table if not exists iam_tenant_cert
+(
+    id bigint auto_increment
+    primary key,
+    create_time timestamp default CURRENT_TIMESTAMP null comment '创建时间',
+    create_user varchar(255) not null comment '创建者OpenId',
+    update_time timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
+    update_user varchar(255) not null comment '最后一次修改者OpenId',
+    category varchar(255) not null comment '凭证类型名称',
+    version tinyint not null comment '凭证保留的版本数量',
+    rel_tenant_id bigint not null comment '关联租户Id',
+    constraint UKkxsomgbfhpvdtpo5w39sy6oyw
+    unique (rel_tenant_id, category)
+    )
+    comment '租户凭证配置';

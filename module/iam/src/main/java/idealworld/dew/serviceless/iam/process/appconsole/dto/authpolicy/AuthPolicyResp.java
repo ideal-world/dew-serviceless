@@ -30,7 +30,6 @@ import lombok.experimental.SuperBuilder;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.util.Date;
 
 /**
  * 权限策略响应.
@@ -57,10 +56,10 @@ public class AuthPolicyResp extends IdResp {
     private AuthSubjectOperatorKind subjectOperator;
     // 生效时间
     @NotNull
-    protected Date effectiveTime;
+    protected Long effectiveTime;
     // 失效时间
     @NotNull
-    protected Date expiredTime;
+    protected Long expiredTime;
     // 关联资源Id
     @NotNull
     private Long relResourceId;

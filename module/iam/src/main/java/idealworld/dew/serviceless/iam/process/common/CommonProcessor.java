@@ -85,7 +85,7 @@ public class CommonProcessor {
                 login(eventBusContext.req.body(AccountLoginReq.class), eventBusContext.context));
         // OAuth登录
         ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/common/oauth/login", eventBusContext ->
-                OAuthProcessor.login(eventBusContext.req.body(AccountOAuthLoginReq.class),eventBusContext.context));
+                OAuthProcessor.login(eventBusContext.req.body(AccountOAuthLoginReq.class), eventBusContext.context));
         // 退出登录
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/common/logout", eventBusContext ->
                 logout(eventBusContext.req.identOptInfo, eventBusContext.context));
@@ -239,14 +239,14 @@ public class CommonProcessor {
                                                                                         .kind(accountRegisterReq.getKind())
                                                                                         .ak(accountRegisterReq.getAk())
                                                                                         .sk(processIdentSk)
-                                                                                        .validStartTime(new Date())
+                                                                                        .validStartTime(System.currentTimeMillis())
                                                                                         .validEndTime(validRuleAndGetValidEndTime)
                                                                                         .relAccountId(accountId)
                                                                                         .relTenantId(tenantId)
                                                                                         .build()))
                                                                         .compose(resp ->
                                                                                 context.sql.save(AccountApp.builder()
-                                                                                        .relAccountId(tenantId)
+                                                                                        .relAccountId(accountId)
                                                                                         .relAppId(accountRegisterReq.getRelAppId())
                                                                                         .build()))
                                                                         .compose(resp ->
@@ -261,15 +261,15 @@ public class CommonProcessor {
         return IAMBasicProcessor.getEnabledTenantIdByAppId(accountLoginReq.getRelAppId(), false, context)
                 .compose(tenantId -> {
                     log.info("login : [{}-{}] kind = {}, ak = {}", tenantId, accountLoginReq.getRelAppId(), accountLoginReq.getKind(), accountLoginReq.getAk());
-                    var now = new Date();
+                    var now = new Date().getTime();
                     return context.sql.getOne(
-                            String.format("SELECT accident.sk, acc.id, acc.openId FROM %s AS accident" +
-                                            "  INNER JOIN %s AS accapp ON accapp.rel_account_id = accident.rel_account_id" +
-                                            "  INNER JOIN %s AS tenantident ON tenantident.rel_tenant_id = accident.rel_tenant_id" +
-                                            "  INNER JOIN %s AS acc ON acc.id = accident.rel_account_id" +
-                                            "  WHERE tenantident.kind = #{kind} AND accident.kind = #{kind} AND accident.ak = #{ak}" +
-                                            "    AND accident.valid_start_time < #{now} AND accident.valid_end_time > #{now}" +
-                                            "    AND acc.rel_tenant_id = #{rel_tenant_id} AND acc.status = #{status}",
+                            String.format("SELECT accident.sk, acc.id, acc.open_id FROM %s AS accident" +
+                                            " INNER JOIN %s AS accapp ON accapp.rel_account_id = accident.rel_account_id" +
+                                            " INNER JOIN %s AS tenantident ON tenantident.rel_tenant_id = accident.rel_tenant_id" +
+                                            " INNER JOIN %s AS acc ON acc.id = accident.rel_account_id" +
+                                            " WHERE tenantident.kind = #{kind} AND accident.kind = #{kind} AND accident.ak = #{ak}" +
+                                            " AND accident.valid_start_time < #{now} AND accident.valid_end_time > #{now}" +
+                                            " AND acc.rel_tenant_id = #{rel_tenant_id} AND acc.status = #{status}",
                                     new AccountIdent().tableName(), new AccountApp().tableName(), new TenantIdent().tableName(), new Account().tableName()),
                             new HashMap<>() {
                                 {
@@ -285,9 +285,9 @@ public class CommonProcessor {
                                     log.warn("Login Fail: [{}-{}] AK {} doesn't exist or has expired or account doesn't exist", tenantId, accountLoginReq.getRelAppId(), accountLoginReq.getAk());
                                     context.helper.error(new BadRequestException("登录认证[" + accountLoginReq.getAk() + "]不存在或已过期或是（应用关联）账号不存在"));
                                 }
-                                var identSk = accountInfo.getString("accident.sk");
-                                var accountId = accountInfo.getLong("acc.id");
-                                var openId = accountInfo.getString("acc.openId");
+                                var identSk = accountInfo.getString("sk");
+                                var accountId = accountInfo.getLong("id");
+                                var openId = accountInfo.getString("open_id");
                                 return login(accountId, openId, accountLoginReq.getKind(), accountLoginReq.getAk(), accountLoginReq.getSk(), identSk, accountLoginReq.getRelAppId(), tenantId, context);
                             });
                 });
@@ -329,11 +329,17 @@ public class CommonProcessor {
     }
 
     public static Future<Void> logout(IdentOptInfo identOptInfo, ProcessContext context) {
+        if (((String) identOptInfo.getAccountCode()).isBlank()) {
+            context.helper.error(new UnAuthorizedException("用户未登录"));
+        }
         log.info("Logout Account {} by token {}", identOptInfo.getAccountCode(), identOptInfo.getToken());
         return AuthCacheProcessor.removeOptInfo(identOptInfo.getToken(), context);
     }
 
     public static Future<Void> changeInfo(AccountChangeReq accountChangeReq, String relOpenId, ProcessContext context) {
+        if (relOpenId.isBlank()) {
+            context.helper.error(new UnAuthorizedException("用户未登录"));
+        }
         return context.sql.update(
                 new HashMap<>() {
                     {
@@ -345,51 +351,56 @@ public class CommonProcessor {
     }
 
     public static Future<Void> changeIdent(AccountIdentChangeReq accountIdentChangeReq, String relOpenId, Long relAppId, ProcessContext context) {
+        if (relOpenId.isBlank()) {
+            context.helper.error(new UnAuthorizedException("用户未登录"));
+        }
         return IAMBasicProcessor.getEnabledTenantIdByOpenId(relOpenId, context)
-                .compose(tenantId -> {
-                    return context.helper.notExistToError(
-                            context.sql.exists(
-                                    String.format("SELECT 1 FROM %s AS ident" +
-                                                    "  INNER JOIN %s AS acc ON acc.id  = ident.rel_account_id" +
-                                                    "  WHERE ident.kind = #{kind} AND ident.ak = #{ak} AND acc.open_id = #{open_id}",
-                                            new AccountIdent().tableName(), new Account().tableName()),
-                                    new HashMap<>() {
-                                        {
-                                            put("kind", accountIdentChangeReq.getKind());
-                                            put("ak", accountIdentChangeReq.getAk());
-                                            put("open_id", relOpenId);
-                                        }
-                                    }), () -> new UnAuthorizedException("用户[" + relOpenId + "]对应的认证方式不存在"))
-                            .compose(resp ->
-                                    IAMBasicProcessor.validRuleAndGetValidEndTime(
-                                            accountIdentChangeReq.getKind(),
-                                            accountIdentChangeReq.getAk(),
-                                            accountIdentChangeReq.getSk(),
-                                            tenantId,
-                                            context)
-                                            .compose(validRuleAndGetValidEndTime ->
-                                                    IAMBasicProcessor.processIdentSk(accountIdentChangeReq.getKind(),
-                                                            accountIdentChangeReq.getAk(),
-                                                            accountIdentChangeReq.getSk(),
-                                                            relAppId,
-                                                            tenantId,
-                                                            context)
-                                                            .compose(processIdentSk ->
-                                                                    context.sql.update(
-                                                                            new HashMap<>() {
-                                                                                {
-                                                                                    put("kind", accountIdentChangeReq.getKind());
-                                                                                    put("ak", accountIdentChangeReq.getAk());
-                                                                                    put("rel_tenant_id", tenantId);
-                                                                                }
-                                                                            },
-                                                                            AccountIdent.builder()
-                                                                                    .sk(processIdentSk)
-                                                                                    .build()))));
-                });
+                .compose(tenantId ->
+                        context.helper.notExistToError(
+                                context.sql.exists(
+                                        String.format("SELECT 1 FROM %s AS ident" +
+                                                        " INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
+                                                        " WHERE ident.kind = #{kind} AND ident.ak = #{ak} AND acc.open_id = #{open_id}",
+                                                new AccountIdent().tableName(), new Account().tableName()),
+                                        new HashMap<>() {
+                                            {
+                                                put("kind", accountIdentChangeReq.getKind());
+                                                put("ak", accountIdentChangeReq.getAk());
+                                                put("open_id", relOpenId);
+                                            }
+                                        }), () -> new UnAuthorizedException("用户[" + relOpenId + "]对应的认证方式不存在"))
+                                .compose(resp ->
+                                        IAMBasicProcessor.validRuleAndGetValidEndTime(
+                                                accountIdentChangeReq.getKind(),
+                                                accountIdentChangeReq.getAk(),
+                                                accountIdentChangeReq.getSk(),
+                                                tenantId,
+                                                context)
+                                                .compose(validRuleAndGetValidEndTime ->
+                                                        IAMBasicProcessor.processIdentSk(accountIdentChangeReq.getKind(),
+                                                                accountIdentChangeReq.getAk(),
+                                                                accountIdentChangeReq.getSk(),
+                                                                relAppId,
+                                                                tenantId,
+                                                                context)
+                                                                .compose(processIdentSk ->
+                                                                        context.sql.update(
+                                                                                new HashMap<>() {
+                                                                                    {
+                                                                                        put("kind", accountIdentChangeReq.getKind());
+                                                                                        put("ak", accountIdentChangeReq.getAk());
+                                                                                        put("rel_tenant_id", tenantId);
+                                                                                    }
+                                                                                },
+                                                                                AccountIdent.builder()
+                                                                                        .sk(processIdentSk)
+                                                                                        .build())))));
     }
 
     public static Future<Void> unRegister(String relOpenId, ProcessContext context) {
+        if (relOpenId.isBlank()) {
+            context.helper.error(new UnAuthorizedException("用户未登录"));
+        }
         return context.sql.update(
                 new HashMap<>() {
                     {
@@ -405,12 +416,12 @@ public class CommonProcessor {
         //  TODO 根据 identOptCacheInfo 过滤
         return context.sql.list(
                 String.format("SELECT resource.* FROM %s AS resource" +
-                                "  INNER JOIN %s AS subject ON subject.id = resource,rel_resource_subject_id" +
-                                "  WHERE ( ( resource.rel_tenant_id = #{rel_tenant_id} AND resource.rel_app_id = #{rel_app_id} )" +
-                                "    OR ( resource.expose_kind = #{expose_kind_tenant} AND resource.rel_tenant_id = #{rel_tenant_id} )" +
-                                "    OR resource.expose_kind = #{expose_kind_global} )" +
-                                "    AND subject.kind = #{kind}" +
-                                "  ORDER BY resource.sort ASC",
+                                " INNER JOIN %s AS subject ON subject.id = resource,rel_resource_subject_id" +
+                                " WHERE ((resource.rel_tenant_id = #{rel_tenant_id} AND resource.rel_app_id = #{rel_app_id})" +
+                                " OR (resource.expose_kind = #{expose_kind_tenant} AND resource.rel_tenant_id = #{rel_tenant_id})" +
+                                " OR resource.expose_kind = #{expose_kind_global})" +
+                                " AND subject.kind = #{kind}" +
+                                " ORDER BY resource.sort ASC",
                         new Resource().tableName(), new ResourceSubject().tableName()),
                 new HashMap<>() {
                     {
@@ -424,19 +435,19 @@ public class CommonProcessor {
                 .compose(resourceInfos ->
                         context.helper.success(resourceInfos.stream()
                                 .map(resourceInfo -> ResourceResp.builder()
-                                        .id(resourceInfo.getLong("resource.id"))
-                                        .name(resourceInfo.getString("resource.name"))
-                                        .pathAndQuery(URIHelper.getPathAndQuery(resourceInfo.getString("resource.uri")))
-                                        .name(resourceInfo.getString("resource.name"))
-                                        .icon(resourceInfo.getString("resource.icon"))
-                                        .action(resourceInfo.getString("resource.action"))
-                                        .sort(resourceInfo.getInteger("resource.sort"))
-                                        .resGroup(resourceInfo.getBoolean("resource.resGroup"))
-                                        .parentId(resourceInfo.getLong("resource.parentId"))
-                                        .relResourceSubjectId(resourceInfo.getLong("resource.relResourceSubjectId"))
-                                        .exposeKind(ExposeKind.parse(resourceInfo.getString("resource.exposeKind")))
-                                        .relAppId(resourceInfo.getLong("resource.relAppId"))
-                                        .relTenantId(resourceInfo.getLong("resource.relTenantId"))
+                                        .id(resourceInfo.getLong("id"))
+                                        .name(resourceInfo.getString("name"))
+                                        .pathAndQuery(URIHelper.getPathAndQuery(resourceInfo.getString("uri")))
+                                        .name(resourceInfo.getString("name"))
+                                        .icon(resourceInfo.getString("icon"))
+                                        .action(resourceInfo.getString("action"))
+                                        .sort(resourceInfo.getInteger("sort"))
+                                        .resGroup(resourceInfo.getBoolean("resGroup"))
+                                        .parentId(resourceInfo.getLong("parentId"))
+                                        .relResourceSubjectId(resourceInfo.getLong("relResourceSubjectId"))
+                                        .exposeKind(ExposeKind.parse(resourceInfo.getString("exposeKind")))
+                                        .relAppId(resourceInfo.getLong("relAppId"))
+                                        .relTenantId(resourceInfo.getLong("relTenantId"))
                                         .build())
                                 .collect(Collectors.toList()))
                 );
@@ -462,24 +473,24 @@ public class CommonProcessor {
                                             context.cache.del(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + tenantId + ":" + ak);
                                             context.cache.del(IAMConstant.CACHE_ACCOUNT_VCODE_ERROR_TIMES + tenantId + ":" + ak);
                                             // TODO 需要特殊标记表示验证码过期
-                                            return context.helper.error(new BadRequestException("验证码不存在或已过期，请重新获取"));
+                                            context.helper.error(new BadRequestException("验证码不存在或已过期，请重新获取"));
                                         }
-                                        return context.helper.error(new BadRequestException("验证码错误"));
+                                        throw context.helper.error(new BadRequestException("验证码错误"));
                                     });
                         });
             case USERNAME:
                 if (!$.security.digest.validate(ak + inputSk, storageSk, "SHA-512")) {
-                    return context.helper.error(new BadRequestException("密码错误"));
+                    context.helper.error(new BadRequestException("用户名或密码错误"));
                 }
                 return context.helper.success();
             case WECHAT_XCX:
                 return context.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString())
                         .compose(accessToken -> {
                             if (accessToken == null) {
-                                return context.helper.error(new BadRequestException("Access Token不存在"));
+                                context.helper.error(new BadRequestException("Access Token不存在"));
                             }
                             if (!accessToken.equalsIgnoreCase(inputSk)) {
-                                return context.helper.error(new BadRequestException("Access Token错误"));
+                                context.helper.error(new BadRequestException("Access Token错误"));
                             }
                             return context.helper.success();
                         });

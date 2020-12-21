@@ -195,7 +195,7 @@ public class ACRoleProcessor {
                 .compose(resp ->
                         context.helper.notExistToError(
                                 context.sql.getOne(
-                                        new HashMap<>() {
+                                        new HashMap<String,Object>() {
                                             {
                                                 put("id", roleAddReq.getRelRoleDefId());
                                                 put("rel_app_id", relAppId);
@@ -210,8 +210,8 @@ public class ACRoleProcessor {
                             return context.helper.notExistToError(
                                     context.sql.getOne(
                                             String.format("SELECT node.name FROM %s AS node" +
-                                                            "  INNER JOIN %s AS group ON group.id = node.rel_group_id" +
-                                                            "  WHERE node.id = #{rel_group_node_id} AND group.rel_tenant_id = #{rel_tenant_id} AND group.rel_app_id = #{rel_app_id}",
+                                                            " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
+                                                            " WHERE node.id = #{rel_group_node_id} AND _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id}",
                                                     new GroupNode().tableName(), new Group().tableName()),
                                             new HashMap<>() {
                                                 {
@@ -221,7 +221,7 @@ public class ACRoleProcessor {
                                                 }
                                             }), () -> new UnAuthorizedException("对应的群组节点不合法"))
                                     .compose(fetchGroupNodeName -> {
-                                        roleAddReq.setName(fetchGroupNodeName.getString("node.name") + " ");
+                                        roleAddReq.setName(fetchGroupNodeName.getString("name") + " ");
                                         return context.helper.success();
                                     });
                         } else {
@@ -282,8 +282,8 @@ public class ACRoleProcessor {
 
     public static Future<List<RoleResp>> findExposeRoles(String name, Long relAppId, Long relTenantId, ProcessContext context) {
         var sql = "SELECT * FROM %s" +
-                "  WHERE expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
-                "    OR expose_kind = #{expose_kind_global}";
+                " WHERE expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
+                " OR expose_kind = #{expose_kind_global}";
         var whereParameters = new HashMap<String, Object>() {
             {
                 put("expose_kind_tenant", ExposeKind.TENANT);
@@ -336,29 +336,29 @@ public class ACRoleProcessor {
     public static Future<Long> getTenantAdminRoleId(ProcessContext context) {
         return context.sql.getOne(
                 String.format("SELECT role.id FROM %s AS role" +
-                        "  INNER JOIN %s def ON def.id = role.rel_role_def_id" +
-                        "  WHERE def.code = #{role_def_code}" +
-                        "   ORDER BY def.create_time ASC", new Role().tableName(), new RoleDef().tableName()),
+                        " INNER JOIN %s def ON def.id = role.rel_role_def_id" +
+                        " WHERE def.code = #{role_def_code}" +
+                        " ORDER BY def.create_time ASC", new Role().tableName(), new RoleDef().tableName()),
                 new HashMap<>() {
                     {
                         put("role_def_code", ((IAMConfig) context.conf).getSecurity().getTenantAdminRoleDefCode());
                     }
                 })
-                .compose(fetchRoleId -> context.helper.success(fetchRoleId.getLong("role.id")));
+                .compose(fetchRoleId -> context.helper.success(fetchRoleId.getLong("id")));
     }
 
     public static Future<Long> getAppAdminRoleId(ProcessContext context) {
         return context.sql.getOne(
                 String.format("SELECT role.id FROM %s AS role" +
-                        "  INNER JOIN %s def ON def.id = role.rel_role_def_id" +
-                        "  WHERE def.code = #{role_def_code}" +
-                        "   ORDER BY def.create_time ASC", new Role().tableName(), new RoleDef().tableName()),
+                        " INNER JOIN %s def ON def.id = role.rel_role_def_id" +
+                        " WHERE def.code = #{role_def_code}" +
+                        " ORDER BY def.create_time ASC", new Role().tableName(), new RoleDef().tableName()),
                 new HashMap<>() {
                     {
                         put("role_def_code", ((IAMConfig) context.conf).getSecurity().getAppAdminRoleDefCode());
                     }
                 })
-                .compose(fetchRoleId -> context.helper.success(fetchRoleId.getLong("role.id")));
+                .compose(fetchRoleId -> context.helper.success(fetchRoleId.getLong("id")));
     }
 
 }

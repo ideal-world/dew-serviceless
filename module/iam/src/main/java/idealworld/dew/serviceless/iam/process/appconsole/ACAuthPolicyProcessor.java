@@ -73,10 +73,10 @@ public class ACAuthPolicyProcessor {
         return context.helper.notExistToError(
                 context.sql.getOne(
                         String.format("SELECT uri FROM %s" +
-                                        "  WHERE id = #{id} AND " +
-                                        "  (( rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id} )" +
-                                        "     OR ( expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id} )" +
-                                        "     OR ( expose_kind = #{expose_kind_global} ))",
+                                        " WHERE id = #{id} AND" +
+                                        " ((rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id})" +
+                                        " OR (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id})" +
+                                        " OR expose_kind = #{expose_kind_global})",
                                 new Resource().tableName()),
                         new HashMap<>() {
                             {
@@ -251,10 +251,10 @@ public class ACAuthPolicyProcessor {
         return context.helper.notExistToError(
                 context.sql.exists(
                         String.format("SELECT id FROM %s" +
-                                        "  WHERE id = #{id} AND " +
-                                        "  (( rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id} )" +
-                                        "     OR ( expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id} )" +
-                                        "     OR ( expose_kind = #{expose_kind_global} ))",
+                                        " WHERE id = #{id} AND " +
+                                        " ((rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id})" +
+                                        " OR (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id})" +
+                                        " OR expose_kind = #{expose_kind_global})",
                                 new Resource().tableName()),
                         new HashMap<>() {
                             {
@@ -315,7 +315,7 @@ public class ACAuthPolicyProcessor {
                                 context.helper.convert(authPolicyModifyReq, AuthPolicy.class))
                                 .compose(resp ->
                                         context.sql.getOne(
-                                                new HashMap<>() {
+                                                new HashMap<String,Object>() {
                                                     {
                                                         put("id", originalAuthPolicy.getRelResourceId());
                                                     }

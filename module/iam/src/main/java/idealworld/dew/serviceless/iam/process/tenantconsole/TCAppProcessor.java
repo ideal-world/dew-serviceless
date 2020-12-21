@@ -24,7 +24,6 @@ import idealworld.dew.framework.exception.ConflictException;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.ident.App;
-import idealworld.dew.serviceless.iam.domain.ident.TenantIdent;
 import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppAddReq;
@@ -83,6 +82,22 @@ public class TCAppProcessor {
 
     public static Future<Void> modifyApp(Long appId, AppModifyReq appModifyReq, Long relTenantId, ProcessContext context) {
         return IAMBasicProcessor.checkAppMembership(appId, relTenantId, context)
+                .compose(resp -> {
+                    if (appModifyReq.getName() != null) {
+                        return context.helper.existToError(
+                                context.sql.exists(
+                                        new HashMap<>() {
+                                            {
+                                                put("!id", appId);
+                                                put("name", appModifyReq.getName());
+                                                put("rel_tenant_id", relTenantId);
+                                            }
+                                        },
+                                        App.class), () -> new ConflictException("应用名称已存在"));
+                    } else {
+                        return context.helper.success(true);
+                    }
+                })
                 .compose(resp ->
                         context.sql.update(
                                 new HashMap<>() {
@@ -129,7 +144,7 @@ public class TCAppProcessor {
                 whereParameters,
                 pageNumber,
                 pageSize,
-                TenantIdent.class)
+                App.class)
                 .compose(apps -> context.helper.success(apps, AppResp.class));
     }
 

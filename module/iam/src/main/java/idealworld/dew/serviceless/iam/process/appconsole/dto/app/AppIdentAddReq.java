@@ -26,7 +26,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * 添加应用认证请求.
@@ -46,7 +45,6 @@ public class AppIdentAddReq implements Serializable {
     private String note;
     // 应用认证有效时间
     @Builder.Default
-    private Date validTime = DewConstant.MAX_TIME;
-
+    private Long validTime = DewConstant.MAX_TIME;
 
 }

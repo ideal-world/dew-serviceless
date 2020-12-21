@@ -23,7 +23,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * 修改应用认证请求.
@@ -40,6 +39,6 @@ public class AppIdentModifyReq implements Serializable {
     @Size(max = 1000)
     private String note;
     // 应用认证有效时间
-    private Date validTime;
+    private Long validTime;
 
 }

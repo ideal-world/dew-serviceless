@@ -27,7 +27,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * 修改权限策略请求.
@@ -48,9 +47,9 @@ public class AuthPolicyModifyReq implements Serializable {
     // 关联权限主体运算类型
     private AuthSubjectOperatorKind subjectOperator;
     // 生效时间
-    protected Date effectiveTime;
+    protected Long effectiveTime;
     // 失效时间
-    protected Date expiredTime;
+    protected Long expiredTime;
     // 关联资源Id
     private Long relResourceId;
     // 操作类型

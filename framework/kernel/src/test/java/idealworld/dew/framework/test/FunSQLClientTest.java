@@ -133,6 +133,7 @@ public class FunSQLClientTest extends DewTest {
                     Assertions.assertEquals(3, resp.size());
                     Assertions.assertEquals("孤岛旭日_new", resp.get(0).getString("name"));
                     Assertions.assertEquals("ENABLED", resp.get(0).getString("status"));
+                    Assertions.assertEquals("xxxx", resp.get(0).getString("open_id"));
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
@@ -155,7 +156,7 @@ public class FunSQLClientTest extends DewTest {
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.page("select * from account", new HashMap<>(), 2L, 2L)
+                        funSQLClient.page("select acc.name, acc.status AS stat from account AS acc", new HashMap<>(), 2L, 2L)
                 )
                 .onSuccess(resp -> {
                     Assertions.assertEquals(3, resp.getRecordTotal());
@@ -163,7 +164,7 @@ public class FunSQLClientTest extends DewTest {
                     Assertions.assertEquals(2, resp.getPageNumber());
                     Assertions.assertEquals(2, resp.getPageSize());
                     Assertions.assertEquals("孤岛旭日3", resp.getObjects().get(0).getString("name"));
-                    Assertions.assertEquals("ENABLED", resp.getObjects().get(0).getString("status"));
+                    Assertions.assertEquals("ENABLED", resp.getObjects().get(0).getString("stat"));
                     testContext.completeNow();
                 })
                 .onFailure(testContext::failNow);
@@ -208,7 +209,7 @@ public class FunSQLClientTest extends DewTest {
                         })
                 )
                 .compose(resp ->
-                        funSQLClient.list("select * from account where name in (#{n1}, #{n2}, #{n3})", new HashMap<>() {
+                        funSQLClient.list("select acc.* from account AS acc where acc.name in (#{n1}, #{n2}, #{n3})", new HashMap<>() {
                             {
                                 put("n1", "孤岛旭日4");
                                 put("n2", "孤岛旭日5");
@@ -297,7 +298,8 @@ public class FunSQLClientTest extends DewTest {
                     Assertions.assertTrue(resp.get(0).getContent().contains("孤岛旭日6"));
                     testContext.completeNow();
                 })
-                .onFailure(testContext::failNow);
+                .onFailure(e ->
+                        testContext.failNow(e));
     }
 
     @Test

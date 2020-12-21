@@ -27,6 +27,7 @@ import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -137,14 +138,37 @@ public class FunEventBus {
                     var actionKind = OptActionKind.parse(event.headers().get(DewConstant.REQUEST_RESOURCE_ACTION_FLAG));
                     var uri = URIHelper.newURI(event.headers().get(DewConstant.REQUEST_RESOURCE_URI_FLAG));
                     log.trace("[EventBus]Receive data [{}]{}", actionKind, uri.toString());
-                    var processF = consumerFun.consume(actionKind, uri, header, event.body());
-                    if (!event.headers().contains(DewConstant.REQUEST_WITHOUT_RESP_FLAG)) {
+                    try {
+                        var processF = consumerFun.consume(actionKind, uri, header, event.body());
+                        if (!event.headers().contains(DewConstant.REQUEST_WITHOUT_RESP_FLAG)) {
+                            processF
+                                    .onSuccess(processResult -> {
+                                        if (processResult instanceof Number
+                                                || processResult instanceof Boolean) {
+                                            event.reply(Buffer.buffer(processResult.toString(), "utf-8"));
+                                        } else if (processResult instanceof String) {
+                                            event.reply(Buffer.buffer((String) processResult, "utf-8"));
+                                        } else if (processResult instanceof Buffer) {
+                                            event.reply(processResult);
+                                        } else if (processResult == null) {
+                                            event.reply(Buffer.buffer());
+                                        } else if (processResult instanceof List) {
+                                            var array = new JsonArray();
+                                            ((List<?>) processResult).forEach(p -> array.add(JsonObject.mapFrom(p)));
+                                            event.reply(array.toBuffer());
+                                        } else {
+                                            event.reply(JsonObject.mapFrom(processResult).toBuffer());
+                                        }
+                                    });
+                        }
                         processF
-                                .onSuccess(processResult -> event.reply(JsonObject.mapFrom(processResult).toBuffer()))
                                 .onFailure(e -> {
-                                    log.error("[EventBus]Reply [{}]{}:{} error", moduleName, actionKind.toString(), uri, e);
+                                    log.error("[EventBus]Process [{}]{}:{} error", moduleName, actionKind.toString(), uri, e);
                                     event.fail(-1, e.getMessage());
                                 });
+                    } catch (Exception e) {
+                        log.error("[EventBus]Process [{}]{}:{} error", moduleName, actionKind.toString(), uri, e);
+                        event.fail(-1, e.getMessage());
                     }
                 }
         );

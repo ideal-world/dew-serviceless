@@ -97,7 +97,7 @@ public class IAMConfig {
         @Builder.Default
         private String iamAdminName = "dew";
         @Builder.Default
-        private String iamAdminPwd = $.field.createShortUUID() + "1A";
+        private String iamAdminPwd = "D_0_" + $.field.createShortUUID();
         @Builder.Default
         private String initNodeCode = "10000";
 

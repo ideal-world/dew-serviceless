@@ -26,7 +26,6 @@ import lombok.experimental.SuperBuilder;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.util.Date;
 
 /**
  * 应用认证响应.
@@ -52,7 +51,7 @@ public class AppIdentResp extends IdResp {
     private String ak;
     // 应用认证有效时间
     @NotNull
-    private Date validTime;
+    private Long validTime;
 
 
 }

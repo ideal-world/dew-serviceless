@@ -14,22 +14,26 @@
  * limitations under the License.
  */
 
-package idealworld.dew.serviceless.iam.test.scene;
+package idealworld.dew.serviceless.iam.test;
 
-import idealworld.dew.serviceless.iam.scene.systemconsole.dto.TenantAddReq;
-import idealworld.dew.serviceless.iam.test.BasicTest;
+import idealworld.dew.framework.dto.OptActionKind;
+import idealworld.dew.serviceless.iam.process.systemconsole.dto.TenantAddReq;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class SystemConsoleTest extends BasicTest {
+public class SystemConsoleTest extends IAMBasicTest {
 
     @Test
-    public void testAddTenant() {
+    public void testAddTenant(Vertx vertx, VertxTestContext testContext) {
         loginBySystemAdmin();
         // 租户注册
-        var tenantId = postToEntity("/console/system/tenant", TenantAddReq.builder()
+        var tenantId = req(OptActionKind.CREATE, "/console/system/tenant", TenantAddReq.builder()
                 .name("xyy")
-                .build(), Long.class).getBody();
+                .build(), Long.class);
         Assertions.assertNotNull(tenantId);
+        testContext.completeNow();
     }
+
 }

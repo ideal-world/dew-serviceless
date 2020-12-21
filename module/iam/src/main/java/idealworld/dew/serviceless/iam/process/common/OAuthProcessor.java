@@ -38,10 +38,7 @@ import idealworld.dew.serviceless.iam.process.common.oauthimpl.PlatformAPI;
 import idealworld.dew.serviceless.iam.process.common.oauthimpl.WechatXCXAPI;
 import io.vertx.core.Future;
 import io.vertx.mysqlclient.MySQLException;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -70,8 +67,8 @@ public class OAuthProcessor {
                                                 var userInfo = oauthUserInfo._1;
                                                 return context.sql.getOne(
                                                         String.format("SELECT acc.id, acc.status FROM %s AS ident" +
-                                                                        "  INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
-                                                                        "  WHERE ident.kind = #{kind} AND ident.ak = #{open_id} AND ident.rel_tenant_id = #{tenant_id}",
+                                                                        " INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
+                                                                        " WHERE ident.kind = #{kind} AND ident.ak = #{open_id} AND ident.rel_tenant_id = #{tenant_id}",
                                                                 new AccountIdent().tableName(), new Account().tableName()),
                                                         new HashMap<>() {
                                                             {
@@ -83,9 +80,9 @@ public class OAuthProcessor {
                                                         .compose(accountInfo -> {
                                                             Long accountId = null;
                                                             if (accountInfo != null) {
-                                                                accountId = accountInfo.getLong("acc.id");
-                                                                if (CommonStatus.parse(accountInfo.getString("acc.status")) == CommonStatus.DISABLED) {
-                                                                    return context.helper.error(new BadRequestException("用户状态异常"));
+                                                                accountId = accountInfo.getLong("id");
+                                                                if (CommonStatus.parse(accountInfo.getString("status")) == CommonStatus.DISABLED) {
+                                                                    context.helper.error(new BadRequestException("用户状态异常"));
                                                                 }
                                                             }
                                                             if (accountId == null) {
@@ -135,6 +132,7 @@ public class OAuthProcessor {
                 });
     }
 
+    @SneakyThrows
     private static Future<Tuple3<PlatformAPI, String, String>> checkAndGetAkSk(AccountIdentKind kind, Long appId, Long tenantId, ProcessContext context) {
         PlatformAPI platformAPI;
         switch (kind) {
@@ -142,16 +140,16 @@ public class OAuthProcessor {
                 platformAPI = WECHAT_XCXAPI;
                 break;
             default:
-                return context.helper.error(new UnAuthorizedException("认证类型不合法"));
+               throw context.helper.error(new UnAuthorizedException("认证类型不合法"));
         }
         return context.helper.notExistToError(
                 context.sql.getOne(
                         String.format("SELECT subject.ak, subject.sk FROM %s AS resource" +
-                                        "  INNER JOIN %s subject ON subject.id = resource.rel_resource_subject_id" +
-                                        "  WHERE (( resource.rel_app_id = #{app_id} AND resource.rel_tenant_id = #{tenant_id} )" +
-                                        "    OR ( resource.expose_kind = #{expose_kind_tenant} AND resource.rel_tenant_id = #{tenant_id})" +
-                                        "    OR resource.expose_kind = #{expose_kind_global} )" +
-                                        "    AND subject.kind = #{kind} AND subject.code = #{code}",
+                                        " INNER JOIN %s subject ON subject.id = resource.rel_resource_subject_id" +
+                                        " WHERE ((resource.rel_app_id = #{app_id} AND resource.rel_tenant_id = #{tenant_id})" +
+                                        " OR (resource.expose_kind = #{expose_kind_tenant} AND resource.rel_tenant_id = #{tenant_id})" +
+                                        " OR resource.expose_kind = #{expose_kind_global})" +
+                                        " AND subject.kind = #{kind} AND subject.code = #{code}",
                                 new ResourceSubject().tableName(), new Resource().tableName()),
                         new HashMap<>() {
                             {
@@ -164,8 +162,8 @@ public class OAuthProcessor {
                             }
                         }), () -> new BadRequestException("对应的OAuth资源主体不存在"))
                 .compose(oauthResourceSubject -> {
-                    var oauthAk = oauthResourceSubject.getString("subject.ak");
-                    var oauthSk = oauthResourceSubject.getString("subject.sk");
+                    var oauthAk = oauthResourceSubject.getString("ak");
+                    var oauthSk = oauthResourceSubject.getString("sk");
                     return context.helper.success(new Tuple3<>(platformAPI, oauthAk, oauthSk));
                 });
     }

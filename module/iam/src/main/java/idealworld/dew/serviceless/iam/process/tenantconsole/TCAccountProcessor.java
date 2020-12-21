@@ -30,14 +30,12 @@ import idealworld.dew.serviceless.iam.domain.auth.AccountGroup;
 import idealworld.dew.serviceless.iam.domain.auth.AccountRole;
 import idealworld.dew.serviceless.iam.domain.ident.Account;
 import idealworld.dew.serviceless.iam.domain.ident.AccountApp;
-import idealworld.dew.serviceless.iam.domain.ident.AccountBind;
 import idealworld.dew.serviceless.iam.domain.ident.AccountIdent;
 import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.account.*;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -207,14 +205,7 @@ public class TCAccountProcessor {
                                                         put("rel_account_id", accountId);
                                                     }
                                                 },
-                                                AccountGroup.class),
-                                        context.sql.softDelete(
-                                                new HashMap<>() {
-                                                    {
-                                                        put("rel_account_id", accountId);
-                                                    }
-                                                },
-                                                AccountBind.class))
+                                                AccountGroup.class))
                                         .compose(resp -> context.helper.success())));
     }
 
@@ -261,7 +252,7 @@ public class TCAccountProcessor {
                     accountIdent.setRelAccountId(accountId);
                     accountIdent.setRelTenantId(relTenantId);
                     if (accountIdent.getValidStartTime() == null) {
-                        accountIdent.setValidStartTime(new Date());
+                        accountIdent.setValidStartTime(System.currentTimeMillis());
                     }
                     if (accountIdent.getValidEndTime() == null) {
                         accountIdent.setValidEndTime(processInfo._0);

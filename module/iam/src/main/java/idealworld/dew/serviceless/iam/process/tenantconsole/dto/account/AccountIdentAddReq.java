@@ -26,7 +26,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * 添加账号认证请求.
@@ -52,10 +51,8 @@ public class AccountIdentAddReq implements Serializable {
     @Builder.Default
     private String sk = "";
     // 账号认证有效开始时间
-    @NotNull
-    private Date validStartTime;
+    private Long validStartTime;
     // 账号认证有效结束时间
-    @NotNull
-    private Date validEndTime;
+    private Long validEndTime;
 
 }

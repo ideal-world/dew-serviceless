@@ -26,6 +26,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.SneakyThrows;
 
 import javax.validation.Validation;
 import javax.validation.Validator;
@@ -54,8 +55,9 @@ public class ProcessHelper {
         return Future.succeededFuture(result);
     }
 
-    public <E> Future<E> error(Throwable e) {
-        return Future.failedFuture(e);
+    @SneakyThrows
+    public <E extends Throwable> E error(E e) {
+        throw e;
     }
 
     public <E extends IdResp, I extends IdEntity> Future<E> success(I entity, Class<E> clazz) {
@@ -86,11 +88,11 @@ public class ProcessHelper {
     }
 
     public <E> Future<E> existToError(Future<E> existFuture, Supplier<Throwable> errorFun) {
-        return toError(existFuture, errorFun, true);
+        return toError(existFuture, errorFun, false);
     }
 
     public <E> Future<E> notExistToError(Future<E> existFuture, Supplier<Throwable> errorFun) {
-        return toError(existFuture, errorFun, false);
+        return toError(existFuture, errorFun, true);
     }
 
     private <E> Future<E> toError(Future<E> existFuture, Supplier<Throwable> errorFun, Boolean needExist) {

@@ -24,7 +24,7 @@ import lombok.experimental.SuperBuilder;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 安全响应.
@@ -46,8 +46,8 @@ public abstract class SafeResp extends IdResp {
     @Size(max = 255)
     private String update_user;
     @NotNull
-    private Date create_time;
+    private LocalDateTime create_time;
     @NotNull
-    private Date update_time;
+    private LocalDateTime update_time;
 
 }

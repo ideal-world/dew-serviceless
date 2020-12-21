@@ -70,7 +70,7 @@ public class TCTenantProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
                 getTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个凭证信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert/", eventBusContext ->
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert", eventBusContext ->
                 pageTenantCerts(eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户的某个认证
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
