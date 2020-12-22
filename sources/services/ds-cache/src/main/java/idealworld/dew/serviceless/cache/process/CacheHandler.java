@@ -16,7 +16,6 @@
 
 package idealworld.dew.serviceless.cache.process;
 
-import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.framework.fun.cache.RedisClient;
