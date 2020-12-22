@@ -67,8 +67,13 @@ public class ACRoleProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/role/{roleId}", eventBusContext ->
                 getRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的角色列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/role", eventBusContext ->
-                findRoles(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/role", eventBusContext -> {
+            if (eventBusContext.req.params.getOrDefault("expose", "false").equalsIgnoreCase("false")) {
+                return findRoles(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+            } else {
+                return findExposeRoles(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+            }
+        });
         // 删除当前应用的某个角色
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/role/{roleId}", eventBusContext ->
                 deleteRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
@@ -195,7 +200,7 @@ public class ACRoleProcessor {
                 .compose(resp ->
                         context.helper.notExistToError(
                                 context.sql.getOne(
-                                        new HashMap<String,Object>() {
+                                        new HashMap<String, Object>() {
                                             {
                                                 put("id", roleAddReq.getRelRoleDefId());
                                                 put("rel_app_id", relAppId);
@@ -260,7 +265,7 @@ public class ACRoleProcessor {
                         put("rel_tenant_id", relTenantId);
                     }
                 },
-                RoleDef.class)
+                Role.class)
                 .compose(role -> context.helper.success(role, RoleResp.class));
     }
 

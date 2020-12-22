@@ -44,7 +44,7 @@ public class SimpleIT {
         var response = $.http.postWrap(gatewayServerUrl + Constant.REQUEST_PATH_FLAG + "?"
                 + Constant.REQUEST_RESOURCE_URI_FLAG + "=" + resUri
                 + "&"
-                + Constant.REQUEST_RESOURCE_ACTION_FLAG + "=" + optActionKind.toString(), $.json.toJsonString(body), header);
+                + Constant.REQUEST_RESOURCE_ACTION_FLAG + "=" + optActionKind.toString(), JsonObject.mapTo(body).toString(), header);
         if (response.statusCode != 200) {
             Assertions.fail("Request [" + optActionKind.toString() + "][" + resUri + "] error : [" + response.statusCode + "]");
         }

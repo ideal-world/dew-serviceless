@@ -49,11 +49,10 @@ import java.util.stream.Collectors;
 public class ExchangeProcessor {
 
     public static void publish(OptActionKind actionKind, String subjectCategory, Object subjectId, Object detailData, ProcessContext context) {
-        context.eb.publish(
-                IAMConstant.MODULE_GATEWAY_NAME,
+        context.eb.publish("",
                 actionKind,
-                "http://" + context.moduleName + "/" + subjectCategory + "/" + subjectId,
-                JsonObject.mapFrom(detailData).toString(),
+                "eb://" + context.moduleName + "/" + subjectCategory + "/" + subjectId,
+                JsonObject.mapFrom(detailData).toBuffer(),
                 new HashMap<>());
     }
 
@@ -241,7 +240,7 @@ public class ExchangeProcessor {
                             || !policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).containsKey(policyInfo.subjectKind.toString().toLowerCase())) {
                         return context.helper.success();
                     }
-                    policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).getJsonObject(policyInfo.subjectKind.toString().toLowerCase()).remove(policyInfo.getSubjectId());
+                    policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).getJsonArray(policyInfo.subjectKind.toString().toLowerCase()).remove(policyInfo.getSubjectId());
                     return context.cache.set(key, policyValue.toString());
                 });
     }

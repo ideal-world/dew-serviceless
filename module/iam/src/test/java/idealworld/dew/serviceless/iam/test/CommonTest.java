@@ -29,11 +29,14 @@ import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppAddReq;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.tenant.TenantIdentAddReq;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.tenant.TenantModifyReq;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 public class CommonTest extends IAMBasicTest {
 
@@ -203,7 +206,7 @@ public class CommonTest extends IAMBasicTest {
     @Disabled
     public void testOAuth(Vertx vertx, VertxTestContext testContext) {
         var oauth = $.file.readAllByClassPath("oauth-info.secret", "UTF-8");
-        var oauthJson = $.json.toJson(oauth);
+        var oauthJson = new JsonObject(oauth);
 
         Assertions.assertEquals("对应的OAuth资源主体不存在", req(OptActionKind.CREATE, "/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
@@ -216,10 +219,10 @@ public class CommonTest extends IAMBasicTest {
                 .kind(ResourceKind.OAUTH)
                 .name("微信OAuth")
                 .uri("oauth://" + AccountIdentKind.WECHAT_XCX.toString())
-                .ak(oauthJson.get("wechat-xcx").get("ak").asText())
-                .sk(oauthJson.get("wechat-xcx").get("sk").asText())
+                .ak(oauthJson.getJsonObject("wechat-xcx").getString("ak"))
+                .sk(oauthJson.getJsonObject("wechat-xcx").getString("sk"))
                 .build(), Long.class)._0;
-        Assertions.assertNotNull(req(OptActionKind.CREATE, "/console/app/resource", ResourceAddReq.builder()
+        Assertions.assertNull(req(OptActionKind.CREATE, "/console/app/resource", ResourceAddReq.builder()
                 .name("微信OAuth")
                 .pathAndQuery(AccountIdentKind.WECHAT_XCX.toString())
                 .relResourceSubjectId(resourceSubjectId)
@@ -232,7 +235,7 @@ public class CommonTest extends IAMBasicTest {
                 .build(), IdentOptInfo.class)._1.getMessage().contains("invalid code"));
         // code只能用一次
         /*Assertions.assertEquals("应用[1]对应租户不存在、未启用或禁止注册", req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
-                .kind(AccountIdentKind.WECHAT_MP)
+                .kind(AccountIdentKind.WECHAT_XCX)
                 .code(oauthJson.get("wechat-xcx").get("code").asText())
                 .relAppId(1L)
                 .build(), IdentOptInfo.class)._1.getMessage());*/
@@ -242,30 +245,30 @@ public class CommonTest extends IAMBasicTest {
                 .build(), Void.class);
         removeToken();
         // code只能用一次
-       /* Assertions.assertEquals("认证类型不存在或已禁用", req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
-                .kind(AccountIdentKind.WECHAT_MP)
+      /*  Assertions.assertEquals("认证类型不存在或已禁用", req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
+                .kind(AccountIdentKind.WECHAT_XCX)
                 .code(oauthJson.get("wechat-xcx").get("code").asText())
                 .relAppId(1L)
                 .build(), IdentOptInfo.class)._1.getMessage());*/
         loginBySystemAdmin();
-        Assertions.assertNotNull(req(OptActionKind.CREATE, "/console/tenant/tenant/ident", TenantIdentAddReq.builder()
+        Assertions.assertNull(req(OptActionKind.CREATE, "/console/tenant/tenant/ident", TenantIdentAddReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
                 .validTimeSec(60 * 60 * 24 * 10L)
-                .build(), Long.class));
+                .build(), Long.class)._1);
         removeToken();
         // 注册
         var identOptInfo = req(OptActionKind.CREATE, "/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
-                .code(oauthJson.get("wechat-xcx").get("code").asText())
+                .code(oauthJson.getJsonObject("wechat-xcx").getString("code"))
                 .relAppId(1L)
                 .build(), IdentOptInfo.class)._0;
         Assertions.assertNotNull(identOptInfo.getAccountCode());
         // 登录 code只能用一次
-        /*identOptInfo = req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
-                .kind(AccountIdentKind.WECHAT_MP)
+       /* identOptInfo = req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
+                .kind(AccountIdentKind.WECHAT_XCX)
                 .code(oauthJson.get("wechat-xcx").get("code").asText())
                 .relAppId(1L)
-                .build(), IdentOptInfo.class).getBody();
+                .build(), IdentOptInfo.class)._0;
         Assertions.assertNotNull(identOptInfo.getAccountCode());*/
         testContext.completeNow();
     }

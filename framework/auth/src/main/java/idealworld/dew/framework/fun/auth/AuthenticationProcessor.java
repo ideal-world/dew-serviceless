@@ -16,9 +16,8 @@
 
 package idealworld.dew.framework.fun.auth;
 
-import com.ecfront.dew.common.$;
-import com.fasterxml.jackson.databind.JsonNode;
 import idealworld.dew.framework.DewAuthConstant;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectOperatorKind;
@@ -27,10 +26,12 @@ import idealworld.dew.framework.util.AntPathMatcher;
 import idealworld.dew.framework.util.URIHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,6 +58,44 @@ public class AuthenticationProcessor {
         AuthenticationProcessor.resourceCacheExpireSec = resourceCacheExpireSec;
         AuthenticationProcessor.groupNodeLength = groupNodeLength;
         LocalResourceCache.loadRemoteResources(moduleName, null);
+    }
+
+    public static Map<AuthSubjectKind, List<String>> packageSubjectInfo(IdentOptCacheInfo identOptInfo) {
+        var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
+        if (identOptInfo != null) {
+            if (identOptInfo.getAccountCode() != null) {
+                subjectInfo.put(AuthSubjectKind.ACCOUNT, new ArrayList<>() {
+                    {
+                        add(identOptInfo.getAccountCode().toString());
+                    }
+                });
+            }
+            if (identOptInfo.getGroupInfo() != null && !identOptInfo.getGroupInfo().isEmpty()) {
+                subjectInfo.put(AuthSubjectKind.GROUP_NODE, identOptInfo.getGroupInfo().stream()
+                        .map(group -> group.getGroupCode() + DewAuthConstant.GROUP_CODE_NODE_CODE_SPLIT + group.getGroupNodeCode())
+                        .collect(Collectors.toList()));
+            }
+            if (identOptInfo.getRoleInfo() != null && !identOptInfo.getRoleInfo().isEmpty()) {
+                subjectInfo.put(AuthSubjectKind.ROLE, identOptInfo.getRoleInfo().stream()
+                        .map(IdentOptCacheInfo.RoleInfo::getCode)
+                        .collect(Collectors.toList()));
+            }
+            if (identOptInfo.getAppId() != null) {
+                subjectInfo.put(AuthSubjectKind.APP, new ArrayList<>() {
+                    {
+                        add(identOptInfo.getAppId().toString());
+                    }
+                });
+            }
+            if (identOptInfo.getTenantId() != null) {
+                subjectInfo.put(AuthSubjectKind.TENANT, new ArrayList<>() {
+                    {
+                        add(identOptInfo.getTenantId().toString());
+                    }
+                });
+            }
+        }
+        return subjectInfo;
     }
 
     public static Future<AuthResultKind> authentication(
@@ -108,7 +147,7 @@ public class AuthenticationProcessor {
                 + currentProcessUri.replace("//", "") + ":"
                 + actionKind, resourceCacheExpireSec)
                 .onSuccess(value -> {
-                    var authInfo = $.json.toJson(value);
+                    var authInfo = new JsonObject(value);
                     var matchResult = matchBasic(AuthSubjectOperatorKind.EQ, authInfo, subjectInfo);
                     if (matchResult) {
                         promise.complete(AuthResultKind.ACCEPT);
@@ -142,66 +181,60 @@ public class AuthenticationProcessor {
                 });
     }
 
-    private static Boolean matchBasic(AuthSubjectOperatorKind eqOrNeqKind, JsonNode authInfo, Map<AuthSubjectKind, List<String>> subjectInfo) {
-        if (!authInfo.has(eqOrNeqKind.toString().toLowerCase())) {
+    private static Boolean matchBasic(AuthSubjectOperatorKind eqOrNeqKind, JsonObject authInfo, Map<AuthSubjectKind, List<String>> subjectInfo) {
+        if (!authInfo.containsKey(eqOrNeqKind.toString().toLowerCase())) {
             return false;
         }
-        var json = authInfo.get(eqOrNeqKind.toString().toLowerCase());
+        var json = authInfo.getJsonObject(eqOrNeqKind.toString().toLowerCase());
         if (subjectInfo.containsKey(AuthSubjectKind.ACCOUNT)
-                && json.has(AuthSubjectKind.ACCOUNT.toString().toLowerCase())) {
-            var subjectJson = json.get(AuthSubjectKind.ACCOUNT.toString().toLowerCase());
-            if (subjectInfo.get(AuthSubjectKind.ACCOUNT).stream()
-                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)))) {
+                && json.containsKey(AuthSubjectKind.ACCOUNT.toString().toLowerCase())) {
+            var subjectJson = json.getJsonArray(AuthSubjectKind.ACCOUNT.toString().toLowerCase());
+            if (subjectInfo.get(AuthSubjectKind.ACCOUNT).stream().anyMatch(subjectJson::contains)) {
                 return true;
             }
         }
         if (subjectInfo.containsKey(AuthSubjectKind.GROUP_NODE)
-                && json.has(AuthSubjectKind.GROUP_NODE.toString().toLowerCase())) {
-            var subjectJson = json.get(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
-            if (subjectInfo.get(AuthSubjectKind.GROUP_NODE).stream()
-                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)))) {
+                && json.containsKey(AuthSubjectKind.GROUP_NODE.toString().toLowerCase())) {
+            var subjectJson = json.getJsonArray(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
+            if (subjectInfo.get(AuthSubjectKind.GROUP_NODE).stream().anyMatch(subjectJson::contains)) {
                 return true;
             }
         }
         if (subjectInfo.containsKey(AuthSubjectKind.ROLE)
-                && json.has(AuthSubjectKind.ROLE.toString().toLowerCase())) {
-            var subjectJson = json.get(AuthSubjectKind.ROLE.toString().toLowerCase());
-            if (subjectInfo.get(AuthSubjectKind.ROLE).stream()
-                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)))) {
+                && json.containsKey(AuthSubjectKind.ROLE.toString().toLowerCase())) {
+            var subjectJson = json.getJsonArray(AuthSubjectKind.ROLE.toString().toLowerCase());
+            if (subjectInfo.get(AuthSubjectKind.ROLE).stream().anyMatch(subjectJson::contains)) {
                 return true;
             }
         }
         if (subjectInfo.containsKey(AuthSubjectKind.APP)
-                && json.has(AuthSubjectKind.APP.toString().toLowerCase())) {
-            var subjectJson = json.get(AuthSubjectKind.APP.toString().toLowerCase());
-            if (subjectInfo.get(AuthSubjectKind.APP).stream()
-                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)))) {
+                && json.containsKey(AuthSubjectKind.APP.toString().toLowerCase())) {
+            var subjectJson = json.getJsonArray(AuthSubjectKind.APP.toString().toLowerCase());
+            if (subjectInfo.get(AuthSubjectKind.APP).stream().anyMatch(subjectJson::contains)) {
                 return true;
             }
         }
         if (subjectInfo.containsKey(AuthSubjectKind.TENANT)
-                && json.has(AuthSubjectKind.TENANT.toString().toLowerCase())) {
-            var subjectJson = json.get(AuthSubjectKind.TENANT.toString().toLowerCase());
-            return subjectInfo.get(AuthSubjectKind.TENANT).stream()
-                    .anyMatch(id -> $.fun.stream(subjectJson.iterator()).anyMatch(node -> node.asText().equals(id)));
+                && json.containsKey(AuthSubjectKind.TENANT.toString().toLowerCase())) {
+            var subjectJson = json.getJsonArray(AuthSubjectKind.TENANT.toString().toLowerCase());
+            return subjectInfo.get(AuthSubjectKind.TENANT).stream().anyMatch(subjectJson::contains);
         }
         return false;
     }
 
-    private static Boolean matchInclude(JsonNode authInfo, Map<AuthSubjectKind, List<String>> subjectInfo) {
-        if (!authInfo.has(AuthSubjectOperatorKind.INCLUDE.toString().toLowerCase())) {
+    private static Boolean matchInclude(JsonObject authInfo, Map<AuthSubjectKind, List<String>> subjectInfo) {
+        if (!authInfo.containsKey(AuthSubjectOperatorKind.INCLUDE.toString().toLowerCase())) {
             return false;
         }
-        var json = authInfo.get(AuthSubjectOperatorKind.INCLUDE.toString().toLowerCase());
+        var json = authInfo.getJsonObject(AuthSubjectOperatorKind.INCLUDE.toString().toLowerCase());
         if (!subjectInfo.containsKey(AuthSubjectKind.GROUP_NODE)
-                || !json.has(AuthSubjectKind.GROUP_NODE.toString().toLowerCase())) {
+                || !json.containsKey(AuthSubjectKind.GROUP_NODE.toString().toLowerCase())) {
             return false;
         }
-        var subjectJson = json.get(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
+        var subjectJson = json.getJsonArray(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
         var subjectIds = subjectInfo.get(AuthSubjectKind.GROUP_NODE);
-        var jsonIterator = subjectJson.elements();
-        while (jsonIterator.hasNext()) {
-            var currentNodeCode = jsonIterator.next().asText();
+        for (var item : subjectJson) {
+            var currentNodeCode = (String) item;
             while (currentNodeCode.length() > 0) {
                 if (subjectIds.contains(currentNodeCode)) {
                     return true;
@@ -212,20 +245,19 @@ public class AuthenticationProcessor {
         return false;
     }
 
-    private static Boolean matchLike(JsonNode authInfo, Map<AuthSubjectKind, List<String>> subjectInfo) {
-        if (!authInfo.has(AuthSubjectOperatorKind.LIKE.toString().toLowerCase())) {
+    private static Boolean matchLike(JsonObject authInfo, Map<AuthSubjectKind, List<String>> subjectInfo) {
+        if (!authInfo.containsKey(AuthSubjectOperatorKind.LIKE.toString().toLowerCase())) {
             return false;
         }
-        var json = authInfo.get(AuthSubjectOperatorKind.LIKE.toString().toLowerCase());
+        var json = authInfo.getJsonObject(AuthSubjectOperatorKind.LIKE.toString().toLowerCase());
         if (!subjectInfo.containsKey(AuthSubjectKind.GROUP_NODE)
-                || !json.has(AuthSubjectKind.GROUP_NODE.toString().toLowerCase())) {
+                || !json.containsKey(AuthSubjectKind.GROUP_NODE.toString().toLowerCase())) {
             return false;
         }
         var subjectIds = subjectInfo.get(AuthSubjectKind.GROUP_NODE);
-        var subjectJson = json.get(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
-        var jsonIterator = subjectJson.elements();
-        while (jsonIterator.hasNext()) {
-            var nodeCode = jsonIterator.next().asText();
+        var subjectJson = json.getJsonArray(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
+        for (var item : subjectJson) {
+            var nodeCode = (String) item;
             for (var subjectId : subjectIds) {
                 if (subjectId.startsWith(nodeCode)) {
                     return true;

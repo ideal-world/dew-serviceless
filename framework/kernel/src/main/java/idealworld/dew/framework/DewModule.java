@@ -18,6 +18,7 @@ package idealworld.dew.framework;
 
 import idealworld.dew.framework.fun.cache.FunRedisClient;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
+import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
 import idealworld.dew.framework.fun.httpserver.FunHttpServer;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
@@ -40,13 +41,11 @@ public abstract class DewModule<C extends Object> extends AbstractVerticle {
     private static Object moduleConfig;
     private static DewConfig.FunConfig funConfig;
 
-    public String getModuleName() {
-        return this.getClass().getSimpleName();
-    }
+    public abstract String getModuleName();
 
-    protected abstract void start(C config, Promise<Void> startPromise);
+    protected abstract Future<Void> start(C config);
 
-    protected abstract void stop(C config, Promise<Void> stopPromise);
+    protected abstract Future<Void> stop(C config);
 
     protected abstract boolean enabledRedisFun();
 
@@ -75,14 +74,20 @@ public abstract class DewModule<C extends Object> extends AbstractVerticle {
         var jsonConfig = vertx.getOrCreateContext().config().getJsonObject("config");
         moduleConfig = jsonConfig != null ? jsonConfig.mapTo(configClazz) : configClazz.getDeclaredConstructor().newInstance();
         CompositeFuture.all(loadFuns(funConfig))
-                .onSuccess(funLoadResult -> start((C) moduleConfig, startPromise))
+                .onSuccess(funLoadResult -> start((C) moduleConfig)
+                        .onSuccess(resp -> ReceiveProcessor.watch(getModuleName(), moduleConfig)
+                                .onSuccess(r -> startPromise.complete())
+                                .onFailure(startPromise::fail))
+                        .onFailure(startPromise::fail))
                 .onFailure(startPromise::fail);
     }
 
     @Override
     public final void stop(Promise<Void> stopPromise) {
         CompositeFuture.all(unLoadFuns(funConfig))
-                .onSuccess(funUnloadResult -> stop((C) moduleConfig, stopPromise))
+                .onSuccess(funUnloadResult -> stop((C) moduleConfig)
+                        .onSuccess(resp -> stopPromise.complete())
+                        .onFailure(stopPromise::fail))
                 .onFailure(stopPromise::fail);
     }
 

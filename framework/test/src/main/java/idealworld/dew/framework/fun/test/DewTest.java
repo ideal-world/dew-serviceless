@@ -16,9 +16,12 @@
 
 package idealworld.dew.framework.fun.test;
 
+import com.ecfront.dew.common.tuple.Tuple2;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.vertx.core.Future;
 import io.vertx.junit5.VertxExtension;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.JdbcDatabaseContainer;
@@ -26,6 +29,7 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.File;
+import java.util.Map;
 
 @Testcontainers
 @ExtendWith(VertxExtension.class)
@@ -62,5 +66,28 @@ public abstract class DewTest {
 
     protected static GenericContainer redisConfig;
     protected static JdbcDatabaseContainer mysqlConfig;
+
+
+    @SneakyThrows
+    protected <E> Tuple2<E, Throwable> await(Future<E> future) {
+        while (!future.isComplete()) {
+            Thread.sleep(10);
+        }
+        if (future.succeeded()) {
+            return new Tuple2<>(future.result(), null);
+        }
+        return new Tuple2<>(null, future.cause());
+    }
+
+    @SneakyThrows
+    protected  <E> Tuple2<E, Throwable> awaitRequest(Future<Tuple2<E, Map<String, String>>> future) {
+        while (!future.isComplete()) {
+            Thread.sleep(10);
+        }
+        if (future.succeeded()) {
+            return new Tuple2<>(future.result()._0, null);
+        }
+        return new Tuple2<>(null, future.cause());
+    }
 
 }

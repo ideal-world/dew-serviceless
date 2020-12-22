@@ -51,13 +51,13 @@ public class ReceiveProcessor {
     public static <E> Future<E> chooseProcess(String moduleName, Object config, OptActionKind actionKind, String pathRequest, String query, Map<String, String> header, Buffer body) {
         if (!PROCESSORS.containsKey(actionKind)) {
             log.warn("[EventBus]Can't found process by [{}] {}", actionKind.toString(), pathRequest);
-            throw new BadRequestException("找不到对应的处理器");
+            throw new BadRequestException("请求[" + actionKind.toString() + ":" + pathRequest + "]找不到对应的处理器");
         }
         if (PROCESSORS.get(actionKind).containsKey(pathRequest)) {
             return PROCESSORS.get(actionKind).get(pathRequest).process(EventBusContext.builder()
                     .req(EventBusContext.Request.builder()
                             .header(header)
-                            .params(URIHelper.getSingleValueQuery(query,false))
+                            .params(URIHelper.getSingleValueQuery(query, false))
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
@@ -77,11 +77,11 @@ public class ReceiveProcessor {
                 .findAny();
         if (matchedPathTemplate.isEmpty()) {
             log.warn("[EventBus]Can't found process by [{}] {}", actionKind.toString(), pathRequest);
-            throw new BadRequestException("找不到对应的处理器");
+            throw new BadRequestException("请求[" + actionKind.toString() + ":" + pathRequest + "]找不到对应的处理器");
         } else {
             var pathPattern = matchedPathTemplate.get();
             var params = PATH_MATCHER.extractUriTemplateVariables(pathPattern, pathRequest);
-            params.putAll(URIHelper.getSingleValueQuery(query,false));
+            params.putAll(URIHelper.getSingleValueQuery(query, false));
             return PROCESSORS.get(actionKind).get(pathPattern).process(EventBusContext.builder()
                     .req(EventBusContext.Request.builder()
                             .header(header)
@@ -89,7 +89,7 @@ public class ReceiveProcessor {
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
-                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG),StandardCharsets.UTF_8)).mapTo(IdentOptCacheInfo.class)
+                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptCacheInfo.class)
                                             : new IdentOptCacheInfo())
                             .build())
                     .context(ProcessContext.builder()

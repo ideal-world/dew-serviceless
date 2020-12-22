@@ -25,6 +25,7 @@ import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.gateway.GatewayConfig;
 import idealworld.dew.serviceless.gateway.GatewayModule;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -44,7 +45,7 @@ public class GatewayFlowTest extends DewTest {
         enableRedis();
     }
 
-    private static String moduleName = new GatewayModule().getModuleName();
+    private static final String MODULE_NAME = new GatewayModule().getModuleName();
     private static GatewayConfig.Security dewSecurityConfig = new GatewayConfig.Security();
 
     @BeforeAll
@@ -76,16 +77,15 @@ public class GatewayFlowTest extends DewTest {
         testContext.completeNow();
     }
 
-
     @Test
     public void testPublic(Vertx vertx, VertxTestContext testContext) {
         var result = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
                         "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容");
         Assertions.assertEquals(200, result.statusCode);
-        var data = $.json.toJson(result.result);
-        Assertions.assertTrue(data.get("headers").has(DewAuthConstant.REQUEST_IDENT_OPT_FLAG));
-        Assertions.assertEquals("测试内容", data.get("data").asText());
+        var data = new JsonObject(result.result);
+        Assertions.assertTrue(data.getJsonObject("headers").containsKey(DewAuthConstant.REQUEST_IDENT_OPT_FLAG));
+        Assertions.assertEquals("测试内容", data.getString("data"));
         testContext.completeNow();
     }
 
@@ -100,7 +100,7 @@ public class GatewayFlowTest extends DewTest {
                 });
         Assertions.assertEquals("认证错误，Token不合法", Resp.generic(errorResult.result,Void.class).getMessage());
 
-        FunRedisClient.choose(moduleName).set(dewSecurityConfig.getCacheTokenInfoKey() + "tokenxxx", "{\"accountCode\":\"testCode\"}");
+        FunRedisClient.choose(MODULE_NAME).set(dewSecurityConfig.getCacheTokenInfoKey() + "tokenxxx", "{\"accountCode\":\"testCode\"}");
         vertx.setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
                             "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
@@ -110,10 +110,10 @@ public class GatewayFlowTest extends DewTest {
                         }
                     });
             Assertions.assertEquals(200, result.statusCode);
-            var data = $.json.toJson(result.result);
-            Assertions.assertTrue(data.get("headers").has(DewAuthConstant.REQUEST_IDENT_OPT_FLAG));
-            Assertions.assertTrue($.security.decodeBase64ToString(data.get("headers").get(DewAuthConstant.REQUEST_IDENT_OPT_FLAG).asText(), StandardCharsets.UTF_8).contains("testCode"));
-            Assertions.assertEquals("测试内容", data.get("data").asText());
+            var data =new JsonObject(result.result);
+            Assertions.assertTrue(data.getJsonObject("headers").containsKey(DewAuthConstant.REQUEST_IDENT_OPT_FLAG));
+            Assertions.assertTrue($.security.decodeBase64ToString(data.getJsonObject("headers").getString(DewAuthConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8).contains("testCode"));
+            Assertions.assertEquals("测试内容", data.getString("data"));
             testContext.completeNow();
         });
     }
@@ -160,7 +160,7 @@ public class GatewayFlowTest extends DewTest {
                 });
         Assertions.assertEquals("认证错误，AK不存在", Resp.generic(errorResult.result, Void.class).getMessage());
 
-        FunRedisClient.choose(moduleName).set(DewAuthConstant.CACHE_APP_AK + "xx", "skxx:1123456:789");
+        FunRedisClient.choose(MODULE_NAME).set(DewAuthConstant.CACHE_APP_AK + "xx", "skxx:1123456:789");
         vertx.setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
                             "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",

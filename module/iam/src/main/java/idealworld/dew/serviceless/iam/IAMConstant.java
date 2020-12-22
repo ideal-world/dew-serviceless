@@ -40,6 +40,4 @@ public class IAMConstant extends DewConstant {
     public static final String RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT = ".";
     public static final String RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX = "default";
 
-    public static final String MODULE_GATEWAY_NAME = "gateway";
-
 }

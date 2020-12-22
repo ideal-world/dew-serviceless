@@ -19,13 +19,14 @@ package idealworld.dew.serviceless.gateway.process;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.httpserver.AuthHttpHandler;
 import idealworld.dew.serviceless.gateway.GatewayConfig;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,7 +56,7 @@ public class GatewayDistributeHandler extends AuthHttpHandler {
         var uri = (URI) ctx.get(DewAuthConstant.REQUEST_RESOURCE_URI_FLAG);
         Buffer body = ctx.getBody();
         var header = new HashMap<String, String>();
-        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64($.json.toJsonString(identOptInfo), StandardCharsets.UTF_8));
+        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
         String distributeModuleName;
         switch (ResourceKind.parse(uri.getScheme().toLowerCase())) {
             case HTTP:

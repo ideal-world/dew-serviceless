@@ -248,23 +248,29 @@ public class ACAuthPolicyProcessor {
                 || authPolicyModifyReq.getRelSubjectKind() == null && authPolicyModifyReq.getRelSubjectIds() != null) {
             throw new BadRequestException("关联权限主体类型与关联权限主体Id必须同时存在");
         }
-        return context.helper.notExistToError(
-                context.sql.exists(
-                        String.format("SELECT id FROM %s" +
-                                        " WHERE id = #{id} AND " +
-                                        " ((rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id})" +
-                                        " OR (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id})" +
-                                        " OR expose_kind = #{expose_kind_global})",
-                                new Resource().tableName()),
-                        new HashMap<>() {
-                            {
-                                put("id", authPolicyModifyReq.getRelResourceId());
-                                put("expose_kind_tenant", ExposeKind.TENANT);
-                                put("expose_kind_global", ExposeKind.GLOBAL);
-                                put("rel_app_id", relAppId);
-                                put("rel_tenant_id", relTenantId);
-                            }
-                        }), () -> new UnAuthorizedException("权限策略对应的资源不合法"))
+        return Future.succeededFuture()
+                .compose(resp -> {
+                    if (authPolicyModifyReq.getRelResourceId() == null) {
+                        return Future.succeededFuture();
+                    }
+                    return context.helper.notExistToError(
+                            context.sql.exists(
+                                    String.format("SELECT id FROM %s" +
+                                                    " WHERE id = #{id} AND " +
+                                                    " ((rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id})" +
+                                                    " OR (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id})" +
+                                                    " OR expose_kind = #{expose_kind_global})",
+                                            new Resource().tableName()),
+                                    new HashMap<>() {
+                                        {
+                                            put("id", authPolicyModifyReq.getRelResourceId());
+                                            put("expose_kind_tenant", ExposeKind.TENANT);
+                                            put("expose_kind_global", ExposeKind.GLOBAL);
+                                            put("rel_app_id", relAppId);
+                                            put("rel_tenant_id", relTenantId);
+                                        }
+                                    }), () -> new UnAuthorizedException("权限策略对应的资源不合法"));
+                })
                 .compose(resp -> {
                     if (authPolicyModifyReq.getRelSubjectIds() != null) {
                         if (!authPolicyModifyReq.getRelSubjectIds().endsWith(",")) {
@@ -315,7 +321,7 @@ public class ACAuthPolicyProcessor {
                                 context.helper.convert(authPolicyModifyReq, AuthPolicy.class))
                                 .compose(resp ->
                                         context.sql.getOne(
-                                                new HashMap<String,Object>() {
+                                                new HashMap<String, Object>() {
                                                     {
                                                         put("id", originalAuthPolicy.getRelResourceId());
                                                     }

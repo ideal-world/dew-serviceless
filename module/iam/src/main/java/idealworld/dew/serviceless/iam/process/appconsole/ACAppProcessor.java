@@ -21,7 +21,6 @@ import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.util.KeyHelper;
-import idealworld.dew.serviceless.iam.domain.ident.AccountIdent;
 import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.domain.ident.AppIdent;
 import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
@@ -116,8 +115,8 @@ public class ACAppProcessor {
         return context.sql.getOne(
                 new HashMap<>() {
                     {
-                        put("id", relAppId);
-                        put("rel_app_id", appIdentId);
+                        put("id", appIdentId);
+                        put("rel_app_id", relAppId);
                     }
                 },
                 AppIdent.class)
@@ -125,8 +124,8 @@ public class ACAppProcessor {
                         context.sql.softDelete(
                                 new HashMap<>() {
                                     {
-                                        put("id", relAppId);
-                                        put("rel_app_id", appIdentId);
+                                        put("id", appIdentId);
+                                        put("rel_app_id", relAppId);
                                     }
                                 },
                                 AppIdent.class)
@@ -138,11 +137,11 @@ public class ACAppProcessor {
         return context.sql.getOne(
                 new HashMap<>() {
                     {
-                        put("id", relAppId);
-                        put("rel_app_id", appIdentId);
+                        put("id", appIdentId);
+                        put("rel_app_id", relAppId);
                     }
                 },
-                AccountIdent.class)
+                AppIdent.class)
                 .compose(fetchAppIdent -> Future.succeededFuture(fetchAppIdent.getSk()));
     }
 

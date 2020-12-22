@@ -43,47 +43,60 @@ import java.util.function.Consumer;
 @Slf4j
 public class ExchangeHelper {
 
-    public static Future<Void> loadAndWatchResourceSubject(String moduleName, DewAuthConfig config, ResourceKind kind, Consumer<ResourceSubjectExchange> addFun, Consumer<String> removeFun) {
-        var header = new HashMap<String, String>();
-        var identOptInfo = IdentOptCacheInfo.builder()
-                .tenantId(config.getIam().getTenantId())
-                .appId(config.getIam().getAppId())
-                .build();
-        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64($.json.toJsonString(identOptInfo), StandardCharsets.UTF_8));
-        FunEventBus.choose(moduleName).request(config.getIam().getModuleName(), OptActionKind.FETCH, "/console/app/resource/subject?qKind=" + kind.toString(), null, header)
-                .onSuccess(result -> {
-                    var resourceSubjects = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
-                    for (var resourceSubject : resourceSubjects) {
-                        var resourceSubjectExchange = ((JsonObject)resourceSubject).mapTo(ResourceSubjectExchange.class);
-                        addFun.accept(resourceSubjectExchange);
-                        log.info("[Exchange]Init [resourceSubject.code={}] data", resourceSubjectExchange.getCode());
-                    }
-                })
-                .onFailure(e -> log.error("[Exchange]Init resourceSubjects error: {}", e.getMessage(), e.getCause()));
-        return watch(moduleName, new HashSet<>() {
-            {
-                add("http://"+DewAuthConstant.MODULE_IAM_NAME+"/resourcesubject." + kind.toString().toLowerCase());
-            }
-        }, exchangeInfo -> {
-            var resourceSubjectExchange = JsonObject.mapFrom(exchangeInfo._1).mapTo(ResourceSubjectExchange.class);
-            if (exchangeInfo._0 == OptActionKind.CREATE
-                    || exchangeInfo._0 == OptActionKind.MODIFY) {
-                removeFun.accept(resourceSubjectExchange.getCode());
-                addFun.accept(resourceSubjectExchange);
-                log.info("[Exchange]Updated [resourceSubject.code={}] data", resourceSubjectExchange.getCode());
-            } else if (exchangeInfo._0 == OptActionKind.DELETE) {
-                removeFun.accept(resourceSubjectExchange.getCode());
-                log.error("[Exchange]Removed [resourceSubject.code={}]", resourceSubjectExchange.getCode());
-            }
-        });
+    private static DewAuthConfig.IAMConfig config;
+
+    public static void init(DewAuthConfig.IAMConfig _config) {
+        config = _config;
     }
 
-    public static Future<Void> watch(String moduleName, Set<String> uris, Consumer<Tuple2<OptActionKind,Buffer>> fun) {
-        FunEventBus.choose(moduleName).consumer(moduleName, (FunEventBus.ConsumerFun<Void>) (actionKind, uri, header, body) -> {
+    public static Future<Void> loadAndWatchResourceSubject(String moduleName, ResourceKind kind, Consumer<ResourceSubjectExchange> addFun, Consumer<String> removeFun) {
+        var header = new HashMap<String, String>();
+        var identOptInfo = IdentOptCacheInfo.builder()
+                .tenantId(config.getTenantId())
+                .appId(config.getAppId())
+                .build();
+        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
+        return Future.succeededFuture()
+                .compose(resp -> {
+                    if (config == null || config.getAppId() == null) {
+                        log.warn("Cannot connect to the iam service because the iam configuration does not exist!");
+                        return Future.succeededFuture();
+                    }
+                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, "/console/app/resource/subject?kind=" + kind.toString(), null, header)
+                            .compose(result -> {
+                                var resourceSubjects = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
+                                for (var resourceSubject : resourceSubjects) {
+                                    var resourceSubjectExchange = ((JsonObject) resourceSubject).mapTo(ResourceSubjectExchange.class);
+                                    addFun.accept(resourceSubjectExchange);
+                                    log.info("[Exchange]Init [resourceSubject.code={}] data", resourceSubjectExchange.getCode());
+                                }
+                                return Future.succeededFuture();
+                            });
+                })
+                .compose(resp -> watch(moduleName, new HashSet<>() {
+                    {
+                        add("eb://" + DewAuthConstant.MODULE_IAM_NAME + "/resourcesubject." + kind.toString().toLowerCase());
+                    }
+                }, exchangeInfo -> {
+                    var resourceSubjectExchange = JsonObject.mapFrom(exchangeInfo._1).mapTo(ResourceSubjectExchange.class);
+                    if (exchangeInfo._0 == OptActionKind.CREATE
+                            || exchangeInfo._0 == OptActionKind.MODIFY) {
+                        removeFun.accept(resourceSubjectExchange.getCode());
+                        addFun.accept(resourceSubjectExchange);
+                        log.info("[Exchange]Updated [resourceSubject.code={}] data", resourceSubjectExchange.getCode());
+                    } else if (exchangeInfo._0 == OptActionKind.DELETE) {
+                        removeFun.accept(resourceSubjectExchange.getCode());
+                        log.error("[Exchange]Removed [resourceSubject.code={}]", resourceSubjectExchange.getCode());
+                    }
+                }));
+    }
+
+    public static Future<Void> watch(String moduleName, Set<String> uris, Consumer<Tuple2<OptActionKind, Buffer>> fun) {
+        FunEventBus.choose(moduleName).consumer("", (FunEventBus.ConsumerFun<Void>) (actionKind, uri, header, body) -> {
             var strUri = uri.toString().toLowerCase();
-            if(uris.stream().anyMatch(u -> u.toLowerCase().startsWith(strUri))){
+            if (uris.stream().anyMatch(u -> strUri.startsWith(u.toLowerCase()))) {
                 log.trace("[Exchange]Received {}", body.toString());
-                fun.accept(new Tuple2<>(actionKind,body));
+                fun.accept(new Tuple2<>(actionKind, body));
             }
             return Future.succeededFuture();
         });

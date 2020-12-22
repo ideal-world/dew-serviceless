@@ -27,4 +27,7 @@ public class ServiceException extends RTException {
         super(message);
     }
 
+    public ServiceException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

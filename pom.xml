@@ -60,16 +60,9 @@
         <module>framework/test</module>
         <module>module/gateway</module>
         <module>module/iam</module>
+        <module>module/ds-db-reldb</module>
+        <module>module/ds-http</module>
         <!--<module>docs</module>
-        <module>sources/basics/common</module>
-        <module>sources/basics/vertx-services</module>
-        <module>sources/basics/spring-services</module>
-        <module>sources/services/gateway</module>
-        <module>sources/services/iam</module>
-        <module>sources/services/ds-db-reldb</module>
-        <module>sources/services/ds-cache</module>
-        <module>sources/services/ds-http</module>
-        <module>sources/terminals</module>
         <module>it</module>-->
         <module>terminals</module>
     </modules>

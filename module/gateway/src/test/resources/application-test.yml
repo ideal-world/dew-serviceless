@@ -3,7 +3,7 @@ funs:
     uri: redis://localhost:6379
 modules:
   -
-    clazzPackage: idealworld.dew.serviceless.gateway.DewGatewayModule
+    clazzPackage: idealworld.dew.serviceless.gateway.GatewayModule
     config:
       security:
         tokenCacheExpireSec: 0

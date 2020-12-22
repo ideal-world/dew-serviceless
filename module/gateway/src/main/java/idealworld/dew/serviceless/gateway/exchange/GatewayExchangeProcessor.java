@@ -16,12 +16,13 @@
 
 package idealworld.dew.serviceless.gateway.exchange;
 
-import com.ecfront.dew.common.$;
+import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.fun.auth.LocalResourceCache;
 import idealworld.dew.framework.fun.auth.dto.ResourceExchange;
 import idealworld.dew.framework.fun.auth.exchange.ExchangeHelper;
 import idealworld.dew.framework.util.URIHelper;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashSet;
@@ -33,15 +34,15 @@ import java.util.HashSet;
 public class GatewayExchangeProcessor {
 
     public static Future<Void> init(String moduleName) {
-        return ExchangeHelper.watch(moduleName,new HashSet<>() {
+        return ExchangeHelper.watch(moduleName, new HashSet<>() {
             {
-                add("resource");
+                add("eb://" + DewAuthConstant.MODULE_IAM_NAME + "/resource");
             }
         }, exchangeData -> {
-            var resourceExchange = $.json.toObject(exchangeData.getDetailData(), ResourceExchange.class);
+            var resourceExchange = new JsonObject(exchangeData._1).mapTo(ResourceExchange.class);
             var resourceActionKind = resourceExchange.getResourceActionKind();
             var resourceUri = URIHelper.newURI(resourceExchange.getResourceUri());
-            switch (exchangeData.getActionKind()) {
+            switch (exchangeData._0) {
                 case CREATE:
                     LocalResourceCache.addLocalResource(resourceUri, resourceActionKind);
                     log.info("[Exchange]Created [resource.actionKind={},uri={}] data", resourceActionKind, resourceExchange.getResourceUri());

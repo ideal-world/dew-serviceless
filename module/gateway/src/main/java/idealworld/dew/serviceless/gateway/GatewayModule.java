@@ -20,10 +20,10 @@ import idealworld.dew.framework.DewModule;
 import idealworld.dew.framework.fun.httpserver.FunHttpServer;
 import idealworld.dew.serviceless.gateway.exchange.GatewayExchangeProcessor;
 import idealworld.dew.serviceless.gateway.process.GatewayAuthHandler;
+import idealworld.dew.serviceless.gateway.process.GatewayAuthPolicy;
 import idealworld.dew.serviceless.gateway.process.GatewayDistributeHandler;
 import idealworld.dew.serviceless.gateway.process.GatewayIdentHandler;
-import idealworld.dew.serviceless.gateway.process.GatewayAuthPolicy;
-import io.vertx.core.Promise;
+import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 
 import java.util.Arrays;
@@ -34,23 +34,30 @@ import java.util.Arrays;
 public class GatewayModule extends DewModule<GatewayConfig> {
 
     @Override
-    protected void start(GatewayConfig config, Promise<Void> startPromise) {
-        var authPolicy = new GatewayAuthPolicy(getModuleName(), config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
-        GatewayExchangeProcessor.init(getModuleName());
-        var identHttpHandler = new GatewayIdentHandler(getModuleName(), config.getSecurity());
-        var authHttpHandler = new GatewayAuthHandler(getModuleName(), authPolicy);
-        var distributeHandler = new GatewayDistributeHandler(getModuleName(), config.getDistribute());
-        FunHttpServer.choose(getModuleName()).addRoute(FunHttpServer.Route.builder()
-                .method(HttpMethod.POST)
-                .path(config.getDistribute().getGatewayRequestPath())
-                .handlers(Arrays.asList(identHttpHandler, authHttpHandler, distributeHandler))
-                .build());
-        startPromise.complete();
+    public String getModuleName() {
+        return "gateway";
     }
 
     @Override
-    protected void stop(GatewayConfig config, Promise<Void> stopPromise) {
-        stopPromise.complete();
+    protected Future<Void> start(GatewayConfig config) {
+        var authPolicy = new GatewayAuthPolicy(getModuleName(), config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
+        return GatewayExchangeProcessor.init(getModuleName())
+                .compose(resp -> {
+                    var identHttpHandler = new GatewayIdentHandler(getModuleName(), config.getSecurity());
+                    var authHttpHandler = new GatewayAuthHandler(getModuleName(), authPolicy);
+                    var distributeHandler = new GatewayDistributeHandler(getModuleName(), config.getDistribute());
+                    FunHttpServer.choose(getModuleName()).addRoute(FunHttpServer.Route.builder()
+                            .method(HttpMethod.POST)
+                            .path(config.getDistribute().getGatewayRequestPath())
+                            .handlers(Arrays.asList(identHttpHandler, authHttpHandler, distributeHandler))
+                            .build());
+                    return Future.succeededFuture();
+                });
+    }
+
+    @Override
+    protected Future<Void> stop(GatewayConfig config) {
+        return Future.succeededFuture();
     }
 
     @Override

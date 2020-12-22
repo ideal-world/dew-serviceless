@@ -138,7 +138,7 @@ public class CacheHandler extends CommonHttpHandler {
             error(StandardCode.INTERNAL_SERVER_ERROR, CacheHandler.class, "缓存服务错误", ctx, handler.cause());
             return;
         }
-        ctx.end($.json.toJsonString(Resp.success(handler.result())));
+        ctx.end(JsonObject.mapTo(Resp.success(handler.result())).toString());
     }
 
 

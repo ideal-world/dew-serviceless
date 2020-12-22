@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class URIHelper {
 
     public static String formatUri(URI uri) {
-        if (uri.getSchemeSpecificPart() != null && !uri.getSchemeSpecificPart().isBlank()) {
+        if (uri.getHost() == null) {
             // E.g. jdbc:h2:men:iam 不用解析
             return uri.toString();
         }

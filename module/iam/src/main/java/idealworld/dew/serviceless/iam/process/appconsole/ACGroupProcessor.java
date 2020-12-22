@@ -58,8 +58,13 @@ public class ACGroupProcessor {
         ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}", eventBusContext ->
                 getGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的群组列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group", eventBusContext ->
-                findGroups(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group", eventBusContext -> {
+            if (eventBusContext.req.params.getOrDefault("expose", "false").equalsIgnoreCase("false")) {
+                return findGroups(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+            } else {
+                return findExposeGroups(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+            }
+        });
         // 删除当前应用的某个群组
         ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}", eventBusContext ->
                 deleteGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
@@ -431,7 +436,7 @@ public class ACGroupProcessor {
                             String.format("SELECT * FROM %s" +
                                             " WHERE rel_group_id = #{rel_group_id} AND code like #{code} AND code >= #{code_goe}",
                                     new GroupNode().tableName()),
-                            new HashMap<String,Object>() {
+                            new HashMap<String, Object>() {
                                 {
                                     put("rel_group_id", groupId);
                                     put("code", originalParentNodeCode + "%");

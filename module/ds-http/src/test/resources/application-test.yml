@@ -1,0 +1,4 @@
+funs:
+modules:
+  - clazzPackage: idealworld.dew.serviceless.http.HttpModule
+    config:

@@ -102,7 +102,7 @@ public class FunEventBus {
         return promise.future();
     }
 
-    public void publish(String moduleName, OptActionKind actionKind, String uri, Object body, Map<String, String> header) {
+    public void publish(String moduleName, OptActionKind actionKind, String uri, Buffer body, Map<String, String> header) {
         var deliveryOptions = new DeliveryOptions()
                 .addHeader(DewConstant.REQUEST_RESOURCE_ACTION_FLAG, actionKind.toString())
                 .addHeader(DewConstant.REQUEST_RESOURCE_URI_FLAG, uri)

@@ -30,7 +30,6 @@ import idealworld.dew.framework.fun.test.DewTest;
 import idealworld.dew.serviceless.iam.IAMConfig;
 import idealworld.dew.serviceless.iam.IAMModule;
 import idealworld.dew.serviceless.iam.process.common.dto.account.AccountLoginReq;
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
@@ -47,12 +46,13 @@ import java.util.stream.Collectors;
 
 public class IAMBasicTest extends DewTest {
 
+    protected static final String MODULE_NAME = new IAMModule().getModuleName();
+
     static {
         enableRedis();
         enableMysql();
     }
 
-    protected static final String MODULE_NAME = IAMModule.class.getSimpleName();
     private static IAMConfig iamConfig;
     private ProcessContext context = ProcessContext.builder().moduleName(MODULE_NAME).build().init(IdentOptCacheInfo.builder().build());
     private String token = null;
@@ -138,36 +138,14 @@ public class IAMBasicTest extends DewTest {
                 : JsonObject.mapFrom(body).toBuffer();
         var header = new HashMap<String, String>();
         var identOptInfo = token == null ? IdentOptCacheInfo.builder().build() : await(AuthCacheProcessor.getOptInfo(token, context))._0.get();
-        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64($.json.toJsonString(identOptInfo), StandardCharsets.UTF_8));
-        var req = FunEventBus.choose(new IAMModule().getModuleName())
-                .request(new IAMModule().getModuleName(),
+        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
+        var req = FunEventBus.choose(MODULE_NAME)
+                .request(MODULE_NAME,
                         actionKind,
-                        "http://" + new IAMModule().getModuleName() + pathAndQuery,
+                        "http://" + MODULE_NAME + pathAndQuery,
                         bufBody,
                         header);
         return awaitRequest(req);
-    }
-
-    @SneakyThrows
-    protected <E> Tuple2<E, Throwable> await(Future<E> future) {
-        while (!future.isComplete()) {
-            Thread.sleep(10);
-        }
-        if (future.succeeded()) {
-            return new Tuple2<>(future.result(), null);
-        }
-        return new Tuple2<>(null, future.cause());
-    }
-
-    @SneakyThrows
-    private <E> Tuple2<E, Throwable> awaitRequest(Future<Tuple2<E, Map<String, String>>> future) {
-        while (!future.isComplete()) {
-            Thread.sleep(10);
-        }
-        if (future.succeeded()) {
-            return new Tuple2<>(future.result()._0, null);
-        }
-        return new Tuple2<>(null, future.cause());
     }
 
     protected void loginBySystemAdmin() {

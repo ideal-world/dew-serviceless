@@ -20,14 +20,15 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.cache.FunRedisClient;
 import idealworld.dew.framework.fun.httpserver.AuthHttpHandler;
 import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.gateway.GatewayConfig;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -139,7 +140,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
             FunRedisClient.choose(getModuleName()).get(security.getCacheTokenInfoKey() + token, security.getTokenCacheExpireSec())
                     .onSuccess(optInfo -> {
                         var identOptInfo = optInfo != null
-                                ? $.json.toObject(optInfo, IdentOptCacheInfo.class)
+                                ? new JsonObject(optInfo).mapTo(IdentOptCacheInfo.class)
                                 : null;
                         if (optInfo == null) {
                             error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "认证错误，Token不合法", ctx);

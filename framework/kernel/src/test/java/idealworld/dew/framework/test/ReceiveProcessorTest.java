@@ -76,7 +76,7 @@ public class ReceiveProcessorTest extends DewTest {
         Future.succeededFuture()
                 .compose(resp -> ReceiveProcessor.chooseProcess("",null, OptActionKind.MODIFY, "/app", "q=测试", new HashMap<>(), null))
                 .onFailure(e -> {
-                    Assertions.assertEquals("找不到对应的处理器", e.getMessage());
+                    Assertions.assertEquals("请求[MODIFY:/app]找不到对应的处理器", e.getMessage());
                     count.countDown();
                 });
 
@@ -84,7 +84,7 @@ public class ReceiveProcessorTest extends DewTest {
                 .compose(resp -> ReceiveProcessor.chooseProcess("",null, OptActionKind.CREATE, "/app/n1/k1/disabled", "q=测试", new HashMap<>(),
                         JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer()))
                 .onFailure(e -> {
-                    Assertions.assertEquals("找不到对应的处理器", e.getMessage());
+                    Assertions.assertEquals("请求[CREATE:/app/n1/k1/disabled]找不到对应的处理器", e.getMessage());
                     count.countDown();
                 });
         count.await();

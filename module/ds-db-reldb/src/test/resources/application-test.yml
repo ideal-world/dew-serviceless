@@ -1,0 +1,14 @@
+funs:
+  redis:
+    uri: redis://localhost:6379
+  sql:
+    host: 127.0.0.1
+    port:
+    db:
+    userName:
+    password:
+modules:
+  - clazzPackage: idealworld.dew.serviceless.reldb.RelDBModule
+    config:
+      security:
+        appInfoCacheExpireSec: 0

@@ -147,8 +147,17 @@ public class ProcessHelper {
         if (bodyClazz == Void.class) {
             return null;
         }
+        if (bodyClazz == Buffer.class) {
+            return (E)body;
+        }
+        if (bodyClazz == String.class) {
+            return (E) body.toString(StandardCharsets.UTF_8);
+        }
         var jsonBody = new JsonObject(body.toString(StandardCharsets.UTF_8));
         trimValues(jsonBody, Arrays.asList(excludeKeys));
+        if(bodyClazz == JsonObject.class){
+            return (E)jsonBody;
+        }
         var beanBody = jsonBody.mapTo(bodyClazz);
         var violations = VALIDATOR.validate(beanBody);
         if (violations.isEmpty()) {

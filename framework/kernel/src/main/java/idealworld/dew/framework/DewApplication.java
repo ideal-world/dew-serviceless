@@ -58,12 +58,13 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
         log.info("[Startup]Loading config...");
         var config = loadConfig();
         this.config = config;
-        log.info("[Startup]Loading modules...");
-        loadModules(config.getModules())
-                .onSuccess(moduleLoadResult -> {
-                    log.info("[Startup]Loading custom operations...");
-                    start(config)
-                            .onSuccess(st -> {
+        log.info("[Startup]Loading custom operations...");
+        start(config)
+                .onSuccess(st -> {
+                    log.info("[Startup]Loading modules...");
+                    loadModules(config.getModules())
+                            .onSuccess(moduleLoadResult -> {
+                                log.info("[Startup]Loading custom operations...");
                                 log.info("[Startup]Started");
                                 startPromise.complete();
                             })
@@ -76,31 +77,22 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
                     log.error("[Startup]Start failure: {}", e.getMessage(), e);
                     startPromise.fail(e);
                 });
+
+
     }
 
     @Override
     public final void stop(Promise<Void> stopPromise) {
-        var unDeployModules = vertx.deploymentIDs().stream()
-                .map(id -> (Future) vertx.undeploy(id))
-                .collect(Collectors.toList());
-        CompositeFuture.all(unDeployModules)
-                .onComplete(moduleUnLoadResult -> {
-                    if (moduleUnLoadResult.failed()) {
-                        log.error("[Shutdown]Stop failure: {}", moduleUnLoadResult.cause().getMessage(), moduleUnLoadResult.cause());
+        log.info("[Shutdown]Stopping custom operations...");
+        stop(config)
+                .onComplete(stopResult -> {
+                    if (stopResult.succeeded()) {
+                        log.info("[Shutdown]Stopped");
+                        stopPromise.complete();
+                    } else {
+                        log.error("[Shutdown]Stop failure: {}", stopResult.cause().getMessage(), stopResult.cause());
+                        stopPromise.fail(stopResult.cause());
                     }
-                    log.info("[Shutdown]Stopping custom operations...");
-                    stop(config)
-                            .onComplete(stopResult -> {
-                                if (stopResult.succeeded()) {
-                                    log.info("[Shutdown]Stopped");
-                                    stopPromise.complete();
-                                } else {
-                                    log.error("[Shutdown]Stop failure: {}", stopResult.cause().getMessage(), stopResult.cause());
-                                    stopPromise.fail(stopResult.cause());
-                                }
-
-                            });
-
                 });
     }
 

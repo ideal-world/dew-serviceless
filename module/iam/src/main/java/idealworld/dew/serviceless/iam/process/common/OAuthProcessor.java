@@ -16,7 +16,6 @@
 
 package idealworld.dew.serviceless.iam.process.common;
 
-import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.tuple.Tuple3;
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.IdentOptInfo;
@@ -24,6 +23,7 @@ import idealworld.dew.framework.exception.BadRequestException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
+import idealworld.dew.serviceless.iam.IAMConstant;
 import idealworld.dew.serviceless.iam.domain.auth.Resource;
 import idealworld.dew.serviceless.iam.domain.auth.ResourceSubject;
 import idealworld.dew.serviceless.iam.domain.ident.Account;
@@ -37,6 +37,7 @@ import idealworld.dew.serviceless.iam.process.common.dto.account.AccountRegister
 import idealworld.dew.serviceless.iam.process.common.oauthimpl.PlatformAPI;
 import idealworld.dew.serviceless.iam.process.common.oauthimpl.WechatXCXAPI;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import io.vertx.mysqlclient.MySQLException;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +87,7 @@ public class OAuthProcessor {
                                                                 }
                                                             }
                                                             if (accountId == null) {
-                                                                log.info("OAuth Register : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), $.json.toJsonString(accountOAuthLoginReq));
+                                                                log.info("OAuth Register : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), JsonObject.mapFrom(accountOAuthLoginReq).toString());
                                                                 return CommonProcessor.registerAccount(AccountRegisterReq.builder()
                                                                         .name("")
                                                                         .kind(accountOAuthLoginReq.getKind())
@@ -96,7 +97,7 @@ public class OAuthProcessor {
                                                                         .build(), context)
                                                                         .onFailure(e -> {
                                                                             if (e instanceof MySQLException && e.getMessage().startsWith("Duplicate entry")) {
-                                                                                log.info("OAuth Login : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), $.json.toJsonString(accountOAuthLoginReq));
+                                                                                log.info("OAuth Login : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), JsonObject.mapFrom(accountOAuthLoginReq).toString());
                                                                                 CommonProcessor.login(AccountLoginReq.builder()
                                                                                         .kind(accountOAuthLoginReq.getKind())
                                                                                         .ak(userInfo.getOpenid())
@@ -109,7 +110,7 @@ public class OAuthProcessor {
                                                                         })
                                                                         .onSuccess(identOptInfo -> context.helper.success(identOptInfo));
                                                             } else {
-                                                                log.info("OAuth Login : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), $.json.toJsonString(accountOAuthLoginReq));
+                                                                log.info("OAuth Login : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), JsonObject.mapFrom(accountOAuthLoginReq).toString());
                                                                 return CommonProcessor.login(AccountLoginReq.builder()
                                                                         .kind(accountOAuthLoginReq.getKind())
                                                                         .ak(userInfo.getOpenid())
@@ -140,7 +141,7 @@ public class OAuthProcessor {
                 platformAPI = WECHAT_XCXAPI;
                 break;
             default:
-               throw context.helper.error(new UnAuthorizedException("认证类型不合法"));
+                throw context.helper.error(new UnAuthorizedException("认证类型不合法"));
         }
         return context.helper.notExistToError(
                 context.sql.getOne(
@@ -150,7 +151,7 @@ public class OAuthProcessor {
                                         " OR (resource.expose_kind = #{expose_kind_tenant} AND resource.rel_tenant_id = #{tenant_id})" +
                                         " OR resource.expose_kind = #{expose_kind_global})" +
                                         " AND subject.kind = #{kind} AND subject.code = #{code}",
-                                new ResourceSubject().tableName(), new Resource().tableName()),
+                                new Resource().tableName(), new ResourceSubject().tableName()),
                         new HashMap<>() {
                             {
                                 put("app_id", appId);
@@ -158,7 +159,9 @@ public class OAuthProcessor {
                                 put("expose_kind_tenant", ExposeKind.TENANT);
                                 put("expose_kind_global", ExposeKind.GLOBAL);
                                 put("kind", ResourceKind.OAUTH);
-                                put("code", kind.toString());
+                                put("code", appId+ IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                                        + ResourceKind.OAUTH.toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                                        + kind.toString());
                             }
                         }), () -> new BadRequestException("对应的OAuth资源主体不存在"))
                 .compose(oauthResourceSubject -> {
@@ -185,6 +188,8 @@ public class OAuthProcessor {
          * 同一平台下的多个用户共用一个标识.
          */
         private String unionid;
+
+        private String session_key;
 
     }
 

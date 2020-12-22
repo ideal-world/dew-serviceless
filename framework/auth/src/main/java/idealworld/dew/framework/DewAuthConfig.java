@@ -29,7 +29,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class DewAuthConfig extends DewConfig{
+public class DewAuthConfig extends DewConfig {
 
     @Builder.Default
     protected IAMConfig iam = new IAMConfig();
