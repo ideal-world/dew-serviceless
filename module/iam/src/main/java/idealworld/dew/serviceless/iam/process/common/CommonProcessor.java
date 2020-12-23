@@ -26,8 +26,8 @@ import idealworld.dew.framework.exception.BadRequestException;
 import idealworld.dew.framework.exception.ConflictException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.AuthCacheProcessor;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.util.KeyHelper;
 import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.iam.IAMConfig;
@@ -66,40 +66,44 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 公共函数服务.
+ * 基础服务.
  *
  * @author gudaoxuri
  */
 @Slf4j
-public class CommonProcessor {
+public class CommonProcessor extends EventBusProcessor {
 
-    static {
+    public CommonProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 注册租户
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/common/tenant", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/common/tenant", eventBusContext ->
                 registerTenant(eventBusContext.req.body(TenantRegisterReq.class), eventBusContext.context));
         // 注册账号
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/common/account", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/common/account", eventBusContext ->
                 registerAccount(eventBusContext.req.body(AccountRegisterReq.class), eventBusContext.context));
         // 登录
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/common/login", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/common/login", eventBusContext ->
                 login(eventBusContext.req.body(AccountLoginReq.class), eventBusContext.context));
         // OAuth登录
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/common/oauth/login", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/common/oauth/login", eventBusContext ->
                 OAuthProcessor.login(eventBusContext.req.body(AccountOAuthLoginReq.class), eventBusContext.context));
         // 退出登录
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/common/logout", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/common/logout", eventBusContext ->
                 logout(eventBusContext.req.identOptInfo, eventBusContext.context));
         // 修改账号
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/common/account", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/common/account", eventBusContext ->
                 changeInfo(eventBusContext.req.body(AccountChangeReq.class), (String) eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.context));
         // 修改账号认证
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/common/account/ident", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/common/account/ident", eventBusContext ->
                 changeIdent(eventBusContext.req.body(AccountIdentChangeReq.class), (String) eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.context));
         // 注销账号
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/common/account", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/common/account", eventBusContext ->
                 unRegister((String) eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.context));
         // 获取资源
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/common/resource", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/common/resource", eventBusContext ->
                 findResources(eventBusContext.req.params.get("kind"), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 
@@ -416,7 +420,7 @@ public class CommonProcessor {
         //  TODO 根据 identOptCacheInfo 过滤
         return context.sql.list(
                 String.format("SELECT resource.* FROM %s AS resource" +
-                                " INNER JOIN %s AS subject ON subject.id = resource,rel_resource_subject_id" +
+                                " INNER JOIN %s AS subject ON subject.id = resource.rel_resource_subject_id" +
                                 " WHERE ((resource.rel_tenant_id = #{rel_tenant_id} AND resource.rel_app_id = #{rel_app_id})" +
                                 " OR (resource.expose_kind = #{expose_kind_tenant} AND resource.rel_tenant_id = #{rel_tenant_id})" +
                                 " OR resource.expose_kind = #{expose_kind_global})" +
@@ -442,12 +446,12 @@ public class CommonProcessor {
                                         .icon(resourceInfo.getString("icon"))
                                         .action(resourceInfo.getString("action"))
                                         .sort(resourceInfo.getInteger("sort"))
-                                        .resGroup(resourceInfo.getBoolean("resGroup"))
-                                        .parentId(resourceInfo.getLong("parentId"))
-                                        .relResourceSubjectId(resourceInfo.getLong("relResourceSubjectId"))
-                                        .exposeKind(ExposeKind.parse(resourceInfo.getString("exposeKind")))
-                                        .relAppId(resourceInfo.getLong("relAppId"))
-                                        .relTenantId(resourceInfo.getLong("relTenantId"))
+                                        .resGroup(resourceInfo.getInteger("res_group") != 0)
+                                        .parentId(resourceInfo.getLong("parent_id"))
+                                        .relResourceSubjectId(resourceInfo.getLong("rel_resource_subject_id"))
+                                        .exposeKind(ExposeKind.parse(resourceInfo.getString("expose_kind")))
+                                        .relAppId(resourceInfo.getLong("rel_app_id"))
+                                        .relTenantId(resourceInfo.getLong("rel_tenant_id"))
                                         .build())
                                 .collect(Collectors.toList()))
                 );

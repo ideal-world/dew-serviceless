@@ -20,8 +20,8 @@ import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.ident.Tenant;
 import idealworld.dew.serviceless.iam.domain.ident.TenantCert;
 import idealworld.dew.serviceless.iam.domain.ident.TenantIdent;
@@ -36,44 +36,48 @@ import java.util.HashMap;
  *
  * @author gudaoxuri
  */
-public class TCTenantProcessor {
+public class TCTenantProcessor extends EventBusProcessor {
 
-    static {
+    public TCTenantProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 修改当前租户
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/tenant", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/tenant/tenant", eventBusContext ->
                 modifyTenant(eventBusContext.req.body(TenantModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/tenant", eventBusContext ->
                 getTenant(eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 添加当前租户的认证
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/tenant/ident", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/tenant/tenant/ident", eventBusContext ->
                 addTenantIdent(eventBusContext.req.body(TenantIdentAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前租户的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/tenant/ident/{tenantIdentId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/tenant/tenant/ident/{tenantIdentId}", eventBusContext ->
                 modifyTenantIdent(Long.parseLong(eventBusContext.req.params.get("tenantIdentId")), eventBusContext.req.body(TenantIdentModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个认证信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/ident/{tenantIdentId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/ident/{tenantIdentId}", eventBusContext ->
                 getTenantIdent(Long.parseLong(eventBusContext.req.params.get("tenantIdentId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的认证列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/ident", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/ident", eventBusContext ->
                 pageTenantIdents(eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/ident/{tenantIdentId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/ident/{tenantIdentId}", eventBusContext ->
                 deleteTenantIdent(Long.parseLong(eventBusContext.req.params.get("tenantIdentId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 添加当前租户的凭证
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/tenant/cert", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/tenant/tenant/cert", eventBusContext ->
                 addTenantCert(eventBusContext.req.body(TenantCertAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前租户的某个凭证
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
                 modifyTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.body(TenantCertModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个凭证信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
                 getTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个凭证信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert", eventBusContext ->
                 pageTenantCerts(eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
                 deleteTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 

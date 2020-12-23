@@ -46,7 +46,7 @@ public abstract class DewTest {
                 .withExposedPorts(6379);
         redisConfig.start();
         System.out.println("Test Redis port: " + redisConfig.getFirstMappedPort());
-        System.getProperties().put("dew.config.funs.redis.uri", "redis://localhost:" + redisConfig.getFirstMappedPort());
+        System.getProperties().put("dew.config.funs.cache.uri", "redis://localhost:" + redisConfig.getFirstMappedPort());
     }
 
     protected static void enableMysql() {

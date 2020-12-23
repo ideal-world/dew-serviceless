@@ -1,0 +1,26 @@
+funs:
+  cache:
+    uri: redis://localhost:6379
+  sql:
+    host: 127.0.0.1
+    port:
+    db:
+    userName:
+    password:
+modules:
+  - clazzPackage: idealworld.dew.serviceless.gateway.GatewayModule
+    config:
+      security:
+        tokenCacheExpireSec: 0
+        akSkCacheExpireSec: 0
+  - clazzPackage: idealworld.dew.serviceless.iam.IAMModule
+    config:
+      allowTenantRegister: true
+      app:
+        iamAdminPwd: TestPwd1d
+  - clazzPackage: idealworld.dew.serviceless.reldb.RelDBModule
+    config:
+      security:
+        appInfoCacheExpireSec: 0
+  - clazzPackage: idealworld.dew.serviceless.cache.CacheModule
+  - clazzPackage: idealworld.dew.serviceless.http.HttpModule

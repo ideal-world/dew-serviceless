@@ -16,9 +16,7 @@
 
 package idealworld.dew.framework.dto;
 
-import com.ecfront.dew.common.Resp;
-import com.ecfront.dew.common.exception.RTException;
-import io.vertx.core.json.JsonObject;
+import idealworld.dew.framework.exception.BadRequestException;
 
 import java.util.Arrays;
 
@@ -70,7 +68,7 @@ public enum OptActionKind {
         return Arrays.stream(OptActionKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
-                .orElseThrow(() -> new RTException(JsonObject.mapFrom(Resp.badRequest("Operation Action kind {" + code + "} NOT exist.")).toString()));
+                .orElseThrow(() -> new BadRequestException("Operation Action kind {" + code + "} NOT exist."));
     }
 
     @Override

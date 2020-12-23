@@ -80,7 +80,7 @@ export function req<T>(name: string, resourceUri: string, optActionKind: OptActi
                     resolve(data)
                 } else {
                     if (data.code === '200') {
-                        resolve(data.body)
+                        resolve(data.body.trim() == "" ? "" : JSON.parse(data.body))
                     } else {
                         console.error('请求错误 : [' + data.code + ']' + data.message)
                         reject('[' + data.code + ']' + data.message)

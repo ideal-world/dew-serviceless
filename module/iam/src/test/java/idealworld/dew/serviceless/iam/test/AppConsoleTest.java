@@ -88,19 +88,19 @@ public class AppConsoleTest extends IAMBasicTest {
                 .codePostfix("defaultmysql")
                 .kind(ResourceKind.RELDB)
                 .name("MYSQL")
-                .uri("jdbc://xxxxx")
+                .uri("mysql://xxxxx")
                 .build(), Long.class)._0;
         Assertions.assertEquals("资源主体编码已存在", req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
                 .codePostfix("defaultmysql")
                 .kind(ResourceKind.RELDB)
                 .name("mysql")
-                .uri("jdbc://xxxxx")
+                .uri("mysql://xxxxx")
                 .build(), Long.class)._1.getMessage());
         Assertions.assertEquals("资源主体URI已存在", req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
                 .codePostfix("defaultmysql2")
                 .kind(ResourceKind.RELDB)
                 .name("mysql")
-                .uri("jdbc://xxxxx")
+                .uri("mysql://xxxxx")
                 .build(), Long.class)._1.getMessage());
 
         // 修改当前应用的某个资源主体
@@ -114,7 +114,7 @@ public class AppConsoleTest extends IAMBasicTest {
         var resourceSubjectResp = req(OptActionKind.FETCH, "/console/app/resource/subject/" + resourceSubjectId, null, ResourceSubjectResp.class)._0;
         Assertions.assertEquals("mysql", resourceSubjectResp.getCodePostfix());
         Assertions.assertEquals("MYSQL", resourceSubjectResp.getName());
-        Assertions.assertEquals("jdbc://xxxxx", resourceSubjectResp.getUri());
+        Assertions.assertEquals("mysql://xxxxx", resourceSubjectResp.getUri());
 
         // 获取当前应用的资源主体列表信息
         var resourceSubjectResps = reqList("/console/app/resource/subject", ResourceSubjectResp.class)._0;

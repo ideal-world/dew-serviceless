@@ -92,17 +92,16 @@ public class GatewayDistributeHandler extends AuthHttpHandler {
                 actionKind,
                 uri.toString(),
                 body,
-                header
-        )
+                header)
                 .onSuccess(resp -> {
                     if (ResourceKind.parse(uri.getScheme().toLowerCase()) == ResourceKind.HTTP
                             && !uri.getHost().equalsIgnoreCase(distribute.getIamModuleName())) {
                         // 外部调用带上返回的HTTP Header
                         resp._1.forEach((k, v) -> ctx.response().putHeader(k, v));
                     }
-                    ctx.end(resp._0);
+                    ctx.end(new JsonObject().put("code", "200").put("body", resp._0.toString("utf-8")).toBuffer());
                 })
-                .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, GatewayDistributeHandler.class, "转发服务错误", ctx));
+                .onFailure(e -> error(ctx, e));
     }
 
 }

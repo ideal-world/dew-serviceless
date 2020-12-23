@@ -21,7 +21,7 @@ import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectOperatorKind;
-import idealworld.dew.framework.fun.cache.FunRedisClient;
+import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.util.AntPathMatcher;
 import idealworld.dew.framework.util.URIHelper;
 import io.vertx.core.Future;
@@ -143,7 +143,7 @@ public class AuthenticationProcessor {
             Promise<AuthResultKind> promise
     ) {
         var currentProcessUri = matchedResourceUris.get(0);
-        FunRedisClient.choose(moduleName).get(DewAuthConstant.CACHE_AUTH_POLICY
+        FunCacheClient.choose(moduleName).get(DewAuthConstant.CACHE_AUTH_POLICY
                 + currentProcessUri.replace("//", "") + ":"
                 + actionKind, resourceCacheExpireSec)
                 .onSuccess(value -> {

@@ -29,13 +29,13 @@ public class RelDBModule extends DewModule<RelDBConfig> {
 
     @Override
     public String getModuleName() {
-        return "relDB";
+        return "reldb";
     }
 
     @Override
     protected Future<Void> start(RelDBConfig config) {
         var authPolicy = new RelDBAuthPolicy(getModuleName(), config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
-        new SqlProcessor(authPolicy);
+        new SqlProcessor(authPolicy, getModuleName());
         return RelDBExchangeProcessor.init(getModuleName(), config, vertx);
     }
 
@@ -45,7 +45,7 @@ public class RelDBModule extends DewModule<RelDBConfig> {
     }
 
     @Override
-    protected boolean enabledRedisFun() {
+    protected boolean enabledCacheFun() {
         return true;
     }
 
@@ -60,7 +60,7 @@ public class RelDBModule extends DewModule<RelDBConfig> {
     }
 
     @Override
-    protected boolean enabledJDBCFun() {
+    protected boolean enabledSQLFun() {
         return true;
     }
 

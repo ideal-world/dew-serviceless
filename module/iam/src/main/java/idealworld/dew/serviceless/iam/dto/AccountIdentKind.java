@@ -16,9 +16,7 @@
 
 package idealworld.dew.serviceless.iam.dto;
 
-import com.ecfront.dew.common.Resp;
-import com.ecfront.dew.common.exception.RTException;
-import io.vertx.core.json.JsonObject;
+import idealworld.dew.framework.exception.BadRequestException;
 
 import java.util.Arrays;
 
@@ -68,7 +66,7 @@ public enum AccountIdentKind {
         return Arrays.stream(AccountIdentKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
-                .orElseThrow(() -> new RTException(JsonObject.mapFrom(Resp.badRequest("Account Ident kind {" + code + "} NOT exist.")).toString()));
+                .orElseThrow(() -> new BadRequestException("Account Ident kind {" + code + "} NOT exist."));
     }
 
     @Override

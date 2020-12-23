@@ -19,7 +19,11 @@ package idealworld.dew.serviceless.gateway.test;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Resp;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.fun.cache.FunRedisClient;
+import idealworld.dew.framework.dto.OptActionKind;
+import idealworld.dew.framework.fun.auth.dto.ResourceKind;
+import idealworld.dew.framework.fun.auth.dto.ResourceSubjectExchange;
+import idealworld.dew.framework.fun.cache.FunCacheClient;
+import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.test.DewTest;
 import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.gateway.GatewayConfig;
@@ -27,6 +31,7 @@ import idealworld.dew.serviceless.gateway.GatewayModule;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,7 +51,7 @@ public class GatewayFlowTest extends DewTest {
     }
 
     private static final String MODULE_NAME = new GatewayModule().getModuleName();
-    private static GatewayConfig.Security dewSecurityConfig = new GatewayConfig.Security();
+    private static final GatewayConfig.Security DEW_SECURITY_CONFIG = GatewayConfig.Security.builder().build();
 
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {
@@ -77,43 +82,72 @@ public class GatewayFlowTest extends DewTest {
         testContext.completeNow();
     }
 
+    @SneakyThrows
     @Test
     public void testPublic(Vertx vertx, VertxTestContext testContext) {
+        // 添加资源主体
+        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resourcesubject.http/httpbin",
+                JsonObject.mapFrom(ResourceSubjectExchange.builder()
+                        .code("1.http.httpbin")
+                        .name("测试API")
+                        .kind(ResourceKind.HTTP)
+                        .uri("https://httpbin.org")
+                        .ak("")
+                        .sk("")
+                        .platformAccount("")
+                        .platformProjectId("")
+                        .timeoutMs(10000L)
+                        .build()).toBuffer(), new HashMap<>());
+        Thread.sleep(1000);
+
         var result = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
-                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
+                        "=" + URLEncoder.encode("http://1.http.httpbin/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容");
         Assertions.assertEquals(200, result.statusCode);
         var data = new JsonObject(result.result);
-        Assertions.assertTrue(data.getJsonObject("headers").containsKey(DewAuthConstant.REQUEST_IDENT_OPT_FLAG));
-        Assertions.assertEquals("测试内容", data.getString("data"));
+        Assertions.assertEquals("测试内容", new JsonObject(data.getString("body")).getString("data"));
         testContext.completeNow();
     }
 
+    @SneakyThrows
     @Test
     public void testToken(Vertx vertx, VertxTestContext testContext) {
+        // 添加资源主体
+        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resourcesubject.http/httpbin",
+                JsonObject.mapFrom(ResourceSubjectExchange.builder()
+                        .code("1.http.httpbin")
+                        .name("测试API")
+                        .kind(ResourceKind.HTTP)
+                        .uri("https://httpbin.org")
+                        .ak("")
+                        .sk("")
+                        .platformAccount("")
+                        .platformProjectId("")
+                        .timeoutMs(10000L)
+                        .build()).toBuffer(), new HashMap<>());
+        Thread.sleep(1000);
+
         var errorResult = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
-                        "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
+                        "=" + URLEncoder.encode("http://1.http.httpbin/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
-                        put(dewSecurityConfig.getTokenFieldName(), "tokenxxx");
+                        put(DEW_SECURITY_CONFIG.getTokenFieldName(), "tokenxxx");
                     }
                 });
-        Assertions.assertEquals("认证错误，Token不合法", Resp.generic(errorResult.result,Void.class).getMessage());
+        Assertions.assertEquals("认证错误，Token不合法", Resp.generic(errorResult.result, Void.class).getMessage());
 
-        FunRedisClient.choose(MODULE_NAME).set(dewSecurityConfig.getCacheTokenInfoKey() + "tokenxxx", "{\"accountCode\":\"testCode\"}");
+        FunCacheClient.choose(MODULE_NAME).set(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + "tokenxxx", "{\"accountCode\":\"testCode\"}");
         vertx.setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
-                            "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
+                            "=" + URLEncoder.encode("http://1.http.httpbin/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                     "测试内容", new HashMap<>() {
                         {
-                            put(dewSecurityConfig.getTokenFieldName(), "tokenxxx");
+                            put(DEW_SECURITY_CONFIG.getTokenFieldName(), "tokenxxx");
                         }
                     });
             Assertions.assertEquals(200, result.statusCode);
-            var data =new JsonObject(result.result);
-            Assertions.assertTrue(data.getJsonObject("headers").containsKey(DewAuthConstant.REQUEST_IDENT_OPT_FLAG));
-            Assertions.assertTrue($.security.decodeBase64ToString(data.getJsonObject("headers").getString(DewAuthConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8).contains("testCode"));
-            Assertions.assertEquals("测试内容", data.getString("data"));
+            var data = new JsonObject(result.result);
+            Assertions.assertEquals("测试内容", new JsonObject(data.getString("body")).getString("data"));
             testContext.completeNow();
         });
     }
@@ -124,10 +158,10 @@ public class GatewayFlowTest extends DewTest {
                         "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
-                        put(dewSecurityConfig.getAkSkFieldName(), "xx");
+                        put(DEW_SECURITY_CONFIG.getAkSkFieldName(), "xx");
                     }
                 });
-        Assertions.assertEquals("请求格式不合法，HTTP Header[" + dewSecurityConfig.getAkSkDateFieldName() + "]不存在", Resp.generic(errorResult.result, Void.class).getMessage());
+        Assertions.assertEquals("请求格式不合法，HTTP Header[" + DEW_SECURITY_CONFIG.getAkSkDateFieldName() + "]不存在", Resp.generic(errorResult.result, Void.class).getMessage());
         var sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         var date = new Date();
@@ -136,17 +170,17 @@ public class GatewayFlowTest extends DewTest {
                         "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
-                        put(dewSecurityConfig.getAkSkFieldName(), "xxxx");
-                        put(dewSecurityConfig.getAkSkDateFieldName(), sdf.format(date));
+                        put(DEW_SECURITY_CONFIG.getAkSkFieldName(), "xxxx");
+                        put(DEW_SECURITY_CONFIG.getAkSkDateFieldName(), sdf.format(date));
                     }
                 });
-        Assertions.assertEquals("请求格式不合法，HTTP Header[" + dewSecurityConfig.getAkSkFieldName() + "]格式错误", Resp.generic(errorResult.result, Void.class).getMessage());
+        Assertions.assertEquals("请求格式不合法，HTTP Header[" + DEW_SECURITY_CONFIG.getAkSkFieldName() + "]格式错误", Resp.generic(errorResult.result, Void.class).getMessage());
         errorResult = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
                         "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
-                        put(dewSecurityConfig.getAkSkFieldName(), "xx:xxx");
-                        put(dewSecurityConfig.getAkSkDateFieldName(), sdf.format(date));
+                        put(DEW_SECURITY_CONFIG.getAkSkFieldName(), "xx:xxx");
+                        put(DEW_SECURITY_CONFIG.getAkSkDateFieldName(), sdf.format(date));
                     }
                 });
         Assertions.assertEquals("认证错误，请求时间已过期", Resp.generic(errorResult.result, Void.class).getMessage());
@@ -154,20 +188,20 @@ public class GatewayFlowTest extends DewTest {
                         "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {
                     {
-                        put(dewSecurityConfig.getAkSkFieldName(), "xx:xxx");
-                        put(dewSecurityConfig.getAkSkDateFieldName(), sdf.format(new Date()));
+                        put(DEW_SECURITY_CONFIG.getAkSkFieldName(), "xx:xxx");
+                        put(DEW_SECURITY_CONFIG.getAkSkDateFieldName(), sdf.format(new Date()));
                     }
                 });
         Assertions.assertEquals("认证错误，AK不存在", Resp.generic(errorResult.result, Void.class).getMessage());
 
-        FunRedisClient.choose(MODULE_NAME).set(DewAuthConstant.CACHE_APP_AK + "xx", "skxx:1123456:789");
+        FunCacheClient.choose(MODULE_NAME).set(DewAuthConstant.CACHE_APP_AK + "xx", "skxx:1123456:789");
         vertx.setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
                             "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                     "测试内容", new HashMap<>() {
                         {
-                            put(dewSecurityConfig.getAkSkFieldName(), "xx:xxx");
-                            put(dewSecurityConfig.getAkSkDateFieldName(), sdf.format(new Date()));
+                            put(DEW_SECURITY_CONFIG.getAkSkFieldName(), "xx:xxx");
+                            put(DEW_SECURITY_CONFIG.getAkSkDateFieldName(), sdf.format(new Date()));
                         }
                     });
             Assertions.assertEquals("认证错误，签名不合法", Resp.generic(result.result, Void.class).getMessage());
@@ -182,12 +216,12 @@ public class GatewayFlowTest extends DewTest {
             result = $.http.postWrap("http://127.0.0.1:9000/exec?" + query,
                     "测试内容", new HashMap<>() {
                         {
-                            put(dewSecurityConfig.getAkSkFieldName(), "xx:" + signature);
-                            put(dewSecurityConfig.getAkSkDateFieldName(), d);
+                            put(DEW_SECURITY_CONFIG.getAkSkFieldName(), "xx:" + signature);
+                            put(DEW_SECURITY_CONFIG.getAkSkDateFieldName(), d);
                         }
                     });
             Assertions.assertEquals(200, result.statusCode);
-            Assertions.assertEquals("转发服务错误", Resp.generic(result.result, Object.class).getMessage());
+            Assertions.assertEquals("请求的资源主题[httpbin.org]不存在", Resp.generic(result.result, Object.class).getMessage());
             testContext.completeNow();
         });
 

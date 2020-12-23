@@ -19,12 +19,14 @@ package idealworld.dew.framework.fun.eventbus;
 import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SafeEntity;
 import idealworld.dew.framework.dto.IdentOptInfo;
-import idealworld.dew.framework.fun.cache.FunRedisClient;
+import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+
+import java.util.Map;
 
 /**
  * @author gudaoxuri
@@ -38,7 +40,7 @@ public class ProcessContext {
 
     public ProcessContext init(IdentOptInfo identOptInfo) {
         this.identOptInfo = identOptInfo;
-        if (FunSQLClient.contains(moduleName)) {
+        if ((funStatus == null || funStatus.get("sql")) && FunSQLClient.contains(moduleName)) {
             sql = FunSQLClient.choose(moduleName);
             if (sql.addEntityByInsertFun == null) {
                 sql.addEntityByInsertFun = o -> addSafeInfo((IdEntity) o, true);
@@ -47,13 +49,13 @@ public class ProcessContext {
                 sql.addEntityByUpdateFun = o -> addSafeInfo((IdEntity) o, false);
             }
         }
-        if (FunRedisClient.contains(moduleName)) {
-            cache = FunRedisClient.choose(moduleName);
+        if ((funStatus == null || funStatus.get("cache")) && FunCacheClient.contains(moduleName)) {
+            cache = FunCacheClient.choose(moduleName);
         }
-        if (FunHttpClient.contains(moduleName)) {
+        if ((funStatus == null || funStatus.get("httpclient")) && FunHttpClient.contains(moduleName)) {
             http = FunHttpClient.choose(moduleName);
         }
-        if (FunEventBus.contains(moduleName)) {
+        if ((funStatus == null || funStatus.get("eventbus")) && FunEventBus.contains(moduleName)) {
             eb = FunEventBus.choose(moduleName);
         }
         return this;
@@ -62,9 +64,10 @@ public class ProcessContext {
     @Builder.Default
     public ProcessHelper helper = new ProcessHelper();
     public Object conf;
+    public Map<String, Boolean> funStatus;
     public String moduleName;
     public FunSQLClient sql;
-    public FunRedisClient cache;
+    public FunCacheClient cache;
     public FunHttpClient http;
     public FunEventBus eb;
 

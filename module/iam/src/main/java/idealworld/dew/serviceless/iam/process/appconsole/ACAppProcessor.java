@@ -18,8 +18,8 @@ package idealworld.dew.serviceless.iam.process.appconsole;
 
 import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.dto.OptActionKind;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.util.KeyHelper;
 import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.domain.ident.AppIdent;
@@ -36,30 +36,34 @@ import java.util.HashMap;
  *
  * @author gudaoxuri
  */
-public class ACAppProcessor {
+public class ACAppProcessor extends EventBusProcessor {
 
-    static {
+    public ACAppProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 添加当前应用的认证
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/app/ident", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/app/app/ident", eventBusContext ->
                 addAppIdent(eventBusContext.req.body(AppIdentAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/app/ident/{appIdentId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/app/app/ident/{appIdentId}", eventBusContext ->
                 modifyAppIdent(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.body(AppIdentModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的认证列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/app/ident", eventBusContext ->
                 pageAppIdents(eventBusContext.req.params.getOrDefault("note", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/app/ident/{appIdentId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/app/app/ident/{appIdentId}", eventBusContext ->
                 deleteAppIdent(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 获取当前应用的某个认证SK
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/sk", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/sk", eventBusContext ->
                 showSk(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的公钥
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/publicKey", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/app/publicKey", eventBusContext ->
                 showPublicKey(eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的私钥
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/privateKey", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/app/privateKey", eventBusContext ->
                 showPrivateKey(eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 

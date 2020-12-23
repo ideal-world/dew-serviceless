@@ -50,6 +50,12 @@
         </dependency>
         <!-- 开发、测试支撑 -->
         <dependency>
+            <groupId>group.idealworld.dew</groupId>
+            <artifactId>serviceless-http</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>

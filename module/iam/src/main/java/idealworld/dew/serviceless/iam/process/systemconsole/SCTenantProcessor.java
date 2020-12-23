@@ -18,8 +18,8 @@ package idealworld.dew.serviceless.iam.process.systemconsole;
 
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.OptActionKind;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.ident.Tenant;
 import idealworld.dew.serviceless.iam.process.systemconsole.dto.TenantAddReq;
 import io.vertx.core.Future;
@@ -29,11 +29,16 @@ import io.vertx.core.Future;
  *
  * @author gudaoxuri
  */
-public class SCTenantProcessor {
+public class SCTenantProcessor extends EventBusProcessor {
 
-    static {
+
+    public SCTenantProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 添加租户
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/system/tenant", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/system/tenant", eventBusContext ->
                 addTenant(eventBusContext.req.body(TenantAddReq.class), eventBusContext.context));
     }
 

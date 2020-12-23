@@ -18,10 +18,10 @@ package idealworld.dew.serviceless.gateway.process;
 
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.framework.DewAuthConstant;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.AuthenticationProcessor;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.httpserver.AuthHttpHandler;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +59,5 @@ public class GatewayAuthHandler extends AuthHttpHandler {
                 })
                 .onFailure(e -> error(StandardCode.INTERNAL_SERVER_ERROR, GatewayAuthHandler.class, "鉴权服务错误", ctx, e));
     }
-
 
 }

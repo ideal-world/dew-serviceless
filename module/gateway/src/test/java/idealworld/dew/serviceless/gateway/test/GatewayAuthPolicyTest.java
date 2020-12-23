@@ -23,7 +23,7 @@ import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectOperatorKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceExchange;
-import idealworld.dew.framework.fun.cache.FunRedisClient;
+import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.test.DewTest;
 import idealworld.dew.framework.util.URIHelper;
@@ -53,16 +53,16 @@ public class GatewayAuthPolicyTest extends DewTest {
     }
 
     private static final String MODULE_NAME = new GatewayModule().getModuleName();
-    private static FunRedisClient redisClient;
+    private static FunCacheClient cacheClient;
     private static FunEventBus eventBus;
 
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {
-        FunRedisClient.init(MODULE_NAME, vertx, DewConfig.FunConfig.RedisConfig.builder()
+        FunCacheClient.init(MODULE_NAME, vertx, DewConfig.FunConfig.CacheConfig.builder()
                 .uri("redis://localhost:" + redisConfig.getFirstMappedPort()).build());
         FunEventBus.init(MODULE_NAME, vertx, DewConfig.FunConfig.EventBusConfig.builder().build())
                 .onSuccess(resp -> {
-                    redisClient = FunRedisClient.choose(MODULE_NAME);
+                    cacheClient = FunCacheClient.choose(MODULE_NAME);
                     eventBus = FunEventBus.choose(MODULE_NAME);
                     testContext.completeNow();
                 });
@@ -73,7 +73,7 @@ public class GatewayAuthPolicyTest extends DewTest {
     public void testBasic(Vertx vertx, VertxTestContext testContext) {
         var count = new CountDownLatch(1);
         // 先向redis中添加一些资源
-        var addAccountAllByRole = redisClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/**:create",
+        var addAccountAllByRole = cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/**:create",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.EQ.toString().toLowerCase(), new HashMap<>() {
@@ -87,7 +87,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                         });
                     }
                 }).toString());
-        var deleteAccountAllByRole = redisClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/**:delete",
+        var deleteAccountAllByRole = cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/**:delete",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.EQ.toString().toLowerCase(), new HashMap<>() {
@@ -101,7 +101,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                         });
                     }
                 }).toString());
-        var deleteAccountIdentAllByRoleAndAccount = redisClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/ident/**:delete",
+        var deleteAccountIdentAllByRoleAndAccount = cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/ident/**:delete",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.NEQ.toString().toLowerCase(), new HashMap<>() {
@@ -124,7 +124,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                         });
                     }
                 }).toString());
-        var deleteAccountIdentItemByAccount = redisClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/ident/1:delete",
+        var deleteAccountIdentItemByAccount = cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/tenant/account/ident/1:delete",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.NEQ.toString().toLowerCase(), new HashMap<>() {
@@ -224,7 +224,7 @@ public class GatewayAuthPolicyTest extends DewTest {
     public void testGroup(Vertx vertx, VertxTestContext testContext) {
         var count = new CountDownLatch(1);
         // 先向redis中添加一些资源
-        var addAccountAllByGroup = redisClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:create",
+        var addAccountAllByGroup = cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:create",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.EQ.toString().toLowerCase(), new HashMap<>() {
@@ -238,7 +238,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                         });
                     }
                 }).toString());
-        var deleteAccountAllByGroup = redisClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:delete",
+        var deleteAccountAllByGroup = cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:delete",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.INCLUDE.toString().toLowerCase(), new HashMap<>() {
@@ -252,7 +252,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                         });
                     }
                 }).toString());
-        var modifyAccountAllByGroup = redisClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:modify",
+        var modifyAccountAllByGroup = cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:modify",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.LIKE.toString().toLowerCase(), new HashMap<>() {
@@ -266,7 +266,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                         });
                     }
                 }).toString());
-        var patchAccountAllByGroup = redisClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:patch",
+        var patchAccountAllByGroup = cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/group/**:patch",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.NEQ.toString().toLowerCase(), new HashMap<>() {
@@ -416,7 +416,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                 })
                 .compose(resp ->
                         // 添加资源
-                        redisClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create",
+                        cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create",
                                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                                     {
                                         put(AuthSubjectOperatorKind.EQ.toString().toLowerCase(), new HashMap<>() {
@@ -432,7 +432,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                                 }).toString()))
                 .compose(resp -> {
                     // 通知资源变更
-                    eventBus.publish("", OptActionKind.CREATE, "eb://iam/resource/xxxx",
+                    eventBus.publish("", OptActionKind.CREATE, "eb://iam/resource.http/xxxx",
                             JsonObject.mapFrom(ResourceExchange.builder()
                                     .resourceUri("http://iam.service/console/app/ident/**")
                                     .resourceActionKind(OptActionKind.CREATE.toString().toLowerCase())
@@ -454,10 +454,10 @@ public class GatewayAuthPolicyTest extends DewTest {
                 })
                 .compose(resp ->
                         // 删除资源
-                        redisClient.del(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create"))
+                        cacheClient.del(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create"))
                 .compose(resp -> {
                     // 通知资源变更
-                    eventBus.publish("", OptActionKind.DELETE, "eb://iam/resource/xxxx",
+                    eventBus.publish("", OptActionKind.DELETE, "eb://iam/resource.http/xxxx",
                             JsonObject.mapFrom(ResourceExchange.builder()
                                     .resourceUri("http://iam.service/console/app/ident/**")
                                     .resourceActionKind(OptActionKind.CREATE.toString().toLowerCase())

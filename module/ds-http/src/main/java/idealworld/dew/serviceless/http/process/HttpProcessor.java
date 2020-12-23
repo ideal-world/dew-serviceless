@@ -19,8 +19,8 @@ package idealworld.dew.serviceless.http.process;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.BadRequestException;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
 import idealworld.dew.framework.util.URIHelper;
 import io.vertx.core.Future;
@@ -31,16 +31,20 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 
 /**
- * 公共函数服务.
+ * Http服务.
  *
  * @author gudaoxuri
  */
 @Slf4j
-public class HttpProcessor {
+public class HttpProcessor extends EventBusProcessor {
 
-    static {
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "", eventBusContext ->
-                query(
+    public HttpProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
+        addProcessor("/**", eventBusContext ->
+                exec(
                         OptActionKind.parse(eventBusContext.req.header.get(DewConstant.REQUEST_RESOURCE_ACTION_FLAG)),
                         eventBusContext.req.header.get(DewConstant.REQUEST_RESOURCE_URI_FLAG),
                         eventBusContext.req.body(Buffer.class),
@@ -48,7 +52,7 @@ public class HttpProcessor {
                         eventBusContext.context));
     }
 
-    public static Future<Buffer> query(OptActionKind actionKind, String strResourceUri, Buffer body, Map<String, String> header, ProcessContext context) {
+    public static Future<Buffer> exec(OptActionKind actionKind, String strResourceUri, Buffer body, Map<String, String> header, ProcessContext context) {
         var resourceUri = URIHelper.newURI(strResourceUri);
         var resourceSubjectCode = resourceUri.getHost();
         if (!FunHttpClient.contains(resourceSubjectCode)) {

@@ -18,14 +18,11 @@ import * as request from "../util/Request";
 import {IdentOptInfo} from "../domain/IdentOptInfo";
 import {OptActionKind} from "../domain/Enum";
 
-let _iamServerName: string = 'iam'
+const iamModuleName: string = 'iam'
 let _appId: number = 0
 
-export function init(appId: number, iamServerName?: string): void {
+export function init(appId: number): void {
     _appId = appId
-    if (iamServerName) {
-        _iamServerName = iamServerName
-    }
 }
 
 export const iamSDK = {
@@ -40,15 +37,15 @@ export const iamSDK = {
 }
 
 function fetchMenu(): Promise<any[]> {
-    return request.req('fetchMenu', 'menu:///', OptActionKind.FETCH)
+    return request.req('fetchMenu', 'menu://' + iamModuleName + '/common/resource?kind=menu', OptActionKind.FETCH)
 }
 
 function fetchEle(): Promise<any[]> {
-    return request.req('fetchEle', 'element:///', OptActionKind.FETCH)
+    return request.req('fetchEle', 'element://' + iamModuleName + '/common/resource?kind=element', OptActionKind.FETCH)
 }
 
 function login(userName: string, password: string): Promise<IdentOptInfo> {
-    return request.req<IdentOptInfo>('login', 'http://' + _iamServerName + '/common/login', OptActionKind.CREATE, {
+    return request.req<IdentOptInfo>('login', 'http://' + iamModuleName + '/common/login', OptActionKind.CREATE, {
         ak: userName,
         sk: password,
         relAppId: _appId
@@ -60,7 +57,7 @@ function login(userName: string, password: string): Promise<IdentOptInfo> {
 }
 
 function logout(): Promise<void> {
-    return request.req<void>('logout', 'http://' + _iamServerName + '/common/logout', OptActionKind.DELETE)
+    return request.req<void>('logout', 'http://' + iamModuleName + '/common/logout', OptActionKind.DELETE)
         .then(v => {
             request.setToken('')
         })

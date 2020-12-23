@@ -20,6 +20,7 @@ import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.OptActionKind;
+import idealworld.dew.framework.exception.DewException;
 import idealworld.dew.framework.util.URIHelper;
 import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
@@ -164,11 +165,19 @@ public class FunEventBus {
                         processF
                                 .onFailure(e -> {
                                     log.error("[EventBus]Process [{}]{}:{} error", moduleName, actionKind.toString(), uri, e);
-                                    event.fail(-1, e.getMessage());
+                                    if(e instanceof DewException){
+                                        event.fail(((DewException) e).getCode(), e.getMessage());
+                                    }else{
+                                        event.fail(-1, e.getMessage());;
+                                    }
                                 });
                     } catch (Exception e) {
                         log.error("[EventBus]Process [{}]{}:{} error", moduleName, actionKind.toString(), uri, e);
-                        event.fail(-1, e.getMessage());
+                        if(e instanceof DewException){
+                            event.fail(((DewException) e).getCode(), e.getMessage());
+                        }else{
+                            event.fail(-1, e.getMessage());;
+                        }
                     }
                 }
         );

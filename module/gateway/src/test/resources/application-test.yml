@@ -1,5 +1,5 @@
 funs:
-  redis:
+  cache:
     uri: redis://localhost:6379
 modules:
   -
@@ -8,3 +8,5 @@ modules:
       security:
         tokenCacheExpireSec: 0
         akSkCacheExpireSec: 0
+  - clazzPackage: idealworld.dew.serviceless.http.HttpModule
+    config:

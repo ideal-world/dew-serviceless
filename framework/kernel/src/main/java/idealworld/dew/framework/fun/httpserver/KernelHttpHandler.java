@@ -19,6 +19,7 @@ package idealworld.dew.framework.fun.httpserver;
 import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.StandardCode;
 import io.vertx.core.Handler;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import lombok.Data;
@@ -39,15 +40,20 @@ public abstract class KernelHttpHandler implements Handler<RoutingContext> {
         this.moduleName = moduleName;
     }
 
-    // TODO 是否需要resp
     protected void error(StandardCode statusCode, Class<?> clazz, String msg, RoutingContext ctx) {
         log.warn("[" + clazz.getSimpleName() + "]Request error [{}]: {}", statusCode.toString(), msg);
-        ctx.response().setStatusCode(200).end(JsonObject.mapFrom(new Resp<Void>(statusCode.toString(), msg, null)).toString());
+        ctx.response().setStatusCode(200).end(JsonObject.mapFrom(new Resp<Void>(statusCode.toString(), msg, null)).toBuffer());
     }
 
     protected void error(StandardCode statusCode, Class<?> clazz, String msg, RoutingContext ctx, Throwable e) {
         log.warn("[" + clazz.getSimpleName() + "]Request error [{}]{}", statusCode.toString(), e.getMessage(), e);
-        ctx.response().setStatusCode(200).end(JsonObject.mapFrom(new Resp<Void>(statusCode.toString(), msg, null)).toString());
+        ctx.response().setStatusCode(200).end(JsonObject.mapFrom(new Resp<Void>(statusCode.toString(), msg, null)).toBuffer());
+    }
+
+    protected void error(RoutingContext ctx, Throwable e) {
+        var statusCode = ((ReplyException) e).failureCode();
+        log.warn("[" + e.getStackTrace()[0].getClassName() + "]Request error [{}]{}", statusCode, e.getMessage(), e);
+        ctx.response().setStatusCode(200).end(JsonObject.mapFrom(new Resp<Void>(statusCode + "", e.getMessage(), null)).toBuffer());
     }
 
 }

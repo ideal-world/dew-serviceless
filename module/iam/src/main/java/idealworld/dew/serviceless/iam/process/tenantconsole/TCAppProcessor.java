@@ -21,8 +21,8 @@ import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
 import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
@@ -38,22 +38,27 @@ import java.util.HashMap;
  *
  * @author gudaoxuri
  */
-public class TCAppProcessor {
+public class TCAppProcessor extends EventBusProcessor {
 
-    static {
+    public TCAppProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 添加当前租户的应用
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/app", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/tenant/app", eventBusContext ->
                 addApp(eventBusContext.req.body(AppAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前租户的某个应用
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/app/{appId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/tenant/app/{appId}", eventBusContext ->
                 modifyApp(Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.body(AppModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个应用信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/app/{appId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/app/{appId}", eventBusContext ->
                 getApp(Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的应用列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/app", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/app", eventBusContext ->
                 pageApps(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
+
 
     public static Future<Long> addApp(AppAddReq appAddReq, Long relTenantId, ProcessContext context) {
         return context.helper.existToError(

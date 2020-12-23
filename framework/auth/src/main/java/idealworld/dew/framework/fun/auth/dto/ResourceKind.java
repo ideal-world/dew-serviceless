@@ -16,9 +16,7 @@
 
 package idealworld.dew.framework.fun.auth.dto;
 
-import com.ecfront.dew.common.Resp;
-import com.ecfront.dew.common.exception.RTException;
-import io.vertx.core.json.JsonObject;
+import idealworld.dew.framework.exception.BadRequestException;
 
 import java.util.Arrays;
 
@@ -78,7 +76,7 @@ public enum ResourceKind {
         return Arrays.stream(ResourceKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
-                .orElseThrow(() -> new RTException(JsonObject.mapFrom(Resp.badRequest("Resource kind {" + code + "} NOT exist.")).toString()));
+                .orElseThrow(() -> new BadRequestException("Resource kind {" + code + "} NOT exist."));
     }
 
     @Override

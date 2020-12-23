@@ -63,20 +63,28 @@ public class FunSQLClient {
         var poolOptions = new PoolOptions()
                 .setMaxSize(config.getMaxPoolSize())
                 .setMaxWaitQueueSize(config.getMaxPoolWaitQueueSize());
-        // TODO 修改成 MySQLConnectOptions 形式
+        MySQLConnectOptions connectOptions;
         if (config.getUri() != null && !config.getUri().isBlank()) {
-            mysqlClient.client = MySQLPool.pool(vertx, config.getUri().trim(), poolOptions);
+            connectOptions = MySQLConnectOptions.fromUri(config.getUri());
         } else {
-            var connectOptions = new MySQLConnectOptions()
-                    .setPort(config.getPort())
+            connectOptions = new MySQLConnectOptions()
                     .setHost(config.getHost())
-                    .setDatabase(config.getDb())
-                    .setUser(config.getUserName())
-                    .setPassword(config.getPassword())
-                    .setCharset(config.getCharset())
-                    .setCollation(config.getCollation());
-            mysqlClient.client = MySQLPool.pool(vertx, connectOptions, poolOptions);
+                    .setPort(config.getPort())
+                    .setDatabase(config.getDb());
         }
+        if (config.getUserName() != null) {
+            connectOptions.setUser(config.getUserName());
+        }
+        if (config.getPassword() != null) {
+            connectOptions.setPassword(config.getPassword());
+        }
+        if (config.getCharset() != null) {
+            connectOptions.setCharset(config.getCharset());
+        }
+        if (config.getCollation() != null) {
+            connectOptions.setCollation(config.getCollation());
+        }
+        mysqlClient.client = MySQLPool.pool(vertx, connectOptions, poolOptions);
         SQL_CLIENTS.put(code, mysqlClient);
         return Future.succeededFuture();
     }

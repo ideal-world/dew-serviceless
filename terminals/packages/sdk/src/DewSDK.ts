@@ -28,10 +28,10 @@ export const DewSDK = {
     http: httpSDK.httpSDK(),
 }
 
-function init(serverUrl: string, appId: number, iamServerName?: string): void {
+function init(serverUrl: string, appId: number): void {
     request.setServerUrl(serverUrl)
     request.setAppId(appId)
-    iamSDK.init(appId, iamServerName)
+    iamSDK.init(appId)
     reldbSDK.init(appId)
     cacheSDK.init(appId)
     httpSDK.init(appId)

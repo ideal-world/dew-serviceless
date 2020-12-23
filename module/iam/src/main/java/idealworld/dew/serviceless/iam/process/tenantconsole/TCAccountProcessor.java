@@ -24,8 +24,8 @@ import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.auth.AccountGroup;
 import idealworld.dew.serviceless.iam.domain.auth.AccountRole;
 import idealworld.dew.serviceless.iam.domain.ident.Account;
@@ -44,57 +44,61 @@ import java.util.List;
  *
  * @author gudaoxuri
  */
-public class TCAccountProcessor {
+public class TCAccountProcessor  extends EventBusProcessor {
 
-    static {
+    public TCAccountProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 添加当前租户的账号
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/account", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/tenant/account", eventBusContext ->
                 addAccount(eventBusContext.req.body(AccountAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前租户的某个账号
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/account/{accountId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/tenant/account/{accountId}", eventBusContext ->
                 modifyAccount(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.body(AccountModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个账号信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/account/{accountId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/account/{accountId}", eventBusContext ->
                 getAccount(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的账号列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/account", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/account", eventBusContext ->
                 pageAccounts(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户的某个账号、关联的账号认证、账号群组、账号角色、账号应用、账号绑定
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}", eventBusContext ->
                 deleteAccount(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前租户某个账号的认证
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/ident", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/ident", eventBusContext ->
                 addAccountIdent(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.body(AccountIdentAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前租户某个账号的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/tenant/account/{accountId}/ident/{accountIdentId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/tenant/account/{accountId}/ident/{accountIdentId}", eventBusContext ->
                 modifyAccountIdent(Long.parseLong(eventBusContext.req.params.get("accountIdentId")), eventBusContext.req.body(AccountIdentModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户某个账号的认证列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/tenant/account/{accountId}/ident", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/tenant/account/{accountId}/ident", eventBusContext ->
                 findAccountIdents(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户某个账号的某个认证
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/ident/{accountIdentId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/ident/{accountIdentId}", eventBusContext ->
                 deleteAccountIdent(Long.parseLong(eventBusContext.req.params.get("accountIdentId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前租户某个账号的关联应用
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/app/{appId}", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/app/{appId}", eventBusContext ->
                 addAccountApp(Long.parseLong(eventBusContext.req.params.get("accountId")), Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户某个账号的某个关联应用
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/app/{accountAppId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/app/{accountAppId}", eventBusContext ->
                 deleteAccountApp(Long.parseLong(eventBusContext.req.params.get("accountAppId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前租户某个账号的关联群组
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/group/{groupNodeId}", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/group/{groupNodeId}", eventBusContext ->
                 addAccountGroup(Long.parseLong(eventBusContext.req.params.get("accountId")), Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户某个账号的某个关联群组
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/group/{accountGroupId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/group/{accountGroupId}", eventBusContext ->
                 deleteAccountGroup(Long.parseLong(eventBusContext.req.params.get("accountGroupId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前租户某个账号的关联角色
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/role/{roleId}", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/role/{roleId}", eventBusContext ->
                 addAccountRole(Long.parseLong(eventBusContext.req.params.get("accountId")), Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户某个账号的某个关联角色
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/role/{accountRoleId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/role/{accountRoleId}", eventBusContext ->
                 deleteAccountRole(Long.parseLong(eventBusContext.req.params.get("accountRoleId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 

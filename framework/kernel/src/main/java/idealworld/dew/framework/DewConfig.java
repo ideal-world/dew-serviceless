@@ -50,7 +50,7 @@ public abstract class DewConfig {
         @Builder.Default
         private HttpServerConfig httpServer = new HttpServerConfig();
         @Builder.Default
-        private RedisConfig redis = new RedisConfig();
+        private CacheConfig cache = new CacheConfig();
         @Builder.Default
         private SQLConfig sql = new SQLConfig();
         @Builder.Default
@@ -75,7 +75,7 @@ public abstract class DewConfig {
         @Builder
         @NoArgsConstructor
         @AllArgsConstructor
-        public static class RedisConfig {
+        public static class CacheConfig {
 
             private String uri;
             private String password;

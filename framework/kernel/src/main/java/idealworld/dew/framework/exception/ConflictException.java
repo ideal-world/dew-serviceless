@@ -16,15 +16,32 @@
 
 package idealworld.dew.framework.exception;
 
-import com.ecfront.dew.common.exception.RTException;
+import com.ecfront.dew.common.StandardCode;
 
 /**
  * @author gudaoxuri
  */
-public class ConflictException extends RTException {
+public class ConflictException extends DewException {
 
     public ConflictException(String message) {
         super(message);
+    }
+
+    public ConflictException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ConflictException(Throwable cause) {
+        super(cause);
+    }
+
+    public ConflictException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+    @Override
+    public Integer getCode() {
+        return Integer.parseInt(StandardCode.CONFLICT.toString());
     }
 
 }

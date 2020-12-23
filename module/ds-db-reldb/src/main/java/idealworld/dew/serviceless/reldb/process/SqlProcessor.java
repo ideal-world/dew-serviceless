@@ -20,13 +20,12 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
-import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.BadRequestException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.AuthenticationProcessor;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
 import idealworld.dew.framework.util.CacheHelper;
 import idealworld.dew.framework.util.URIHelper;
@@ -40,16 +39,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 /**
- * 公共函数服务.
+ * SQL服务.
  *
  * @author gudaoxuri
  */
 @Slf4j
-public class SqlProcessor {
+public class SqlProcessor extends EventBusProcessor {
 
-    static {
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "", eventBusContext ->
-                query(
+     {
+        addProcessor("", eventBusContext ->
+                exec(
                         eventBusContext.req.header.get(DewConstant.REQUEST_RESOURCE_URI_FLAG),
                         new JsonObject($.security.decodeBase64ToString(eventBusContext.req.header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptCacheInfo.class),
                         eventBusContext.req.body(String.class),
@@ -58,11 +57,12 @@ public class SqlProcessor {
 
     private static RelDBAuthPolicy authPolicy;
 
-    public SqlProcessor(RelDBAuthPolicy _authPolicy) {
+    public SqlProcessor(RelDBAuthPolicy _authPolicy,String moduleName) {
+        super(moduleName);
         authPolicy = _authPolicy;
     }
 
-    public static Future<Buffer> query(String resourceUriWithoutPath, IdentOptCacheInfo identOptCacheInfo, String strBody, ProcessContext context) {
+    public static Future<Buffer> exec(String resourceUriWithoutPath, IdentOptCacheInfo identOptCacheInfo, String strBody, ProcessContext context) {
         var resourceSubjectCode = URIHelper.newURI(resourceUriWithoutPath).getHost();
         if (!FunSQLClient.contains(resourceSubjectCode)) {
             throw context.helper.error(new BadRequestException("请求的资源主题[" + resourceSubjectCode + "]不存在"));

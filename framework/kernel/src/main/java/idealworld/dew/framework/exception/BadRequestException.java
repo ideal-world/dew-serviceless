@@ -16,15 +16,33 @@
 
 package idealworld.dew.framework.exception;
 
-import com.ecfront.dew.common.exception.RTException;
+import com.ecfront.dew.common.StandardCode;
 
 /**
  * @author gudaoxuri
  */
-public class BadRequestException extends RTException {
+public class BadRequestException extends DewException {
 
     public BadRequestException(String message) {
         super(message);
     }
+
+    public BadRequestException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public BadRequestException(Throwable cause) {
+        super(cause);
+    }
+
+    public BadRequestException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+    @Override
+    public Integer getCode() {
+        return Integer.parseInt(StandardCode.BAD_REQUEST.toString());
+    }
+
 
 }

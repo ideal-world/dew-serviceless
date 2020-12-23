@@ -16,9 +16,7 @@
 
 package idealworld.dew.framework.fun.auth.dto;
 
-import com.ecfront.dew.common.Resp;
-import com.ecfront.dew.common.exception.RTException;
-import io.vertx.core.json.JsonObject;
+import idealworld.dew.framework.exception.BadRequestException;
 
 import java.util.Arrays;
 
@@ -66,7 +64,7 @@ public enum AuthSubjectOperatorKind {
         return Arrays.stream(AuthSubjectOperatorKind.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
-                .orElseThrow(() -> new RTException(JsonObject.mapFrom(Resp.badRequest("Auth Subject Operator kind {" + code + "} NOT exist.")).toString()));
+                .orElseThrow(() -> new BadRequestException("Auth Subject Operator kind {" + code + "} NOT exist."));
     }
 
     @Override

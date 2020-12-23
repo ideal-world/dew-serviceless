@@ -62,10 +62,17 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
         start(config)
                 .onSuccess(st -> {
                     log.info("[Startup]Loading modules...");
-                    loadModules(config.getModules())
+                    var modules = config.getModules();
+                    loadModules(modules)
                             .onSuccess(moduleLoadResult -> {
                                 log.info("[Startup]Loading custom operations...");
-                                log.info("[Startup]Started");
+                                log.info("\r\n==============[Startup]==============\r\n" +
+                                        "The service has been started and contains the following modules:\r\n" +
+                                        modules.stream()
+                                                .filter(DewConfig.ModuleConfig::getEnabled)
+                                                .map(m -> ">>" + m.getClazzPackage())
+                                                .collect(Collectors.joining("\r\n")) +
+                                        "\r\n==============[Startup]==============");
                                 startPromise.complete();
                             })
                             .onFailure(e -> {
@@ -166,6 +173,9 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
             } else {
                 var mergedConfig = mergeItems((Map) (configMap.get("funs")), (Map) (((Map) moduleConfig).get("funs")));
                 ((Map) (moduleConfig)).put("funs", mergedConfig);
+            }
+            if (!(((Map) moduleConfig).containsKey("config"))) {
+                ((Map) (moduleConfig)).put("config", new LinkedHashMap<>());
             }
         });
         return JsonObject.mapFrom(configMap).mapTo(configClazz);

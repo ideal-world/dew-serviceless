@@ -16,12 +16,12 @@
 
 package idealworld.dew.framework.exception;
 
-import com.ecfront.dew.common.exception.RTException;
+import com.ecfront.dew.common.StandardCode;
 
 /**
  * @author gudaoxuri
  */
-public class ServiceException extends RTException {
+public class ServiceException extends DewException {
 
     public ServiceException(String message) {
         super(message);
@@ -30,4 +30,18 @@ public class ServiceException extends RTException {
     public ServiceException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public ServiceException(Throwable cause) {
+        super(cause);
+    }
+
+    public ServiceException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+    @Override
+    public Integer getCode() {
+        return Integer.parseInt(StandardCode.INTERNAL_SERVER_ERROR.toString());
+    }
+
 }

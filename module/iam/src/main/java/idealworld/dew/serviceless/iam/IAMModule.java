@@ -67,16 +67,16 @@ public class IAMModule extends DewModule<IAMConfig> {
 
     @Override
     protected Future<Void> start(IAMConfig config) {
-        new CommonProcessor();
-        new SCTenantProcessor();
-        new TCTenantProcessor();
-        new TCAppProcessor();
-        new TCAccountProcessor();
-        new ACAppProcessor();
-        new ACRoleProcessor();
-        new ACGroupProcessor();
-        new ACResourceProcessor();
-        new ACAuthPolicyProcessor();
+        new CommonProcessor(getModuleName());
+        new SCTenantProcessor(getModuleName());
+        new TCTenantProcessor(getModuleName());
+        new TCAppProcessor(getModuleName());
+        new TCAccountProcessor(getModuleName());
+        new ACAppProcessor(getModuleName());
+        new ACRoleProcessor(getModuleName());
+        new ACGroupProcessor(getModuleName());
+        new ACResourceProcessor(getModuleName());
+        new ACAuthPolicyProcessor(getModuleName());
         var context = ProcessContext.builder()
                 .conf(config)
                 .moduleName(getModuleName())
@@ -372,7 +372,7 @@ public class IAMModule extends DewModule<IAMConfig> {
     }
 
     @Override
-    protected boolean enabledRedisFun() {
+    protected boolean enabledCacheFun() {
         return true;
     }
 
@@ -387,7 +387,7 @@ public class IAMModule extends DewModule<IAMConfig> {
     }
 
     @Override
-    protected boolean enabledJDBCFun() {
+    protected boolean enabledSQLFun() {
         return true;
     }
 

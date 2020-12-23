@@ -27,7 +27,6 @@ import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.reldb.RelDBConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashSet;
@@ -54,7 +53,7 @@ public class RelDBExchangeProcessor {
                                 add("eb://" + DewAuthConstant.MODULE_IAM_NAME + "/resource." + ResourceKind.RELDB.toString().toLowerCase());
                             }
                         }, exchangeData -> {
-                            var resourceExchange = new JsonObject(exchangeData._1).mapTo(ResourceExchange.class);
+                            var resourceExchange = exchangeData._1.toJsonObject().mapTo(ResourceExchange.class);
                             var resourceActionKind = resourceExchange.getResourceActionKind();
                             var resourceUri = URIHelper.newURI(resourceExchange.getResourceUri());
                             switch (exchangeData._0) {

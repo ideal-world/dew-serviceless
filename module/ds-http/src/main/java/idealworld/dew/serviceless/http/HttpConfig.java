@@ -33,4 +33,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class HttpConfig {
 
+    // TODO
+    private String someKey;
+
 }

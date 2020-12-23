@@ -21,8 +21,8 @@ import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
 import idealworld.dew.serviceless.iam.IAMConfig;
 import idealworld.dew.serviceless.iam.domain.auth.AccountGroup;
@@ -45,20 +45,24 @@ import java.util.stream.IntStream;
  *
  * @author gudaoxuri
  */
-public class ACGroupProcessor {
+public class ACGroupProcessor extends EventBusProcessor {
 
-    static {
+    public ACGroupProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 添加当前应用的群组
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/group", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/app/group", eventBusContext ->
                 addGroup(eventBusContext.req.body(GroupAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个群组
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}", eventBusContext ->
                 modifyGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.body(GroupModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个群组信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}", eventBusContext ->
                 getGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的群组列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group", eventBusContext -> {
+        addProcessor(OptActionKind.FETCH, "/console/app/group", eventBusContext -> {
             if (eventBusContext.req.params.getOrDefault("expose", "false").equalsIgnoreCase("false")) {
                 return findGroups(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
             } else {
@@ -66,20 +70,20 @@ public class ACGroupProcessor {
             }
         });
         // 删除当前应用的某个群组
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}", eventBusContext ->
                 deleteGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前应用某个群组的节点
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/group/{groupId}/node", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/app/group/{groupId}/node", eventBusContext ->
                 addGroupNode(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.body(GroupNodeAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用某个群组的节点
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}/node/{groupNodeId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}/node/{groupNodeId}", eventBusContext ->
                 modifyGroupNode(Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.body(GroupNodeModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用某个群组的节点列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}/node", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}/node", eventBusContext ->
                 findGroupNodes(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用某个群组的节点
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}/node/{groupNodeId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}/node/{groupNodeId}", eventBusContext ->
                 deleteGroupNode(Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 

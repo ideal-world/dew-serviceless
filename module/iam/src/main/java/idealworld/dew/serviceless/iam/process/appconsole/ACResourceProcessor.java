@@ -23,8 +23,8 @@ import idealworld.dew.framework.exception.ConflictException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.dto.ResourceExchange;
 import idealworld.dew.framework.fun.auth.dto.ResourceSubjectExchange;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.iam.IAMConstant;
 import idealworld.dew.serviceless.iam.domain.auth.AuthPolicy;
@@ -44,36 +44,40 @@ import java.util.stream.Collectors;
  *
  * @author gudaoxuri
  */
-public class ACResourceProcessor {
+public class ACResourceProcessor extends EventBusProcessor {
 
-    static {
+    public ACResourceProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 添加当前应用的资源主体
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/resource/subject", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/app/resource/subject", eventBusContext ->
                 addResourceSubject(eventBusContext.req.body(ResourceSubjectAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个资源主体
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/resource/subject/{resourceSubjectId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/app/resource/subject/{resourceSubjectId}", eventBusContext ->
                 modifyResourceSubject(Long.parseLong(eventBusContext.req.params.get("resourceSubjectId")), eventBusContext.req.body(ResourceSubjectModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个资源主体信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/resource/subject/{resourceSubjectId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/resource/subject/{resourceSubjectId}", eventBusContext ->
                 getResourceSubject(Long.parseLong(eventBusContext.req.params.get("resourceSubjectId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的资源主体列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/resource/subject", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/resource/subject", eventBusContext ->
                 findResourceSubjects(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用的某个资源主体
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/resource/subject/{resourceSubjectId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/app/resource/subject/{resourceSubjectId}", eventBusContext ->
                 deleteResourceSubject(Long.parseLong(eventBusContext.req.params.get("resourceSubjectId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前应用的资源
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/resource", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/app/resource", eventBusContext ->
                 addResource(eventBusContext.req.body(ResourceAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个资源
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/resource/{resourceId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/app/resource/{resourceId}", eventBusContext ->
                 modifyResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.body(ResourceModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个资源信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/resource/{resourceId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/resource/{resourceId}", eventBusContext ->
                 getResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的资源列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/resource", eventBusContext -> {
+        addProcessor(OptActionKind.FETCH, "/console/app/resource", eventBusContext -> {
             if (eventBusContext.req.params.getOrDefault("expose", "false").equalsIgnoreCase("false")) {
                 return findResources(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("uri", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
             } else {
@@ -81,7 +85,7 @@ public class ACResourceProcessor {
             }
         });
         // 删除当前应用的某个资源
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/resource/{resourceId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/app/resource/{resourceId}", eventBusContext ->
                 deleteResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 

@@ -22,12 +22,11 @@ import {OptActionKind} from "../src/domain/Enum";
 
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000"
 const APP_ID = 1
-const IAM_SERVER_NAME = "127.0.0.1:8081"
 const USERNAME = "dew"
-const PASSWORD = "7IXEJhU71A"
+const PASSWORD = "TestPwd1d"
 
 beforeAll(() => {
-    DewSDK.init(GATEWAY_SERVER_URL, APP_ID, IAM_SERVER_NAME)
+    DewSDK.init(GATEWAY_SERVER_URL, APP_ID)
 })
 
 test('Test iam sdk', async () => {
@@ -100,7 +99,7 @@ function encrypt(sql: string): string {
 }
 
 test('Test reldb sdk', async () => {
-    let publicKey = await request.req<string>('getAppPublicKey', 'http://' + IAM_SERVER_NAME + '/console/app/app/publicKey', OptActionKind.FETCH)
+    let publicKey = await request.req<string>('getAppPublicKey', 'http://iam/console/app/app/publicKey', OptActionKind.FETCH)
     dewPlugin.initRSA(publicKey)
     let accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account'), [])
     expect(accounts.length).toBe(1)

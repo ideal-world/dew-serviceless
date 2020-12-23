@@ -16,15 +16,33 @@
 
 package idealworld.dew.framework.exception;
 
-import com.ecfront.dew.common.exception.RTException;
+import com.ecfront.dew.common.StandardCode;
 
 /**
  * @author gudaoxuri
  */
-public class NotFoundException extends RTException {
+public class NotFoundException extends DewException {
+
 
     public NotFoundException(String message) {
         super(message);
+    }
+
+    public NotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public NotFoundException(Throwable cause) {
+        super(cause);
+    }
+
+    public NotFoundException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+    @Override
+    public Integer getCode() {
+        return Integer.parseInt(StandardCode.NOT_FOUND.toString());
     }
 
 }

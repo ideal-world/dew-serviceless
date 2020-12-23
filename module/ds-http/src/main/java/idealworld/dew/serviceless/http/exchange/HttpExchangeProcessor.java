@@ -20,7 +20,6 @@ import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.auth.exchange.ExchangeHelper;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
-import idealworld.dew.framework.fun.sql.FunSQLClient;
 import idealworld.dew.serviceless.http.HttpConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -40,7 +39,7 @@ public class HttpExchangeProcessor {
                                         .uri(resourceSubjectExchange.getUri())
                                         .timeoutMs(resourceSubjectExchange.getTimeoutMs())
                                         .build()),
-                FunSQLClient::remove);
+                FunHttpClient::remove);
     }
 
 }

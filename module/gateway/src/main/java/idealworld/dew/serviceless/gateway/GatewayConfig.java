@@ -93,8 +93,6 @@ public class GatewayConfig {
         @Builder.Default
         private Integer appRequestDateOffsetMs = 5000;
         @Builder.Default
-        private String cacheTokenInfoKey = "dew:auth:token:info:";
-        @Builder.Default
         private Map<String, List<String>> blockIps = new LinkedHashMap<>();
         @Builder.Default
         private Integer groupNodeLength = 5;

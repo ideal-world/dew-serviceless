@@ -50,18 +50,18 @@ public class ExchangeHelper {
     }
 
     public static Future<Void> loadAndWatchResourceSubject(String moduleName, ResourceKind kind, Consumer<ResourceSubjectExchange> addFun, Consumer<String> removeFun) {
-        var header = new HashMap<String, String>();
-        var identOptInfo = IdentOptCacheInfo.builder()
-                .tenantId(config.getTenantId())
-                .appId(config.getAppId())
-                .build();
-        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
         return Future.succeededFuture()
                 .compose(resp -> {
                     if (config == null || config.getAppId() == null) {
                         log.warn("Cannot connect to the iam service because the iam configuration does not exist!");
                         return Future.succeededFuture();
                     }
+                    var header = new HashMap<String, String>();
+                    var identOptInfo = IdentOptCacheInfo.builder()
+                            .tenantId(config.getTenantId())
+                            .appId(config.getAppId())
+                            .build();
+                    header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
                     return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, "/console/app/resource/subject?kind=" + kind.toString(), null, header)
                             .compose(result -> {
                                 var resourceSubjects = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
@@ -78,7 +78,7 @@ public class ExchangeHelper {
                         add("eb://" + DewAuthConstant.MODULE_IAM_NAME + "/resourcesubject." + kind.toString().toLowerCase());
                     }
                 }, exchangeInfo -> {
-                    var resourceSubjectExchange = JsonObject.mapFrom(exchangeInfo._1).mapTo(ResourceSubjectExchange.class);
+                    var resourceSubjectExchange = exchangeInfo._1.toJsonObject().mapTo(ResourceSubjectExchange.class);
                     if (exchangeInfo._0 == OptActionKind.CREATE
                             || exchangeInfo._0 == OptActionKind.MODIFY) {
                         removeFun.accept(resourceSubjectExchange.getCode());

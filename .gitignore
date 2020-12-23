@@ -34,4 +34,6 @@ package-lock.json
 .vertx/
 
 *-prod.yml
+*-prod.yaml
+*-prod.json
 *.secret

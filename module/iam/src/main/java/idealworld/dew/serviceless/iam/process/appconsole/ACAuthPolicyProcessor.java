@@ -21,8 +21,8 @@ import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.BadRequestException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.domain.auth.AuthPolicy;
 import idealworld.dew.serviceless.iam.domain.auth.Resource;
 import idealworld.dew.serviceless.iam.dto.ExposeKind;
@@ -44,23 +44,27 @@ import java.util.stream.Collectors;
  *
  * @author gudaoxuri
  */
-public class ACAuthPolicyProcessor {
+public class ACAuthPolicyProcessor extends EventBusProcessor {
 
-    static {
+    public ACAuthPolicyProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 添加当前应用的权限策略
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/authpolicy", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/app/authpolicy", eventBusContext ->
                 addAuthPolicy(eventBusContext.req.body(AuthPolicyAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个权限策略
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
                 modifyAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")), eventBusContext.req.body(AuthPolicyModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // getAuthPolicy
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
                 getAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的权限策略列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/authpolicy", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/authpolicy", eventBusContext ->
                 pageAuthPolicies(eventBusContext.req.params.getOrDefault("subjectKind", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用的某个权限策略
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
                 deleteAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 

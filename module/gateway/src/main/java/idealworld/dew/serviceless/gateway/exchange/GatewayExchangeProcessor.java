@@ -22,7 +22,6 @@ import idealworld.dew.framework.fun.auth.dto.ResourceExchange;
 import idealworld.dew.framework.fun.auth.exchange.ExchangeHelper;
 import idealworld.dew.framework.util.URIHelper;
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashSet;
@@ -36,10 +35,10 @@ public class GatewayExchangeProcessor {
     public static Future<Void> init(String moduleName) {
         return ExchangeHelper.watch(moduleName, new HashSet<>() {
             {
-                add("eb://" + DewAuthConstant.MODULE_IAM_NAME + "/resource");
+                add("eb://" + DewAuthConstant.MODULE_IAM_NAME + "/resource.");
             }
         }, exchangeData -> {
-            var resourceExchange = new JsonObject(exchangeData._1).mapTo(ResourceExchange.class);
+            var resourceExchange = exchangeData._1.toJsonObject().mapTo(ResourceExchange.class);
             var resourceActionKind = resourceExchange.getResourceActionKind();
             var resourceUri = URIHelper.newURI(resourceExchange.getResourceUri());
             switch (exchangeData._0) {

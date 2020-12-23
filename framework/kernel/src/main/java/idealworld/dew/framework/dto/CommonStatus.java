@@ -16,9 +16,7 @@
 
 package idealworld.dew.framework.dto;
 
-import com.ecfront.dew.common.Resp;
-import com.ecfront.dew.common.exception.RTException;
-import io.vertx.core.json.JsonObject;
+import idealworld.dew.framework.exception.BadRequestException;
 
 import java.util.Arrays;
 
@@ -54,7 +52,7 @@ public enum CommonStatus {
         return Arrays.stream(CommonStatus.values())
                 .filter(item -> item.code.equalsIgnoreCase(code))
                 .findFirst()
-                .orElseThrow(() -> new RTException(JsonObject.mapFrom(Resp.badRequest("Common status {" + code + "} NOT exist.")).toString()));
+                .orElseThrow(() -> new BadRequestException("Common status {" + code + "} NOT exist."));
     }
 
     @Override

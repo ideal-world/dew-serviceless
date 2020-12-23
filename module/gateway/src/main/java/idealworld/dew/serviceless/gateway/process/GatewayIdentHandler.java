@@ -23,7 +23,7 @@ import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
-import idealworld.dew.framework.fun.cache.FunRedisClient;
+import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.fun.httpserver.AuthHttpHandler;
 import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.gateway.GatewayConfig;
@@ -117,7 +117,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                 return;
             }
             var appId = Long.parseLong(ctx.request().headers().get(security.getAppId().trim()));
-            FunRedisClient.choose(getModuleName()).get(DewAuthConstant.CACHE_APP_INFO + appId, security.getAppInfoCacheExpireSec())
+            FunCacheClient.choose(getModuleName()).get(DewAuthConstant.CACHE_APP_INFO + appId, security.getAppInfoCacheExpireSec())
                     .onSuccess(appInfo -> {
                         if (appInfo == null) {
                             error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "认证错误，AppId不合法", ctx);
@@ -137,7 +137,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
 
         // fetch token
         if (token != null) {
-            FunRedisClient.choose(getModuleName()).get(security.getCacheTokenInfoKey() + token, security.getTokenCacheExpireSec())
+            FunCacheClient.choose(getModuleName()).get(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token, security.getTokenCacheExpireSec())
                     .onSuccess(optInfo -> {
                         var identOptInfo = optInfo != null
                                 ? new JsonObject(optInfo).mapTo(IdentOptCacheInfo.class)
@@ -179,7 +179,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
         var reqPath = ctx.request().path();
         var reqQuery = ctx.request().query() != null ? ctx.request().query() : "";
         var sortedReqQuery = Arrays.stream(reqQuery.split("&")).sorted(String::compareTo).collect(Collectors.joining("&"));
-        FunRedisClient.choose(getModuleName()).get(DewAuthConstant.CACHE_APP_AK + ak, security.getTokenCacheExpireSec())
+        FunCacheClient.choose(getModuleName()).get(DewAuthConstant.CACHE_APP_AK + ak, security.getTokenCacheExpireSec())
                 .onSuccess(legalSkAndAppId -> {
                     if (legalSkAndAppId == null) {
                         error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "认证错误，AK不存在", ctx);

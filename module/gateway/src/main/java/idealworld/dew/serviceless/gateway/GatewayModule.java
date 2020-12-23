@@ -61,7 +61,7 @@ public class GatewayModule extends DewModule<GatewayConfig> {
     }
 
     @Override
-    protected boolean enabledRedisFun() {
+    protected boolean enabledCacheFun() {
         return true;
     }
 
@@ -76,7 +76,7 @@ public class GatewayModule extends DewModule<GatewayConfig> {
     }
 
     @Override
-    protected boolean enabledJDBCFun() {
+    protected boolean enabledSQLFun() {
         return false;
     }
 

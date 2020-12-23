@@ -33,7 +33,7 @@ public class HttpModule extends DewModule<HttpConfig> {
 
     @Override
     protected Future<Void> start(HttpConfig config) {
-        new HttpProcessor();
+        new HttpProcessor(getModuleName());
         return HttpExchangeProcessor.init(getModuleName(), config, vertx);
     }
 
@@ -43,8 +43,8 @@ public class HttpModule extends DewModule<HttpConfig> {
     }
 
     @Override
-    protected boolean enabledRedisFun() {
-        return true;
+    protected boolean enabledCacheFun() {
+        return false;
     }
 
     @Override
@@ -58,7 +58,7 @@ public class HttpModule extends DewModule<HttpConfig> {
     }
 
     @Override
-    protected boolean enabledJDBCFun() {
+    protected boolean enabledSQLFun() {
         return false;
     }
 

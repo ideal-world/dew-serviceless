@@ -19,7 +19,7 @@ package idealworld.dew.framework.fun.auth;
 import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.fun.cache.FunRedisClient;
+import idealworld.dew.framework.fun.cache.FunCacheClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
@@ -48,7 +48,7 @@ public class LocalResourceCache {
 
     public static void loadRemoteResources(String moduleName, String filterResourceKind) {
         var scanKey = DewAuthConstant.CACHE_AUTH_POLICY + (filterResourceKind == null ? "" : filterResourceKind + ":");
-        FunRedisClient.choose(moduleName).scan(scanKey, key -> {
+        FunCacheClient.choose(moduleName).scan(scanKey, key -> {
             var keyItems = key.substring(DewAuthConstant.CACHE_AUTH_POLICY.length()).split(":");
             var resourceKind = keyItems[0];
             var resourceUri = resourceKind + "://" + keyItems[1];

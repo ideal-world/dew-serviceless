@@ -22,8 +22,8 @@ import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.serviceless.iam.IAMConfig;
 import idealworld.dew.serviceless.iam.domain.auth.*;
 import idealworld.dew.serviceless.iam.dto.ExposeKind;
@@ -38,36 +38,40 @@ import java.util.List;
  *
  * @author gudaoxuri
  */
-public class ACRoleProcessor {
+public class ACRoleProcessor extends EventBusProcessor {
 
-    static {
+    public ACRoleProcessor(String moduleName) {
+        super(moduleName);
+    }
+
+    {
         // 添加当前应用的角色定义
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/role/def", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/app/role/def", eventBusContext ->
                 addRoleDef(eventBusContext.req.body(RoleDefAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个角色定义
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/role/def/{roleDefId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/app/role/def/{roleDefId}", eventBusContext ->
                 modifyRoleDef(Long.parseLong(eventBusContext.req.params.get("roleDefId")), eventBusContext.req.body(RoleDefModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个角色定义信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/role/def/{roleDefId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/role/def/{roleDefId}", eventBusContext ->
                 getRoleDef(Long.parseLong(eventBusContext.req.params.get("roleDefId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的角色定义列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/role/def", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/role/def", eventBusContext ->
                 pageRoleDef(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用的某个角色定义
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/role/def/{roleDefId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/app/role/def/{roleDefId}", eventBusContext ->
                 deleteRoleDef(Long.parseLong(eventBusContext.req.params.get("roleDefId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前应用的角色
-        ReceiveProcessor.addProcessor(OptActionKind.CREATE, "/console/app/role", eventBusContext ->
+        addProcessor(OptActionKind.CREATE, "/console/app/role", eventBusContext ->
                 addRole(eventBusContext.req.body(RoleAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个角色
-        ReceiveProcessor.addProcessor(OptActionKind.PATCH, "/console/app/role/{roleId}", eventBusContext ->
+        addProcessor(OptActionKind.PATCH, "/console/app/role/{roleId}", eventBusContext ->
                 modifyRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.body(RoleModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个角色信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/role/{roleId}", eventBusContext ->
+        addProcessor(OptActionKind.FETCH, "/console/app/role/{roleId}", eventBusContext ->
                 getRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的角色列表信息
-        ReceiveProcessor.addProcessor(OptActionKind.FETCH, "/console/app/role", eventBusContext -> {
+        addProcessor(OptActionKind.FETCH, "/console/app/role", eventBusContext -> {
             if (eventBusContext.req.params.getOrDefault("expose", "false").equalsIgnoreCase("false")) {
                 return findRoles(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
             } else {
@@ -75,7 +79,7 @@ public class ACRoleProcessor {
             }
         });
         // 删除当前应用的某个角色
-        ReceiveProcessor.addProcessor(OptActionKind.DELETE, "/console/app/role/{roleId}", eventBusContext ->
+        addProcessor(OptActionKind.DELETE, "/console/app/role/{roleId}", eventBusContext ->
                 deleteRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 

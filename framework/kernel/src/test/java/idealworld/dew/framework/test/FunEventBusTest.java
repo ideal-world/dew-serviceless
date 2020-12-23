@@ -20,9 +20,9 @@ import com.ecfront.dew.common.Resp;
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.dto.OptActionKind;
+import idealworld.dew.framework.fun.eventbus.EventBusDispatcher;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
-import idealworld.dew.framework.fun.eventbus.ReceiveProcessor;
 import idealworld.dew.framework.fun.test.DewTest;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -53,7 +53,7 @@ public class FunEventBusTest extends DewTest {
     @Test
     public void testComplexReqResp(Vertx vertx, VertxTestContext testContext) {
         var count = new CountDownLatch(4);
-        ReceiveProcessor.addProcessor(OptActionKind.MODIFY, "/app/{name}/{kind}/enabled", context -> {
+        EventBusDispatcher.addProcessor("",OptActionKind.MODIFY, "/app/{name}/{kind}/enabled", context -> {
             Assertions.assertEquals("xxxx", context.req.header.get("App-Id"));
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));
@@ -68,7 +68,7 @@ public class FunEventBusTest extends DewTest {
             return Future.succeededFuture(Resp.success("/app/{name}/{kind}/enabled"));
         });
         FunEventBus.choose("").consumer("", (actionKind, uri, header, body) ->
-                ReceiveProcessor.chooseProcess("", null, actionKind, uri.getPath(), uri.getQuery(), header, body));
+                EventBusDispatcher.chooseProcess("", null,null, actionKind, uri.getPath(), uri.getQuery(), header, body));
 
         FunEventBus.choose("").request("", OptActionKind.MODIFY, "http://iam/app/n1/k1/enabled?q=测试",
                 JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer(), new HashMap<>() {
