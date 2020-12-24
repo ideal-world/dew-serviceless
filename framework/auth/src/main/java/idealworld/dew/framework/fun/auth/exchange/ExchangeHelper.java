@@ -22,9 +22,12 @@ import idealworld.dew.framework.DewAuthConfig;
 import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
+import idealworld.dew.framework.fun.auth.LocalResourceCache;
+import idealworld.dew.framework.fun.auth.dto.ResourceExchange;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceSubjectExchange;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
+import idealworld.dew.framework.util.URIHelper;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
@@ -49,7 +52,7 @@ public class ExchangeHelper {
         config = _config;
     }
 
-    public static Future<Void> loadAndWatchResourceSubject(String moduleName, ResourceKind kind, Consumer<ResourceSubjectExchange> addFun, Consumer<String> removeFun) {
+    public static Future<Void> loadAndWatchResources(String moduleName, String kind) {
         return Future.succeededFuture()
                 .compose(resp -> {
                     if (config == null || config.getAppId() == null) {
@@ -62,7 +65,57 @@ public class ExchangeHelper {
                             .appId(config.getAppId())
                             .build();
                     header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
-                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, "/console/app/resource/subject?kind=" + kind.toString(), null, header)
+                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX+"resource?kind=" + kind, null, header)
+                            .compose(result -> {
+                                var resources = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
+                                for (var resource : resources) {
+                                    var resourceExchange = ((JsonObject) resource).mapTo(ResourceExchange.class);
+                                    LocalResourceCache.addLocalResource(URIHelper.newURI(resourceExchange.getUri()), resourceExchange.getActionKind().toLowerCase());
+                                    log.info("[Exchange]Init [resource.actionKind={}:uri={}] data", resourceExchange.getActionKind(), resourceExchange.getUri());
+                                }
+                                return Future.succeededFuture();
+                            });
+                })
+                .compose(resp -> watch(moduleName, new HashSet<>() {
+                    {
+                        add("eb://" + DewAuthConstant.MODULE_IAM_NAME + "/resource." + kind);
+                    }
+                }, exchangeInfo -> {
+                    var resourceExchange = exchangeInfo._1.toJsonObject().mapTo(ResourceExchange.class);
+                    var resourceActionKind = resourceExchange.getActionKind().toLowerCase();
+                    var resourceUri = URIHelper.newURI(resourceExchange.getUri());
+                    switch (exchangeInfo._0) {
+                        case CREATE:
+                            LocalResourceCache.addLocalResource(resourceUri, resourceActionKind);
+                            log.info("[Exchange]Created [resource.actionKind={},uri={}] data", resourceActionKind, resourceExchange.getUri());
+                            break;
+                        case MODIFY:
+                            LocalResourceCache.removeLocalResource(resourceUri, resourceActionKind);
+                            LocalResourceCache.addLocalResource(resourceUri, resourceActionKind);
+                            log.info("[Exchange]Modify [resource.actionKind={},uri={}] data", resourceActionKind, resourceExchange.getUri());
+                            break;
+                        case DELETE:
+                            LocalResourceCache.removeLocalResource(resourceUri, resourceActionKind);
+                            log.info("[Exchange]Delete [resource.actionKind={},uri={}] data", resourceActionKind, resourceExchange.getUri());
+                            break;
+                    }
+                }));
+    }
+
+    public static Future<Void> loadAndWatchResourceSubjects(String moduleName, ResourceKind kind, Consumer<ResourceSubjectExchange> addFun, Consumer<String> removeFun) {
+        return Future.succeededFuture()
+                .compose(resp -> {
+                    if (config == null || config.getAppId() == null) {
+                        log.warn("Cannot connect to the iam service because the iam configuration does not exist!");
+                        return Future.succeededFuture();
+                    }
+                    var header = new HashMap<String, String>();
+                    var identOptInfo = IdentOptCacheInfo.builder()
+                            .tenantId(config.getTenantId())
+                            .appId(config.getAppId())
+                            .build();
+                    header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
+                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX+"resource/subject?kind=" + kind.toString(), null, header)
                             .compose(result -> {
                                 var resourceSubjects = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
                                 for (var resourceSubject : resourceSubjects) {

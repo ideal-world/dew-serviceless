@@ -46,10 +46,9 @@ function doExec<T>(resourceSubjectCode: string, encryptedSql: string, parameters
     if (item.length !== 2) {
         throw "该SQL语句没有加密 : " + encryptedSql
     }
-    return request.req<string>('reldb', 'reldb://' + resourceSubjectCode, OptActionKind[item[0]], {
+    return request.req<T[]>('reldb', 'reldb://' + resourceSubjectCode, OptActionKind[item[0]], {
         sql: item[1],
         parameters: parameters
     })
-        .then(result => JSON.parse(result))
 }
 

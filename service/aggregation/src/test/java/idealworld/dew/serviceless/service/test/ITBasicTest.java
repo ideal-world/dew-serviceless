@@ -25,14 +25,12 @@ import idealworld.dew.framework.fun.test.DewTest;
 import idealworld.dew.serviceless.service.ServicelessApplication;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.BeforeAll;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ITBasicTest extends DewTest {
 
@@ -76,8 +74,7 @@ public class ITBasicTest extends DewTest {
     }
 
     protected <E> List<E> reqList(OptActionKind optActionKind, String resourceUri, Object body, String token, Integer appId, Class<E> bodyClazz) {
-        return new JsonArray(new JsonObject(request(optActionKind, resourceUri, body, token, appId)).getString("body")).stream()
-                .map(i -> JsonObject.mapFrom(i).mapTo(bodyClazz)).collect(Collectors.toList());
+        return Resp.genericList(request(optActionKind, resourceUri, body, token, appId), bodyClazz).getBody();
     }
 
 }

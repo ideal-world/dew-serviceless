@@ -20,6 +20,7 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.framework.DewAuthConstant;
+import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
@@ -85,6 +86,10 @@ public class GatewayIdentHandler extends AuthHttpHandler {
         OptActionKind actionKind;
         try {
             resourceUri = URIHelper.newURI(URLDecoder.decode(queryMap.get(DewAuthConstant.REQUEST_RESOURCE_URI_FLAG), StandardCharsets.UTF_8));
+            if(resourceUri.getPath().toLowerCase().startsWith(DewConstant.REQUEST_INNER_PATH_PREFIX)){
+                error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "请求资源不合法", ctx);
+                return;
+            }
             if (resourceUri.getScheme() == null) {
                 error(StandardCode.BAD_REQUEST, GatewayIdentHandler.class, "请求格式不合法，资源URI错误", ctx);
                 return;

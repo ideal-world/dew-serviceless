@@ -49,7 +49,7 @@ public class GatewayAuthHandler extends AuthHttpHandler {
         var action = (OptActionKind) ctx.get(DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG);
         var identOptCacheInfo = (IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
         var subjectInfo = AuthenticationProcessor.packageSubjectInfo(identOptCacheInfo);
-        authPolicy.authentication(getModuleName(), action.toString(), resourceUri, subjectInfo)
+        authPolicy.authentication(getModuleName(), action.toString().toLowerCase(), resourceUri, subjectInfo)
                 .onSuccess(authResultKind -> {
                     if (authResultKind == AuthResultKind.REJECT) {
                         error(StandardCode.UNAUTHORIZED, GatewayAuthHandler.class, "鉴权错误，没有权限访问对应的资源[" + action + "|" + resourceUri.toString() + "]", ctx);

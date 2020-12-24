@@ -17,8 +17,8 @@
 package idealworld.dew.serviceless.gateway;
 
 import idealworld.dew.framework.DewModule;
+import idealworld.dew.framework.fun.auth.exchange.ExchangeHelper;
 import idealworld.dew.framework.fun.httpserver.FunHttpServer;
-import idealworld.dew.serviceless.gateway.exchange.GatewayExchangeProcessor;
 import idealworld.dew.serviceless.gateway.process.GatewayAuthHandler;
 import idealworld.dew.serviceless.gateway.process.GatewayAuthPolicy;
 import idealworld.dew.serviceless.gateway.process.GatewayDistributeHandler;
@@ -41,7 +41,7 @@ public class GatewayModule extends DewModule<GatewayConfig> {
     @Override
     protected Future<Void> start(GatewayConfig config) {
         var authPolicy = new GatewayAuthPolicy(getModuleName(), config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
-        return GatewayExchangeProcessor.init(getModuleName())
+        return ExchangeHelper.loadAndWatchResources(getModuleName(),"")
                 .compose(resp -> {
                     var identHttpHandler = new GatewayIdentHandler(getModuleName(), config.getSecurity());
                     var authHttpHandler = new GatewayAuthHandler(getModuleName(), authPolicy);

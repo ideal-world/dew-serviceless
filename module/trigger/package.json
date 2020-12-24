@@ -1,0 +1,30 @@
+{
+  "name": "@dew/trigger",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Dew Serviceless CLI",
+  "main": "dist/main/index",
+  "files": [
+    "dist"
+  ],
+  "keywords": [],
+  "scripts": {
+    "postinstall": "es4x install",
+    "start": "tsc && es4x",
+    "test": "es4x test index.test.ts",
+    "compile": "tsc -b"
+  },
+  "license": "Apache-2.0",
+  "author": "gudaoxuri",
+  "dependencies": {"@vertx/core": "4.0.0"},
+  "devDependencies": {
+    "@es4x/create": "0.14.0",
+    "@vertx/unit": "4.0.0",
+    "typescript": "^4.0.2"
+  },
+    "maven": {
+    "groupId": "group.idealworld.dew",
+    "artifactId": "framework-kernel",
+    "version": "1.0.0-SNAPSHOT"
+  }
+}

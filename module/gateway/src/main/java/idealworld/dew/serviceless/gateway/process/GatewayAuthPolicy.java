@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -48,7 +49,7 @@ public class GatewayAuthPolicy {
             URI resourceUri,
             Map<AuthSubjectKind, List<String>> subjectInfo
     ) {
-        return AuthenticationProcessor.authentication(moduleName, actionKind, resourceUri, subjectInfo);
+        return AuthenticationProcessor.authentication(moduleName, actionKind.toLowerCase(), resourceUri, subjectInfo);
     }
 
 

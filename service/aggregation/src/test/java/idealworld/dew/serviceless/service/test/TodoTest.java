@@ -103,7 +103,7 @@ public class TodoTest extends ITBasicTest {
                     put("ak", mysqlConfig.getUsername());
                     put("sk", mysqlConfig.getPassword());
                 }
-            }, null, null, Map.class);
+            }, null, null, Long.class);
             Assertions.fail();
         } catch (Exception ignored) {
         }

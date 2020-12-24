@@ -24,6 +24,7 @@ import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.httpserver.AuthHttpHandler;
+import idealworld.dew.framework.util.JsonHelper;
 import idealworld.dew.serviceless.gateway.GatewayConfig;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -99,7 +100,7 @@ public class GatewayDistributeHandler extends AuthHttpHandler {
                         // 外部调用带上返回的HTTP Header
                         resp._1.forEach((k, v) -> ctx.response().putHeader(k, v));
                     }
-                    ctx.end(new JsonObject().put("code", "200").put("body", resp._0.toString("utf-8")).toBuffer());
+                    ctx.end(JsonHelper.appendBuffer(new JsonObject().put("code", "200"),"body", resp._0).toBuffer());
                 })
                 .onFailure(e -> error(ctx, e));
     }

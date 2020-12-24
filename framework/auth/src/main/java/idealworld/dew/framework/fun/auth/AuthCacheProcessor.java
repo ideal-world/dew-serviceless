@@ -68,19 +68,17 @@ public class AuthCacheProcessor {
                         return context.helper.success();
                     }
                     if (expireSec == DewAuthConstant.OBJECT_UNDEFINED) {
-                        return context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
-                                optInfo.getTokenKind() + "##" + System.currentTimeMillis(),
-                                optInfo.getToken())
-                                .compose(resp -> removeOldToken(optInfo.getAccountCode(),
-                                        optInfo.getTokenKind(), context));
+                        return removeOldToken(optInfo.getAccountCode(), optInfo.getTokenKind(), context)
+                                .compose(resp -> context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
+                                        optInfo.getTokenKind() + "##" + System.currentTimeMillis(),
+                                        optInfo.getToken()));
                     }
                     return context.cache.expire(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(), expireSec)
+                            .compose(resp -> removeOldToken(optInfo.getAccountCode(), optInfo.getTokenKind(), context))
                             .compose(resp ->
                                     context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
                                             optInfo.getTokenKind() + "##" + System.currentTimeMillis(),
-                                            optInfo.getToken()))
-                            .compose(resp -> removeOldToken(optInfo.getAccountCode(),
-                                    optInfo.getTokenKind(), context));
+                                            optInfo.getToken()));
                 });
     }
 

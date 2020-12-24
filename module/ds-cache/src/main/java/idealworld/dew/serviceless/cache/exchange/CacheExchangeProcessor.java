@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CacheExchangeProcessor {
 
     public static Future<Void> init(String moduleName, CacheConfig cacheConfig, Vertx vertx) {
-        return ExchangeHelper.loadAndWatchResourceSubject(moduleName, ResourceKind.CACHE,
+        return ExchangeHelper.loadAndWatchResourceSubjects(moduleName, ResourceKind.CACHE,
                 resourceSubjectExchange ->
                         FunCacheClient.init(resourceSubjectExchange.getCode(), vertx,
                                 DewConfig.FunConfig.CacheConfig.builder()

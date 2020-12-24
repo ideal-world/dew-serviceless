@@ -69,8 +69,8 @@ test('Test cache sdk', async () => {
 
     expect(await DewSDK.cache.exists('test-inrc')).toBe(true)
     expect(await DewSDK.cache.hexists('test-field-inrc', 'f1')).toBe(true)
-    expect(await DewSDK.cache.get('test-inrc')).toBe('2')
-    expect(await DewSDK.cache.hget('test-field-inrc', 'f1')).toBe('2')
+    expect(await DewSDK.cache.get('test-inrc')).toBe(2)
+    expect(await DewSDK.cache.hget('test-field-inrc', 'f1')).toBe(2)
     expect(await DewSDK.cache.hgetall('test-field-inrc')).toStrictEqual({'f1': '2'})
 
     await DewSDK.cache.del('test-inrc')
@@ -99,42 +99,43 @@ function encrypt(sql: string): string {
 }
 
 test('Test reldb sdk', async () => {
+    let identOptInfo = await DewSDK.iam.login(USERNAME, PASSWORD)
     let publicKey = await request.req<string>('getAppPublicKey', 'http://iam/console/app/app/publicKey', OptActionKind.FETCH)
     dewPlugin.initRSA(publicKey)
     let accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account'), [])
     expect(accounts.length).toBe(1)
     // @ts-ignore
-    expect(accounts[0].name).toBe('孤岛旭日1')
-    accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['孤岛旭日1'])
+    expect(accounts[0].name).toBe('dew')
+    accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['dew'])
     expect(accounts.length).toBe(1)
     // @ts-ignore
-    expect(accounts[0].name).toBe('孤岛旭日1')
+    expect(accounts[0].name).toBe('dew')
     accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['dew2'])
     expect(accounts.length).toBe(0)
     // subject
     accounts = await DewSDK.reldb.subject(APP_ID + '.reldb.default').exec(encrypt('select name from iam_account'), [])
     expect(accounts.length).toBe(1)
     // @ts-ignore
-    expect(accounts[0].name).toBe('孤岛旭日1')
+    expect(accounts[0].name).toBe('dew')
 })
 
 test('Test http sdk', async () => {
     // get
     let getR = await DewSDK.http.subject("1.http.httpbin").get<any>('/get')
-    expect(getR.headers.Host).toBe('127.0.0.1')
+    expect(getR.body.url).toBe('https://127.0.0.1/get')
     getR = await DewSDK.http.subject("1.http.httpbin").get<any>('/get', {
         'Customer-A': 'AAA'
     })
-    expect(getR.headers['Customer-A']).toBe('AAA')
+    expect(getR.body.headers['Customer-A']).toBe('AAA')
     // delete
     await DewSDK.http.subject("1.http.httpbin").delete('/delete')
     // post
     let postR = await DewSDK.http.subject("1.http.httpbin").post<any>('/post', 'some data')
-    expect(postR.data).toBe('some data')
+    expect(postR.body.data).toBe('some data')
     // put
     let putR = await DewSDK.http.subject("1.http.httpbin").put<any>('/put', 'some data')
-    expect(putR.data).toBe('some data')
+    expect(putR.body.data).toBe('some data')
     // patch
     let patchR = await DewSDK.http.subject("1.http.httpbin").patch<any>('/patch', 'some data')
-    expect(patchR.data).toBe('some data')
+    expect(patchR.body.data).toBe('some data')
 }, 200000)

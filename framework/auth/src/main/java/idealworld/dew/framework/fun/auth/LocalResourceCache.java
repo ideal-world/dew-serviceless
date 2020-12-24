@@ -16,14 +16,10 @@
 
 package idealworld.dew.framework.fun.auth;
 
-import com.ecfront.dew.common.Resp;
-import com.ecfront.dew.common.exception.RTException;
-import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.fun.cache.FunCacheClient;
+import idealworld.dew.framework.dto.OptActionKind;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,49 +42,45 @@ public class LocalResourceCache {
     // resourceKind -> actionKind -> uris
     private static final Map<String, Map<String, List<URI>>> LOCAL_RESOURCES = new ConcurrentHashMap<>();
 
-    public static void loadRemoteResources(String moduleName, String filterResourceKind) {
-        var scanKey = DewAuthConstant.CACHE_AUTH_POLICY + (filterResourceKind == null ? "" : filterResourceKind + ":");
-        FunCacheClient.choose(moduleName).scan(scanKey, key -> {
-            var keyItems = key.substring(DewAuthConstant.CACHE_AUTH_POLICY.length()).split(":");
-            var resourceKind = keyItems[0];
-            var resourceUri = resourceKind + "://" + keyItems[1];
-            var actionKind = keyItems[2];
-            if (!LOCAL_RESOURCES.containsKey(resourceKind)) {
-                LOCAL_RESOURCES.put(resourceKind, new ConcurrentHashMap<>());
-            }
-            if (!LOCAL_RESOURCES.get(resourceKind).containsKey(actionKind)) {
-                LOCAL_RESOURCES.get(resourceKind).put(actionKind, new CopyOnWriteArrayList<>());
-            }
-            try {
-                if (!LOCAL_RESOURCES.get(resourceKind).get(actionKind).contains(new URI(resourceUri))) {
-                    LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(new URI(resourceUri));
-                }
-            } catch (URISyntaxException e) {
-                log.error("[LocalResourceCache]Init local resource cache error: {}", e.getMessage(), e);
-                throw new RTException(e);
-            }
-        });
-    }
-
     public static Map<String, List<URI>> getResourceInfo(String resourceKind) {
         return LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>());
     }
 
-    public static Resp<Void> addLocalResource(URI resourceUri, String actionKind) {
+    public static void addLocalResource(URI resourceUri, String actionKind) {
         var resourceKind = resourceUri.getScheme();
         if (!LOCAL_RESOURCES.containsKey(resourceKind)) {
             LOCAL_RESOURCES.put(resourceKind, new ConcurrentHashMap<>());
         }
+        if (actionKind == null || actionKind.equalsIgnoreCase("")) {
+            addLocalResource(resourceKind, resourceUri, OptActionKind.CREATE.toString().toLowerCase());
+            addLocalResource(resourceKind, resourceUri, OptActionKind.MODIFY.toString().toLowerCase());
+            addLocalResource(resourceKind, resourceUri, OptActionKind.PATCH.toString().toLowerCase());
+            addLocalResource(resourceKind, resourceUri, OptActionKind.EXISTS.toString().toLowerCase());
+            addLocalResource(resourceKind, resourceUri, OptActionKind.FETCH.toString().toLowerCase());
+            addLocalResource(resourceKind, resourceUri, OptActionKind.DELETE.toString().toLowerCase());
+        } else {
+            addLocalResource(resourceKind, resourceUri, "");
+        }
+    }
+
+    private static void addLocalResource(String resourceKind, URI resourceUri, String actionKind) {
         if (!LOCAL_RESOURCES.get(resourceKind).containsKey(actionKind)) {
             LOCAL_RESOURCES.get(resourceKind).put(actionKind, new CopyOnWriteArrayList<>());
         }
         LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(resourceUri);
-        return Resp.success(null);
     }
 
-    public static Resp<Void> removeLocalResource(URI resourceUri, String actionKind) {
-        LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(actionKind, new ArrayList<>()).remove(resourceUri);
-        return Resp.success(null);
+    public static void removeLocalResource(URI resourceUri, String actionKind) {
+        if (actionKind == null || actionKind.equalsIgnoreCase("")) {
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.CREATE.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.MODIFY.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.PATCH.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.EXISTS.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.FETCH.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.DELETE.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
+        } else {
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(actionKind.toLowerCase(), new ArrayList<>()).remove(resourceUri);
+        }
     }
 
 }

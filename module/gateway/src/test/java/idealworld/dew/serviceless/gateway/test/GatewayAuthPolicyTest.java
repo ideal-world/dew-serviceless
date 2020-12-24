@@ -23,12 +23,12 @@ import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectOperatorKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceExchange;
+import idealworld.dew.framework.fun.auth.exchange.ExchangeHelper;
 import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.test.DewTest;
 import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.gateway.GatewayModule;
-import idealworld.dew.serviceless.gateway.exchange.GatewayExchangeProcessor;
 import idealworld.dew.serviceless.gateway.process.GatewayAuthPolicy;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -389,7 +389,7 @@ public class GatewayAuthPolicyTest extends DewTest {
 
     @Test
     public void testDynamicModifyResources(Vertx vertx, VertxTestContext testContext) {
-        GatewayExchangeProcessor.init(MODULE_NAME);
+        ExchangeHelper.loadAndWatchResources(MODULE_NAME,"");
 
         Map<AuthSubjectKind, List<String>> subjectInfo = new HashMap<>() {
             {
@@ -407,7 +407,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                             promise.complete();
                         }))
                 )
-                .compose(resp -> GatewayExchangeProcessor.init(MODULE_NAME))
+                .compose(resp -> ExchangeHelper.loadAndWatchResources(MODULE_NAME,""))
                 // 资源不存在
                 .compose(resp -> authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/app/ident"), subjectInfo))
                 .compose(result -> {
@@ -434,8 +434,8 @@ public class GatewayAuthPolicyTest extends DewTest {
                     // 通知资源变更
                     eventBus.publish("", OptActionKind.CREATE, "eb://iam/resource.http/xxxx",
                             JsonObject.mapFrom(ResourceExchange.builder()
-                                    .resourceUri("http://iam.service/console/app/ident/**")
-                                    .resourceActionKind(OptActionKind.CREATE.toString().toLowerCase())
+                                    .uri("http://iam.service/console/app/ident/**")
+                                    .actionKind(OptActionKind.CREATE.toString().toLowerCase())
                                     .build()).toBuffer(), new HashMap<>());
                     return Future.succeededFuture();
                 })
@@ -459,8 +459,8 @@ public class GatewayAuthPolicyTest extends DewTest {
                     // 通知资源变更
                     eventBus.publish("", OptActionKind.DELETE, "eb://iam/resource.http/xxxx",
                             JsonObject.mapFrom(ResourceExchange.builder()
-                                    .resourceUri("http://iam.service/console/app/ident/**")
-                                    .resourceActionKind(OptActionKind.CREATE.toString().toLowerCase())
+                                    .uri("http://iam.service/console/app/ident/**")
+                                    .actionKind(OptActionKind.CREATE.toString().toLowerCase())
                                     .build()).toBuffer(), new HashMap<>());
                     return Future.succeededFuture();
                 })

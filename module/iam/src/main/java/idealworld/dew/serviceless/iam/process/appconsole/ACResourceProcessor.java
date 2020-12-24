@@ -392,17 +392,17 @@ public class ACResourceProcessor extends EventBusProcessor {
                                 return context.sql.save(resource);
                             })
                             .compose(resourceId -> context.sql.getOne(resourceId, Resource.class))
-                            .compose(resource -> {
+                            .compose(storedResource -> {
                                 ExchangeProcessor.publish(
                                         OptActionKind.CREATE,
                                         Resource.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind(),
-                                        resource.getId(),
+                                        storedResource.getId(),
                                         ResourceExchange.builder()
-                                                .resourceActionKind(resource.getAction())
-                                                .resourceUri(resource.getUri())
+                                                .actionKind(storedResource.getAction())
+                                                .uri(storedResource.getUri())
                                                 .build(),
                                         context);
-                                return context.helper.success(resource.getId());
+                                return context.helper.success(storedResource.getId());
                             });
                 });
     }
@@ -475,8 +475,8 @@ public class ACResourceProcessor extends EventBusProcessor {
                                             Resource.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind(),
                                             storedResource.getId(),
                                             ResourceExchange.builder()
-                                                    .resourceActionKind(storedResource.getAction())
-                                                    .resourceUri(storedResource.getUri())
+                                                    .actionKind(storedResource.getAction())
+                                                    .uri(storedResource.getUri())
                                                     .build(),
                                             context);
                                     return context.helper.success();
@@ -640,8 +640,8 @@ public class ACResourceProcessor extends EventBusProcessor {
                                                             Resource.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind(),
                                                             storedResource.getId(),
                                                             ResourceExchange.builder()
-                                                                    .resourceActionKind(storedResource.getAction())
-                                                                    .resourceUri(storedResource.getUri())
+                                                                    .actionKind(storedResource.getAction())
+                                                                    .uri(storedResource.getUri())
                                                                     .build(),
                                                             context);
                                                     return context.helper.success();

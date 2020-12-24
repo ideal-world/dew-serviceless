@@ -16,14 +16,17 @@
 
 package idealworld.dew.serviceless.iam.exchange;
 
+import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.BadRequestException;
-import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
-import idealworld.dew.framework.fun.auth.dto.AuthSubjectOperatorKind;
+import idealworld.dew.framework.fun.auth.dto.*;
+import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.iam.IAMConstant;
+import idealworld.dew.serviceless.iam.domain.auth.Resource;
+import idealworld.dew.serviceless.iam.domain.auth.ResourceSubject;
 import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.domain.ident.AppIdent;
 import idealworld.dew.serviceless.iam.domain.ident.Tenant;
@@ -40,25 +43,37 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * @author gudaoxuri
  */
 @Slf4j
-public class ExchangeProcessor {
+public class ExchangeProcessor extends EventBusProcessor {
 
-    public static void publish(OptActionKind actionKind, String subjectCategory, Object subjectId, Object detailData, ProcessContext context) {
-        context.eb.publish("",
-                actionKind,
-                "eb://" + context.moduleName + "/" + subjectCategory + "/" + subjectId,
-                JsonObject.mapFrom(detailData).toBuffer(),
-                new HashMap<>());
+    public ExchangeProcessor(String moduleName) {
+        super(moduleName);
     }
 
-    public static Future<Void> cacheAppIdents(ProcessContext context) {
-        if (!context.cache.isLeader()) {
-            return context.helper.success();
+    {
+        addProcessor(OptActionKind.FETCH, DewConstant.REQUEST_INNER_PATH_PREFIX + "resource/subject", eventBusContext ->
+                findResourceSubjects(eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.context));
+        addProcessor(OptActionKind.FETCH, DewConstant.REQUEST_INNER_PATH_PREFIX + "resource", eventBusContext ->
+                findResources(eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.context));
+    }
+
+    public Future<Void> init(ProcessContext context) {
+        return cacheAppIdents(context);
+    }
+
+    private Future<Void> cacheAppIdents(ProcessContext context) {
+        try {
+            if (!context.cache.isLeader()) {
+                return context.helper.success();
+            }
+        } catch (Exception e) {
+            throw e;
         }
         return context.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
@@ -84,6 +99,67 @@ public class ExchangeProcessor {
                                 })
                                 .collect(Collectors.toList())))
                 .compose(resp -> context.helper.success());
+    }
+
+    private static Future<List<ResourceSubjectExchange>> findResourceSubjects(String kind, ProcessContext context) {
+        var sql = "SELECT * FROM %s";
+        var whereParameters = new HashMap<String, Object>();
+        if (kind != null && !kind.isBlank()) {
+            sql += " WHERE kind = #{kind}";
+            whereParameters.put("kind", kind);
+        }
+        return context.sql.list(
+                String.format(sql, new ResourceSubject().tableName()),
+                whereParameters)
+                .compose(resourceSubjects ->
+                        context.helper.success(
+                                resourceSubjects.stream()
+                                        .map(resourceSubject ->
+                                                ResourceSubjectExchange.builder()
+                                                        .code(resourceSubject.getString("code"))
+                                                        .name(resourceSubject.getString("name"))
+                                                        .kind(ResourceKind.parse(resourceSubject.getString("kind")))
+                                                        .uri(resourceSubject.getString("uri"))
+                                                        .ak(resourceSubject.getString("ak"))
+                                                        .sk(resourceSubject.getString("sk"))
+                                                        .platformAccount(resourceSubject.getString("platform_account"))
+                                                        .platformProjectId(resourceSubject.getString("platform_project_id"))
+                                                        .timeoutMs(resourceSubject.getLong("timeout_ms"))
+                                                        .build())
+                                        .collect(Collectors.toList())));
+    }
+
+    private static Future<List<ResourceExchange>> findResources(String kind, ProcessContext context) {
+        var sql = "SELECT resource.uri, resource.action FROM %s resource";
+        var whereParameters = new HashMap<String, Object>();
+        if (kind != null && !kind.isBlank()) {
+            sql += " INNER JOIN %s subject ON subject.id = resource.rel_resource_subject_id" +
+                    " WHERE subject.kind = #{kind}";
+            sql = String.format(sql, new Resource().tableName(), new ResourceSubject().tableName());
+            whereParameters.put("kind", kind);
+        } else {
+            sql = String.format(sql, new Resource().tableName());
+        }
+        return context.sql.list(
+                sql,
+                whereParameters)
+                .compose(resources ->
+                        context.helper.success(
+                                resources.stream()
+                                        .map(resource ->
+                                                ResourceExchange.builder()
+                                                        .uri(resource.getString("uri"))
+                                                        .actionKind(resource.getString("action"))
+                                                        .build())
+                                        .collect(Collectors.toList())));
+    }
+
+    public static void publish(OptActionKind actionKind, String subjectCategory, Object subjectId, Object detailData, ProcessContext context) {
+        context.eb.publish("",
+                actionKind,
+                "eb://" + context.moduleName + "/" + subjectCategory + "/" + subjectId,
+                JsonObject.mapFrom(detailData).toBuffer(),
+                new HashMap<>());
     }
 
     public static Future<Void> enableTenant(Long tenantId, ProcessContext context) {

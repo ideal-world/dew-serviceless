@@ -140,8 +140,8 @@ public class RelDBFlowTest extends DewTest {
                     }
                 }).toString()));
         FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.reldb", JsonObject.mapFrom(ResourceExchange.builder()
-                .resourceActionKind(OptActionKind.FETCH.toString().toLowerCase())
-                .resourceUri("reldb://1.reldb.subjectCodexx/iam_account/name")
+                .actionKind(OptActionKind.FETCH.toString().toLowerCase())
+                .uri("reldb://1.reldb.subjectCodexx/iam_account/name")
                 .build()).toBuffer(), new HashMap<>());
         Thread.sleep(1000);
 
@@ -149,8 +149,8 @@ public class RelDBFlowTest extends DewTest {
 
         await(FunCacheClient.choose(MODULE_NAME).del(DewConstant.CACHE_AUTH_POLICY + "reldb:1.reldb.subjectCodexx/iam_account/name:fetch"));
         FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.DELETE, "eb://iam/resource.reldb", JsonObject.mapFrom(ResourceExchange.builder()
-                .resourceActionKind(OptActionKind.FETCH.toString().toLowerCase())
-                .resourceUri("reldb://1.reldb.subjectCodexx/iam_account/name")
+                .actionKind(OptActionKind.FETCH.toString().toLowerCase())
+                .uri("reldb://1.reldb.subjectCodexx/iam_account/name")
                 .build()).toBuffer(), new HashMap<>());
         Thread.sleep(1000);
 

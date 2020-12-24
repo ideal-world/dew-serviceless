@@ -50,7 +50,7 @@ public class CacheProcessor extends EventBusProcessor {
     }
 
 
-    public static Future<?> exec(OptActionKind actionKind, String strResourceUri, Buffer strBody, ProcessContext context) {
+    public static Future<?> exec(OptActionKind actionKind, String strResourceUri, Buffer body, ProcessContext context) {
         var resourceUri = URIHelper.newURI(strResourceUri);
         var resourceSubjectCode = resourceUri.getHost();
         if (!FunCacheClient.contains(resourceSubjectCode)) {
@@ -81,38 +81,38 @@ public class CacheProcessor extends EventBusProcessor {
                 }
             case CREATE:
             case MODIFY:
-                var body = strBody.toString("utf-8");
+                var strBody = body == null ? null : body.toString("utf-8");
                 var attrExpire = resourceQuery.containsKey(CacheConstant.REQUEST_ATTR_EXPIRE_SEC)
                         && !resourceQuery.get(CacheConstant.REQUEST_ATTR_EXPIRE_SEC).isBlank()
                         ? Long.parseLong(resourceQuery.get(CacheConstant.REQUEST_ATTR_EXPIRE_SEC))
                         : null;
                 var attrIncr = resourceQuery.containsKey(CacheConstant.REQUEST_ATTR_INCR);
                 if (fieldName == null) {
-                    if (body != null && !body.isBlank() && attrIncr) {
-                        return cacheClient.incrby(key, Integer.valueOf(body));
+                    if (strBody != null && !strBody.isBlank() && attrIncr) {
+                        return cacheClient.incrby(key, Integer.valueOf(strBody));
                     }
-                    if (body != null && !body.isBlank() && attrExpire == null) {
-                        return cacheClient.set(key, body);
+                    if (strBody != null && !strBody.isBlank() && attrExpire == null) {
+                        return cacheClient.set(key, strBody);
                     }
-                    if (body != null && !body.isBlank() && attrExpire != null) {
-                        return cacheClient.setex(key, body, attrExpire);
+                    if (strBody != null && !strBody.isBlank() && attrExpire != null) {
+                        return cacheClient.setex(key, strBody, attrExpire);
                     }
-                    if ((body == null || body.isBlank()) && attrExpire != null) {
+                    if ((strBody == null || strBody.isBlank()) && attrExpire != null) {
                         return cacheClient.expire(key, attrExpire);
                     }
                 }
                 if (fieldName != null) {
-                    if (body != null && !body.isBlank() && attrIncr) {
-                        return cacheClient.hincrby(key, fieldName, Integer.valueOf(body));
+                    if (strBody != null && !strBody.isBlank() && attrIncr) {
+                        return cacheClient.hincrby(key, fieldName, Integer.valueOf(strBody));
                     }
-                    if (body != null && !body.isBlank() && attrExpire == null) {
-                        return cacheClient.hset(key, fieldName, body);
+                    if (strBody != null && !strBody.isBlank() && attrExpire == null) {
+                        return cacheClient.hset(key, fieldName, strBody);
                     }
                     if (attrExpire != null) {
                         return cacheClient.expire(key, attrExpire);
                     }
                 }
-                log.warn("[Cache]Unsupported operations: action = {}, key = {}, fieldKey = {}, body = {}, expire = {}", actionKind.toString(), key, fieldName, body, attrExpire);
+                log.warn("[Cache]Unsupported operations: action = {}, key = {}, fieldKey = {}, body = {}, expire = {}", actionKind.toString(), key, fieldName, strBody, attrExpire);
                 throw context.helper.error(new BadRequestException("请求的格式不正确"));
             case DELETE:
                 if (fieldName == null || fieldName.isBlank() || fieldName.equals("*")) {

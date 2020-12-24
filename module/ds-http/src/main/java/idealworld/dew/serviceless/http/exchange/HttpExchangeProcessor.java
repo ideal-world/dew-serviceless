@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class HttpExchangeProcessor {
 
     public static Future<Void> init(String moduleName, HttpConfig httpConfig, Vertx vertx) {
-        return ExchangeHelper.loadAndWatchResourceSubject(moduleName, ResourceKind.HTTP,
+        return ExchangeHelper.loadAndWatchResourceSubjects(moduleName, ResourceKind.HTTP,
                 resourceSubjectExchange ->
                         FunHttpClient.init(resourceSubjectExchange.getCode(), vertx,
                                 DewConfig.FunConfig.HttpClientConfig.builder()

@@ -33,6 +33,8 @@ public class DewConstant {
     public static final String REQUEST_WITHOUT_RESP_FLAG = "Dew-Without-Resp";
     public static final String REQUEST_IDENT_OPT_FLAG = "Dew-Ident-Opt";
 
+    public static final String REQUEST_INNER_PATH_PREFIX = "/eb/inner/";
+
     public static final String PARAM_DEFAULT_TOKEN_KIND_FLAG = "DEFAULT";
 
     public static final String PARAM_PROFILE_KEY = "dew.profile";

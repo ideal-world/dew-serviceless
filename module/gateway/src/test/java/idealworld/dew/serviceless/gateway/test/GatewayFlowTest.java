@@ -105,7 +105,7 @@ public class GatewayFlowTest extends DewTest {
                 "测试内容");
         Assertions.assertEquals(200, result.statusCode);
         var data = new JsonObject(result.result);
-        Assertions.assertEquals("测试内容", new JsonObject(data.getString("body")).getString("data"));
+        Assertions.assertEquals("测试内容",data.getJsonObject("body").getString("data"));
         testContext.completeNow();
     }
 
@@ -147,7 +147,7 @@ public class GatewayFlowTest extends DewTest {
                     });
             Assertions.assertEquals(200, result.statusCode);
             var data = new JsonObject(result.result);
-            Assertions.assertEquals("测试内容", new JsonObject(data.getString("body")).getString("data"));
+            Assertions.assertEquals("测试内容",data.getJsonObject("body").getString("data"));
             testContext.completeNow();
         });
     }

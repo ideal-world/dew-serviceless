@@ -77,12 +77,13 @@ public class IAMModule extends DewModule<IAMConfig> {
         new ACGroupProcessor(getModuleName());
         new ACResourceProcessor(getModuleName());
         new ACAuthPolicyProcessor(getModuleName());
+        var exchangeProcessor = new ExchangeProcessor(getModuleName());
         var context = ProcessContext.builder()
                 .conf(config)
                 .moduleName(getModuleName())
                 .build()
                 .init(IdentOptInfo.builder().build());
-        return ExchangeProcessor.cacheAppIdents(context)
+        return exchangeProcessor.init(context)
                 .compose(resp ->
                         context.sql.count(
                                 new HashMap<>(),
@@ -112,7 +113,6 @@ public class IAMModule extends DewModule<IAMConfig> {
         public Long systemAPIResourceId;
         public Long tenantAPIResourceId;
         public Long appAPIResourceId;
-        public Long appMenuResourceId;
 
     }
 
@@ -268,7 +268,7 @@ public class IAMModule extends DewModule<IAMConfig> {
                         .compose(resp ->
                                 ACResourceProcessor.addResourceSubject(ResourceSubjectAddReq.builder()
                                         .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
-                                        .name(iamConfig.getApp().getIamAppName() + "Menus")
+                                        .name(iamConfig.getApp().getIamAppName() + " Menus")
                                         .uri("menu://" + getModuleName())
                                         .kind(ResourceKind.MENU)
                                         .build(), dto.appId, dto.tenantId, context))
@@ -315,10 +315,6 @@ public class IAMModule extends DewModule<IAMConfig> {
                                         .pathAndQuery("/common/resource")
                                         .relResourceSubjectId(dto.iamMenuResourceSubjectId)
                                         .build(), dto.appId, dto.tenantId, context))
-                        .compose(appMenuResourceId -> {
-                            dto.appMenuResourceId = appMenuResourceId;
-                            return Future.succeededFuture();
-                        })
                         // 初始化权限策略
                         .compose(resp ->
                                 ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
@@ -342,14 +338,6 @@ public class IAMModule extends DewModule<IAMConfig> {
                                         .relSubjectIds(dto.appRoleAdminId + ",")
                                         .subjectOperator(AuthSubjectOperatorKind.EQ)
                                         .relResourceId(dto.appAPIResourceId)
-                                        .resultKind(AuthResultKind.ACCEPT)
-                                        .build(), dto.appId, dto.tenantId, context))
-                        .compose(resp ->
-                                ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
-                                        .relSubjectKind(AuthSubjectKind.ROLE)
-                                        .relSubjectIds(dto.appRoleAdminId + ",")
-                                        .subjectOperator(AuthSubjectOperatorKind.EQ)
-                                        .relResourceId(dto.appMenuResourceId)
                                         .resultKind(AuthResultKind.ACCEPT)
                                         .build(), dto.appId, dto.tenantId, context))
                         .compose(resp -> {

@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package idealworld.dew.framework.fun.auth.dto;
+package idealworld.dew.framework.test;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author gudaoxuri
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ResourceExchange {
+public class MiscTest {
 
-    private String uri;
-    private String actionKind;
+    @Test
+    public void testJson(){
+
+    }
 
 }

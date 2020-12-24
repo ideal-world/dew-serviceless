@@ -77,20 +77,20 @@ public abstract class DewModule<C extends Object> extends AbstractVerticle {
         moduleConfig = jsonConfig != null ? jsonConfig.mapTo(configClazz) : configClazz.getDeclaredConstructor().newInstance();
         CompositeFuture.all(loadFuns(funConfig))
                 .onSuccess(funLoadResult ->
-                        vertx.setTimer(500, r ->
-                                start(moduleConfig)
-                                        .onSuccess(resp -> EventBusDispatcher.watch(getModuleName(), moduleConfig, new HashMap<>() {
-                                            {
-                                                put("cache", enabledCacheFun());
-                                                put("httpserver", enabledHttpServerFun());
-                                                put("httpclient", enabledHttpClientFun());
-                                                put("sql", enabledSQLFun());
-                                                put("eventbus", enabledEventbus());
-                                            }
-                                        })
-                                                .onSuccess(rr -> startPromise.complete())
-                                                .onFailure(startPromise::fail))
+                        start(moduleConfig)
+                                .onSuccess(resp ->
+                                        EventBusDispatcher.watch(getModuleName(), moduleConfig, new HashMap<>() {
+                                    {
+                                        put("cache", enabledCacheFun());
+                                        put("httpserver", enabledHttpServerFun());
+                                        put("httpclient", enabledHttpClientFun());
+                                        put("sql", enabledSQLFun());
+                                        put("eventbus", enabledEventbus());
+                                    }
+                                })
+                                        .onSuccess(rr -> startPromise.complete())
                                         .onFailure(startPromise::fail))
+                                .onFailure(startPromise::fail)
                 )
                 .onFailure(startPromise::fail);
     }
