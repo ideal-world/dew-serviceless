@@ -75,6 +75,14 @@ public class PathMatchTest extends DewTest {
         matchedPaths = matchPaths("/app1");
         Assertions.assertEquals(0, matchedPaths.size());
 
+        Assertions.assertTrue(PATH_MATCHER.match("/app", "/app"));
+        Assertions.assertFalse(PATH_MATCHER.match("/app/*", "/app"));
+        Assertions.assertTrue(PATH_MATCHER.match("/app/**", "/app"));
+        Assertions.assertTrue(PATH_MATCHER.match("/app/*", "/app/1"));
+        Assertions.assertTrue(PATH_MATCHER.match("/app/**", "/app/1"));
+        Assertions.assertTrue(PATH_MATCHER.match("/app/**", "/app/1/1"));
+        Assertions.assertFalse(PATH_MATCHER.match("/app/*", "/app/1/1"));
+        Assertions.assertTrue(PATH_MATCHER.match("/app*", "/appxxx"));
         testContext.completeNow();
     }
 

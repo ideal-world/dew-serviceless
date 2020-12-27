@@ -416,9 +416,7 @@ public class AppConsoleTest extends IAMBasicTest {
 
         // 获取当前应用的权限策略列表信息
         var authPolicyResps = reqPage("/console/app/authpolicy", 1L, 100L, AuthPolicyResp.class)._0;
-        Assertions.assertEquals(25, authPolicyResps.getRecordTotal());
         Assertions.assertEquals(1, authPolicyResps.getPageTotal());
-        Assertions.assertEquals(1, authPolicyResps.getObjects().get(24).getRelResourceId());
 
         // 删除当前应用的某个权限策略
         Assertions.assertNull(req(OptActionKind.DELETE, "/console/app/authpolicy/" + authPolicyId, null, Void.class)._1);

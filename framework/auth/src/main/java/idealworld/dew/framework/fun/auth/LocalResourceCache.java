@@ -59,7 +59,7 @@ public class LocalResourceCache {
             addLocalResource(resourceKind, resourceUri, OptActionKind.FETCH.toString().toLowerCase());
             addLocalResource(resourceKind, resourceUri, OptActionKind.DELETE.toString().toLowerCase());
         } else {
-            addLocalResource(resourceKind, resourceUri, "");
+            addLocalResource(resourceKind, resourceUri, actionKind);
         }
     }
 

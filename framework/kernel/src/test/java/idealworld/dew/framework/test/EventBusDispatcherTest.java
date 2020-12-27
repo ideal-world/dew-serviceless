@@ -41,6 +41,7 @@ public class EventBusDispatcherTest extends DewTest {
     @SneakyThrows
     @Test
     public void testProcess(Vertx vertx, VertxTestContext testContext) {
+        EventBusDispatcher.initModule("");
         EventBusDispatcher.addProcessor("", OptActionKind.CREATE, "/app", MockProcessor1());
         EventBusDispatcher.addProcessor("", OptActionKind.CREATE, "/app/{name}", MockProcessor2());
         EventBusDispatcher.addProcessor("", OptActionKind.CREATE, "/app/{name}/{kind}", MockProcessor3());

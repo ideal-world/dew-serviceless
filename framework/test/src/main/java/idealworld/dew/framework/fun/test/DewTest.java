@@ -69,7 +69,7 @@ public abstract class DewTest {
 
 
     @SneakyThrows
-    protected <E> Tuple2<E, Throwable> await(Future<E> future) {
+    protected static <E> Tuple2<E, Throwable> await(Future<E> future) {
         while (!future.isComplete()) {
             Thread.sleep(10);
         }
@@ -80,7 +80,7 @@ public abstract class DewTest {
     }
 
     @SneakyThrows
-    protected  <E> Tuple2<E, Throwable> awaitRequest(Future<Tuple2<E, Map<String, String>>> future) {
+    protected static <E> Tuple2<E, Throwable> awaitRequest(Future<Tuple2<E, Map<String, String>>> future) {
         while (!future.isComplete()) {
             Thread.sleep(10);
         }
