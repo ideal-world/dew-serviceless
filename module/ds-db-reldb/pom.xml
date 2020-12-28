@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>serviceless-reldb</artifactId>
-    <name>2.2 Dew Serviceless RelDB</name>
+    <name>2.4 Dew Serviceless RelDB</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 

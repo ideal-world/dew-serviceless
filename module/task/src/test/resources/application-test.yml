@@ -1,0 +1,13 @@
+funs:
+  cache:
+    uri: redis://localhost:6379
+  sql:
+    host: 127.0.0.1
+    port:
+    db:
+    userName:
+    password:
+modules:
+  - clazzPackage: idealworld.dew.serviceless.task.TaskModule
+    config:
+      gatewayServerUrl: http://127.0.0.1:9000

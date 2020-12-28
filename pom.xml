@@ -60,10 +60,10 @@
         <module>framework/test</module>
         <module>module/gateway</module>
         <module>module/iam</module>
+        <module>module/task</module>
         <module>module/ds-db-reldb</module>
         <module>module/ds-cache</module>
         <module>module/ds-http</module>
-        <module>module/trigger</module>
         <module>service/aggregation</module>
         <!--<module>docs</module>-->
         <module>terminals</module>

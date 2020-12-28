@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>serviceless-cache</artifactId>
-    <name>2.3 Dew Serviceless Cache</name>
+    <name>2.5 Dew Serviceless Cache</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 

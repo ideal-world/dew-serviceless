@@ -27,12 +27,13 @@
         <relativePath>../../framework/parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>serviceless-http</artifactId>
-    <name>2.6 Dew Serviceless HTTP</name>
+    <artifactId>serviceless-task</artifactId>
+    <name>2.2 Dew Serviceless Task</name>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
+        <quartz.version>2.3.2</quartz.version>
     </properties>
 
     <dependencies>
@@ -42,7 +43,49 @@
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-web-client</artifactId>
+            <artifactId>vertx-redis-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-mysql-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-sql-client-templates</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+            <version>${quartz.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>${graalvm.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.truffle</groupId>
+            <artifactId>truffle-api</artifactId>
+            <version>${graalvm.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.js</groupId>
+            <artifactId>js</artifactId>
+            <version>${graalvm.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.js</groupId>
+            <artifactId>js-scriptengine</artifactId>
+            <version>${graalvm.version}</version>
+            <scope>provided</scope>
         </dependency>
         <!-- 开发、测试支撑 -->
         <dependency>

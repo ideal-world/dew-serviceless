@@ -30,9 +30,9 @@ import javax.validation.constraints.Size;
 /**
  * 资源.
  * <p>
- * URI格式： <resource kind>://<resource subject code>/<[path]>[?<property key>=<property value>]
+ * URI格式： resource kind://resource subject code/path?property key=property value
  * <p>
- * <path> 为空时 表示为（整个）该资源主体
+ * path 为空时 表示为（整个）该资源主体
  * <p>
  * {@link ResourceKind#HTTP}:
  * path = <API路径>
