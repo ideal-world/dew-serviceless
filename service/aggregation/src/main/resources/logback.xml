@@ -28,7 +28,7 @@
     </root>
 
     <logger name="idealworld.dew.serviceless">
-        <level value="TRACE"/>
+        <level value="INFO"/>
     </logger>
 
 </configuration>

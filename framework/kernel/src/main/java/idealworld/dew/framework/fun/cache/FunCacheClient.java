@@ -77,11 +77,11 @@ public class FunCacheClient {
         redisClient.redisAPI = RedisAPI.api(redis);
         redis.connect()
                 .onSuccess(conn -> {
-                    log.info("[Redis]Connected {}", config.getUri());
+                    log.info("[Redis][{}]Connected {}", code, config.getUri());
                     promise.complete();
                 })
                 .onFailure(e -> {
-                    log.error("[Redis]Connection error: {}", e.getMessage(), e);
+                    log.error("[Redis][{}]Connection error: {}", code, e.getMessage(), e);
                     throw new RTException(e);
                 });
         redisClient.subRedis = Redis.createClient(
@@ -91,11 +91,11 @@ public class FunCacheClient {
                         .setPassword(config.getPassword()))
                 .connect(conn -> {
                     if (conn.succeeded()) {
-                        log.info("[Redis]Subscribe connected {}", config.getUri());
+                        log.info("[Redis][{}]Subscribe connected {}", code, config.getUri());
                         redisClient.subRedisConn = conn.result();
                         return;
                     }
-                    log.error("[Redis]Subscribe connection error: {}", conn.cause().getMessage(), conn.cause());
+                    log.error("[Redis][{}]Subscribe connection error: {}", code, conn.cause().getMessage(), conn.cause());
                     throw new RTException(conn.cause());
                 });
         redisClient.pubRedis = Redis.createClient(
@@ -105,11 +105,11 @@ public class FunCacheClient {
                         .setPassword(config.getPassword()))
                 .connect(conn -> {
                     if (conn.succeeded()) {
-                        log.info("[Redis]Publish connected {}", config.getUri());
+                        log.info("[Redis][{}]Publish connected {}", code, config.getUri());
                         redisClient.pubRedisConn = conn.result();
                         return;
                     }
-                    log.error("[Redis]Publish connection error: {}", conn.cause().getMessage(), conn.cause());
+                    log.error("[Redis][{}]Publish connection error: {}", code, conn.cause().getMessage(), conn.cause());
                     throw new RTException(conn.cause());
                 });
         redisClient.election();
@@ -165,7 +165,7 @@ public class FunCacheClient {
                 redisAPI.expire(key, String.valueOf(expireSec)).onSuccess(response ->
                         promise.complete()
                 ).onFailure(e -> {
-                    log.error("[Redis]Expire [{}] error: {}", key, e.getMessage(), e);
+                    log.error("[Redis][{}]Expire [{}] error: {}", code, key, e.getMessage(), e);
                     promise.fail(e.getCause());
                 })
         );
@@ -181,7 +181,7 @@ public class FunCacheClient {
                 }).onSuccess(response ->
                         promise.complete()
                 ).onFailure(e -> {
-                    log.error("[Redis]Set [{}:{}] error: {}", key, value, e.getMessage(), e);
+                    log.error("[Redis][{}]Set [{}:{}] error: {}", code, key, value, e.getMessage(), e);
                     promise.fail(e.getCause());
                 })
         );
@@ -192,7 +192,7 @@ public class FunCacheClient {
                 redisAPI.setex(key, String.valueOf(expireSec), value).onSuccess(response ->
                         promise.complete()
                 ).onFailure(e -> {
-                    log.error("[Redis]Setex [{}:{}] error: {}", key, value, e.getMessage(), e);
+                    log.error("[Redis][{}]Setex [{}:{}] error: {}", code, key, value, e.getMessage(), e);
                     promise.fail(e.getCause());
                 })
         );
@@ -203,7 +203,7 @@ public class FunCacheClient {
                 redisAPI.setnx(key, value).onSuccess(response ->
                         promise.complete(response.toInteger() > 0)
                 ).onFailure(e -> {
-                    log.error("[Redis]Setnx [{}:{}] error: {}", key, value, e.getMessage(), e);
+                    log.error("[Redis][{}]Setnx [{}:{}] error: {}", code, key, value, e.getMessage(), e);
                     promise.fail(e.getCause());
                 })
         );
@@ -215,7 +215,7 @@ public class FunCacheClient {
                         .onSuccess(response -> promise.complete(
                                 response != null ? response.toString(StandardCharsets.UTF_8) : null))
                         .onFailure(e -> {
-                            log.error("[Redis]Get [{}] error: {}", key, e.getMessage(), e);
+                            log.error("[Redis][{}]Get [{}] error: {}", code, key, e.getMessage(), e);
                             promise.fail(e.getCause());
                         })
         );
@@ -235,7 +235,7 @@ public class FunCacheClient {
                 redisAPI.exists(Arrays.asList(keys))
                         .onSuccess(response -> promise.complete(response.toInteger() > 0))
                         .onFailure(e -> {
-                            log.error("[Redis]Exists [{}] error: {}", String.join(",", keys), e.getMessage(), e);
+                            log.error("[Redis][{}]Exists [{}] error: {}", code, String.join(",", keys), e.getMessage(), e);
                             promise.fail(e.getCause());
                         })
         );
@@ -247,7 +247,7 @@ public class FunCacheClient {
                 redisAPI.del(Arrays.asList(keys)).onSuccess(response ->
                         promise.complete()
                 ).onFailure(e -> {
-                    log.error("[Redis]Del [{}] error: {}", String.join(",", keys), e.getMessage(), e);
+                    log.error("[Redis][{}]Del [{}] error: {}", code, String.join(",", keys), e.getMessage(), e);
                     promise.fail(e.getCause());
                 })
         );
@@ -259,7 +259,7 @@ public class FunCacheClient {
                         .onSuccess(response -> promise.complete(
                                 response != null ? response.toLong() : null))
                         .onFailure(e -> {
-                            log.error("[Redis]Incrby [{}] error: {}", key, e.getMessage(), e);
+                            log.error("[Redis][{}]Incrby [{}] error: {}", code, key, e.getMessage(), e);
                             promise.fail(e.getCause());
                         })
         );
@@ -278,7 +278,7 @@ public class FunCacheClient {
                 })
                         .onSuccess(response -> promise.complete(null))
                         .onFailure(e -> {
-                            log.error("[Redis]Hset [{}-{}] error: {}", key, fieldKey, e.getMessage(), e);
+                            log.error("[Redis][{}]Hset [{}-{}] error: {}", code, key, fieldKey, e.getMessage(), e);
                             promise.fail(e.getCause());
                         })
         );
@@ -290,7 +290,7 @@ public class FunCacheClient {
                         .onSuccess(response -> promise.complete(
                                 response != null ? response.toString(StandardCharsets.UTF_8) : null))
                         .onFailure(e -> {
-                            log.error("[Redis]Hget [{}-{}] error: {}", key, fieldKey, e.getMessage(), e);
+                            log.error("[Redis][{}]Hget [{}-{}] error: {}", code, key, fieldKey, e.getMessage(), e);
                             promise.fail(e.getCause());
                         })
         );
@@ -314,7 +314,7 @@ public class FunCacheClient {
                             promise.complete(result);
                         })
                         .onFailure(e -> {
-                            log.error("[Redis]Hgetall [{}] error: {}", key, e.getMessage(), e);
+                            log.error("[Redis][{}]Hgetall [{}] error: {}", code, key, e.getMessage(), e);
                             promise.fail(e.getCause());
                         })
         );
@@ -325,7 +325,7 @@ public class FunCacheClient {
                 redisAPI.hexists(key, fieldKey)
                         .onSuccess(response -> promise.complete(response.toInteger() > 0))
                         .onFailure(e -> {
-                            log.error("[Redis]Hexists [{}-{}] error: {}", key, fieldKey, e.getMessage(), e);
+                            log.error("[Redis][{}]Hexists [{}-{}] error: {}", code, key, fieldKey, e.getMessage(), e);
                             promise.fail(e.getCause());
                         })
         );
@@ -339,7 +339,7 @@ public class FunCacheClient {
                 redisAPI.hdel(args)
                         .onSuccess(response -> promise.complete(null))
                         .onFailure(e -> {
-                            log.error("[Redis]Hdel [{}-{}] error: {}", key, String.join(",", fieldKeys), e.getMessage(), e);
+                            log.error("[Redis][{}]Hdel [{}-{}] error: {}", key, code, String.join(",", fieldKeys), e.getMessage(), e);
                             promise.fail(e.getCause());
                         })
         );
@@ -351,7 +351,7 @@ public class FunCacheClient {
                         .onSuccess(response -> promise.complete(
                                 response != null ? response.toLong() : null))
                         .onFailure(e -> {
-                            log.error("[Redis]Hincrby [{}-{}] error: {}", key, fieldKey, e.getMessage(), e);
+                            log.error("[Redis][{}]Hincrby [{}-{}] error: {}", code, key, fieldKey, e.getMessage(), e);
                             promise.fail(e.getCause());
                         })
         );
@@ -371,7 +371,7 @@ public class FunCacheClient {
                         promise.complete();
                         return;
                     }
-                    log.error("[Redis]Publish [{}] error: {}", key, reply.cause().getMessage(), reply.cause());
+                    log.error("[Redis][{}]Publish [{}] error: {}", code, key, reply.cause().getMessage(), reply.cause());
                     promise.fail(reply.cause());
                 })
         );
@@ -386,7 +386,7 @@ public class FunCacheClient {
                         promise.complete();
                         return;
                     }
-                    log.error("[Redis]Subscribe [{}] error: {}", key, reply.cause().getMessage(), reply.cause());
+                    log.error("[Redis][{}]Subscribe [{}] error: {}", code, key, reply.cause().getMessage(), reply.cause());
                     promise.fail(reply.cause());
                 })
         );
@@ -405,7 +405,7 @@ public class FunCacheClient {
             if (newCursor != 0) {
                 doScan(newCursor, key, fun);
             }
-        }).onFailure(e -> log.error("[Redis]Scan [{}] error: {}", key, e.getMessage(), e));
+        }).onFailure(e -> log.error("[Redis][{}]Scan [{}] error: {}", code, key, e.getMessage(), e));
     }
 
     public Boolean isLeader() {
@@ -440,12 +440,12 @@ public class FunCacheClient {
                                     }
                                 })
                                 .onFailure(e ->
-                                        log.error("[Redis]Election [{}] error: {}", CACHE_KEY_ELECTION_PREFIX + code, e.getMessage(), e)
+                                        log.error("[Redis][{}]Election [{}] error: {}", code, CACHE_KEY_ELECTION_PREFIX + code, e.getMessage(), e)
                                 );
                     }
                 })
                 .onFailure(e ->
-                        log.error("[Redis]Election [{}] error: {}", CACHE_KEY_ELECTION_PREFIX + code, e.getMessage(), e)
+                        log.error("[Redis][{}]Election [{}] error: {}", code, CACHE_KEY_ELECTION_PREFIX + code, e.getMessage(), e)
                 );
     }
 

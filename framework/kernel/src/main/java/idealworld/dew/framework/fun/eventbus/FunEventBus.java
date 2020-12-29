@@ -43,10 +43,12 @@ import java.util.Map;
 public class FunEventBus {
 
     private static final Map<String, FunEventBus> EVENT_BUS = new HashMap<>();
+    private String code;
     protected EventBus eventBus;
 
     public static Future<Void> init(String code, Vertx vertx, DewConfig.FunConfig.EventBusConfig eventBusConfig) {
         var dewEventBus = new FunEventBus();
+        dewEventBus.code = code;
         dewEventBus.eventBus = vertx.eventBus();
         dewEventBus.addInboundInterceptors().forEach(interceptor -> dewEventBus.eventBus.addInboundInterceptor(interceptor));
         dewEventBus.addOutboundInterceptors().forEach(interceptor -> dewEventBus.eventBus.addOutboundInterceptor(interceptor));
@@ -91,7 +93,7 @@ public class FunEventBus {
                 deliveryOptions,
                 (Handler<AsyncResult<Message<Buffer>>>) event -> {
                     if (event.failed()) {
-                        log.error("[EventBus]Request [{}]{}:{} error", moduleName, actionKind.toString(), uri);
+                        log.error("[EventBus][{}]Request [{}]{}:{} error", code, moduleName, actionKind.toString(), uri);
                         promise.fail(event.cause());
                     } else {
                         var respHeader = new HashMap<String, String>();
@@ -138,7 +140,7 @@ public class FunEventBus {
                     event.headers().forEach(h -> header.put(h.getKey(), h.getValue()));
                     var actionKind = OptActionKind.parse(event.headers().get(DewConstant.REQUEST_RESOURCE_ACTION_FLAG));
                     var uri = URIHelper.newURI(event.headers().get(DewConstant.REQUEST_RESOURCE_URI_FLAG));
-                    log.trace("[EventBus]Receive data [{}]{}", actionKind, uri.toString());
+                    log.trace("[EventBus][{}]Receive data [{}]{}", code, actionKind, uri.toString());
                     try {
                         var processF = consumerFun.consume(actionKind, uri, header, event.body());
                         if (!event.headers().contains(DewConstant.REQUEST_WITHOUT_RESP_FLAG)) {
@@ -164,19 +166,20 @@ public class FunEventBus {
                         }
                         processF
                                 .onFailure(e -> {
-                                    log.error("[EventBus]Process [{}]{}:{} error", moduleName, actionKind.toString(), uri, e);
-                                    if(e instanceof DewException){
+                                    log.error("[EventBus][{}]Process [{}]{}:{} error", code, moduleName, actionKind.toString(), uri, e);
+                                    if (e instanceof DewException) {
                                         event.fail(((DewException) e).getCode(), e.getMessage());
-                                    }else{
-                                        event.fail(-1, e.getMessage());;
+                                    } else {
+                                        event.fail(-1, e.getMessage());
+                                        ;
                                     }
                                 });
                     } catch (Exception e) {
-                        log.error("[EventBus]Process [{}]{}:{} error", moduleName, actionKind.toString(), uri, e);
-                        if(e instanceof DewException){
+                        log.error("[EventBus][{}]Process [{}]{}:{} error", code, moduleName, actionKind.toString(), uri, e);
+                        if (e instanceof DewException) {
                             event.fail(((DewException) e).getCode(), e.getMessage());
-                        }else{
-                            event.fail(-1, e.getMessage());;
+                        } else {
+                            event.fail(-1, e.getMessage());
                         }
                     }
                 }

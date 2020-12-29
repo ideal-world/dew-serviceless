@@ -20,7 +20,6 @@ import com.ecfront.dew.common.exception.RTIOException;
 import idealworld.dew.framework.DewConfig;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -44,15 +43,16 @@ import java.util.stream.Collectors;
 public class FunHttpServer {
 
     private static final Map<String, FunHttpServer> HTTP_SERVER = new HashMap<>();
+    private String code;
     private HttpServer httpServer;
     private Vertx vertx;
     private DewConfig.FunConfig.HttpServerConfig httpServerConfig;
 
     public static Future<Void> init(String code, Vertx vertx, DewConfig.FunConfig.HttpServerConfig httpServerConfig) {
         var httpServer = new FunHttpServer();
+        httpServer.code = code;
         httpServer.vertx = vertx;
         httpServer.httpServerConfig = httpServerConfig;
-        Promise<Void> promise = Promise.promise();
         httpServer.httpServer = vertx.createHttpServer();
         HTTP_SERVER.put(code, httpServer);
         return Future.succeededFuture();
@@ -97,7 +97,7 @@ public class FunHttpServer {
                     route.getHandlers().forEach(currentRoute::handler);
                     currentRoute.failureHandler(ctx -> {
                         int statusCode = ctx.statusCode();
-                        log.warn("[HTTP]Request error [{}] {}", ctx.statusCode(), ctx.failure().getMessage(), ctx.failure());
+                        log.warn("[HTTP][{}]Request error [{}] {}", code, ctx.statusCode(), ctx.failure().getMessage(), ctx.failure());
                         ctx.response().setStatusCode(statusCode).end("请求发生内部错误");
                     });
                     return route.getMethod();
@@ -108,10 +108,10 @@ public class FunHttpServer {
         httpServer.requestHandler(router)
                 .listen(httpServerConfig.getPort(), httpResult -> {
                     if (httpResult.succeeded()) {
-                        log.info("[HTTP]HTTP server started on port " + httpServerConfig.getPort());
+                        log.info("[HTTP][" + code + "]HTTP server started on port " + httpServerConfig.getPort());
                     } else {
-                        log.error("[HTTP]HTTP server start failure", httpResult.cause());
-                        throw new RTIOException("[HTTP]HTTP server start failure");
+                        log.error("[HTTP][" + code + "]HTTP server start failure", httpResult.cause());
+                        throw new RTIOException("[HTTP][" + code + "]HTTP server start failure");
                     }
                 });
     }

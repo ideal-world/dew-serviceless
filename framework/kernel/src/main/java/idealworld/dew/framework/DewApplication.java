@@ -47,6 +47,7 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
     protected abstract Future<?> stop(C config);
 
     private void prepare() {
+        System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory");
         ObjectMapper mapper = io.vertx.core.json.jackson.DatabindCodec.mapper();
         mapper.registerModule(new JavaTimeModule());
     }

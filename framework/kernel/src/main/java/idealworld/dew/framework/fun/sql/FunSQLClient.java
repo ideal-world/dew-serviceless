@@ -56,10 +56,12 @@ public class FunSQLClient {
 
     private static final Map<String, FunSQLClient> SQL_CLIENTS = new HashMap<>();
 
+    private String code;
     private SqlClient client;
 
     public static Future<Void> init(String code, Vertx vertx, DewConfig.FunConfig.SQLConfig config) {
         var mysqlClient = new FunSQLClient();
+        mysqlClient.code = code;
         var poolOptions = new PoolOptions()
                 .setMaxSize(config.getMaxPoolSize())
                 .setMaxWaitQueueSize(config.getMaxPoolWaitQueueSize());
@@ -123,7 +125,7 @@ public class FunSQLClient {
 
     public <E> Future<List<E>> list(String sql, Map<String, Object> parameters, Class<E> returnClazz) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]List\r\n--------------\r\n{}\r\n{}", sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]List\r\n--------------\r\n{}\r\n{}", code, sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         Promise<List<E>> promise = Promise.promise();
         SqlTemplate
@@ -139,12 +141,12 @@ public class FunSQLClient {
                                 .collect(Collectors.toList());
                         promise.complete(result);
                     } catch (Exception e) {
-                        log.error("[SQL]Select [{}] convert error: {}", sql, e.getMessage(), e);
+                        log.error("[SQL][{}]Select [{}] convert error: {}", code, sql, e.getMessage(), e);
                         promise.fail(e);
                     }
                 })
                 .onFailure(e -> {
-                    log.error("[SQL]Select [{}] error: {}", sql, e.getMessage(), e);
+                    log.error("[SQL][{}]Select [{}] error: {}", code, sql, e.getMessage(), e);
                     promise.fail(e);
                 });
         return promise.future();
@@ -202,7 +204,7 @@ public class FunSQLClient {
     public Future<Long> count(String sql, Map<String, Object> parameters) {
         var countSql = "SELECT COUNT(1) AS _count FROM (" + sql + ") AS _" + System.currentTimeMillis();
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]Count\r\n--------------\r\n{}\r\n{}", countSql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Count\r\n--------------\r\n{}\r\n{}", code, countSql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         Promise<Long> promise = Promise.promise();
         SqlTemplate
@@ -211,7 +213,7 @@ public class FunSQLClient {
                 .execute(parameters)
                 .onSuccess(records -> promise.complete(records.iterator().next().getLong("_count")))
                 .onFailure(e -> {
-                    log.error("[SQL]Count [{}] error: {}", countSql, e.getMessage(), e);
+                    log.error("[SQL][{}]Count [{}] error: {}", code, countSql, e.getMessage(), e);
                     promise.fail(e);
                 });
         return promise.future();
@@ -230,7 +232,7 @@ public class FunSQLClient {
     public <E> Future<Page<E>> page(String sql, Map<String, Object> parameters, Long pageNumber, Long pageSize, Class<E> returnClazz) {
         var pageSql = sql + " LIMIT " + (pageNumber - 1) * pageSize + ", " + pageSize;
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]Page\r\n--------------\r\n{}\r\n{}", pageSql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Page\r\n--------------\r\n{}\r\n{}", code, pageSql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         Promise<Page<E>> promise = Promise.promise();
         Page<E> page = new Page<>();
@@ -258,7 +260,7 @@ public class FunSQLClient {
         var values = caseEntity.stream().map(j -> "#{" + j.getKey() + "}").collect(Collectors.joining(", "));
         var sql = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + values + ")";
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]Save\r\n--------------\r\n{}\r\n{}", sql, caseEntity.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Save\r\n--------------\r\n{}\r\n{}", code, sql, caseEntity.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate
                 .forUpdate(client, sql)
@@ -274,7 +276,7 @@ public class FunSQLClient {
         var values = caseEntity.stream().map(j -> "#{" + j.getKey() + "}").collect(Collectors.joining(", "));
         var sql = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + values + ")";
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]Save Batch(" + jsonEntities.size() + ") , first record\r\n--------------\r\n{}\r\n{}", sql, caseEntity.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Save Batch(" + jsonEntities.size() + ") , first record\r\n--------------\r\n{}\r\n{}", code, sql, caseEntity.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql)
                 .mapFrom(TupleMapper.jsonObject())
@@ -285,14 +287,14 @@ public class FunSQLClient {
 
     public Future<Long> save(String sql, Map<String, Object> parameters) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]Save\r\n--------------\r\n{}\r\n{}", sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Save\r\n--------------\r\n{}\r\n{}", code, sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).execute(parameters), sql);
     }
 
     public Future<Long> save(String sql, List<Map<String, Object>> parameters) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]Save Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}", sql, parameters.get(0).entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Save Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}", code, sql, parameters.get(0).entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).executeBatch(parameters), sql);
     }
@@ -303,7 +305,7 @@ public class FunSQLClient {
 
     public Future<Void> update(String sql, Map<String, Object> parameters) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]Update\r\n--------------\r\n{}\r\n{}", sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Update\r\n--------------\r\n{}\r\n{}", code, sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).execute(parameters), sql)
                 .compose(resp -> Future.succeededFuture());
@@ -311,7 +313,7 @@ public class FunSQLClient {
 
     public Future<Void> update(String sql, List<Map<String, Object>> parameters) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]Update Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}", sql, parameters.get(0).entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Update Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}", code, sql, parameters.get(0).entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).executeBatch(parameters), sql)
                 .compose(resp -> Future.succeededFuture());
@@ -337,7 +339,7 @@ public class FunSQLClient {
         var sql = packageWhere("UPDATE " + tableName + " SET " + sets, whereParameters);
         caseEntity.putAll(whereParameters);
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]Update\r\n--------------\r\n{}\r\n{}", sql, caseEntity.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Update\r\n--------------\r\n{}\r\n{}", code, sql, caseEntity.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).execute(caseEntity), sql)
                 .compose(resp -> Future.succeededFuture());
@@ -382,7 +384,7 @@ public class FunSQLClient {
     public <E extends IdEntity> Future<Void> softDelete(String sql, Map<String, Object> parameters, Class<E> entityClazz) {
         var tableName = entityClazz.getDeclaredConstructor().newInstance().tableName();
         if (log.isTraceEnabled()) {
-            log.trace("[SQL]SoftDelete\r\n--------------\r\n{}\r\n{}", sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]SoftDelete\r\n--------------\r\n{}\r\n{}", code, sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return tx(client ->
                 client.list(sql, parameters, Map.class)
@@ -425,7 +427,7 @@ public class FunSQLClient {
             function.get()
                     .onComplete(result -> {
                         if (result.failed()) {
-                            log.error("[SQL]Transaction [{}] error: {}", result.cause().getMessage(), result.cause());
+                            log.error("[SQL][{}]Transaction [{}] error: {}", code, result.cause().getMessage(), result.cause());
                             promise.fail(result.cause());
                         } else {
                             promise.complete(result.result());
@@ -439,7 +441,7 @@ public class FunSQLClient {
                     .onComplete(result -> {
                         context.sql = this;
                         if (result.failed()) {
-                            log.error("[SQL]Transaction [{}] error: {}", result.cause().getMessage(), result.cause());
+                            log.error("[SQL][{}]Transaction [{}] error: {}", code, result.cause().getMessage(), result.cause());
                             promise.fail(result.cause());
                         } else {
                             promise.complete(result.result());
@@ -455,7 +457,7 @@ public class FunSQLClient {
             function.apply(this)
                     .onComplete(result -> {
                         if (result.failed()) {
-                            log.error("[SQL]Transaction [{}] error: {}", result.cause().getMessage(), result.cause());
+                            log.error("[SQL][{}]Transaction [{}] error: {}", code, result.cause().getMessage(), result.cause());
                             promise.fail(result.cause());
                         } else {
                             promise.complete(result.result());
@@ -465,7 +467,7 @@ public class FunSQLClient {
             ((Pool) client).withTransaction(client -> function.apply(txInstance(client)))
                     .onComplete(result -> {
                         if (result.failed()) {
-                            log.error("[SQL]Transaction [{}] error: {}", result.cause().getMessage(), result.cause());
+                            log.error("[SQL][{}]Transaction [{}] error: {}", code, result.cause().getMessage(), result.cause());
                             promise.fail(result.cause());
                         } else {
                             promise.complete(result.result());
@@ -517,7 +519,7 @@ public class FunSQLClient {
                     }
                 })
                 .onFailure(e -> {
-                    log.error("[SQL]SaveOrUpdate [{}] error: {}", sql, e.getMessage(), e);
+                    log.error("[SQL][{}]SaveOrUpdate [{}] error: {}", code, sql, e.getMessage(), e);
                     promise.fail(e);
                 });
         return promise.future();
@@ -536,7 +538,7 @@ public class FunSQLClient {
                         }
                         promise.complete(result);
                     } else {
-                        log.error("[SQL]Raw Execute error: {}", ar.cause().getMessage(), ar.cause());
+                        log.error("[SQL][{}]Raw Execute error: {}", code, ar.cause().getMessage(), ar.cause());
                         promise.fail(ar.cause());
                     }
                 });
