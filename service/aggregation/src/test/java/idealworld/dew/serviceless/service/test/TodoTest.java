@@ -84,6 +84,14 @@ public class TodoTest extends ITBasicTest {
         // 添加普通用户到角色
         req(OptActionKind.CREATE, "http://iam/console/tenant/account/" + accountId + "/role/" + roleId, "", appAdminToken, null, Long.class);
         // 普通用户登录
+         req(OptActionKind.CREATE, "http://iam/common/login", new HashMap<String, Object>() {
+            {
+                put("ak", "gdxr");
+                put("sk", "sossd#@x3");
+                put("relAppId", APP_ID);
+            }
+        }, null, null, Map.class);
+        // 测试二次登录时Redis中的Token是否正常
         var userIdentOpt = req(OptActionKind.CREATE, "http://iam/common/login", new HashMap<String, Object>() {
             {
                 put("ak", "gdxr");

@@ -33,34 +33,53 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <serviceless.version>1.0.0-SNAPSHOT</serviceless.version>
+        <maven.install.skip>true</maven.install.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
+
+        <main.verticle>idealworld.dew.serviceless.service.ServicelessApplication</main.verticle>
     </properties>
 
     <dependencies>
         <dependency>
+            <groupId>com.ecfront.dew</groupId>
+            <artifactId>common</artifactId>
+            <version>3.0.0-beta3</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mindrot</groupId>
+                    <artifactId>jbcrypt</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>group.idealworld.dew</groupId>
             <artifactId>serviceless-gateway</artifactId>
-            <version>${serviceless.version}</version>
+            <version>${dew-serviceless.version}</version>
         </dependency>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
             <artifactId>serviceless-iam</artifactId>
-            <version>${serviceless.version}</version>
+            <version>${dew-serviceless.version}</version>
         </dependency>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
             <artifactId>serviceless-reldb</artifactId>
-            <version>${serviceless.version}</version>
+            <version>${dew-serviceless.version}</version>
         </dependency>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
             <artifactId>serviceless-cache</artifactId>
-            <version>${serviceless.version}</version>
+            <version>${dew-serviceless.version}</version>
         </dependency>
         <dependency>
             <groupId>group.idealworld.dew</groupId>
             <artifactId>serviceless-http</artifactId>
-            <version>${serviceless.version}</version>
+            <version>${dew-serviceless.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>group.idealworld.dew</groupId>
+            <artifactId>serviceless-task</artifactId>
+            <version>${dew-serviceless.version}</version>
         </dependency>
         <!-- 开发、测试支撑 -->
         <dependency>

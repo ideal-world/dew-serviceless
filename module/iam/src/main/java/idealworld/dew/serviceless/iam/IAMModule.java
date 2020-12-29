@@ -84,10 +84,17 @@ public class IAMModule extends DewModule<IAMConfig> {
                 .build()
                 .init(IdentOptInfo.builder().build());
         return exchangeProcessor.init(context)
-                .compose(resp ->
-                        context.sql.count(
+                .compose(resp -> {
+                    try {
+                        return context.sql.count(
                                 new HashMap<>(),
-                                Tenant.class))
+                                Tenant.class);
+                    } catch (Exception e) {
+                        // FIXME test ---------------------
+                        System.out.println(e);
+                        return null;
+                    }
+                })
                 .compose(tenantCount -> {
                     if (tenantCount != 0) {
                         return Future.succeededFuture();
