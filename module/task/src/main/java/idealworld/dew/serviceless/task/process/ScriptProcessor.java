@@ -16,20 +16,22 @@
 
 package idealworld.dew.serviceless.task.process;
 
-import com.oracle.truffle.api.impl.Accessor;
-import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.js.runtime.builtins.JSProxy;
-import com.oracle.truffle.js.runtime.objects.JSObject;
-import com.oracle.truffle.js.runtime.objects.PropertyProxy;
+import com.ecfront.dew.common.exception.RTScriptException;
+import lombok.extern.slf4j.Slf4j;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @author gudaoxuri
  */
+@Slf4j
 public class ScriptProcessor {
 
     private static final Map<Long, Context> SCRIPT_CONTAINER = new HashMap<>();
@@ -54,7 +56,7 @@ public class ScriptProcessor {
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = require('DewSDK').DewSDK"));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', '" + appId + "')"));
         }
-        SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "async function " + funName + "(){\r\n"+funBody+"\r\n}"));
+        SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "async function " + funName + "(){\r\n" + funBody + "\r\n}"));
     }
 
     public static void remove(Long appId) {
@@ -62,20 +64,32 @@ public class ScriptProcessor {
     }
 
     public static void execute(Long appId, String funName) {
-        var value = SCRIPT_CONTAINER.get(appId).getBindings("js").getMember(funName).execute();
-        Object name = getPropertyWithoutSideEffect(value, "name");
-        Object message = getPropertyWithoutSideEffect(obj, "message");
-            System.out.println(value.toString());
+        synchronized (SCRIPT_CONTAINER.get(appId)) {
+            var normal = new ScriptOutput();
+            var error = new ScriptOutput();
+            Consumer<Object> then = (v) -> normal.write("" + v);
+            Consumer<Object> catchy = (v) -> error.write("" + v);
+            SCRIPT_CONTAINER.get(appId).getBindings("js").getMember(funName).execute()
+                    .invokeMember("then", then).invokeMember("catch", catchy);
+            if (!error.toString().trim().isBlank()) {
+                throw new RTScriptException(error.toString().trim());
+            }
+        }
     }
 
-    private static Object getPropertyWithoutSideEffect(DynamicObject obj, String key) {
-        Object value = obj.get(key);
-        if (value == null) {
-            return !JSProxy.isProxy(obj) ? getPropertyWithoutSideEffect(JSObject.getPrototype(obj), key) : null;
-        } else if (value instanceof Accessor) {
-            return "{Accessor}";
-        } else {
-            return value instanceof PropertyProxy ? null : value;
+    private static class ScriptOutput extends ByteArrayOutputStream {
+
+        void write(String text) {
+            try {
+                this.write(text.getBytes());
+            } catch (IOException e) {
+                assert false;
+            }
+        }
+
+        @Override
+        public synchronized String toString() {
+            return this.toString(StandardCharsets.UTF_8);
         }
     }
 

@@ -88,7 +88,12 @@ public class TaskProcessor extends EventBusProcessor {
     public static Future<Void> addTask(String code, String cron, String fun, Long appId, ProcessContext context) {
         ScriptProcessor.add(appId, code, fun);
         if (!cron.isBlank()) {
-            CronHelper.addJob(code, appId + "", cron, (name, group) -> execTask(code, appId, context));
+            CronHelper.addJob(code, appId + "", cron, (name, group) -> {
+                if (!context.cache.isLeader()) {
+                    return;
+                }
+                execTask(code, appId, context);
+            });
         }
         var taskDef = TaskDef.builder()
                 .code(code)
@@ -104,7 +109,12 @@ public class TaskProcessor extends EventBusProcessor {
         ScriptProcessor.add(appId, code, fun);
         CronHelper.removeJob(code, appId + "");
         if (!cron.isBlank()) {
-            CronHelper.addJob(code, appId + "", cron, (name, group) -> execTask(code, appId, context));
+            CronHelper.addJob(code, appId + "", cron, (name, group) -> {
+                if (!context.cache.isLeader()) {
+                    return;
+                }
+                execTask(code, appId, context);
+            });
         }
         return context.helper.notExistToError(
                 context.sql.exists(new HashMap<>() {
@@ -146,9 +156,6 @@ public class TaskProcessor extends EventBusProcessor {
     }
 
     public static Future<Void> execTask(String code, Long appId, ProcessContext context) {
-        if (!context.cache.isLeader()) {
-            return context.helper.success();
-        }
         log.trace("Executing task[{}-{}]", appId, code);
         return context.helper.notExistToError(
                 context.sql.getOne(new HashMap<>() {

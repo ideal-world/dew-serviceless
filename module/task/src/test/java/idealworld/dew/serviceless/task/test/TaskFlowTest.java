@@ -22,8 +22,11 @@ import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
+import idealworld.dew.framework.fun.sql.FunSQLClient;
 import idealworld.dew.framework.fun.test.DewTest;
 import idealworld.dew.serviceless.task.TaskModule;
+import idealworld.dew.serviceless.task.domain.TaskDef;
+import idealworld.dew.serviceless.task.domain.TaskInst;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -36,7 +39,6 @@ import org.junit.jupiter.api.Test;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.concurrent.CountDownLatch;
 
 public class TaskFlowTest extends DewTest {
 
@@ -73,7 +75,14 @@ public class TaskFlowTest extends DewTest {
     @Test
     public void testFlow(Vertx vertx, VertxTestContext testContext) {
         Assertions.assertNull(request(OptActionKind.CREATE, "http://xxx/task/codexx?cron=" + URLEncoder.encode("/5 * * * * ?", StandardCharsets.UTF_8), "Dewxx.xx()")._1);
-        new CountDownLatch(1).await();
+        Assertions.assertNull(request(OptActionKind.CREATE, "http://xxx/task/codeyy?cron=" + URLEncoder.encode("/5 * * * * ?", StandardCharsets.UTF_8), "1+1")._1);
+        var taskDefs = await(FunSQLClient.choose(MODULE_NAME).list(new HashMap<>(), TaskDef.class))._0;
+        Assertions.assertEquals(2, taskDefs.size());
+        Assertions.assertEquals("codexx", taskDefs.get(0).getCode());
+        Thread.sleep(60000);
+        var taskInsts = await(FunSQLClient.choose(MODULE_NAME).list(new HashMap<>(), TaskInst.class))._0;
+        Assertions.assertTrue(taskInsts.stream().anyMatch(TaskInst::getSuccess));
+        Assertions.assertTrue(taskInsts.stream().anyMatch(i -> !i.getSuccess()));
         testContext.completeNow();
     }
 
