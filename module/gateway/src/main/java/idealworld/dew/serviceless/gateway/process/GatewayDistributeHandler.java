@@ -84,6 +84,9 @@ public class GatewayDistributeHandler extends AuthHttpHandler {
             case OBJECT:
                 distributeModuleName = distribute.getObjModuleName();
                 break;
+            case TASK:
+                distributeModuleName = distribute.getTaskModuleName();
+                break;
             default:
                 error(StandardCode.NOT_FOUND, GatewayDistributeHandler.class, "资源类型不存在", ctx);
                 return;

@@ -65,6 +65,8 @@ public class GatewayConfig {
         private String mqModuleName = "mq";
         @Builder.Default
         private String objModuleName = "obj";
+        @Builder.Default
+        private String taskModuleName = "task";
 
     }
 
