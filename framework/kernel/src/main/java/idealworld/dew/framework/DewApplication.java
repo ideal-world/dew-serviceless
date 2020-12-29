@@ -17,7 +17,7 @@
 package idealworld.dew.framework;
 
 import com.ecfront.dew.common.$;
-import com.ecfront.dew.common.exception.RTIOException;
+import com.ecfront.dew.common.exception.RTException;
 import com.ecfront.dew.common.exception.RTReflectiveOperationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -143,15 +143,12 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
         if (System.getProperties().containsKey(DewConstant.PARAM_CONFIG)) {
             config = System.getProperty(DewConstant.PARAM_CONFIG);
         } else {
-            try {
-                config = $.file.readAllByClassPath("application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yml", StandardCharsets.UTF_8);
-            } catch (RTIOException | NullPointerException ignore) {
-                try {
-                    config = $.file.readAllByClassPath("application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yaml", StandardCharsets.UTF_8);
-                } catch (RTIOException | NullPointerException e) {
-                    log.error("[Startup]Configuration file [{}] not found in classpath", "application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yml/yaml");
-                    throw e;
-                }
+            config = $.file.readAllByClassPath("application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yml", StandardCharsets.UTF_8);
+            if (config == null) {
+                config = $.file.readAllByClassPath("application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yaml", StandardCharsets.UTF_8);
+            }
+            if (config == null) {
+                throw new RTException("[Startup]Configuration file [" + "application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yml/yaml" + "] not found in classpath");
             }
         }
         var configMap = (Map) YamlHelper.toObject(config);
