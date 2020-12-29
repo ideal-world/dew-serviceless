@@ -22,6 +22,7 @@ import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
  * @author gudaoxuri
  * @author gjason
  */
+@Slf4j
 public class AuthCacheProcessor {
 
     public static Future<Optional<IdentOptCacheInfo>> getOptInfo(String token, ProcessContext context) {
@@ -68,17 +70,17 @@ public class AuthCacheProcessor {
                         return context.helper.success();
                     }
                     if (expireSec == DewAuthConstant.OBJECT_UNDEFINED) {
-                        return removeOldToken(optInfo.getAccountCode(), optInfo.getTokenKind(), context)
-                                .compose(resp -> context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
-                                        optInfo.getTokenKind() + "##" + System.currentTimeMillis(),
-                                        optInfo.getToken()));
+                        return context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
+                                optInfo.getToken(),
+                                optInfo.getTokenKind() + "##" + System.currentTimeMillis())
+                                .compose(resp -> removeOldToken(optInfo.getAccountCode(), optInfo.getTokenKind(), context));
                     }
                     return context.cache.expire(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(), expireSec)
-                            .compose(resp -> removeOldToken(optInfo.getAccountCode(), optInfo.getTokenKind(), context))
                             .compose(resp ->
                                     context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
-                                            optInfo.getTokenKind() + "##" + System.currentTimeMillis(),
-                                            optInfo.getToken()));
+                                            optInfo.getToken(),
+                                            optInfo.getTokenKind() + "##" + System.currentTimeMillis()))
+                            .compose(resp -> removeOldToken(optInfo.getAccountCode(), optInfo.getTokenKind(), context));
                 });
     }
 
@@ -89,31 +91,21 @@ public class AuthCacheProcessor {
         // 当前 account code 关联的所有 token
         return context.cache.hgetall(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode)
                 .compose(tokenKinds ->
-                        CompositeFuture.all(tokenKinds.entrySet().stream()
-                                .map(entry ->
-                                        context.cache.exists(entry.getValue())
-                                                .compose(exists -> {
-                                                    if (!exists) {
-                                                        // 删除过期的关联token
-                                                        return context.cache.hdel(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode, entry.getKey());
-                                                    }
-                                                    return context.helper.success(null);
-                                                }))
-                                .collect(Collectors.toList())))
-                .compose(resp -> context.cache.hgetall(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode))
-                .compose(tokenKinds ->
-                        CompositeFuture.all(tokenKinds.keySet().stream()
-                                .filter(key -> key.split("##")[0].equalsIgnoreCase(tokenKind))
-                                // 按创建时间倒序
-                                .sorted((key1, key2) ->
-                                        Long.compare(Long.parseLong(key2.split("##")[1]), Long.parseLong(key1.split("##")[1])))
-                                .skip(revisionHistoryLimit)
-                                .map(key ->
-                                        // 删除多余版本
-                                        context.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + tokenKinds.get(key))
-                                                .compose(r ->
-                                                        context.cache.hdel(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode, key)))
-                                .collect(Collectors.toList())))
+                        CompositeFuture.all(
+                                tokenKinds.entrySet().stream()
+                                        .filter(entry -> entry.getValue().split("##")[0].equalsIgnoreCase(tokenKind))
+                                        // 按创建时间倒序
+                                        .sorted((entry1, entry2) ->
+                                                Long.compare(Long.parseLong(entry2.getValue().split("##")[1]), Long.parseLong(entry1.getValue().split("##")[1])))
+                                        .skip(revisionHistoryLimit + 1)
+                                        .map(entry ->
+                                                // 删除多余版本
+                                                context.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + entry.getKey())
+                                                        .compose(r ->
+                                                                context.cache.hdel(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode, entry.getKey())))
+                                        .collect(Collectors.toList())
+                        )
+                )
                 .compose(rsp -> context.helper.success());
     }
 

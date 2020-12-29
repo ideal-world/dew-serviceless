@@ -40,7 +40,7 @@ public class ProcessContext {
 
     public ProcessContext init(IdentOptInfo identOptInfo) {
         this.identOptInfo = identOptInfo;
-        if ((funStatus == null || funStatus.get("sql")) && FunSQLClient.contains(moduleName)) {
+        if ((funStatus == null || funStatus.containsKey("sql") && funStatus.get("sql")) && FunSQLClient.contains(moduleName)) {
             sql = FunSQLClient.choose(moduleName);
             if (sql.addEntityByInsertFun == null) {
                 sql.addEntityByInsertFun = o -> addSafeInfo((IdEntity) o, true);
@@ -49,13 +49,13 @@ public class ProcessContext {
                 sql.addEntityByUpdateFun = o -> addSafeInfo((IdEntity) o, false);
             }
         }
-        if ((funStatus == null || funStatus.get("cache")) && FunCacheClient.contains(moduleName)) {
+        if ((funStatus == null || funStatus.containsKey("cache") && funStatus.get("cache")) && FunCacheClient.contains(moduleName)) {
             cache = FunCacheClient.choose(moduleName);
         }
-        if ((funStatus == null || funStatus.get("httpclient")) && FunHttpClient.contains(moduleName)) {
+        if ((funStatus == null || funStatus.containsKey("httpclient") && funStatus.get("httpclient")) && FunHttpClient.contains(moduleName)) {
             http = FunHttpClient.choose(moduleName);
         }
-        if ((funStatus == null || funStatus.get("eventbus")) && FunEventBus.contains(moduleName)) {
+        if ((funStatus == null || funStatus.containsKey("eventbus") && funStatus.get("eventbus")) && FunEventBus.contains(moduleName)) {
             eb = FunEventBus.choose(moduleName);
         }
         return this;

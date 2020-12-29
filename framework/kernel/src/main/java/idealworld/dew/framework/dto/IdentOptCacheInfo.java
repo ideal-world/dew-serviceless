@@ -17,10 +17,7 @@
 package idealworld.dew.framework.dto;
 
 import idealworld.dew.framework.DewConstant;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -35,6 +32,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class IdentOptCacheInfo extends IdentOptInfo {
 
+    @Builder.Default
     private String tokenKind = DewConstant.PARAM_DEFAULT_TOKEN_KIND_FLAG;
     private Long appId;
     private Long tenantId;
