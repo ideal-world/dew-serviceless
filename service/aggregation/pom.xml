@@ -41,17 +41,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.ecfront.dew</groupId>
-            <artifactId>common</artifactId>
-            <version>3.0.0-beta3</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.mindrot</groupId>
-                    <artifactId>jbcrypt</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>group.idealworld.dew</groupId>
             <artifactId>serviceless-gateway</artifactId>
             <version>${dew-serviceless.version}</version>

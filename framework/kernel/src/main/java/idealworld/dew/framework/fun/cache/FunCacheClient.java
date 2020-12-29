@@ -26,6 +26,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.redis.client.*;
 import io.vertx.redis.client.impl.types.BulkType;
+import io.vertx.redis.client.impl.types.MultiType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
@@ -303,7 +304,12 @@ public class FunCacheClient {
                             var it = response.stream().iterator();
                             while (it.hasNext()) {
                                 var item = it.next();
-                                result.put(item.get(0).toString(), ((BulkType) item.get(1)).toString());
+                                if (item instanceof MultiType) {
+                                    result.put(item.get(0).toString(), ((BulkType) item.get(1)).toString());
+                                } else {
+                                    // TODO 在某些时候会变成单值
+                                    result.put(item.toString(), it.next().toString());
+                                }
                             }
                             promise.complete(result);
                         })

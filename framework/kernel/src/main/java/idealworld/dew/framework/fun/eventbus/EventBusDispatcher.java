@@ -118,7 +118,7 @@ public class EventBusDispatcher {
 
     public static Future<Void> watch(String moduleName, Object config, Map<String, Boolean> funStatus) {
         FunEventBus.choose(moduleName).consumer(moduleName, (actionKind, uri, header, body) ->
-                chooseProcess(moduleName, config, funStatus, actionKind, uri.getPath(), URLDecoder.decode(uri.getQuery(), StandardCharsets.UTF_8), header, body));
+                chooseProcess(moduleName, config, funStatus, actionKind, uri.getPath(), uri.getQuery() != null ? URLDecoder.decode(uri.getQuery(), StandardCharsets.UTF_8) : null, header, body));
         return Future.succeededFuture();
     }
 

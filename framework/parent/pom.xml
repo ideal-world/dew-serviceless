@@ -41,7 +41,7 @@
 
         <dew-framework.version>1.0.0-SNAPSHOT</dew-framework.version>
         <dew-serviceless.version>1.0.0-SNAPSHOT</dew-serviceless.version>
-        <dew-common.version>3.0.0-beta2</dew-common.version>
+        <dew-common.version>3.0.0-beta3</dew-common.version>
 
         <vertx.version>4.0.0</vertx.version>
         <snakeyaml.version>1.27</snakeyaml.version>
