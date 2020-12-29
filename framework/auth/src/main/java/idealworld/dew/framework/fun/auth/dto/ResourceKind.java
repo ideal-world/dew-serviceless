@@ -28,10 +28,6 @@ import java.util.Arrays;
 public enum ResourceKind {
 
     /**
-     * HTTP(s).
-     */
-    HTTP("HTTP"),
-    /**
      * 菜单.
      */
     MENU("MENU"),
@@ -39,6 +35,10 @@ public enum ResourceKind {
      * 页面元素.
      */
     ELEMENT("ELEMENT"),
+    /**
+     * OAuth.
+     */
+    OAUTH("OAUTH"),
     /**
      * 关系数据库.
      */
@@ -56,9 +56,13 @@ public enum ResourceKind {
      */
     OBJECT("OBJECT"),
     /**
-     * OAuth.
+     * Task.
      */
-    OAUTH("OAUTH");
+    TASK("TASK"),
+    /**
+     * HTTP(s).
+     */
+    HTTP("HTTP");
 
     private final String code;
 
