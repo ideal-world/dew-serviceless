@@ -68,13 +68,9 @@ public class ExchangeProcessor extends EventBusProcessor {
     }
 
     private Future<Void> cacheAppIdents(ProcessContext context) {
-        try {
             if (!context.cache.isLeader()) {
                 return context.helper.success();
             }
-        } catch (Exception e) {
-            throw e;
-        }
         return context.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
                                 " INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +

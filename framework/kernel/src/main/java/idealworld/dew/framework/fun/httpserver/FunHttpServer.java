@@ -31,9 +31,9 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FunHttpServer {
 
-    private static final Map<String, FunHttpServer> HTTP_SERVER = new HashMap<>();
+    private static final Map<String, FunHttpServer> HTTP_SERVER = new ConcurrentHashMap<>();
     private String code;
     private HttpServer httpServer;
     private Vertx vertx;

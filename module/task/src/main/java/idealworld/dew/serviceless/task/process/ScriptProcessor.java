@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 /**
@@ -35,6 +37,8 @@ import java.util.function.Consumer;
 public class ScriptProcessor {
 
     private static final Map<Long, Context> SCRIPT_CONTAINER = new HashMap<>();
+    private static final Map<Long, Lock> LOCKS = new HashMap<>();
+
 
     private static String _gatewayServerUrl;
     private static String _dewSDK;
@@ -46,7 +50,9 @@ public class ScriptProcessor {
         _dewSDK = dewSDK;
     }
 
-    public synchronized static void add(Long appId, String funName, String funBody) {
+    public static void add(Long appId, String funName, String funBody) {
+        LOCKS.putIfAbsent(appId, new ReentrantLock());
+        LOCKS.get(appId).lock();
         if (!SCRIPT_CONTAINER.containsKey(appId)) {
             Context context = Context.newBuilder().allowAllAccess(true).build();
             SCRIPT_CONTAINER.put(appId, context);
@@ -57,6 +63,7 @@ public class ScriptProcessor {
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', '" + appId + "')"));
         }
         SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "async function " + funName + "(){\r\n" + funBody + "\r\n}"));
+        LOCKS.get(appId).unlock();
     }
 
     public static void remove(Long appId) {
@@ -64,17 +71,17 @@ public class ScriptProcessor {
     }
 
     public static void execute(Long appId, String funName) {
-        synchronized (SCRIPT_CONTAINER.get(appId)) {
-            var normal = new ScriptOutput();
-            var error = new ScriptOutput();
-            Consumer<Object> then = (v) -> normal.write("" + v);
-            Consumer<Object> catchy = (v) -> error.write("" + v);
-            SCRIPT_CONTAINER.get(appId).getBindings("js").getMember(funName).execute()
-                    .invokeMember("then", then).invokeMember("catch", catchy);
-            if (!error.toString().trim().isBlank()) {
-                throw new RTScriptException(error.toString().trim());
-            }
+        LOCKS.get(appId).lock();
+        var normal = new ScriptOutput();
+        var error = new ScriptOutput();
+        Consumer<Object> then = (v) -> normal.write("" + v);
+        Consumer<Object> catchy = (v) -> error.write("" + v);
+        SCRIPT_CONTAINER.get(appId).getBindings("js").getMember(funName).execute()
+                .invokeMember("then", then).invokeMember("catch", catchy);
+        if (!error.toString().trim().isBlank()) {
+            throw new RTScriptException(error.toString().trim());
         }
+        LOCKS.get(appId).unlock();
     }
 
     private static class ScriptOutput extends ByteArrayOutputStream {

@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -46,7 +47,7 @@ public class FunCacheClient {
 
     private static final String CACHE_KEY_PREFIX = "redis:";
     private static final String CACHE_KEY_ELECTION_PREFIX = "dew:cluster:election:";
-    private static final Map<String, FunCacheClient> REDIS_CLIENTS = new HashMap<>();
+    private static final Map<String, FunCacheClient> REDIS_CLIENTS = new ConcurrentHashMap<>();
     private final String instanceId = $.field.createUUID();
     private String code;
     private Integer electionPeriodSec;
@@ -75,6 +76,7 @@ public class FunCacheClient {
                         .setMaxPoolSize(config.getMaxPoolSize())
                         .setMaxPoolWaiting(config.getMaxPoolWaiting()));
         redisClient.redisAPI = RedisAPI.api(redis);
+        REDIS_CLIENTS.put(code, redisClient);
         redis.connect()
                 .onSuccess(conn -> {
                     log.info("[Redis][{}]Connected {}", code, config.getUri());
@@ -113,7 +115,6 @@ public class FunCacheClient {
                     throw new RTException(conn.cause());
                 });
         redisClient.election();
-        REDIS_CLIENTS.put(code, redisClient);
         return promise.future();
     }
 
@@ -151,9 +152,10 @@ public class FunCacheClient {
                     }
                 })
                 .compose(resp -> {
-                    redisAPI.close();
+                    // Auto close
+                    /*redisAPI.close();
                     subRedis.close();
-                    pubRedis.close();
+                    pubRedis.close();*/
                     return Future.succeededFuture();
                 });
     }

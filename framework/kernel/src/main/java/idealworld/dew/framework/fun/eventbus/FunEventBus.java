@@ -37,12 +37,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Slf4j
 public class FunEventBus {
 
-    private static final Map<String, FunEventBus> EVENT_BUS = new HashMap<>();
+    private static final Map<String, FunEventBus> EVENT_BUS = new ConcurrentHashMap<>();
     private String code;
     protected EventBus eventBus;
 

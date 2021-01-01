@@ -24,6 +24,7 @@ import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.BadRequestException;
 import idealworld.dew.framework.exception.ConflictException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.AuthCacheProcessor;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
@@ -87,6 +88,9 @@ public class CommonProcessor extends EventBusProcessor {
         // 登录
         addProcessor(OptActionKind.CREATE, "/common/login", eventBusContext ->
                 login(eventBusContext.req.body(AccountLoginReq.class), eventBusContext.context));
+        // 获取登录信息
+        addProcessor(OptActionKind.FETCH, "/common/login", eventBusContext ->
+                fetchLoginInfo(eventBusContext.req.identOptInfo.getToken(), eventBusContext.context));
         // OAuth登录
         addProcessor(OptActionKind.CREATE, "/common/oauth/login", eventBusContext ->
                 OAuthProcessor.login(eventBusContext.req.body(AccountOAuthLoginReq.class), eventBusContext.context));
@@ -329,6 +333,16 @@ public class CommonProcessor extends EventBusProcessor {
                             .roleInfo(optInfo.getRoleInfo())
                             .groupInfo(optInfo.getGroupInfo())
                             .build());
+                });
+    }
+
+    public static Future<IdentOptInfo> fetchLoginInfo(String token, ProcessContext context) {
+        return AuthCacheProcessor.getOptInfo(token, context)
+                .compose(info -> {
+                    if (info.isPresent()) {
+                        return context.helper.success(info.get());
+                    }
+                    throw context.helper.error(new NotFoundException("Token无效"));
                 });
     }
 

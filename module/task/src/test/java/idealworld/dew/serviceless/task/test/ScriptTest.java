@@ -80,14 +80,18 @@ public class ScriptTest {
         ScriptProcessor.add(1L, "test1", "1+1");
         ScriptProcessor.add(2L, "test2", "1+1");
         ScriptProcessor.add(3L, "test3", "1+1");
-        ScriptProcessor.add(3L, "test3_1", "1+1");
+        var addThread = new Thread(() -> ScriptProcessor.add(3L, "test3_1", "1+1"));
+        addThread.start();
+        addThread.join();
 
         var hasError = new AtomicBoolean(false);
         var count = new AtomicLong(0);
         new Thread(() -> {
             while (true) {
                 try {
+                    ScriptProcessor.add(1L, "test1_1", "1+1");
                     ScriptProcessor.execute(1L, "test1");
+                    ScriptProcessor.execute(2L, "test2");
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -98,6 +102,7 @@ public class ScriptTest {
         new Thread(() -> {
             while (true) {
                 try {
+                    ScriptProcessor.execute(1L, "test1");
                     ScriptProcessor.execute(2L, "test2");
                     count.addAndGet(1);
                 } catch (Exception e) {

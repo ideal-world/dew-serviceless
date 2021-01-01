@@ -32,6 +32,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author gudaoxuri
@@ -39,17 +40,17 @@ import java.util.Map;
 @Slf4j
 public class EventBusDispatcher {
 
-    private static final Map<String, Map<OptActionKind, Map<String, ProcessFun>>> PROCESSORS = new HashMap<>();
+    private static final Map<String, Map<OptActionKind, Map<String, ProcessFun>>> PROCESSORS = new ConcurrentHashMap<>();
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 
-    public static void initModule(String moduleName) {
+    public static synchronized void initModule(String moduleName) {
         PROCESSORS.put(moduleName, new HashMap<>());
-        PROCESSORS.get(moduleName).put(OptActionKind.CREATE, new HashMap<>());
-        PROCESSORS.get(moduleName).put(OptActionKind.MODIFY, new HashMap<>());
-        PROCESSORS.get(moduleName).put(OptActionKind.FETCH, new HashMap<>());
-        PROCESSORS.get(moduleName).put(OptActionKind.EXISTS, new HashMap<>());
-        PROCESSORS.get(moduleName).put(OptActionKind.PATCH, new HashMap<>());
-        PROCESSORS.get(moduleName).put(OptActionKind.DELETE, new HashMap<>());
+        PROCESSORS.get(moduleName).put(OptActionKind.CREATE, new ConcurrentHashMap<>());
+        PROCESSORS.get(moduleName).put(OptActionKind.MODIFY, new ConcurrentHashMap<>());
+        PROCESSORS.get(moduleName).put(OptActionKind.FETCH, new ConcurrentHashMap<>());
+        PROCESSORS.get(moduleName).put(OptActionKind.EXISTS, new ConcurrentHashMap<>());
+        PROCESSORS.get(moduleName).put(OptActionKind.PATCH, new ConcurrentHashMap<>());
+        PROCESSORS.get(moduleName).put(OptActionKind.DELETE, new ConcurrentHashMap<>());
     }
 
     public static void addProcessor(String moduleName, String pathPattern, ProcessFun processFun) {

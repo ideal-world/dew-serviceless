@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author gudaoxuri
@@ -36,7 +37,7 @@ import java.util.Map;
 @Slf4j
 public class FunHttpClient {
 
-    private static final Map<String, FunHttpClient> HTTP_CLIENTS = new HashMap<>();
+    private static final Map<String, FunHttpClient> HTTP_CLIENTS = new ConcurrentHashMap<>();
     private WebClient webClient;
     private DewConfig.FunConfig.HttpClientConfig httpClientConfig;
 
