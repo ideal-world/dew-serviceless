@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
-export type JsonMap<V> = {
-    [key: string]: V;
+export type AppIdentResp = {
+    id: number
+    note: string
+    ak: string
+    validTime: number
 }

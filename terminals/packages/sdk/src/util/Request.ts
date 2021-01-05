@@ -14,17 +14,27 @@
  * limitations under the License.
  */
 
-import axios from 'axios';
 import {JsonMap} from "../domain/Basic";
 import {OptActionKind} from "../domain/Enum";
+import Base64 from "crypto-js/enc-base64";
+import moment from "moment";
+import utf8 from "crypto-js/enc-utf8";
+import hmacSHA1 from "crypto-js/hmac-sha1";
+import {axiosReq} from "./AxiosImpl";
 
 const TOKEN_FLAG = 'Dew-Token'
 const REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri"
 const REQUEST_RESOURCE_ACTION_FLAG = "Dew-Resource-Action"
-const APP_ID_FLAG = "Dew-App-Id"
+
+const AUTHENTICATION_HEAD_NAME = 'Authentication'
+const DATE_HEAD_NAME = 'Dew-Date'
+
 let _token: string = ''
 let _serverUrl: string = ''
-let _appId: number = 0
+let _ak: string = ''
+let _sk: string = ''
+
+let ajax: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any> = axiosReq
 
 const MOCK_DATA: JsonMap<Function> = {}
 
@@ -32,6 +42,10 @@ export function mock(items: JsonMap<Function>) {
     for (let k in items) {
         MOCK_DATA[k.toLowerCase()] = items[k]
     }
+}
+
+export function setAjaxImpl(impl: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>) {
+    ajax = impl
 }
 
 export function addMock(code: string, fun: Function) {
@@ -42,8 +56,9 @@ export function setToken(token: string): void {
     _token = token
 }
 
-export function setAppId(appId: number): void {
-    _appId = appId
+export function setAkSk(ak: string, sk: string): void {
+    _ak = ak
+    _sk = sk
 }
 
 export function setServerUrl(serverUrl: string): void {
@@ -60,20 +75,17 @@ export function req<T>(name: string, resourceUri: string, optActionKind: OptActi
             resolve(MOCK_DATA[name.toLowerCase()].call(null, optActionKind, resourceUri, body))
         })
     }
-    if (!_appId) {
-        throw 'The Http Head must contain [' + APP_ID_FLAG + ']'
-    }
     headers = headers ? headers : {}
-    headers[APP_ID_FLAG] = _appId + ''
     headers[TOKEN_FLAG] = _token ? _token : ''
+    let pathAndQuery = REQUEST_RESOURCE_URI_FLAG + '=' + encodeURIComponent(resourceUri) + '&' + REQUEST_RESOURCE_ACTION_FLAG + '=' + optActionKind
+    generateAuthentication('post', pathAndQuery, headers)
     console.log('[Dew]Request [%s]%s , GW = [%s]', optActionKind, resourceUri, _serverUrl)
     return new Promise<T>((resolve, reject) => {
-        axios.request<any>({
-            url: _serverUrl + '?' + REQUEST_RESOURCE_URI_FLAG + '=' + encodeURIComponent(resourceUri) + '&' + REQUEST_RESOURCE_ACTION_FLAG + '=' + optActionKind,
-            method: 'post',
-            headers: headers,
-            data: body
-        })
+        ajax(
+            _serverUrl + '?' + pathAndQuery,
+            headers,
+            body
+        )
             .then(res => {
                 let data = res.data
                 if (rawResult) {
@@ -92,4 +104,20 @@ export function req<T>(name: string, resourceUri: string, optActionKind: OptActi
                 reject(error)
             })
     })
+}
+
+function generateAuthentication(method: string, pathAndQuery: string, headers: any): void {
+    if (!_ak || !_sk) {
+        return
+    }
+    let item = pathAndQuery.split('?')
+    let path = item[0]
+    let query = item.length === 2 ? item[1] : ''
+    if (query) {
+        query = query.split('&').sort((a, b) => a < b ? 1 : -1).join("&")
+    }
+    let date = moment.utc().format('ddd, DD MMM YYYY HH:mm:ss [GMT]')
+    let signature = Base64.stringify(utf8.parse(hmacSHA1((method + '\n' + date + '\n' + path + '\n' + query).toLowerCase(), _sk).toString()))
+    headers[AUTHENTICATION_HEAD_NAME] = _ak + ':' + signature
+    headers[DATE_HEAD_NAME] = date
 }

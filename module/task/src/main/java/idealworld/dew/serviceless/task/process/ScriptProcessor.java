@@ -59,6 +59,11 @@ public class ScriptProcessor {
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", _requirejs));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", _dewSDK));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('idealworld.dew.serviceless.task.helper.ScriptExchangeHelper')"));
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "require('DewSDK').setAjaxImpl((url, headers, data) => {\r\n" +
+                    "        return new Promise((resolve, reject) => {\n\n" +
+                    "            resolve({data:JSON.parse($.req(url,headers,data))})\n\n" +
+                    "        })\n\n" +
+                    "    })"));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = require('DewSDK').DewSDK"));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', '" + appId + "')"));
         }
@@ -72,16 +77,19 @@ public class ScriptProcessor {
 
     public static void execute(Long appId, String funName) {
         LOCKS.get(appId).lock();
-        var normal = new ScriptOutput();
-        var error = new ScriptOutput();
-        Consumer<Object> then = (v) -> normal.write("" + v);
-        Consumer<Object> catchy = (v) -> error.write("" + v);
-        SCRIPT_CONTAINER.get(appId).getBindings("js").getMember(funName).execute()
-                .invokeMember("then", then).invokeMember("catch", catchy);
-        if (!error.toString().trim().isBlank()) {
-            throw new RTScriptException(error.toString().trim());
+        try {
+            var normal = new ScriptOutput();
+            var error = new ScriptOutput();
+            Consumer<Object> then = (v) -> normal.write("" + v);
+            Consumer<Object> catchy = (v) -> error.write("" + v);
+            SCRIPT_CONTAINER.get(appId).getBindings("js").getMember(funName).execute()
+                    .invokeMember("then", then).invokeMember("catch", catchy);
+            if (!error.toString().trim().isBlank()) {
+                throw new RTScriptException(error.toString().trim());
+            }
+        } finally {
+            LOCKS.get(appId).unlock();
         }
-        LOCKS.get(appId).unlock();
     }
 
     private static class ScriptOutput extends ByteArrayOutputStream {

@@ -120,7 +120,7 @@ public class CommonProcessor extends EventBusProcessor {
 
     }
 
-    public static Future<IdentOptInfo> registerTenant(TenantRegisterReq tenantRegisterReq, ProcessContext context) {
+    public static Future<IdentOptCacheInfo> registerTenant(TenantRegisterReq tenantRegisterReq, ProcessContext context) {
         var iamConfig = (IAMConfig) context.conf;
         if (!iamConfig.getAllowTenantRegister()) {
             context.helper.error(new ConflictException("当前设置不允许自助注册租户"));
@@ -198,7 +198,15 @@ public class CommonProcessor extends EventBusProcessor {
                                                 TCAccountProcessor.addAccountRole(dto.accountId, appAdminRoleId, dto.tenantId, context)))
                         // 登录
                         .compose(resp ->
-                                loginWithoutAuth(dto.accountId, dto.openId, tenantRegisterReq.getAccountUserName(), dto.appId, dto.tenantId, context)));
+                                loginWithoutAuth(dto.accountId, dto.openId, tenantRegisterReq.getAccountUserName(), dto.appId, dto.tenantId, context)))
+                .compose(identOptInfo -> context.helper.success( IdentOptCacheInfo.builder()
+                        .tenantId(dto.tenantId)
+                        .appId(dto.appId)
+                        .accountCode(identOptInfo.getAccountCode())
+                        .token(identOptInfo.getToken())
+                        .groupInfo(identOptInfo.getGroupInfo())
+                        .roleInfo(identOptInfo.getRoleInfo())
+                        .build()));
     }
 
     public static Future<IdentOptInfo> registerAccount(AccountRegisterReq accountRegisterReq, ProcessContext context) {

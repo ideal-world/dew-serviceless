@@ -16,14 +16,23 @@
 
 package idealworld.dew.serviceless.task.helper;
 
+import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.exception.RTScriptException;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Map;
 
 /**
  * @author gudaoxuri
  */
 @Slf4j
 public class ScriptExchangeHelper {
+
+    public static Object req(String url, Map header, Object data) {
+        var result = $.http.post(url, data, header);
+        log.trace("Http POST request {} response: {}", url, result);
+        return result;
+    }
 
     public static void log(String msg) {
         log.info("[Script]Log: " + msg);

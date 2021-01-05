@@ -32,55 +32,55 @@ function CacheSDK(resourceSubjectCode: string) {
     return {
         exists(key: string): Promise<boolean> {
             checkKey(key)
-            return cache<boolean>(resourceSubjectCode, OptActionKind.EXISTS, key)
+            return cache<boolean>("existsCache", resourceSubjectCode, OptActionKind.EXISTS, key)
         },
         hexists(key: string, fieldName: string): Promise<boolean> {
             checkKey(key)
-            return cache<boolean>(resourceSubjectCode, OptActionKind.EXISTS, key + "/" + fieldName)
+            return cache<boolean>("hexistsCache", resourceSubjectCode, OptActionKind.EXISTS, key + "/" + fieldName)
         },
         get<T>(key: string): Promise<T> {
             checkKey(key)
-            return cache<T>(resourceSubjectCode, OptActionKind.FETCH, key)
+            return cache<T>("getCache", resourceSubjectCode, OptActionKind.FETCH, key)
         },
         hgetall<T>(key: string): Promise<T> {
             checkKey(key)
-            return cache<T>(resourceSubjectCode, OptActionKind.FETCH, key + '/*')
+            return cache<T>("hgetallCache", resourceSubjectCode, OptActionKind.FETCH, key + '/*')
         },
         hget<T>(key: string, fieldName: string): Promise<T> {
             checkKey(key)
-            return cache<T>(resourceSubjectCode, OptActionKind.FETCH, key + '/' + fieldName)
+            return cache<T>("hgetCache", resourceSubjectCode, OptActionKind.FETCH, key + '/' + fieldName)
         },
         del(key: string): Promise<void> {
             checkKey(key)
-            return cache<void>(resourceSubjectCode, OptActionKind.DELETE, key)
+            return cache<void>("delCache", resourceSubjectCode, OptActionKind.DELETE, key)
         },
         hdel(key: string, fieldName: string): Promise<void> {
             checkKey(key)
-            return cache<void>(resourceSubjectCode, OptActionKind.DELETE, key + '/' + fieldName)
+            return cache<void>("hdelCache", resourceSubjectCode, OptActionKind.DELETE, key + '/' + fieldName)
         },
         incrby(key: string, step: number): Promise<number> {
             checkKey(key)
-            return cache<number>(resourceSubjectCode, OptActionKind.CREATE, key + '?incr=true', step + '')
+            return cache<number>("incrbyCache", resourceSubjectCode, OptActionKind.CREATE, key + '?incr=true', step + '')
         },
         hincrby(key: string, fieldName: string, step: number): Promise<number> {
             checkKey(key)
-            return cache<number>(resourceSubjectCode, OptActionKind.CREATE, key + '/' + fieldName + '?incr=true', step + '')
+            return cache<number>("hincrbyCache", resourceSubjectCode, OptActionKind.CREATE, key + '/' + fieldName + '?incr=true', step + '')
         },
         set(key: string, value: any): Promise<void> {
             checkKey(key)
-            return cache<void>(resourceSubjectCode, OptActionKind.CREATE, key, value)
+            return cache<void>("setCache", resourceSubjectCode, OptActionKind.CREATE, key, value)
         },
         hset(key: string, fieldName: string, value: any): Promise<void> {
             checkKey(key)
-            return cache<void>(resourceSubjectCode, OptActionKind.CREATE, key + '/' + fieldName, value)
+            return cache<void>("hsetCache", resourceSubjectCode, OptActionKind.CREATE, key + '/' + fieldName, value)
         },
         setex(key: string, value: any, expireSec: number): Promise<void> {
             checkKey(key)
-            return cache<void>(resourceSubjectCode, OptActionKind.CREATE, key + '?expire=' + expireSec, value)
+            return cache<void>("setexCache", resourceSubjectCode, OptActionKind.CREATE, key + '?expire=' + expireSec, value)
         },
         expire(key: string, expireSec: number): Promise<void> {
             checkKey(key)
-            return cache<void>(resourceSubjectCode, OptActionKind.CREATE, key + '?expire=' + expireSec)
+            return cache<void>("expireCache", resourceSubjectCode, OptActionKind.CREATE, key + '?expire=' + expireSec)
         },
         subject(resourceSubject: string) {
             return CacheSDK(resourceSubject)
@@ -95,6 +95,6 @@ function checkKey(key: string): void {
     }
 }
 
-function cache<T>(resourceSubjectCode: string, optActionKind: OptActionKind, pathAndQuery: string, body?: any): Promise<T> {
-    return request.req<T>('cache', 'cache://' + resourceSubjectCode + '/' + pathAndQuery, optActionKind, body)
+function cache<T>(name: string, resourceSubjectCode: string, optActionKind: OptActionKind, pathAndQuery: string, body?: any): Promise<T> {
+    return request.req<T>(name, 'cache://' + resourceSubjectCode + '/' + pathAndQuery, optActionKind, body)
 }

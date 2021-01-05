@@ -19,6 +19,8 @@ package idealworld.dew.framework.util;
 import lombok.SneakyThrows;
 
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,7 +37,7 @@ public class URIHelper {
             // E.g. jdbc:h2:men:iam 不用解析
             return uri.toString();
         }
-        var query = sortQuery(uri.getQuery());
+        var query = sortQuery(uri.getRawQuery());
         var path = uri.getPath().isBlank()
                 ? ""
                 : uri.getPath().endsWith("/")
@@ -46,7 +48,7 @@ public class URIHelper {
                 + uri.getHost()
                 + (uri.getPort() != -1 ? ":" + uri.getPort() : "")
                 + path
-                + (uri.getQuery() != null ? "?" + query : "");
+                + (uri.getRawQuery() != null ? "?" + query : "");
     }
 
     public static String sortQuery(String query) {
@@ -88,7 +90,7 @@ public class URIHelper {
                 ? uri.getPath().substring(0, uri.getPath().length() - 1)
                 : uri.getPath();
         return path
-                + (uri.getQuery() != null ? "?" + uri.getQuery() : "");
+                + (uri.getRawQuery() != null ? "?" + uri.getRawQuery() : "");
     }
 
     public static Map<String, String> getSingleValueQuery(String query) {
@@ -101,7 +103,7 @@ public class URIHelper {
         }
         return Arrays.stream(query.split("&"))
                 .map(i -> i.split("="))
-                .collect(Collectors.toMap(i -> toLowerCase ? i[0].toLowerCase() : i[0], i -> i.length > 1 ? i[1] : ""));
+                .collect(Collectors.toMap(i -> toLowerCase ? i[0].toLowerCase() : i[0], i -> i.length > 1 ? URLDecoder.decode(i[1], StandardCharsets.UTF_8) : ""));
     }
 
     @SneakyThrows

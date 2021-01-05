@@ -57,11 +57,11 @@ public class EventBusContext {
         public IdentOptCacheInfo identOptInfo = IdentOptCacheInfo.builder().build();
 
         public Long pageNumber() {
-            return Long.parseLong(params.get("pageNumber"));
+            return Long.parseLong(params.getOrDefault("pageNumber", "1"));
         }
 
         public Long pageSize() {
-            return Long.parseLong(params.get("pageSize"));
+            return Long.parseLong(params.getOrDefault("pageSize", "10"));
         }
 
         public <E> E body(Class<E> clazz) {

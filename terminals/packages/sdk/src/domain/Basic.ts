@@ -15,5 +15,29 @@
  */
 
 export type JsonMap<V> = {
-    [key: string]: V;
+    [key: string]: V
+}
+
+
+export type Page<V> = {
+    /**
+     * 当前页，从1开始.
+     */
+    pageNumber: number
+    /**
+     * 每页记录数.
+     */
+    pageSize: number
+    /**
+     * 总页数.
+     */
+    pageTotal: number
+    /**
+     * 总记录数.
+     */
+    recordTotal: number
+    /**
+     * 实际对象.
+     */
+    objects: V[]
 }

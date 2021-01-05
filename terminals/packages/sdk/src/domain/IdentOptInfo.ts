@@ -1,35 +1,44 @@
 /*
  * Copyright 2020. gudaoxuri
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * Unless required by applicable law or agreed to in writing software
+ * distributed under the License is distributed on an "AS IS" BASIS
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
 export type IdentOptInfo = {
-    token: string,
-    accountCode: string,
+    token: string
+    accountCode: string
+    roleInfo: RoleInfo[]
+    groupInfo: GroupInfo[]
+}
+
+export type IdentOptCacheInfo = {
+    tenantId: string
+    appId: string
+    token: string
+    accountCode: string
     roleInfo: RoleInfo[]
     groupInfo: GroupInfo[]
 }
 
 export type RoleInfo = {
-    code: string,
-    name: string,
+    code: string
+    name: string
 }
 
 export type GroupInfo = {
-    groupCode: string,
-    groupNodeCode: string,
-    groupNodeBusCode: string,
-    groupName: string,
-    groupNodeName: string,
+    groupCode: string
+    groupNodeCode: string
+    groupNodeBusCode: string
+    groupName: string
+    groupNodeName: string
 }

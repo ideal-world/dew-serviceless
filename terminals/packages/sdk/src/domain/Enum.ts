@@ -40,3 +40,101 @@ export enum OptActionKind {
      */
     DELETE = 'DELETE',
 }
+
+export enum CommonStatus {
+    /**
+     * 禁用
+     */
+    DISABLED = "DISABLED",
+
+    /**
+     * 启用
+     */
+    ENABLED = "ENABLED",
+}
+
+
+export enum AccountIdentKind {
+    /**
+     * 用户名 + 密码.
+     */
+    USERNAME = "USERNAME",
+    /**
+     * 租户间授权认证.
+     */
+    AUTH_IDENT = "AUTH-IDENT",
+    /**
+     * 手机号 + 验证码.
+     */
+    PHONE = "PHONE",
+    /**
+     * 邮箱 + 密码.
+     */
+    EMAIL = "EMAIL",
+    /**
+     * 微信小程序OAuth.
+     */
+    WECHAT_XCX = "WECHAT-XCX",
+}
+
+export enum ResourceKind {
+    /**
+     * 菜单.
+     */
+    MENU = "MENU",
+    /**
+     * 页面元素.
+     */
+    ELEMENT = "ELEMENT",
+    /**
+     * OAuth.
+     */
+    OAUTH = "OAUTH",
+    /**
+     * 关系数据库.
+     */
+    RELDB = "RELDB",
+    /**
+     * 缓存.
+     */
+    CACHE = "CACHE",
+    /**
+     * MQ.
+     */
+    MQ = "MQ",
+    /**
+     * 对象存储.
+     */
+    OBJECT = "OBJECT",
+    /**
+     * Task.
+     */
+    TASK = "TASK",
+    /**
+     * HTTP(s).
+     */
+    HTTP = "HTTP",
+}
+
+export enum AuthSubjectKind {
+    /**
+     * 租户.
+     */
+    TENANT = "TENANT",
+    /**
+     * 应用.
+     */
+    APP = "APP",
+    /**
+     * 角色.
+     */
+    ROLE = "ROLE",
+    /**
+     * 群组节点.
+     */
+    GROUP_NODE = "GROUP_NODE",
+    /**
+     * 账户.
+     */
+    ACCOUNT = "ACCOUNT",
+}

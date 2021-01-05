@@ -19,26 +19,44 @@ import * as iamSDK from "./module/IAMSDK";
 import * as cacheSDK from "./module/CacheSDK";
 import * as httpSDK from "./module/HttpSDK";
 import * as reldbSDK from "./module/RelDBSDK";
+import * as taskSDK from "./module/TaskSDK";
+import {JsonMap} from "./domain/Basic";
 
 export const DewSDK = {
+    _load:load(),
     init: init,
     iam: iamSDK.iamSDK,
     reldb: reldbSDK.reldbSDK(),
     cache: cacheSDK.cacheSDK(),
     http: httpSDK.httpSDK(),
+    task: taskSDK.taskSDK(),
 }
 
+export function setAjaxImpl(impl: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>) {
+    request.setAjaxImpl(impl)
+}
+
+function load(){
+
+}
+
+/**
+ * 初始化SDK
+ * @param serverUrl 服务网关地址
+ * @param appId 当前应用Id
+ */
 function init(serverUrl: string, appId: number): void {
     request.setServerUrl(serverUrl)
-    request.setAppId(appId)
-    iamSDK.init(appId)
+    iamSDK.init()
     reldbSDK.init(appId)
     cacheSDK.init(appId)
     httpSDK.init(appId)
+    taskSDK.init(appId)
     // 重新赋值一次
     DewSDK.reldb = reldbSDK.reldbSDK()
     DewSDK.cache = cacheSDK.cacheSDK()
     DewSDK.http = httpSDK.httpSDK()
+    DewSDK.task = taskSDK.taskSDK()
 }
 
 

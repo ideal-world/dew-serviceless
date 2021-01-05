@@ -15,20 +15,23 @@
  */
 
 import inquirer from 'inquirer'
-import {IdentOptInfo} from './domain/IdentOptInfo'
-import * as request from './util/Request'
 import * as gitHelper from './util/GitHelper'
 import chalk from "chalk";
 import clear from "clear";
 import figlet from "figlet";
 import * as fileHelper from './util/FileHelper';
 import fsPath from "path";
+import {DewSDK} from "@dew/sdk/dist/DewSDK";
+import * as request from '@dew/sdk/dist/util/Request';
 
 const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless-template-simple.git'
 
 // TODO
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000";
 const IAM_URL = "http://iam";
+const SDK_VERSION = "1.0.0";
+
+DewSDK.init(GATEWAY_SERVER_URL, "")
 
 const createAppWithNewTenantSteps: any[] = [
     {
@@ -196,13 +199,8 @@ const allSteps: any[] = [
 async function createApp(answers: any) {
     let confirmMessage
     if (!answers.createTenant) {
-        let identOptInfo = await request.req<IdentOptInfo>('login', IAM_URL + '/common/login', 'CREATE', {
-            ak: answers.tenantAdminUsername,
-            sk: answers.tenantAdminPassword,
-            relAppId: answers.tenantAdminAppId
-        })
-        request.setToken(identOptInfo.token)
-        let tenantName = (await request.req<any>('getTenant', IAM_URL + '/console/tenant/tenant', 'FETCH')).name
+        await DewSDK.iam.account.login(answers.tenantAdminUsername, answers.tenantAdminPassword, answers.tenantAdminAppId)
+        let tenantName = (await DewSDK.iam.tenant.fetch()).name
         confirmMessage = '即将在租户 [' + tenantName + '] 中创建应用 [' + answers.appName + ']'
     } else {
         confirmMessage = '即将创建应用 [' + answers.appName + ']'
@@ -215,26 +213,32 @@ async function createApp(answers: any) {
     if (!confirmAnswer) {
         return;
     }
+    let appId
     if (answers.createTenant) {
-        let identOptInfo = await request.req<IdentOptInfo>('createTenant', IAM_URL + '/common/tenant', 'CREATE', {
-            tenantName: answers.tenantName,
-            appName: answers.appName,
-            accountUserName: answers.tenantAdminUsername,
-            accountPassword: answers.tenantAdminPassword,
-        })
+        let identOptInfo = await DewSDK.iam.tenant.register(answers.tenantName, answers.appName, answers.tenantAdminUsername, answers.tenantAdminPassword)
         request.setToken(identOptInfo.token)
+        appId = identOptInfo.appId
     } else {
-        await request.req<any>('createApp', IAM_URL + '/console/tenant/app', 'CREATE', {
-            name: answers.appName,
-        })
+        appId = await DewSDK.iam.app.fetch(answers.appName)
     }
-    let publicKey = await request.req<string>('getAppPublicKey', IAM_URL + '/console/app/app/publicKey', 'FETCH')
+    let publicKey = await DewSDK.iam.app.fetchPublicKey()
+    let identAKInfo = (await DewSDK.iam.app.ident.list()).body[0]
+    let identSk = await DewSDK.iam.app.ident.fetch(identAKInfo.id)
+
     let path = fsPath.resolve(fileHelper.pwd(), answers.appName)
     console.log(chalk.green('正在创建模板到 [' + path + ']'))
-    // TODO package.json 内容替换
     await gitHelper.clone(TEMPLATE_SIMPLE_GIT_ADDR, path, 1)
-    fileHelper.writeFile(path + '/Dew.key', publicKey)
-    console.log(chalk.green.bold.bgWhite('应用创建完成，请到 [' + path + '] 中查看。'))
+    let packageJsonFile = JSON.parse(fileHelper.readFile(path + '/package.json'))
+    packageJsonFile['dependencies'].push("@dew/sdk", SDK_VERSION)
+    fileHelper.writeFile(path + '/package.json', JSON.stringify(packageJsonFile))
+    fileHelper.writeFile(path + '/Dew.public', publicKey)
+    fileHelper.writeFile(path + '/Dew.secret', identAKInfo.ak + '\r\n' + identSk)
+    console.log(chalk.green.bold.bgWhite('应用创建完成，请到 [' + path + '] 中查看。\r\n' +
+        '===================\r\n' +
+        '应用Id(AppId): ' + appId + '\r\n' +
+        '应用管理员: ' + answers.tenantAdminUsername + '\r\n' +
+        '管理员密码: ' + answers.tenantAdminPassword + '\r\n' +
+        '==================='))
 }
 
 export async function run() {

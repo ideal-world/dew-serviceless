@@ -10,7 +10,7 @@
   "scripts": {
     "clean": "rimraf ./dist && rimraf tsconfig.build.tsbuildinfo",
     "compile": "tsc -b",
-    "build": "yarn run clean && yarn run compile",
+    "build": "yarn run clean && yarn run compile && gulp",
     "test": "jest",
     "testC": "jest --coverage --no-cache",
     "prepublishOnly": "yarn run build"
@@ -18,7 +18,10 @@
   "license": "Apache-2.0",
   "author": "gudaoxuri",
   "dependencies": {
-    "axios": "^0.20.0"
+    "axios": "^0.20.0",
+    "@types/crypto-js": "^4.0.1",
+    "crypto-js": "^4.0.0",
+    "moment": "^2.29.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

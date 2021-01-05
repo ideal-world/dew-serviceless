@@ -60,7 +60,7 @@ public class CacheProcessor extends EventBusProcessor {
         if (resourcePath.length < 1) {
             throw context.helper.error(new BadRequestException("请求的格式不正确"));
         }
-        var resourceQuery = URIHelper.getSingleValueQuery(resourceUri.getQuery());
+        var resourceQuery = URIHelper.getSingleValueQuery(resourceUri.getRawQuery());
         var key = resourcePath[0];
         var fieldName = resourcePath.length == 2 ? resourcePath[1] : null;
         var cacheClient = FunCacheClient.choose(resourceSubjectCode);

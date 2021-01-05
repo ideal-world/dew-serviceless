@@ -16,49 +16,192 @@
 
 import * as request from "../util/Request";
 import {IdentOptInfo} from "../domain/IdentOptInfo";
-import {OptActionKind} from "../domain/Enum";
+import {AccountIdentKind, AuthSubjectKind, OptActionKind, ResourceKind} from "../domain/Enum";
+import {IdentOptCacheInfo} from "@dew/cli/dist/domain/IdentOptInfo";
+import {TenantResp} from "../domain/Tenant";
+import {AppIdentResp} from "../domain/App";
+import {Page} from "../domain/Basic";
 
 const iamModuleName: string = 'iam'
-let _appId: number = 0
 
-export function init(appId: number): void {
-    _appId = appId
+export function init(): void {
+}
+
+const account = {
+
+    login(userName: string, password: string, appId: number): Promise<IdentOptInfo> {
+        request.setToken('')
+        return request.req<IdentOptInfo>('login', 'http://' + iamModuleName + '/common/login', OptActionKind.CREATE, {
+            ak: userName,
+            sk: password,
+            relAppId: appId
+        })
+            .then(identOptInfo => {
+                request.setToken(identOptInfo.token)
+                return identOptInfo
+            })
+    },
+    logout(): Promise<void> {
+        return request.req<void>('logout', 'http://' + iamModuleName + '/common/logout', OptActionKind.DELETE)
+            .then(() => {
+                request.setToken('')
+            })
+    },
+    registerAccount(accountName: string): Promise<number> {
+        return request.req<number>('registerAccount', 'http://' + iamModuleName + '/console/tenant/account', OptActionKind.CREATE, {
+            name: accountName
+        })
+    },
+    createAccountIdent(accountId: number, identKind: AccountIdentKind, ak: string, sk: string): Promise<number> {
+        return request.req<number>('addAccountIdent', 'http://' + iamModuleName + '/console/tenant/account/' + accountId + '/ident', OptActionKind.CREATE, {
+            kind: identKind,
+            ak: ak,
+            sk: sk
+        })
+    },
+    bindApp(accountId: number, appId: number): Promise<number> {
+        return request.req<number>('bindApp', 'http://' + iamModuleName + '/console/tenant/account/' + accountId + '/app/' + appId, OptActionKind.CREATE)
+    },
+    bindRole(accountId: number, roleId: number): Promise<number> {
+        return request.req<number>('bindRole', 'http://' + iamModuleName + '/console/tenant/account/' + accountId + '/role/' + roleId, OptActionKind.CREATE)
+    }
+
+}
+
+const resource = {
+
+    fetchMenu(): Promise<any[]> {
+        return request.req('fetchMenu', 'menu://' + iamModuleName + '/common/resource?kind=menu', OptActionKind.FETCH)
+    },
+    fetchEle(): Promise<any[]> {
+        return request.req('fetchEle', 'element://' + iamModuleName + '/common/resource?kind=element', OptActionKind.FETCH)
+    },
+    createResourceSubject(code: string, kind: ResourceKind, name: string, uri: string, ak: string, sk: string): Promise<number> {
+        return request.req<number>('createResourceSubject', 'http://' + iamModuleName + '/console/app/resource/subject', OptActionKind.CREATE, {
+            codePostfix: code,
+            kind: kind,
+            name: name,
+            uri: uri,
+            ak: ak,
+            sk: sk
+        })
+    },
+    createResource(name: string, pathAndQuery: string, resourceSubjectId: number): Promise<number> {
+        return request.req<number>('createResource', 'http://' + iamModuleName + '/console/app/resource', OptActionKind.CREATE, {
+            name: name,
+            pathAndQuery: pathAndQuery,
+            relResourceSubjectId: resourceSubjectId
+        })
+    },
+
+}
+
+const authpolicy = {
+    createAuthPolicy(subjectKind: AuthSubjectKind, subjectId: number, resourceId: number): Promise<void> {
+        return request.req<void>('createAuthPolicy', 'http://' + iamModuleName + '/console/app/authpolicy', OptActionKind.CREATE, {
+            relSubjectKind: subjectKind,
+            relSubjectIds: subjectId,
+            subjectOperator: "EQ",
+            relResourceId: resourceId,
+            resultKind: "ACCEPT"
+        })
+    },
+}
+
+const tenant = {
+
+    registerTenant(tenantName: string, appName: string, tenantAdminUsername: string, tenantAdminPassword: string): Promise<IdentOptCacheInfo> {
+        return request.req<IdentOptCacheInfo>('createTenant', 'http://' + iamModuleName + '/common/tenant', OptActionKind.CREATE, {
+            tenantName: tenantName,
+            appName: appName,
+            accountUserName: tenantAdminUsername,
+            accountPassword: tenantAdminPassword,
+        })
+    },
+    fetchTenant(): Promise<TenantResp> {
+        return request.req<IdentOptCacheInfo>('fetchTenant', 'http://' + iamModuleName + '/console/tenant/tenant', OptActionKind.FETCH)
+    }
+
+}
+
+const app = {
+
+    createApp(appName: string): Promise<number> {
+        return request.req<number>('createApp', 'http://' + iamModuleName + '/console/tenant/app', OptActionKind.CREATE, {
+            name: appName
+        })
+    },
+    fetchPublicKey(): Promise<string> {
+        return request.req<string>('fetchPublicKey', 'http://' + iamModuleName + '/console/app/app/publicKey', OptActionKind.FETCH)
+    },
+    listAppIdents(): Promise<Page<AppIdentResp>> {
+        return request.req<Page<AppIdentResp>>('listAppIdents', 'http://' + iamModuleName + '/console/app/app/ident', OptActionKind.FETCH)
+    },
+    fetchAppIdentSk(identId: string): Promise<string> {
+        return request.req<string>('fetchAppIdentSk', 'http://' + iamModuleName + '/console/app/app/ident/' + identId + '/sk', OptActionKind.FETCH)
+    },
+
+}
+
+const role = {
+
+    createRoleDef(roleDefCode: string, roleDefName: string): Promise<number> {
+        return request.req<number>('createRoleDef', 'http://' + iamModuleName + '/console/app/role/def', OptActionKind.CREATE, {
+            code: roleDefCode,
+            name: roleDefName
+        })
+    },
+
+    createRole(relRoleDefId: number): Promise<number> {
+        return request.req<number>('createRole', 'http://' + iamModuleName + '/console/app/role', OptActionKind.CREATE, {
+            relRoleDefId: relRoleDefId
+        })
+    }
+
 }
 
 export const iamSDK = {
-    login: login,
-    logout: logout,
-    menu: {
-        fetch: fetchMenu
+    account: {
+        login: account.login,
+        logout: account.logout,
+        register: account.registerAccount,
+        bindApp: account.bindApp,
+        bindRole: account.bindRole,
+        ident: {
+            create: account.createAccountIdent
+        }
     },
-    ele: {
-        fetch: fetchEle
+    resource: {
+        create: resource.createResource,
+        subject: {
+            create: resource.createResourceSubject
+        },
+        menu: {
+            fetch: resource.fetchMenu
+        },
+        ele: {
+            fetch: resource.fetchEle
+        },
     },
-}
-
-function fetchMenu(): Promise<any[]> {
-    return request.req('fetchMenu', 'menu://' + iamModuleName + '/common/resource?kind=menu', OptActionKind.FETCH)
-}
-
-function fetchEle(): Promise<any[]> {
-    return request.req('fetchEle', 'element://' + iamModuleName + '/common/resource?kind=element', OptActionKind.FETCH)
-}
-
-function login(userName: string, password: string): Promise<IdentOptInfo> {
-    return request.req<IdentOptInfo>('login', 'http://' + iamModuleName + '/common/login', OptActionKind.CREATE, {
-        ak: userName,
-        sk: password,
-        relAppId: _appId
-    })
-        .then(identOptInfo => {
-            request.setToken(identOptInfo.token)
-            return identOptInfo
-        })
-}
-
-function logout(): Promise<void> {
-    return request.req<void>('logout', 'http://' + iamModuleName + '/common/logout', OptActionKind.DELETE)
-        .then(v => {
-            request.setToken('')
-        })
+    tenant: {
+        register: tenant.registerTenant,
+        fetch: tenant.fetchTenant
+    },
+    app: {
+        create: app.createApp,
+        ident: {
+            list: app.listAppIdents,
+            fetchSk: app.fetchAppIdentSk,
+        },
+        key: {
+            fetchPublicKey: app.fetchPublicKey
+        }
+    },
+    role: {
+        createRoleDef: role.createRoleDef,
+        createRole: role.createRole
+    },
+    authpolicy: {
+        create: authpolicy.createAuthPolicy
+    }
 }

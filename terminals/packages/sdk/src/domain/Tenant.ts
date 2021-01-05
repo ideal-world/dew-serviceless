@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-async function sss() {
-    console.log(sdd.s)
-}
+import {CommonStatus} from "./Enum";
 
-sss()
-    .then((a, b) => {
-        console.log(a)
-    })
+export type TenantResp = {
+    id: number
+    name: string
+    icon: string
+    allowAccountRegister: boolean
+    parameters: string
+    status: CommonStatus
+}

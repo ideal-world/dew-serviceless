@@ -267,8 +267,8 @@ public class AuthenticationProcessor {
                         uri.getHost().equalsIgnoreCase(resourceUri.getHost())
                                 && uri.getPort() == resourceUri.getPort()
                                 && !uri.getPath().equalsIgnoreCase(resourceUri.getPath())
-                                && (uri.getQuery() == null && resourceUri.getQuery() == null
-                                || uri.getQuery().equalsIgnoreCase(resourceUri.getQuery()))
+                                && (uri.getRawQuery() == null && resourceUri.getRawQuery() == null
+                                || uri.getRawQuery().equalsIgnoreCase(resourceUri.getRawQuery()))
                                 && PATH_MATCHER.match(uri.getPath(), resourceUri.getPath())
                 )
                 .sorted((uri1, uri2) -> comparator.compare(uri1.getPath(), uri2.getPath()))

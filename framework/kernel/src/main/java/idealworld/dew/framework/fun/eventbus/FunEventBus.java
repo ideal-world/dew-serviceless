@@ -172,7 +172,6 @@ public class FunEventBus {
                                         event.fail(((DewException) e).getCode(), e.getMessage());
                                     } else {
                                         event.fail(-1, e.getMessage());
-                                        ;
                                     }
                                 });
                     } catch (Exception e) {

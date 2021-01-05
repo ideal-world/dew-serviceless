@@ -26,7 +26,11 @@ let sqlParser: SQLParser = new SQLParser()
 
 export function checkAndReplace(fileContent: string): string {
     let ast = JSASTHelper.parse(fileContent)
-    return replaceSql(fileContent, ast)
+    fileContent = replaceSql(fileContent, ast)
+    ast = JSASTHelper.parse(fileContent)
+    let items = replaceAndExtractInitFun(fileContent, ast)
+    let initFun = items[1]
+    return items[0]
 }
 
 function replaceSql(fileContent: string, ast: Node): string {
@@ -51,6 +55,11 @@ function replaceSql(fileContent: string, ast: Node): string {
     return fileContent
 }
 
+function replaceAndExtractInitFun(fileContent: string, ast: Node): string[] {
+    console.log(fileContent)
+    return []
+}
+
 function encrypt(text: string): string {
     initRSA()
     return rsa.encryptByPub(text)
@@ -58,7 +67,7 @@ function encrypt(text: string): string {
 
 export function initRSA(publicKeyContent?: string): void {
     if (!rsa) {
-        let publicKey = publicKeyContent ? publicKeyContent : fs.readFileSync(path.resolve(__dirname, '../', 'Dew.key'), {encoding: 'utf8'})
+        let publicKey = publicKeyContent ? publicKeyContent : fs.readFileSync(path.resolve(__dirname, '../', 'Dew.public'), {encoding: 'utf8'})
         rsa = new RSA()
         rsa.loadKey(publicKey)
     }

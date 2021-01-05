@@ -142,7 +142,7 @@ public class TodoTest extends ITBasicTest {
                 put("relResourceId", resourceId);
                 put("resultKind", "ACCEPT");
             }
-        }, appAdminToken, null, String.class);
+        }, appAdminToken, null, Void.class);
         // 未注册用户不能添加记录
         try {
             req(OptActionKind.CREATE, "reldb://" + APP_ID + ".reldb.todoDB", new HashMap<String, Object>() {

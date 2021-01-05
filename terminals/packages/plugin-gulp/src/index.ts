@@ -24,6 +24,7 @@ const PLUGIN_NAME = 'Dew-Build';
 module.exports = function () {
     return through.obj(function (file, enc, cb) {
         if (file.isBuffer()) {
+            // TODO 过滤非js文件
             file.contents = Buffer.from(checkAndReplace(file.contents.toString('utf8')))
             this.push(file)
             cb()

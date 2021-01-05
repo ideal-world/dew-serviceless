@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-export type IdentOptInfo = {
-    token: string,
-    accountCode: string,
-    roleInfo: RoleInfo[]
-    groupInfo: GroupInfo[]
-}
 
-export type RoleInfo = {
-    code: string,
-    name: string,
-}
+import axios from "axios";
+import {JsonMap} from "../domain/Basic";
 
-export type GroupInfo = {
-    groupCode: string,
-    groupNodeCode: string,
-    groupNodeBusCode: string,
-    groupName: string,
-    groupNodeName: string,
+export function axiosReq(url: string, headers?: JsonMap<any>, data?: any): Promise<any> {
+    return axios.request<any>({
+        url: url,
+        method: 'POST',
+        headers: headers,
+        data: data
+    })
 }

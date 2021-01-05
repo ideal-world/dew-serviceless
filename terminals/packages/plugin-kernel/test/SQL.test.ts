@@ -18,29 +18,29 @@ import {checkAndReplace} from "../src";
 
 test('Test check and replace', async () => {
     expect(checkAndReplace(`
-    Hi.sql('xxx','select * from main')
+    Dew.sql('xxx','select * from main')
     `)).not.toContain('select')
     expect(checkAndReplace(`
-    Hi.sql('xxx',"select * from main")
+    Dew.sql('xxx',"select * from main")
     `)).not.toContain('select')
     expect(checkAndReplace(`
-    Hi.sql('xxx','select * from main left join org on org.id = main.orgId')
+    Dew.sql('xxx','select * from main left join org on org.id = main.orgId')
     `)).not.toContain('select')
     expect(checkAndReplace(
-        "Hi.sql('xxx',`select * from main\n" +
+        "Dew.sql('xxx',`select * from main\n" +
         " left join org on org.id = main.orgId`)"
     )).not.toContain('select')
     // TODO 支持拼接
 
     /*    expect(checkAndReplace(`
-        Hi.sql('xxx','select * from main'+
+        Dew.sql('xxx','select * from main'+
             '  left join org on org.id = main.orgId')
         `)).toEqual(`
-        Hi.sql('xxx','FETCH|xxxxxx')
+        Dew.sql('xxx','FETCH|xxxxxx')
         `)*/
     expect(checkAndReplace(`
     let insertSql = 'insert into main(name, age) values (?, ?)'
-    Hi.sql(insertSql,10,'20')
+    Dew.sql(insertSql,10,'20')
     `)).not.toContain('insert into main(name, age) values (?, ?)')
     expect(checkAndReplace(`
     let sqlJson = {
@@ -49,8 +49,8 @@ test('Test check and replace', async () => {
     sqlJson[s2] = 'update main set name = ? where id = ?'
     sqlJson[s3] = {}
     sqlJson[s3][s33] = 'update main set name = ? where id = ?'
-    Hi.sql(sqlJson.s1,10,'20')
-    Hi.sql(sqlJson.s2,10,'20')
+    Dew.sql(sqlJson.s1,10,'20')
+    Dew.sql(sqlJson.s2,10,'20')
     `)).not.toContain('update')
     /*expect(checkAndReplace(`
     type SqlType = {
@@ -59,7 +59,7 @@ test('Test check and replace', async () => {
     let sqlType:SqlType = {
         s1:'insert into main(name, age) values (?, ?)'
     }
-    Hi.sql(sqlType.s1,10,'20')
+    Dew.sql(sqlType.s1,10,'20')
     `)).toEqual(`
    type SqlType = {
         s1: string
@@ -67,7 +67,7 @@ test('Test check and replace', async () => {
     let sqlType:SqlType = {
         s1:'CREATE|xxxxxx'
     }
-    Hi.sql(sqlType.s1,10,'20')
+    Dew.sql(sqlType.s1,10,'20')
     `)
     expect(checkAndReplace(`
     class SqlClass {
@@ -76,7 +76,7 @@ test('Test check and replace', async () => {
     let sqlClass:SqlClass = {
         s1:'insert into main(name, age) values (?, ?)'
     }
-    Hi.sql(sqlClass.s1,10,'20')
+    Dew.sql(sqlClass.s1,10,'20')
     `)).toEqual(`
     class SqlClass {
     s1!: string
@@ -84,7 +84,7 @@ test('Test check and replace', async () => {
     let sqlClass:SqlClass = {
         s1:'CREATE|xxxxxx'
     }
-    Hi.sql(sqlClass.s1,10,'20')
+    Dew.sql(sqlClass.s1,10,'20')
     `)*/
 
     expect(checkAndReplace("xxfsss")).toContain("xxfsss")

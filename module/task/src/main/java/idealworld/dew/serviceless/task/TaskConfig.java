@@ -33,6 +33,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TaskConfig {
 
-    private String gatewayServerUrl;
+    private String gatewayServerUrl = "http://127.0.0.1:9000";
 
 }

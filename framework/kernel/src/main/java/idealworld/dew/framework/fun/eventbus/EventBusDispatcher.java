@@ -28,7 +28,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -119,7 +118,7 @@ public class EventBusDispatcher {
 
     public static Future<Void> watch(String moduleName, Object config, Map<String, Boolean> funStatus) {
         FunEventBus.choose(moduleName).consumer(moduleName, (actionKind, uri, header, body) ->
-                chooseProcess(moduleName, config, funStatus, actionKind, uri.getPath(), uri.getQuery() != null ? URLDecoder.decode(uri.getQuery(), StandardCharsets.UTF_8) : null, header, body));
+                chooseProcess(moduleName, config, funStatus, actionKind, uri.getPath(), uri.getRawQuery() != null ? uri.getQuery() : null, header, body));
         return Future.succeededFuture();
     }
 

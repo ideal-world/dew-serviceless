@@ -17,8 +17,7 @@
 
 import {DewSDK} from "../src/DewSDK";
 import * as dewPlugin from "@dew/plugin-kernel";
-import * as request from "../src/util/Request";
-import {OptActionKind} from "../src/domain/Enum";
+
 
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000"
 const APP_ID = 1
@@ -30,13 +29,14 @@ beforeAll(() => {
 })
 
 test('Test iam sdk', async () => {
-    let identOptInfo = await DewSDK.iam.login(USERNAME, PASSWORD)
+    let identOptInfo = await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
     expect(identOptInfo.roleInfo[0].name).toContain('管理员')
-    let menus = await DewSDK.iam.menu.fetch()
+    let menus = await DewSDK.iam.resource.menu.fetch()
     expect(menus.length).toBe(1)
-    let eles = await DewSDK.iam.ele.fetch()
+    let eles = await DewSDK.iam.resource.ele.fetch()
     expect(eles.length).toBe(0)
-    await DewSDK.iam.logout()
+    await DewSDK.iam.account.logout()
+    // TODO 更多接口
 })
 
 test('Test cache sdk', async () => {
@@ -99,8 +99,8 @@ function encrypt(sql: string): string {
 }
 
 test('Test reldb sdk', async () => {
-    let identOptInfo = await DewSDK.iam.login(USERNAME, PASSWORD)
-    let publicKey = await request.req<string>('getAppPublicKey', 'http://iam/console/app/app/publicKey', OptActionKind.FETCH)
+    await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
+    let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
     dewPlugin.initRSA(publicKey)
     let accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account'), [])
     expect(accounts.length).toBe(1)
@@ -139,3 +139,32 @@ test('Test http sdk', async () => {
     let patchR = await DewSDK.http.subject("1.http.httpbin").patch<any>('/patch', 'some data')
     expect(patchR.body.data).toBe('some data')
 }, 200000)
+
+test('Test task sdk', async done => {
+    await DewSDK.task.create("invoke", `
+      await DewSDK.iam.account.login('` + USERNAME + `', '` + PASSWORD + `', ` + APP_ID + `)
+      await DewSDK.iam.account.register("后台添加用户")
+      `)
+    await DewSDK.task.create("timer", `
+    await DewSDK.iam.account.login('` + USERNAME + `', '` + PASSWORD + `', ` + APP_ID + `)
+    await DewSDK.iam.account.register("xxxx")
+    `, '/5 * * * * ?')
+    await DewSDK.task.modify("timer", `
+    await DewSDK.iam.account.login('` + USERNAME + `', '` + PASSWORD + `', ` + APP_ID + `)
+    await DewSDK.iam.account.register("定时添加用户")
+    `, '/5 * * * * ?')
+    await DewSDK.task.execute("invoke")
+    setTimeout(async () => {
+        await DewSDK.task.delete("invoke")
+        await DewSDK.task.delete("timer")
+        await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
+        let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
+        dewPlugin.initRSA(publicKey)
+        let accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['后台添加用户'])
+        expect(accounts.length).toBe(1)
+        accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['定时添加用户'])
+        expect(accounts.length).toBeGreaterThan(1)
+        done()
+    }, 30000)
+}, 200000)
+

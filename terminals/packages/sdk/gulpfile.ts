@@ -28,6 +28,8 @@ function build() {
         debug: false,
         entries: ['src/DewSDK.ts'],
         cache: {},
+        // TODO ignore
+        ignore: ['./AxiosImpl'],
         packageCache: {},
     }).require('./src/DewSDK.ts', {expose: 'DewSDK'})
         .plugin(tsify)
