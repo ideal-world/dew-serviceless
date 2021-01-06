@@ -33,5 +33,8 @@
     "ts-node": "^9.0.0",
     "typescript": "^4.0.2"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "gitHead": "92f0ec9a9087ecf0d9b24bcadedf27c6526d3176"
 }
