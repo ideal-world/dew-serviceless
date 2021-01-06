@@ -21,8 +21,7 @@ import clear from "clear";
 import figlet from "figlet";
 import * as fileHelper from './util/FileHelper';
 import fsPath from "path";
-import {DewSDK} from "@idealworld/sdk/dist/DewSDK";
-import * as request from '@idealworld/sdk/dist/util/Request';
+import {DewSDK} from "@idealworld/sdk";
 
 const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless-template-simple.git'
 
@@ -30,7 +29,7 @@ const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000";
 const SDK_VERSION = "1.0.0";
 
-DewSDK.init(GATEWAY_SERVER_URL, "")
+DewSDK.init(GATEWAY_SERVER_URL, 0)
 
 const createAppWithNewTenantSteps: any[] = [
     {
@@ -182,7 +181,7 @@ const allSteps: any[] = [
             if (!val.trim()) {
                 return '请输入服务地址'
             }
-            request.setServerUrl(val)
+            DewSDK.setting.serverUrl(val)
             return true
         }
     }, {
@@ -194,6 +193,8 @@ const allSteps: any[] = [
         ]
     }
 ].concat(createAppSteps)
+
+console.log(">>>>>>>>>>>:"+require('./package.json').version)
 
 async function createApp(answers: any) {
     let confirmMessage
@@ -215,14 +216,14 @@ async function createApp(answers: any) {
     let appId
     if (answers.createTenant) {
         let identOptInfo = await DewSDK.iam.tenant.register(answers.tenantName, answers.appName, answers.tenantAdminUsername, answers.tenantAdminPassword)
-        request.setToken(identOptInfo.token)
+        DewSDK.setting.token(identOptInfo.token)
         appId = identOptInfo.appId
     } else {
-        appId = await DewSDK.iam.app.fetch(answers.appName)
+        appId = await DewSDK.iam.app.create(answers.appName)
     }
-    let publicKey = await DewSDK.iam.app.fetchPublicKey()
-    let identAKInfo = (await DewSDK.iam.app.ident.list()).body[0]
-    let identSk = await DewSDK.iam.app.ident.fetch(identAKInfo.id)
+    let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
+    let identAKInfo = (await DewSDK.iam.app.ident.list()).objects[0]
+    let identSk = await DewSDK.iam.app.ident.fetchSk(identAKInfo.ak)
 
     let path = fsPath.resolve(fileHelper.pwd(), answers.appName)
     console.log(chalk.green('正在创建模板到 [' + path + ']'))

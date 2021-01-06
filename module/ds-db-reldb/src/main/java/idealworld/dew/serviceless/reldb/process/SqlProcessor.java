@@ -21,6 +21,7 @@ import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.exception.BadRequestException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.AuthenticationProcessor;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
@@ -36,6 +37,7 @@ import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -46,7 +48,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SqlProcessor extends EventBusProcessor {
 
-     {
+    private static final Pattern CONTEXT_FLAG_R = Pattern.compile("#\\{\\.+\\}");
+
+    {
         addProcessor("", eventBusContext ->
                 exec(
                         eventBusContext.req.header.get(DewConstant.REQUEST_RESOURCE_URI_FLAG),
@@ -56,10 +60,12 @@ public class SqlProcessor extends EventBusProcessor {
     }
 
     private static RelDBAuthPolicy authPolicy;
+    private static RelDBConfig config;
 
-    public SqlProcessor(RelDBAuthPolicy _authPolicy,String moduleName) {
+    public SqlProcessor(RelDBAuthPolicy _authPolicy, String moduleName, RelDBConfig _config) {
         super(moduleName);
         authPolicy = _authPolicy;
+        config = _config;
     }
 
     public static Future<Buffer> exec(String resourceUriWithoutPath, IdentOptCacheInfo identOptCacheInfo, String strBody, ProcessContext context) {
@@ -72,6 +78,7 @@ public class SqlProcessor extends EventBusProcessor {
         }
         var sqlInfo = new JsonObject(strBody);
         var encryptSql = sqlInfo.getString("sql");
+        var parameters = sqlInfo.getJsonArray("parameters").getList();
         return context.cache.get(DewConstant.CACHE_APP_INFO + identOptCacheInfo.getAppId(), ((RelDBConfig) context.conf).getSecurity().getAppInfoCacheExpireSec())
                 .compose(appInfo -> {
                     if (appInfo == null) {
@@ -81,7 +88,18 @@ public class SqlProcessor extends EventBusProcessor {
                     var privateKey = CacheHelper.getSet(appInfoItems[2], Integer.MAX_VALUE, () -> $.security.asymmetric.getPrivateKey(appInfoItems[2], "RSA"));
                     var decryptSql = new String($.security.asymmetric.decrypt(
                             $.security.decodeBase64ToBytes(encryptSql), privateKey, 1024, "RSA/ECB/OAEPWithSHA1AndMGF1Padding"));
-                    var sqlAsts = SqlParser.parse(decryptSql);
+                    var finalSql = CONTEXT_FLAG_R.matcher(decryptSql).replaceAll(h -> {
+                        var hit = h.group();
+                        if (hit.equalsIgnoreCase(config.getContextFlag().getCurrentUserId())) {
+                            parameters.add(identOptCacheInfo.getAccountCode());
+                        } else if (hit.equalsIgnoreCase(config.getContextFlag().getCurrentTimestamp())) {
+                            parameters.add(System.currentTimeMillis());
+                        } else {
+                            throw context.helper.error(new NotFoundException("占位符[" + hit + "]不存在"));
+                        }
+                        return "?";
+                    });
+                    var sqlAsts = SqlParser.parse(finalSql);
                     if (sqlAsts == null) {
                         throw context.helper.error(new BadRequestException("请求的SQL解析错误"));
                     }
@@ -102,7 +120,7 @@ public class SqlProcessor extends EventBusProcessor {
                                 if (authResultKind == AuthResultKind.REJECT) {
                                     context.helper.error(new UnAuthorizedException("鉴权错误，没有权限访问对应的资源"));
                                 }
-                                return FunSQLClient.choose(resourceSubjectCode).rawExec(decryptSql, sqlInfo.getJsonArray("parameters").getList())
+                                return FunSQLClient.choose(resourceSubjectCode).rawExec(finalSql, parameters)
                                         .compose(result -> context.helper.success(result.toBuffer()));
                             });
                 });

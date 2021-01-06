@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import File from 'vinyl'
-
+import {File} from "vinyl";
 const plugin = require('../src');
 
 test('Test gulp plugin', () => {

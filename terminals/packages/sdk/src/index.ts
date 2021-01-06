@@ -23,21 +23,24 @@ import * as taskSDK from "./module/TaskSDK";
 import {JsonMap} from "./domain/Basic";
 
 export const DewSDK = {
-    _load:load(),
     init: init,
     iam: iamSDK.iamSDK,
     reldb: reldbSDK.reldbSDK(),
     cache: cacheSDK.cacheSDK(),
     http: httpSDK.httpSDK(),
     task: taskSDK.taskSDK(),
+    setting: {
+        token: function (token: string): void {
+            request.setToken(token)
+        },
+        serverUrl: function (serverUrl: string): void {
+            request.setServerUrl(serverUrl)
+        },
+    }
 }
 
 export function setAjaxImpl(impl: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>) {
     request.setAjaxImpl(impl)
-}
-
-function load(){
-
 }
 
 /**

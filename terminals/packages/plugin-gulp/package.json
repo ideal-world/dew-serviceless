@@ -2,8 +2,7 @@
   "name": "@idealworld/plugin-gulp",
   "version": "0.1.3",
   "description": "Dew Serviceless plugin Gulp",
-  "main": "dist/index",
-  "types": "dist/index",
+  "main": "dist/index.js",
   "files": [
     "dist"
   ],
@@ -16,7 +15,14 @@
     "prepublishOnly": "yarn run build"
   },
   "license": "Apache-2.0",
-  "author": "gudaoxuri",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ideal-world/dew-serviceless"
+  },
+  "author": {
+    "name": "gudaoxuri",
+    "email": "i@sunisle.org"
+  },
   "dependencies": {
     "@idealworld/plugin-kernel": "^0.1.3",
     "@types/crypto-js": "^4.0.1",

@@ -23,6 +23,8 @@ import {Page} from "../domain/Basic";
 
 const iamModuleName: string = 'iam'
 
+let _identOptInfo: IdentOptInfo
+
 export function init(): void {
 }
 
@@ -37,6 +39,7 @@ const account = {
         })
             .then(identOptInfo => {
                 request.setToken(identOptInfo.token)
+                _identOptInfo = identOptInfo
                 return identOptInfo
             })
     },
@@ -45,6 +48,9 @@ const account = {
             .then(() => {
                 request.setToken('')
             })
+    },
+    fetchLoginInfo(): IdentOptInfo {
+        return _identOptInfo
     },
     registerAccount(accountName: string): Promise<number> {
         return request.req<number>('registerAccount', 'http://' + iamModuleName + '/console/tenant/account', OptActionKind.CREATE, {
@@ -168,7 +174,8 @@ export const iamSDK = {
         bindRole: account.bindRole,
         ident: {
             create: account.createAccountIdent
-        }
+        },
+        fetchLoginInfo: account.fetchLoginInfo
     },
     resource: {
         create: resource.createResource,

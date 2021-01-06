@@ -15,8 +15,8 @@
  */
 
 
-import {DewSDK} from "../src/DewSDK";
 import * as dewPlugin from "@idealworld/plugin-kernel";
+import {DewSDK} from "@idealworld/sdk";
 
 
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000"

@@ -1,4 +1,4 @@
 #! /usr/bin/env node
 
-const CLI = require('../dist/DewCLI')
+const CLI = require('../dist/index')
 CLI.run()
