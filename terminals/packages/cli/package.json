@@ -34,5 +34,6 @@
   },
   "bin": {
     "dewcli": "bin/dewcli"
-  }
+  },
+  "gitHead": "cae2208aa2ac70689b44ffda236599ce115100da"
 }

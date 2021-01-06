@@ -10,7 +10,8 @@
   "scripts": {
     "clean": "rimraf ./dist && rimraf tsconfig.build.tsbuildinfo",
     "compile": "tsc -b",
-    "build": "yarn run clean && yarn run compile && gulp",
+    "build": "yarn run clean && yarn run compile",
+    "gulp": "gulp",
     "test": "jest",
     "testC": "jest --coverage --no-cache",
     "prepublishOnly": "yarn run build"
@@ -42,5 +43,6 @@
     "typescript": "^4.0.2",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
-  }
+  },
+  "gitHead": "cae2208aa2ac70689b44ffda236599ce115100da"
 }
