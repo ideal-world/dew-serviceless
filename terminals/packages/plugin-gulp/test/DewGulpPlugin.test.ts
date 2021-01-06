@@ -27,8 +27,8 @@ test('Test gulp plugin', () => {
     sqlJson[s2] = 'update main set name = ? where id = ?'
     sqlJson[s3] = {}
     sqlJson[s3][s33] = 'update main set name = ? where id = ?'
-    Hi.sql(sqlJson.s1,10,'20')
-    Hi.sql(sqlJson.s2,10,'20')
+    Dew.sql(sqlJson.s1,10,'20')
+    Dew.sql(sqlJson.s2,10,'20')
     `)
     })
     let pStream = plugin()
