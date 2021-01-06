@@ -7,7 +7,7 @@
   "scripts": {
     "clean": "lerna run clean",
     "build": "lerna run build",
-    "deploy": "lerna publish",
+    "deploy": "lerna publish --access public",
     "test": "lerna run test"
   },
   "author": "gudaoxuri",
