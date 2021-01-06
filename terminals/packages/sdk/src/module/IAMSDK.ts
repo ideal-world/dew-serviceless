@@ -15,9 +15,8 @@
  */
 
 import * as request from "../util/Request";
-import {IdentOptInfo} from "../domain/IdentOptInfo";
+import {IdentOptCacheInfo, IdentOptInfo} from "../domain/IdentOptInfo";
 import {AccountIdentKind, AuthSubjectKind, OptActionKind, ResourceKind} from "../domain/Enum";
-import {IdentOptCacheInfo} from "@dew/cli/dist/domain/IdentOptInfo";
 import {TenantResp} from "../domain/Tenant";
 import {AppIdentResp} from "../domain/App";
 import {Page} from "../domain/Basic";
@@ -119,7 +118,7 @@ const tenant = {
         })
     },
     fetchTenant(): Promise<TenantResp> {
-        return request.req<IdentOptCacheInfo>('fetchTenant', 'http://' + iamModuleName + '/console/tenant/tenant', OptActionKind.FETCH)
+        return request.req<TenantResp>('fetchTenant', 'http://' + iamModuleName + '/console/tenant/tenant', OptActionKind.FETCH)
     }
 
 }

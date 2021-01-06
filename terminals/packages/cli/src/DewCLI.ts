@@ -28,7 +28,6 @@ const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless
 
 // TODO
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000";
-const IAM_URL = "http://iam";
 const SDK_VERSION = "1.0.0";
 
 DewSDK.init(GATEWAY_SERVER_URL, "")
