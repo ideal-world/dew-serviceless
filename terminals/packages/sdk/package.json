@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/sdk",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "Dew Serviceless SDK",
   "main": "dist/index",
   "typings": "dist/index",
@@ -34,7 +34,7 @@
   "devDependencies": {
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
-    "@idealworld/plugin-kernel": "^0.1.5",
+    "@idealworld/plugin-kernel": "^0.1.7",
     "@types/jest": "^26.0.12",
     "@types/node": "^14.6.2",
     "browserify": "^16.5.2",
