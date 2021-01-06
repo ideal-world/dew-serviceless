@@ -16,7 +16,7 @@
 
 import * as through from 'through2'
 import * as gutil from 'gulp-util'
-import {checkAndReplace} from "@dew/plugin-kernel";
+import {checkAndReplace} from "@idealworld/plugin-kernel";
 
 const PluginError = gutil.PluginError;
 const PLUGIN_NAME = 'Dew-Build';

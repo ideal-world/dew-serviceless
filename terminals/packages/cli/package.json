@@ -1,5 +1,5 @@
 {
-  "name": "@dew/cli",
+  "name": "@idealworld/cli",
   "version": "0.1.1",
   "description": "Dew Serviceless CLI",
   "main": "dist/index",
@@ -17,7 +17,7 @@
   "license": "Apache-2.0",
   "author": "gudaoxuri",
   "dependencies": {
-    "@dew/sdk": "^0.1.1",
+    "@idealworld/sdk": "^0.1.1",
     "@types/inquirer": "^7.3.1",
     "chalk": "^4.1.0",
     "clear": "^0.1.0",

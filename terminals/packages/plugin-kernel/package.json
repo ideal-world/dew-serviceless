@@ -1,5 +1,5 @@
 {
-  "name": "@dew/plugin-kernel",
+  "name": "@idealworld/plugin-kernel",
   "version": "0.1.1",
   "description": "Dew Serviceless plugin Kernel",
   "main": "dist/index",
@@ -18,7 +18,7 @@
   "license": "Apache-2.0",
   "author": "gudaoxuri",
   "dependencies": {
-    "@dew/sdk": "^0.1.1",
+    "@idealworld/sdk": "^0.1.1",
     "@types/node-rsa": "^1.0.0",
     "acorn": "^8.0.4",
     "axios": "^0.20.0",

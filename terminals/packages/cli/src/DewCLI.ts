@@ -21,8 +21,8 @@ import clear from "clear";
 import figlet from "figlet";
 import * as fileHelper from './util/FileHelper';
 import fsPath from "path";
-import {DewSDK} from "@dew/sdk/dist/DewSDK";
-import * as request from '@dew/sdk/dist/util/Request';
+import {DewSDK} from "@idealworld/sdk/dist/DewSDK";
+import * as request from '@idealworld/sdk/dist/util/Request';
 
 const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless-template-simple.git'
 
@@ -228,7 +228,7 @@ async function createApp(answers: any) {
     console.log(chalk.green('正在创建模板到 [' + path + ']'))
     await gitHelper.clone(TEMPLATE_SIMPLE_GIT_ADDR, path, 1)
     let packageJsonFile = JSON.parse(fileHelper.readFile(path + '/package.json'))
-    packageJsonFile['dependencies'].push("@dew/sdk", SDK_VERSION)
+    packageJsonFile['dependencies'].push("@idealworld/sdk", SDK_VERSION)
     fileHelper.writeFile(path + '/package.json', JSON.stringify(packageJsonFile))
     fileHelper.writeFile(path + '/Dew.public', publicKey)
     fileHelper.writeFile(path + '/Dew.secret', identAKInfo.ak + '\r\n' + identSk)

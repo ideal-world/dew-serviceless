@@ -1,5 +1,5 @@
 {
-  "name": "@dew/plugin",
+  "name": "@idealworld/plugin",
   "private": true,
   "workspaces": [
     "packages/*"
