@@ -1,6 +1,6 @@
 {
   "name": "@dew/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Dew Serviceless CLI",
   "main": "dist/index",
   "types": "dist/index",
@@ -17,7 +17,7 @@
   "license": "Apache-2.0",
   "author": "gudaoxuri",
   "dependencies": {
-    "@dew/sdk": "^0.2.0",
+    "@dew/sdk": "^0.2.1",
     "@types/inquirer": "^7.3.1",
     "chalk": "^4.1.0",
     "clear": "^0.1.0",
