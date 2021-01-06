@@ -1,6 +1,6 @@
 {
   "name": "@dew/plugin-gulp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Dew Serviceless plugin Gulp",
   "main": "dist/index",
   "types": "dist/index",
@@ -18,7 +18,7 @@
   "license": "Apache-2.0",
   "author": "gudaoxuri",
   "dependencies": {
-    "@dew/plugin-kernel": "^0.1.0",
+    "@dew/plugin-kernel": "^0.2.0",
     "@types/crypto-js": "^4.0.1",
     "@types/through2": "^2.0.36",
     "gulp-util": "^3.0.8",
@@ -28,9 +28,9 @@
     "@types/jest": "^26.0.12",
     "@types/node": "^14.6.2",
     "jest": "^26.4.2",
+    "rimraf": "^3.0.2",
     "ts-jest": "^26.3.0",
     "ts-node": "^9.0.0",
-    "typescript": "^4.0.2",
-    "rimraf": "^3.0.2"
+    "typescript": "^4.0.2"
   }
 }
