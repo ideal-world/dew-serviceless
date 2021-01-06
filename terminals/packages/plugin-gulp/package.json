@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/plugin-gulp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Dew Serviceless plugin Gulp",
   "main": "dist/index",
   "types": "dist/index",
@@ -18,7 +18,7 @@
   "license": "Apache-2.0",
   "author": "gudaoxuri",
   "dependencies": {
-    "@idealworld/plugin-kernel": "^0.1.1",
+    "@idealworld/plugin-kernel": "^0.1.2",
     "@types/crypto-js": "^4.0.1",
     "@types/through2": "^2.0.36",
     "gulp-util": "^3.0.8",
