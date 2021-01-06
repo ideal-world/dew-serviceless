@@ -2,7 +2,8 @@
   "name": "@idealworld/plugin-kernel",
   "version": "0.1.4",
   "description": "Dew Serviceless plugin Kernel",
-  "main": "dist/index.js",
+  "main": "dist/index",
+  "typings": "dist/index",
   "files": [
     "dist"
   ],

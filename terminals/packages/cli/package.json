@@ -2,7 +2,8 @@
   "name": "@idealworld/cli",
   "version": "0.1.4",
   "description": "Dew Serviceless CLI",
-  "main": "dist/index.js",
+  "main": "dist/index",
+  "typings": "dist/index",
   "files": [
     "dist"
   ],

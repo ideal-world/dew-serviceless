@@ -2,7 +2,8 @@
   "name": "@idealworld/sdk",
   "version": "0.1.4",
   "description": "Dew Serviceless SDK",
-  "main": "dist/index.js",
+  "main": "dist/index",
+  "typings": "dist/index",
   "files": [
     "dist"
   ],
