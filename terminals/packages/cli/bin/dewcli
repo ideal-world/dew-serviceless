@@ -1,4 +1,4 @@
 #! /usr/bin/env node
 
-const CLI = require('../dist/index')
+const CLI = require('../')
 CLI.run()
