@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/cli",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Dew Serviceless CLI",
   "main": "dist/index",
   "typings": "dist/index",
