@@ -2,10 +2,10 @@
   "name": "@idealworld/plugin-kernel",
   "version": "0.1.9",
   "description": "Dew Serviceless plugin Kernel",
-  "main": "index",
-  "typings": "index",
+  "main": "dist/index",
+  "typings": "dist/index",
   "files": [
-    "../../dist/plugin-kernel"
+    "dist"
   ],
   "scripts": {
     "clean": "rimraf ./dist && rimraf tsconfig.build.tsbuildinfo",

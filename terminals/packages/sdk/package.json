@@ -1,11 +1,11 @@
 {
   "name": "@idealworld/sdk",
-  "version": "0.1.9",
+  "version": "0.1.7",
   "description": "Dew Serviceless SDK",
-  "main": "index",
-  "typings": "index",
+  "main": "dist/index",
+  "typings": "dist/index",
   "files": [
-    "../../dist/sdk"
+    "dist"
   ],
   "scripts": {
     "clean": "rimraf ./dist && rimraf tsconfig.build.tsbuildinfo",

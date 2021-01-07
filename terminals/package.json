@@ -5,16 +5,16 @@
     "packages/*"
   ],
   "scripts": {
-    "clean": "lerna run clean",
+    "clean": "rimraf ./dist && lerna run clean",
     "build": "lerna run build",
-    "deploy": "lerna publish",
-    "local": "lerna publish --skip-git --skip-npm",
+    "deploy": "lerna run prePublish && lerna publish",
     "test": "lerna run test"
   },
   "author": "gudaoxuri",
   "dependencies": {},
   "devDependencies": {
     "typescript": "^4.0.2",
-    "lerna": "~3.22.1"
+    "lerna": "~3.22.1",
+    "rimraf": "^3.0.2"
   }
 }
