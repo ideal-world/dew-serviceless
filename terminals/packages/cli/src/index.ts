@@ -194,8 +194,6 @@ const allSteps: any[] = [
     }
 ].concat(createAppSteps)
 
-console.log(">>>>>>>>>>>:"+require('./package.json').version)
-
 async function createApp(answers: any) {
     let confirmMessage
     if (!answers.createTenant) {

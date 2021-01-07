@@ -11,9 +11,9 @@
   "scripts": {
     "clean": "rimraf ./dist && rimraf tsconfig.build.tsbuildinfo",
     "compile": "tsc -b",
-    "build": "yarn run clean && yarn run compile",
-    "prePublish": "cpx  ../../dist/cli/src/** ./dist",
-    "start": "tsc && node bin/dewcli"
+    "build": "yarn run clean && yarn run compile && yarn run prePublish",
+    "prePublish": "cpx ../../dist/cli/src/** ./dist",
+    "start": "tsc && yarn run prePublish && node bin/dewcli"
   },
   "license": "Apache-2.0",
   "repository": {
