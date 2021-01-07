@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/plugin-gulp",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Dew Serviceless plugin Gulp",
   "main": "index",
   "typings": "index",
@@ -25,7 +25,7 @@
     "email": "i@sunisle.org"
   },
   "dependencies": {
-    "@idealworld/plugin-kernel": "^0.1.8",
+    "@idealworld/plugin-kernel": "^0.1.9",
     "@types/crypto-js": "^4.0.1",
     "@types/through2": "^2.0.36",
     "gulp-util": "^3.0.8",
