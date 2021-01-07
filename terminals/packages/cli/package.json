@@ -2,10 +2,11 @@
   "name": "@idealworld/cli",
   "version": "0.1.7",
   "description": "Dew Serviceless CLI",
-  "main": "dist/index",
-  "typings": "dist/index",
+  "main": "index",
+  "typings": "index",
   "files": [
-    "dist"
+    "bin",
+    "../../dist/cli"
   ],
   "scripts": {
     "clean": "rimraf ./dist && rimraf tsconfig.build.tsbuildinfo",
