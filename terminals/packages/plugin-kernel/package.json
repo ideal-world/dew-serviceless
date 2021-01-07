@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/plugin-kernel",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Dew Serviceless plugin Kernel",
   "main": "dist/index",
   "typings": "dist/index",
