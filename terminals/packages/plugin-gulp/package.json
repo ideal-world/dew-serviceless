@@ -2,10 +2,10 @@
   "name": "@idealworld/plugin-gulp",
   "version": "0.1.7",
   "description": "Dew Serviceless plugin Gulp",
-  "main": "dist/index",
-  "typings": "dist/index",
+  "main": "index",
+  "typings": "index",
   "files": [
-    "dist"
+    "../../dist/plugin-gulp"
   ],
   "scripts": {
     "clean": "rimraf ./dist && rimraf tsconfig.build.tsbuildinfo",

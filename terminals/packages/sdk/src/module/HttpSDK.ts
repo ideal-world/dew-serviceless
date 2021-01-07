@@ -25,31 +25,40 @@ export function init(appId: number): void {
     _appId = appId
 }
 
-export function httpSDK() {
-    return HttpSDK(_appId + ".http.default")
+export function httpSDK():HttpSDK {
+    return new HttpSDK(_appId + ".http.default")
 }
 
-function HttpSDK(resourceSubjectCode: string) {
+export class HttpSDK {
 
-    return {
-        get<T>(pathAndQuery: string, header?: JsonMap<any>): Promise<T> {
-            return http<T>(resourceSubjectCode, OptActionKind.FETCH, pathAndQuery, header)
-        },
-        delete(pathAndQuery: string, header?: JsonMap<any>): Promise<void> {
-            return http<void>(resourceSubjectCode, OptActionKind.DELETE, pathAndQuery, header)
-        },
-        post<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
-            return http<T>(resourceSubjectCode, OptActionKind.CREATE, pathAndQuery, header, body)
-        },
-        put<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
-            return http<T>(resourceSubjectCode, OptActionKind.MODIFY, pathAndQuery, header, body)
-        },
-        patch<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
-            return http<T>(resourceSubjectCode, OptActionKind.PATCH, pathAndQuery, header, body)
-        },
-        subject(resourceSubject: string) {
-            return HttpSDK(resourceSubject)
-        }
+    constructor(resourceSubjectCode: string) {
+        this.resourceSubjectCode = resourceSubjectCode;
+    }
+
+    private readonly resourceSubjectCode: string
+
+    get<T>(pathAndQuery: string, header?: JsonMap<any>): Promise<T> {
+        return http<T>(this.resourceSubjectCode, OptActionKind.FETCH, pathAndQuery, header)
+    }
+
+    delete(pathAndQuery: string, header?: JsonMap<any>): Promise<void> {
+        return http<void>(this.resourceSubjectCode, OptActionKind.DELETE, pathAndQuery, header)
+    }
+
+    post<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
+        return http<T>(this.resourceSubjectCode, OptActionKind.CREATE, pathAndQuery, header, body)
+    }
+
+    put<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
+        return http<T>(this.resourceSubjectCode, OptActionKind.MODIFY, pathAndQuery, header, body)
+    }
+
+    patch<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
+        return http<T>(this.resourceSubjectCode, OptActionKind.PATCH, pathAndQuery, header, body)
+    }
+
+    subject(resourceSubject: string): HttpSDK {
+        return new HttpSDK(resourceSubject)
     }
 
 }

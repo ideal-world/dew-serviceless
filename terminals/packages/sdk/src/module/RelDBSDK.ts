@@ -31,7 +31,7 @@ export function reldbSDK() {
 function RelDBSDK(resourceSubjectCode: string) {
 
     return {
-        exec<T>(encryptedSql: string, parameters: string[]): Promise<T[]> {
+        exec<T>(encryptedSql: string, parameters: any[]): Promise<T[]> {
             return doExec<T>(resourceSubjectCode, encryptedSql, parameters)
         },
         subject(resourceSubject: string) {
@@ -41,7 +41,7 @@ function RelDBSDK(resourceSubjectCode: string) {
 
 }
 
-function doExec<T>(resourceSubjectCode: string, encryptedSql: string, parameters: string[]): Promise<T[]> {
+function doExec<T>(resourceSubjectCode: string, encryptedSql: string, parameters: any[]): Promise<T[]> {
     let item = encryptedSql.split('|')
     if (item.length !== 2) {
         throw "该SQL语句没有加密 : " + encryptedSql

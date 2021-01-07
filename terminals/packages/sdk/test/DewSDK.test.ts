@@ -15,9 +15,7 @@
  */
 
 
-import * as dewPlugin from "@idealworld/plugin-kernel";
 import {DewSDK} from "@idealworld/sdk";
-
 
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000"
 const APP_ID = 1
@@ -93,32 +91,6 @@ test('Test cache sdk', async () => {
     }, 1000)
 })
 
-function encrypt(sql: string): string {
-    let encryptSql = dewPlugin.checkAndReplace('`' + sql + '`')
-    return encryptSql.substring(1, encryptSql.length - 1)
-}
-
-test('Test reldb sdk', async () => {
-    await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
-    let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
-    dewPlugin.initRSA(publicKey)
-    let accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account'), [])
-    expect(accounts.length).toBe(1)
-    // @ts-ignore
-    expect(accounts[0].name).toBe('dew')
-    accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['dew'])
-    expect(accounts.length).toBe(1)
-    // @ts-ignore
-    expect(accounts[0].name).toBe('dew')
-    accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['dew2'])
-    expect(accounts.length).toBe(0)
-    // subject
-    accounts = await DewSDK.reldb.subject(APP_ID + '.reldb.default').exec(encrypt('select name from iam_account'), [])
-    expect(accounts.length).toBe(1)
-    // @ts-ignore
-    expect(accounts[0].name).toBe('dew')
-})
-
 test('Test http sdk', async () => {
     // get
     let getR = await DewSDK.http.subject("1.http.httpbin").get<any>('/get')
@@ -154,7 +126,7 @@ test('Test task sdk', async done => {
     await DewSDK.iam.account.register("定时添加用户")
     `, '/5 * * * * ?')
     await DewSDK.task.execute("invoke")
-    setTimeout(async () => {
+    /*setTimeout(async () => {
         await DewSDK.task.delete("invoke")
         await DewSDK.task.delete("timer")
         await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
@@ -165,6 +137,6 @@ test('Test task sdk', async done => {
         accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['定时添加用户'])
         expect(accounts.length).toBeGreaterThan(1)
         done()
-    }, 30000)
+    }, 30000)*/
 }, 200000)
 

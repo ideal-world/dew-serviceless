@@ -8,6 +8,7 @@
     "clean": "lerna run clean",
     "build": "lerna run build",
     "deploy": "lerna publish",
+    "local": "lerna publish --skip-git --skip-npm",
     "test": "lerna run test"
   },
   "author": "gudaoxuri",

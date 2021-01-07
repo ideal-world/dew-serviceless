@@ -2,10 +2,10 @@
   "name": "@idealworld/plugin-kernel",
   "version": "0.1.7",
   "description": "Dew Serviceless plugin Kernel",
-  "main": "dist/index",
-  "typings": "dist/index",
+  "main": "index",
+  "typings": "index",
   "files": [
-    "dist"
+    "../../dist/plugin-kernel"
   ],
   "scripts": {
     "clean": "rimraf ./dist && rimraf tsconfig.build.tsbuildinfo",
@@ -28,8 +28,6 @@
     "@idealworld/sdk": "^0.1.7",
     "@types/node-rsa": "^1.0.0",
     "acorn": "^8.0.4",
-    "axios": "^0.20.0",
-    "moment": "^2.29.0",
     "node-rsa": "^1.1.1",
     "node-sql-parser": "^3.1.0"
   },
