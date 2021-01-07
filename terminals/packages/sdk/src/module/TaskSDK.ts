@@ -25,32 +25,43 @@ export function init(appId: number): void {
 }
 
 export function taskSDK() {
-    return TaskSDK(_appId + ".task.default")
+    return new TaskSDK(_appId + ".task.default")
 }
 
-function TaskSDK(resourceSubjectCode: string) {
+export class TaskSDK {
 
-    return {
-        create(taskCode: string, fun: string, cron?: string): Promise<void> {
-            let query = ''
-            if (cron) {
-                query = '?cron=' + encodeURIComponent(cron)
-            }
-            return task<void>("createTask", resourceSubjectCode, OptActionKind.CREATE, 'task/' + taskCode + query, fun)
-        },
-        modify(taskCode: string, fun: string, cron?: string): Promise<void> {
-            let query = ''
-            if (cron) {
-                query = '?cron=' + encodeURIComponent(cron)
-            }
-            return task<void>("modifyTask", resourceSubjectCode, OptActionKind.MODIFY, 'task/' + taskCode + query, fun)
-        },
-        delete(taskCode: string): Promise<void> {
-            return task<void>("deleteTask", resourceSubjectCode, OptActionKind.DELETE, 'task/' + taskCode)
-        },
-        execute(taskCode: string): Promise<void> {
-            return task<void>("executeTask", resourceSubjectCode, OptActionKind.CREATE, 'exec/' + taskCode)
-        },
+    constructor(resourceSubjectCode: string) {
+        this.resourceSubjectCode = resourceSubjectCode;
+    }
+
+    private readonly resourceSubjectCode: string
+
+    create(taskCode: string, fun: string, cron?: string): Promise<void> {
+        let query = ''
+        if (cron) {
+            query = '?cron=' + encodeURIComponent(cron)
+        }
+        return task<void>("createTask", this.resourceSubjectCode, OptActionKind.CREATE, 'task/' + taskCode + query, fun)
+    }
+
+    modify(taskCode: string, fun: string, cron?: string): Promise<void> {
+        let query = ''
+        if (cron) {
+            query = '?cron=' + encodeURIComponent(cron)
+        }
+        return task<void>("modifyTask", this.resourceSubjectCode, OptActionKind.MODIFY, 'task/' + taskCode + query, fun)
+    }
+
+    delete(taskCode: string): Promise<void> {
+        return task<void>("deleteTask", this.resourceSubjectCode, OptActionKind.DELETE, 'task/' + taskCode)
+    }
+
+    execute(taskCode: string): Promise<void> {
+        return task<void>("executeTask", this.resourceSubjectCode, OptActionKind.CREATE, 'exec/' + taskCode)
+    }
+
+    subject(resourceSubject: string) {
+        return new TaskSDK(resourceSubject)
     }
 
 }

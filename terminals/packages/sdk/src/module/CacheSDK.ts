@@ -24,67 +24,83 @@ export function init(appId: number): void {
 }
 
 export function cacheSDK() {
-    return CacheSDK(_appId + ".cache.default")
+    return new CacheSDK(_appId + ".cache.default")
 }
 
-function CacheSDK(resourceSubjectCode: string) {
+export class CacheSDK {
+    constructor(resourceSubjectCode: string) {
+        this.resourceSubjectCode = resourceSubjectCode;
+    }
 
-    return {
-        exists(key: string): Promise<boolean> {
-            checkKey(key)
-            return cache<boolean>("existsCache", resourceSubjectCode, OptActionKind.EXISTS, key)
-        },
-        hexists(key: string, fieldName: string): Promise<boolean> {
-            checkKey(key)
-            return cache<boolean>("hexistsCache", resourceSubjectCode, OptActionKind.EXISTS, key + "/" + fieldName)
-        },
-        get<T>(key: string): Promise<T> {
-            checkKey(key)
-            return cache<T>("getCache", resourceSubjectCode, OptActionKind.FETCH, key)
-        },
-        hgetall<T>(key: string): Promise<T> {
-            checkKey(key)
-            return cache<T>("hgetallCache", resourceSubjectCode, OptActionKind.FETCH, key + '/*')
-        },
-        hget<T>(key: string, fieldName: string): Promise<T> {
-            checkKey(key)
-            return cache<T>("hgetCache", resourceSubjectCode, OptActionKind.FETCH, key + '/' + fieldName)
-        },
-        del(key: string): Promise<void> {
-            checkKey(key)
-            return cache<void>("delCache", resourceSubjectCode, OptActionKind.DELETE, key)
-        },
-        hdel(key: string, fieldName: string): Promise<void> {
-            checkKey(key)
-            return cache<void>("hdelCache", resourceSubjectCode, OptActionKind.DELETE, key + '/' + fieldName)
-        },
-        incrby(key: string, step: number): Promise<number> {
-            checkKey(key)
-            return cache<number>("incrbyCache", resourceSubjectCode, OptActionKind.CREATE, key + '?incr=true', step + '')
-        },
-        hincrby(key: string, fieldName: string, step: number): Promise<number> {
-            checkKey(key)
-            return cache<number>("hincrbyCache", resourceSubjectCode, OptActionKind.CREATE, key + '/' + fieldName + '?incr=true', step + '')
-        },
-        set(key: string, value: any): Promise<void> {
-            checkKey(key)
-            return cache<void>("setCache", resourceSubjectCode, OptActionKind.CREATE, key, value)
-        },
-        hset(key: string, fieldName: string, value: any): Promise<void> {
-            checkKey(key)
-            return cache<void>("hsetCache", resourceSubjectCode, OptActionKind.CREATE, key + '/' + fieldName, value)
-        },
-        setex(key: string, value: any, expireSec: number): Promise<void> {
-            checkKey(key)
-            return cache<void>("setexCache", resourceSubjectCode, OptActionKind.CREATE, key + '?expire=' + expireSec, value)
-        },
-        expire(key: string, expireSec: number): Promise<void> {
-            checkKey(key)
-            return cache<void>("expireCache", resourceSubjectCode, OptActionKind.CREATE, key + '?expire=' + expireSec)
-        },
-        subject(resourceSubject: string) {
-            return CacheSDK(resourceSubject)
-        }
+    private readonly resourceSubjectCode: string
+
+    exists(key: string): Promise<boolean> {
+        checkKey(key)
+        return cache<boolean>("existsCache", this.resourceSubjectCode, OptActionKind.EXISTS, key)
+    }
+
+    hexists(key: string, fieldName: string): Promise<boolean> {
+        checkKey(key)
+        return cache<boolean>("hexistsCache", this.resourceSubjectCode, OptActionKind.EXISTS, key + "/" + fieldName)
+    }
+
+    get<T>(key: string): Promise<T> {
+        checkKey(key)
+        return cache<T>("getCache", this.resourceSubjectCode, OptActionKind.FETCH, key)
+    }
+
+    hgetall<T>(key: string): Promise<T> {
+        checkKey(key)
+        return cache<T>("hgetallCache", this.resourceSubjectCode, OptActionKind.FETCH, key + '/*')
+    }
+
+    hget<T>(key: string, fieldName: string): Promise<T> {
+        checkKey(key)
+        return cache<T>("hgetCache", this.resourceSubjectCode, OptActionKind.FETCH, key + '/' + fieldName)
+    }
+
+    del(key: string): Promise<void> {
+        checkKey(key)
+        return cache<void>("delCache", this.resourceSubjectCode, OptActionKind.DELETE, key)
+    }
+
+    hdel(key: string, fieldName: string): Promise<void> {
+        checkKey(key)
+        return cache<void>("hdelCache", this.resourceSubjectCode, OptActionKind.DELETE, key + '/' + fieldName)
+    }
+
+    incrby(key: string, step: number): Promise<number> {
+        checkKey(key)
+        return cache<number>("incrbyCache", this.resourceSubjectCode, OptActionKind.CREATE, key + '?incr=true', step + '')
+    }
+
+    hincrby(key: string, fieldName: string, step: number): Promise<number> {
+        checkKey(key)
+        return cache<number>("hincrbyCache", this.resourceSubjectCode, OptActionKind.CREATE, key + '/' + fieldName + '?incr=true', step + '')
+    }
+
+    set(key: string, value: any): Promise<void> {
+        checkKey(key)
+        return cache<void>("setCache", this.resourceSubjectCode, OptActionKind.CREATE, key, value)
+    }
+
+    hset(key: string, fieldName: string, value: any): Promise<void> {
+        checkKey(key)
+        return cache<void>("hsetCache", this.resourceSubjectCode, OptActionKind.CREATE, key + '/' + fieldName, value)
+    }
+
+    setex(key: string, value: any, expireSec: number): Promise<void> {
+        checkKey(key)
+        return cache<void>("setexCache", this.resourceSubjectCode, OptActionKind.CREATE, key + '?expire=' + expireSec, value)
+    }
+
+    expire(key: string, expireSec: number): Promise<void> {
+        checkKey(key)
+        return cache<void>("expireCache", this.resourceSubjectCode, OptActionKind.CREATE, key + '?expire=' + expireSec)
+    }
+
+    subject(resourceSubject: string) {
+        return new CacheSDK(resourceSubject)
     }
 
 }
