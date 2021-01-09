@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -42,11 +43,9 @@ public class ScriptProcessor {
 
     private static String _gatewayServerUrl;
     private static String _dewSDK;
-    private static String _requirejs;
 
-    public static void init(String gatewayServerUrl, String requirejs, String dewSDK) {
+    public static void init(String gatewayServerUrl, String dewSDK) {
         _gatewayServerUrl = gatewayServerUrl;
-        _requirejs = requirejs;
         _dewSDK = dewSDK;
     }
 
@@ -56,15 +55,21 @@ public class ScriptProcessor {
         if (!SCRIPT_CONTAINER.containsKey(appId)) {
             Context context = Context.newBuilder().allowAllAccess(true).build();
             SCRIPT_CONTAINER.put(appId, context);
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", _requirejs));
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "let global = this"));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", _dewSDK));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('idealworld.dew.serviceless.task.helper.ScriptExchangeHelper')"));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "require('DewSDK').setAjaxImpl((url, headers, data) => {\r\n" +
-                    "        return new Promise((resolve, reject) => {\n\n" +
-                    "            resolve({data:JSON.parse($.req(url,headers,data))})\n\n" +
-                    "        })\n\n" +
-                    "    })"));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = require('DewSDK').DewSDK"));
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = this.JVM.DewSDK\r\n" +
+                    "DewSDK.setting.ajax((url, headers, data) => {\r\n" +
+                    "  return new Promise((resolve, reject) => {\n\n" +
+                    "    resolve({data:JSON.parse($.req(url,headers,data))})\n\n" +
+                    "  })\n\n" +
+                    "})\r\n" +
+                    "Dew.setting.currentTime(() => {\r\n" +
+                    "  return $.currentTime()\r\n" +
+                    "})\r\n" +
+                    "Dew.setting.signature((text, key) => {\r\n" +
+                    "  return $.signature(text, key)\r\n" +
+                    "})\r\n"));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', '" + appId + "')"));
         }
         SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "async function " + funName + "(){\r\n" + funBody + "\r\n}"));
@@ -75,18 +80,20 @@ public class ScriptProcessor {
         SCRIPT_CONTAINER.remove(appId);
     }
 
-    public static void execute(Long appId, String funName) {
+    public static Object execute(Long appId, String funName, List<?> parameters) {
         LOCKS.get(appId).lock();
         try {
             var normal = new ScriptOutput();
             var error = new ScriptOutput();
             Consumer<Object> then = (v) -> normal.write("" + v);
             Consumer<Object> catchy = (v) -> error.write("" + v);
-            SCRIPT_CONTAINER.get(appId).getBindings("js").getMember(funName).execute()
+            SCRIPT_CONTAINER.get(appId).getBindings("js").getMember(funName).execute(parameters)
                     .invokeMember("then", then).invokeMember("catch", catchy);
             if (!error.toString().trim().isBlank()) {
                 throw new RTScriptException(error.toString().trim());
             }
+            // TODO
+            return normal;
         } finally {
             LOCKS.get(appId).unlock();
         }

@@ -51,16 +51,11 @@ public class RelDBFlowTest extends DewTest {
     }
 
     private static final String MODULE_NAME = new RelDBModule().getModuleName();
-    private final Map<String, String> rsaKeys = $.security.asymmetric.generateKeys("RSA", 1024);
 
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {
         System.getProperties().put("dew.profile", "test");
         vertx.deployVerticle(new RelDBApplicationTest(), testContext.succeedingThenComplete());
-    }
-
-    private String encrypt(String sql) {
-        return $.security.encodeBytesToBase64($.security.asymmetric.encrypt(sql.getBytes(), $.security.asymmetric.getPublicKey(rsaKeys.get("PublicKey"), "RSA"), 1024, "RSA/ECB/OAEPWithSHA1AndMGF1Padding"));
     }
 
     private Tuple2<Buffer, Throwable> request(String subjectCode, String body, IdentOptCacheInfo identOptCacheInfo) {
@@ -119,11 +114,9 @@ public class RelDBFlowTest extends DewTest {
 
         Assertions.assertEquals("认证错误，AppId不合法", request("1.reldb.subjectCodexx", "{\"sql\":\"select name from iam_account\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
 
-        await(FunCacheClient.choose(MODULE_NAME).set(DewConstant.CACHE_APP_INFO + "1000", "2000\n" + rsaKeys.get("PublicKey") + "\n" + rsaKeys.get("PrivateKey")));
-
-        Assertions.assertEquals("请求的SQL解析错误", request("1.reldb.subjectCodexx", "{\"sql\":\"" + encrypt("select1 name from iam_account1") + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
-        Assertions.assertEquals("Table 'test.iam_account1' doesn't exist", request("1.reldb.subjectCodexx", "{\"sql\":\"" + encrypt("select name from iam_account1") + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
-        Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + encrypt("select name from iam_account") + "\",\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));
+        Assertions.assertEquals("请求的SQL解析错误", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select1 name from iam_account1" + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
+        Assertions.assertEquals("Table 'test.iam_account1' doesn't exist", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account1" + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
+        Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\",\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));
 
         await(FunCacheClient.choose(MODULE_NAME).set(DewConstant.CACHE_AUTH_POLICY + "reldb:1.reldb.subjectCodexx/iam_account/name:fetch",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
@@ -145,7 +138,7 @@ public class RelDBFlowTest extends DewTest {
                 .build()).toBuffer(), new HashMap<>());
         Thread.sleep(1000);
 
-        Assertions.assertEquals("鉴权错误，没有权限访问对应的资源", request("1.reldb.subjectCodexx", "{\"sql\":\"" + encrypt("select name from iam_account") + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
+        Assertions.assertEquals("鉴权错误，没有权限访问对应的资源", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
 
         await(FunCacheClient.choose(MODULE_NAME).del(DewConstant.CACHE_AUTH_POLICY + "reldb:1.reldb.subjectCodexx/iam_account/name:fetch"));
         FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.DELETE, "eb://iam/resource.reldb", JsonObject.mapFrom(ResourceExchange.builder()
@@ -154,7 +147,7 @@ public class RelDBFlowTest extends DewTest {
                 .build()).toBuffer(), new HashMap<>());
         Thread.sleep(1000);
 
-        Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + encrypt("select name from iam_account") + "\",\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));
+        Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\",\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));
         testContext.completeNow();
     }
 

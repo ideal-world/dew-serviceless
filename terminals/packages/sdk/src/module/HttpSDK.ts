@@ -25,14 +25,14 @@ export function init(appId: number): void {
     _appId = appId
 }
 
-export function httpSDK():HttpSDK {
-    return new HttpSDK(_appId + ".http.default")
+export function httpSDK(): HttpSDK {
+    return new HttpSDK("default")
 }
 
 export class HttpSDK {
 
-    constructor(resourceSubjectCode: string) {
-        this.resourceSubjectCode = resourceSubjectCode;
+    constructor(codePostfix: string) {
+        this.resourceSubjectCode = _appId + ".http." + codePostfix;
     }
 
     private readonly resourceSubjectCode: string
@@ -57,8 +57,8 @@ export class HttpSDK {
         return http<T>(this.resourceSubjectCode, OptActionKind.PATCH, pathAndQuery, header, body)
     }
 
-    subject(resourceSubject: string): HttpSDK {
-        return new HttpSDK(resourceSubject)
+    subject(codePostfix: string): HttpSDK {
+        return new HttpSDK(codePostfix)
     }
 
 }

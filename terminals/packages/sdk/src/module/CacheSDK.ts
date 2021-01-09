@@ -24,12 +24,13 @@ export function init(appId: number): void {
 }
 
 export function cacheSDK() {
-    return new CacheSDK(_appId + ".cache.default")
+    return new CacheSDK("default")
 }
 
 export class CacheSDK {
-    constructor(resourceSubjectCode: string) {
-        this.resourceSubjectCode = resourceSubjectCode;
+
+    constructor(codePostfix: string) {
+        this.resourceSubjectCode = _appId + ".cache." + codePostfix;
     }
 
     private readonly resourceSubjectCode: string
@@ -99,8 +100,8 @@ export class CacheSDK {
         return cache<void>("expireCache", this.resourceSubjectCode, OptActionKind.CREATE, key + '?expire=' + expireSec)
     }
 
-    subject(resourceSubject: string) {
-        return new CacheSDK(resourceSubject)
+    subject(codePostfix: string) {
+        return new CacheSDK(codePostfix)
     }
 
 }

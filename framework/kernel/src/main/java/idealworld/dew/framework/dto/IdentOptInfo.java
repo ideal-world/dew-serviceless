@@ -50,7 +50,8 @@ public class IdentOptInfo {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RoleInfo {
-        private String code;
+        private Long id;
+        private String defCode;
         private String name;
     }
 

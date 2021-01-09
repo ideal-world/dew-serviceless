@@ -26,22 +26,42 @@ function build() {
     return browserify({
         basedir: '.',
         debug: false,
-        entries: ['src/DewSDK.ts'],
+        entries: ['src/jvm.ts'],
         cache: {},
-        //  TODO ignore
-        ignore: ['./AxiosImpl'],
+        standalone: "JVM",
         packageCache: {},
-    }).require('./src/DewSDK.ts', {expose: 'DewSDK'})
+    })
         .plugin(tsify)
         .bundle()
-        .pipe(source('DewSDK_browserify.js'))
+        .pipe(source('DewSDK_JVM.js'))
         .pipe(buffer())
         .pipe(babel({
             presets: ['@babel/preset-env']
         }))
         .pipe(uglify())
-        .pipe(gulp.dest('dist/'))
+        .pipe(gulp.dest('../../../module/task/src/main/resources/'))
+}
+
+function jvmBuildTest(){
+    return browserify({
+        basedir: '.',
+        debug: false,
+        entries: ['test/jvm_todo/TodoAction1.test.ts'],
+        cache: {},
+        standalone: "ToDo",
+        packageCache: {},
+    })
+        .plugin(tsify)
+        .bundle()
+        .pipe(source('Todo.js'))
+        .pipe(buffer())
+        .pipe(babel({
+            presets: ['@babel/preset-env']
+        }))
+        /*.pipe(uglify())*/
+        .pipe(gulp.dest('./dist/jvm_todo/'))
 }
 
 exports.default = build
+exports.jvmTest = jvmBuildTest
 

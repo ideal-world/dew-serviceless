@@ -19,12 +19,15 @@ package idealworld.dew.serviceless.task.test;
 import idealworld.dew.serviceless.task.process.ScriptProcessor;
 import idealworld.dew.serviceless.task.process.TaskProcessor;
 import lombok.SneakyThrows;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -36,11 +39,9 @@ public class ScriptTest {
 
     @BeforeAll
     public static void before() {
-        String requirejs = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/requirejs.js")))
+        String dewSDK = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/DewSDK_JVM.js")))
                 .lines().collect(Collectors.joining("\n"));
-        String dewSDK = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/DewSDK_browserify.js")))
-                .lines().collect(Collectors.joining("\n"));
-        ScriptProcessor.init("http://127.0.0.1:9000", requirejs, dewSDK);
+        ScriptProcessor.init("http://127.0.0.1:9000", dewSDK);
     }
 
     @Test
@@ -50,25 +51,25 @@ public class ScriptTest {
         ScriptProcessor.add(1L, "test3", "i+1");
         ScriptProcessor.add(1L, "test4", "1+1");
         try {
-            ScriptProcessor.execute(1L, "test1");
+            ScriptProcessor.execute(1L, "test1", new ArrayList<>());
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertEquals("TypeError: (t.adapter || u.adapter) is not a function", e.getMessage());
         }
         try {
-            ScriptProcessor.execute(1L, "test2");
+            ScriptProcessor.execute(1L, "test2", new ArrayList<>());
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertEquals("TypeError: (t.adapter || u.adapter) is not a function", e.getMessage());
         }
         try {
-            ScriptProcessor.execute(1L, "test3");
+            ScriptProcessor.execute(1L, "test3", new ArrayList<>());
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertEquals("ReferenceError: i is not defined", e.getMessage());
         }
         try {
-            ScriptProcessor.execute(1L, "test4");
+            ScriptProcessor.execute(1L, "test4", new ArrayList<>());
         } catch (Exception e) {
             Assertions.fail(e);
         }
@@ -90,8 +91,8 @@ public class ScriptTest {
             while (true) {
                 try {
                     ScriptProcessor.add(1L, "test1_1", "1+1");
-                    ScriptProcessor.execute(1L, "test1");
-                    ScriptProcessor.execute(2L, "test2");
+                    ScriptProcessor.execute(1L, "test1", new ArrayList<>());
+                    ScriptProcessor.execute(2L, "test2", new ArrayList<>());
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -102,8 +103,8 @@ public class ScriptTest {
         new Thread(() -> {
             while (true) {
                 try {
-                    ScriptProcessor.execute(1L, "test1");
-                    ScriptProcessor.execute(2L, "test2");
+                    ScriptProcessor.execute(1L, "test1", new ArrayList<>());
+                    ScriptProcessor.execute(2L, "test2", new ArrayList<>());
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -114,8 +115,8 @@ public class ScriptTest {
         new Thread(() -> {
             while (true) {
                 try {
-                    ScriptProcessor.execute(3L, "test3");
-                    ScriptProcessor.execute(3L, "test3_1");
+                    ScriptProcessor.execute(3L, "test3", new ArrayList<>());
+                    ScriptProcessor.execute(3L, "test3_1", new ArrayList<>());
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -130,6 +131,19 @@ public class ScriptTest {
             Assertions.fail();
         }
 
+    }
+
+    @Test
+    public void testGrammar(){
+        String dewSDK = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/DewSDK_JVM.js")))
+                .lines().collect(Collectors.joining("\n"));
+        String testJS = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/TodoAction.test.ts")))
+                .lines().collect(Collectors.joining("\n"));
+        Context context = Context.newBuilder().allowAllAccess(true).build();
+        context.eval(Source.create("js", "let global = this"));
+        context.eval(Source.create("js", dewSDK));
+        context.eval(Source.create("js", "const DewSDK = this.JVM.DewSDK"));
+        context.eval(Source.create("js", testJS));
     }
 
 }

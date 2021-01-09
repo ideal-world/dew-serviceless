@@ -31,7 +31,8 @@ export type IdentOptCacheInfo = {
 }
 
 export type RoleInfo = {
-    code: string
+    id: number
+    defCode: string
     name: string
 }
 

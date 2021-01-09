@@ -371,10 +371,11 @@ public class IAMBasicProcessor {
 
     public static Future<Set<IdentOptInfo.RoleInfo>> findRoleInfo(Long accountId, ProcessContext context) {
         return context.sql.list(
-                String.format("SELECT role.id, role.name FROM %s AS accrole" +
+                String.format("SELECT role.id, role.name, role_def.code FROM %s AS accrole" +
                                 " INNER JOIN %s role ON role.id = accrole.rel_role_id" +
+                                " INNER JOIN %s role_def ON role_def.id = role.rel_role_def_id" +
                                 " WHERE accrole.rel_account_id = #{rel_account_id}",
-                        new AccountRole().tableName(), new Role().tableName()),
+                        new AccountRole().tableName(), new Role().tableName(),new RoleDef().tableName()),
                 new HashMap<>() {
                     {
                         put("rel_account_id", accountId);
@@ -384,7 +385,8 @@ public class IAMBasicProcessor {
                     var roleInfos = fetchRolesResult.stream()
                             .map(info -> {
                                 var role = new IdentOptInfo.RoleInfo();
-                                role.setCode(info.getLong("id") + "");
+                                role.setId(info.getLong("id"));
+                                role.setDefCode(info.getString("code"));
                                 role.setName(info.getString("name"));
                                 return role;
                             })

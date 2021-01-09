@@ -28,6 +28,18 @@ let _identOptInfo: IdentOptInfo
 export function init(): void {
 }
 
+const auth = {
+    fetchLoginInfo(): IdentOptInfo {
+        return _identOptInfo
+    },
+    createLoginInfo(identOptInfo: string): void {
+        auth.setLoginInfo(JSON.parse(identOptInfo))
+    },
+    setLoginInfo(identOptInfo: IdentOptInfo): void {
+        _identOptInfo = identOptInfo
+        request.setToken(_identOptInfo.token)
+    },
+}
 const account = {
 
     login(userName: string, password: string, appId: number): Promise<IdentOptInfo> {
@@ -38,8 +50,8 @@ const account = {
             relAppId: appId
         })
             .then(identOptInfo => {
-                request.setToken(identOptInfo.token)
                 _identOptInfo = identOptInfo
+                request.setToken(identOptInfo.token)
                 return identOptInfo
             })
     },
@@ -48,9 +60,6 @@ const account = {
             .then(() => {
                 request.setToken('')
             })
-    },
-    fetchLoginInfo(): IdentOptInfo {
-        return _identOptInfo
     },
     registerAccount(accountName: string): Promise<number> {
         return request.req<number>('registerAccount', 'http://' + iamModuleName + '/console/tenant/account', OptActionKind.CREATE, {
@@ -101,7 +110,7 @@ const resource = {
 
 }
 
-const authpolicy = {
+const authPolicy = {
     createAuthPolicy(subjectKind: AuthSubjectKind, subjectId: number, resourceId: number): Promise<void> {
         return request.req<void>('createAuthPolicy', 'http://' + iamModuleName + '/console/app/authpolicy', OptActionKind.CREATE, {
             relSubjectKind: subjectKind,
@@ -166,6 +175,11 @@ const role = {
 }
 
 export const iamSDK = {
+    auth: {
+        fetch: auth.fetchLoginInfo,
+        create: auth.createLoginInfo,
+        set: auth.setLoginInfo
+    },
     account: {
         login: account.login,
         logout: account.logout,
@@ -174,8 +188,7 @@ export const iamSDK = {
         bindRole: account.bindRole,
         ident: {
             create: account.createAccountIdent
-        },
-        fetchLoginInfo: account.fetchLoginInfo
+        }
     },
     resource: {
         create: resource.createResource,
@@ -207,7 +220,7 @@ export const iamSDK = {
         createRoleDef: role.createRoleDef,
         createRole: role.createRole
     },
-    authpolicy: {
-        create: authpolicy.createAuthPolicy
+    policy: {
+        create: authPolicy.createAuthPolicy
     }
 }

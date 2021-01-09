@@ -25,13 +25,13 @@ export function init(appId: number): void {
 }
 
 export function taskSDK() {
-    return new TaskSDK(_appId + ".task.default")
+    return new TaskSDK("default")
 }
 
 export class TaskSDK {
 
-    constructor(resourceSubjectCode: string) {
-        this.resourceSubjectCode = resourceSubjectCode;
+    constructor(codePostfix: string) {
+        this.resourceSubjectCode = _appId + ".task." + codePostfix;
     }
 
     private readonly resourceSubjectCode: string
@@ -56,12 +56,12 @@ export class TaskSDK {
         return task<void>("deleteTask", this.resourceSubjectCode, OptActionKind.DELETE, 'task/' + taskCode)
     }
 
-    execute(taskCode: string): Promise<void> {
-        return task<void>("executeTask", this.resourceSubjectCode, OptActionKind.CREATE, 'exec/' + taskCode)
+    execute(taskCode: string, parameters: any[]): Promise<any> {
+        return task<any>("executeTask", this.resourceSubjectCode, OptActionKind.CREATE, 'exec/' + taskCode, parameters)
     }
 
-    subject(resourceSubject: string) {
-        return new TaskSDK(resourceSubject)
+    subject(codePostfix: string) {
+        return new TaskSDK(codePostfix)
     }
 
 }

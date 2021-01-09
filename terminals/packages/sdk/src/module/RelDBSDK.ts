@@ -25,13 +25,13 @@ export function init(appId: number): void {
 }
 
 export function reldbSDK() {
-    return new RelDBSDK(_appId + ".reldb.default")
+    return new RelDBSDK("default")
 }
 
 export class RelDBSDK {
 
-    constructor(resourceSubjectCode: string) {
-        this.resourceSubjectCode = resourceSubjectCode;
+    constructor(codePostfix: string) {
+        this.resourceSubjectCode = _appId + ".reldb." + codePostfix;
     }
 
     private readonly resourceSubjectCode: string
@@ -40,8 +40,8 @@ export class RelDBSDK {
         return doExec<T>(this.resourceSubjectCode, encryptedSql, parameters)
     }
 
-    subject(resourceSubject: string) {
-        return new RelDBSDK(resourceSubject)
+    subject(codePostfix: string) {
+        return new RelDBSDK(codePostfix)
     }
 
 }

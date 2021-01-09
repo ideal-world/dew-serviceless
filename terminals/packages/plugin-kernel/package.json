@@ -27,9 +27,7 @@
   "dependencies": {
     "@idealworld/sdk": "^0.1.12",
     "@types/node-rsa": "^1.0.0",
-    "acorn": "^8.0.4",
-    "node-rsa": "^1.1.1",
-    "node-sql-parser": "^3.1.0"
+    "acorn": "^8.0.4"
   },
   "devDependencies": {
     "@types/jest": "^26.0.12",

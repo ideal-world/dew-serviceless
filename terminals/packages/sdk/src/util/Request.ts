@@ -16,11 +16,6 @@
 
 import {JsonMap} from "../domain/Basic";
 import {OptActionKind} from "../domain/Enum";
-import Base64 from "crypto-js/enc-base64";
-import moment from "moment";
-import utf8 from "crypto-js/enc-utf8";
-import hmacSHA1 from "crypto-js/hmac-sha1";
-import {axiosReq} from "./AxiosImpl";
 
 const TOKEN_FLAG = 'Dew-Token'
 const REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri"
@@ -34,7 +29,9 @@ let _serverUrl: string = ''
 let _ak: string = ''
 let _sk: string = ''
 
-let ajax: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any> = axiosReq
+let ajax: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>
+let currentTime: () => string
+let signature: (text: string, key: string) => string
 
 const MOCK_DATA: JsonMap<Function> = {}
 
@@ -46,6 +43,14 @@ export function mock(items: JsonMap<Function>) {
 
 export function setAjaxImpl(impl: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>) {
     ajax = impl
+}
+
+export function setCurrentTime(impl: () => string) {
+    currentTime = impl
+}
+
+export function setSignature(impl: (text: string, key: string) => string) {
+    signature = impl
 }
 
 export function addMock(code: string, fun: Function) {
@@ -84,7 +89,7 @@ export function req<T>(name: string, resourceUri: string, optActionKind: OptActi
         ajax(
             _serverUrl + '?' + pathAndQuery,
             headers,
-            body
+            typeof body === "undefined" ? "" : body
         )
             .then(res => {
                 let data = res.data
@@ -116,8 +121,7 @@ function generateAuthentication(method: string, pathAndQuery: string, headers: a
     if (query) {
         query = query.split('&').sort((a, b) => a < b ? 1 : -1).join("&")
     }
-    let date = moment.utc().format('ddd, DD MMM YYYY HH:mm:ss [GMT]')
-    let signature = Base64.stringify(utf8.parse(hmacSHA1((method + '\n' + date + '\n' + path + '\n' + query).toLowerCase(), _sk).toString()))
-    headers[AUTHENTICATION_HEAD_NAME] = _ak + ':' + signature
+    let date = currentTime()
+    headers[AUTHENTICATION_HEAD_NAME] = _ak + ':' + signature(method + '\n' + date + '\n' + path + '\n' + query, _sk)
     headers[DATE_HEAD_NAME] = date
 }

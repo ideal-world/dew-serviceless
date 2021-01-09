@@ -214,7 +214,7 @@ async function createApp(answers: any) {
     let appId
     if (answers.createTenant) {
         let identOptInfo = await DewSDK.iam.tenant.register(answers.tenantName, answers.appName, answers.tenantAdminUsername, answers.tenantAdminPassword)
-        DewSDK.setting.token(identOptInfo.token)
+        DewSDK.iam.auth.set(identOptInfo)
         appId = identOptInfo.appId
     } else {
         appId = await DewSDK.iam.app.create(answers.appName)

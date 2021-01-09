@@ -30,7 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -46,11 +48,9 @@ public class TaskProcessor extends EventBusProcessor {
     public TaskProcessor(String moduleName, TaskConfig config, Vertx vertx) {
         super(moduleName);
         _vertx = vertx;
-        String requirejs = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/requirejs.js")))
+        String dewSDK = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/DewSDK_JVM.js")))
                 .lines().collect(Collectors.joining("\n"));
-        String dewSDK = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/DewSDK_browserify.js")))
-                .lines().collect(Collectors.joining("\n"));
-        ScriptProcessor.init(config.getGatewayServerUrl(), requirejs, dewSDK);
+        ScriptProcessor.init(config.getGatewayServerUrl(), dewSDK);
     }
 
     {
@@ -81,6 +81,8 @@ public class TaskProcessor extends EventBusProcessor {
                 execTask(
                         eventBusContext.req.params.get("taskCode"),
                         eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.body(List.class),
+                        false,
                         eventBusContext.context));
 
     }
@@ -92,7 +94,7 @@ public class TaskProcessor extends EventBusProcessor {
                 if (!context.cache.isLeader()) {
                     return;
                 }
-                execTask(code, appId, context);
+                execTask(code, appId, new ArrayList<>(), true, context);
             });
         }
         var taskDef = TaskDef.builder()
@@ -113,7 +115,7 @@ public class TaskProcessor extends EventBusProcessor {
                 if (!context.cache.isLeader()) {
                     return;
                 }
-                execTask(code, appId, context);
+                execTask(code, appId, new ArrayList<>(), true, context);
             });
         }
         return context.helper.notExistToError(
@@ -155,8 +157,19 @@ public class TaskProcessor extends EventBusProcessor {
                 .compose(resp -> context.helper.success());
     }
 
-    public static Future<Void> execTask(String code, Long appId, ProcessContext context) {
-        log.trace("Executing task[{}-{}]", appId, code);
+    public static Future<Object> execTask(String code, Long appId, List<?> parameters, Boolean fromTimer, ProcessContext context) {
+        if (!fromTimer) {
+            return _vertx.getOrCreateContext().executeBlocking(promise -> {
+                try {
+                    var result = ScriptProcessor.execute(appId, code, parameters);
+                    promise.complete(result);
+                } catch (Exception e) {
+                    log.warn("Execute task error: {}", e.getMessage(), e);
+                    promise.fail(e);
+                }
+            });
+        }
+        log.trace("Executing timer task[{}-{}]", appId, code);
         return context.helper.notExistToError(
                 context.sql.getOne(new HashMap<>() {
                     {
@@ -176,21 +189,22 @@ public class TaskProcessor extends EventBusProcessor {
                 .compose(taskInstId ->
                         _vertx.getOrCreateContext().executeBlocking(promise -> {
                             try {
-                                ScriptProcessor.execute(appId, code);
+                                var result = ScriptProcessor.execute(appId, code, parameters);
                                 context.sql.update(taskInstId, TaskInst.builder()
                                         .endTime(System.currentTimeMillis())
                                         .success(true)
                                         .message("")
                                         .build());
+                                promise.complete(result);
                             } catch (Exception e) {
-                                log.warn("Execute task error: {}", e.getMessage(), e);
+                                log.warn("Execute timer task error: {}", e.getMessage(), e);
                                 context.sql.update(taskInstId, TaskInst.builder()
                                         .endTime(System.currentTimeMillis())
                                         .success(false)
                                         .message(e.getMessage())
                                         .build());
+                                promise.fail(e);
                             }
-                            promise.complete();
                         }));
     }
 

@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-import {Node} from "acorn";
-import * as JSASTHelper from "./util/JSASTHelper";
+import {SDK} from "./DewSDK";
 
-export function checkAndReplace(fileContent: string): string {
-    let ast = JSASTHelper.parse(fileContent)
-    let items = replaceAndExtractInitFun(fileContent, ast)
-    let initFun = items[1]
-    return items[0]
-}
-
-function replaceAndExtractInitFun(fileContent: string, ast: Node): string[] {
-    console.log(fileContent)
-    return []
-}
+export const DewSDK = SDK

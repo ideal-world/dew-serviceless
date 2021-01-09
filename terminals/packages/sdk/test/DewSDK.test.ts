@@ -81,14 +81,34 @@ test('Test cache sdk', async () => {
     expect(await DewSDK.cache.exists('test-ex')).toBe(true)
     expect(await DewSDK.cache.exists('test-key')).toBe(true)
     // subject
-    expect(await DewSDK.cache.subject(APP_ID + '.cache.default').exists('test-key')).toBe(true)
+    expect(await DewSDK.cache.subject('default').exists('test-key')).toBe(true)
 
     setTimeout(async () => {
         expect(await DewSDK.cache.exists('test-ex')).toBe(false)
         expect(await DewSDK.cache.exists('test-key')).toBe(false)
         // subject
-        expect(await DewSDK.cache.subject(APP_ID + '.cache.default').exists('test-key')).toBe(false)
+        expect(await DewSDK.cache.subject('default').exists('test-key')).toBe(false)
     }, 1000)
+})
+
+test('Test reldb sdk', async () => {
+    await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
+    let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
+    let accounts = await DewSDK.reldb.exec('select name from iam_account', [])
+    expect(accounts.length).toBe(1)
+    // @ts-ignore
+    expect(accounts[0].name).toBe('dew')
+    accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['dew'])
+    expect(accounts.length).toBe(1)
+    // @ts-ignore
+    expect(accounts[0].name).toBe('dew')
+    accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['dew2'])
+    expect(accounts.length).toBe(0)
+    // subject
+    accounts = await DewSDK.reldb.subject(APP_ID + '.reldb.default').exec('select name from iam_account', [])
+    expect(accounts.length).toBe(1)
+    // @ts-ignore
+    expect(accounts[0].name).toBe('dew')
 })
 
 test('Test http sdk', async () => {
@@ -125,18 +145,16 @@ test('Test task sdk', async done => {
     await DewSDK.iam.account.login('` + USERNAME + `', '` + PASSWORD + `', ` + APP_ID + `)
     await DewSDK.iam.account.register("定时添加用户")
     `, '/5 * * * * ?')
-    await DewSDK.task.execute("invoke")
-    /*setTimeout(async () => {
+    await DewSDK.task.execute("invoke",[])
+    setTimeout(async () => {
         await DewSDK.task.delete("invoke")
         await DewSDK.task.delete("timer")
         await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
-        let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
-        dewPlugin.initRSA(publicKey)
-        let accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['后台添加用户'])
+        let accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['后台添加用户'])
         expect(accounts.length).toBe(1)
-        accounts = await DewSDK.reldb.exec(encrypt('select name from iam_account where name = ?'), ['定时添加用户'])
+        accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['定时添加用户'])
         expect(accounts.length).toBeGreaterThan(1)
         done()
-    }, 30000)*/
+    }, 30000)
 }, 200000)
 

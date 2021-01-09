@@ -20,7 +20,12 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.exception.RTScriptException;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * @author gudaoxuri
@@ -34,12 +39,22 @@ public class ScriptExchangeHelper {
         return result;
     }
 
-    public static void log(String msg) {
-        log.info("[Script]Log: " + msg);
+    public static String currentTime() {
+        var sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return sdf.format(new Date());
+    }
+
+    public static String signature(String text,String key) {
+        return  $.security.encodeStringToBase64($.security.digest.digest((text).toLowerCase(),key, "HmacSHA1"),StandardCharsets.UTF_8);
+    }
+
+    public static void info(String msg) {
+        log.info("[Script]Info: {}", msg);
     }
 
     public static void error(String msg) {
-        log.warn("[Script]Execute error: {}", msg);
+        log.warn("[Script]Error: {}", msg);
         throw new RTScriptException(msg);
     }
 

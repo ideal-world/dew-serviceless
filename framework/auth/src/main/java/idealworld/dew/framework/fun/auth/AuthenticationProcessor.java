@@ -76,7 +76,7 @@ public class AuthenticationProcessor {
             }
             if (identOptInfo.getRoleInfo() != null && !identOptInfo.getRoleInfo().isEmpty()) {
                 subjectInfo.put(AuthSubjectKind.ROLE, identOptInfo.getRoleInfo().stream()
-                        .map(IdentOptCacheInfo.RoleInfo::getCode)
+                        .map(r -> r.getId()+"")
                         .collect(Collectors.toList()));
             }
             if (identOptInfo.getAppId() != null) {

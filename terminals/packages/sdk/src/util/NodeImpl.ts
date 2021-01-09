@@ -17,6 +17,10 @@
 
 import axios from "axios";
 import {JsonMap} from "../domain/Basic";
+import moment from "moment";
+import Base64 from "crypto-js/enc-base64";
+import utf8 from "crypto-js/enc-utf8";
+import hmacSHA1 from "crypto-js/hmac-sha1";
 
 export function axiosReq(url: string, headers?: JsonMap<any>, data?: any): Promise<any> {
     return axios.request<any>({
@@ -25,4 +29,12 @@ export function axiosReq(url: string, headers?: JsonMap<any>, data?: any): Promi
         headers: headers,
         data: data
     })
+}
+
+export function currentTime(): string {
+    return moment.utc().format('ddd, DD MMM YYYY HH:mm:ss [GMT]')
+}
+
+export function signature(text: string, key: string): string {
+    return Base64.stringify(utf8.parse(hmacSHA1((text).toLowerCase(), key).toString()))
 }
