@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/plugin-kernel",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Dew Serviceless plugin Kernel",
   "main": "dist/index",
   "typings": "dist/index",
@@ -25,7 +25,7 @@
     "email": "i@sunisle.org"
   },
   "dependencies": {
-    "@idealworld/sdk": "^0.1.12",
+    "@idealworld/sdk": "^0.1.13",
     "@types/node-rsa": "^1.0.0",
     "acorn": "^8.0.4"
   },
