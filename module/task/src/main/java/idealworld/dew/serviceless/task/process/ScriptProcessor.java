@@ -42,38 +42,47 @@ public class ScriptProcessor {
 
 
     private static String _gatewayServerUrl;
-    private static String _dewSDK;
 
-    public static void init(String gatewayServerUrl, String dewSDK) {
+    public static void init(String gatewayServerUrl) {
         _gatewayServerUrl = gatewayServerUrl;
-        _dewSDK = dewSDK;
+    }
+
+    public static void init(Long appId, String funs) {
+        if (!SCRIPT_CONTAINER.containsKey(appId)) {
+            LOCKS.putIfAbsent(appId, new ReentrantLock());
+            LOCKS.get(appId).lock();
+            try {
+                Context context = Context.newBuilder().allowAllAccess(true).build();
+                SCRIPT_CONTAINER.put(appId, context);
+                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "let global = this"));
+                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", funs));
+                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('idealworld.dew.serviceless.task.helper.ScriptExchangeHelper')"));
+                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = this.JVM.DewSDK\r\n" +
+                        "DewSDK.setting.ajax((url, headers, data) => {\r\n" +
+                        "  return new Promise((resolve, reject) => {\n\n" +
+                        "    resolve({data:JSON.parse($.req(url,headers,data))})\n\n" +
+                        "  })\n\n" +
+                        "})\r\n" +
+                        "Dew.setting.currentTime(() => {\r\n" +
+                        "  return $.currentTime()\r\n" +
+                        "})\r\n" +
+                        "Dew.setting.signature((text, key) => {\r\n" +
+                        "  return $.signature(text, key)\r\n" +
+                        "})\r\n"));
+                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', '" + appId + "')"));
+            } finally {
+                LOCKS.get(appId).unlock();
+            }
+        }
     }
 
     public static void add(Long appId, String funName, String funBody) {
-        LOCKS.putIfAbsent(appId, new ReentrantLock());
         LOCKS.get(appId).lock();
-        if (!SCRIPT_CONTAINER.containsKey(appId)) {
-            Context context = Context.newBuilder().allowAllAccess(true).build();
-            SCRIPT_CONTAINER.put(appId, context);
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "let global = this"));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", _dewSDK));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('idealworld.dew.serviceless.task.helper.ScriptExchangeHelper')"));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = this.JVM.DewSDK\r\n" +
-                    "DewSDK.setting.ajax((url, headers, data) => {\r\n" +
-                    "  return new Promise((resolve, reject) => {\n\n" +
-                    "    resolve({data:JSON.parse($.req(url,headers,data))})\n\n" +
-                    "  })\n\n" +
-                    "})\r\n" +
-                    "Dew.setting.currentTime(() => {\r\n" +
-                    "  return $.currentTime()\r\n" +
-                    "})\r\n" +
-                    "Dew.setting.signature((text, key) => {\r\n" +
-                    "  return $.signature(text, key)\r\n" +
-                    "})\r\n"));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', '" + appId + "')"));
+        try {
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "async function " + funName + "(){\r\n" + funBody + "\r\n}"));
+        } finally {
+            LOCKS.get(appId).unlock();
         }
-        SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "async function " + funName + "(){\r\n" + funBody + "\r\n}"));
-        LOCKS.get(appId).unlock();
     }
 
     public static void remove(Long appId) {

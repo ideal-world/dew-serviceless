@@ -33,6 +33,9 @@ export const SDK = {
         serverUrl: function (serverUrl: string): void {
             request.setServerUrl(serverUrl)
         },
+        aksk: function (ak: string, sk: string): void {
+            request.setAkSk(ak, sk)
+        },
         ajax: function (impl: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>): void {
             request.setAjaxImpl(impl)
         },

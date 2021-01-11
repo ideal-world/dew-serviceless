@@ -16,7 +16,7 @@
 
 import {Node, Parser} from "acorn";
 
-let _ecmaVersion: 3 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020 = 6
+let _ecmaVersion: 3 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020 = 2020
 let _sourceType: 'script' | 'module' = 'script'
 
 export function option(ecmaVersion: 3 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020,
@@ -32,16 +32,34 @@ export function parse(fileContent: string): Node {
     })
 }
 
-export function findAstOffsetByType(ast: Node, types: string[]): [number, number, string][] {
-    let offsets: [number, number, string][] = []
+export function findAstOffsetByType(ast: Node, types: string[]): { start: number, end: number, type: string, ast: Node }[] {
+    let offsets: { start: number, end: number, type: string, ast: Node }[] = []
     if (types.some(t => t === ast.type)) {
-        offsets.push([ast.start, ast.end, ast.type])
+        offsets.push({
+            start: ast.start,
+            end: ast.end,
+            type: ast.type,
+            ast: ast
+        })
     } else {
         switch (ast.type) {
             // 入口
             case 'Program':
                 // @ts-ignore
                 ast.body && ast.body.forEach(node => offsets = offsets.concat(findAstOffsetByType(node, types)))
+                break;
+            // function
+            case 'FunctionDeclaration':
+                // @ts-ignore
+                if (ast.id) {
+                    // @ts-ignore
+                    offsets = offsets.concat(findAstOffsetByType(ast.id, types))
+                }
+                // @ts-ignore
+                if (ast.body) {
+                    // @ts-ignore
+                    offsets = offsets.concat(findAstOffsetByType(ast.body, types))
+                }
                 break;
             // let a = 'xxx'
             case 'VariableDeclaration':

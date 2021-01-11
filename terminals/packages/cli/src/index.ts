@@ -219,7 +219,6 @@ async function createApp(answers: any) {
     } else {
         appId = await DewSDK.iam.app.create(answers.appName)
     }
-    let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
     let identAKInfo = (await DewSDK.iam.app.ident.list()).objects[0]
     let identSk = await DewSDK.iam.app.ident.fetchSk(identAKInfo.ak)
 
@@ -228,9 +227,12 @@ async function createApp(answers: any) {
     await gitHelper.clone(TEMPLATE_SIMPLE_GIT_ADDR, path, 1)
     let packageJsonFile = JSON.parse(fileHelper.readFile(path + '/package.json'))
     packageJsonFile['dependencies'].push("@idealworld/sdk", SDK_VERSION)
+    packageJsonFile['dependencies'].push("@idealworld/plugin-gulp", SDK_VERSION)
+    packageJsonFile['dew'].push("serverUrl", answers.serverUrl)
+    packageJsonFile['dew'].push("appId", appId)
+    packageJsonFile['dew'].push("ak", identAKInfo.ak)
+    packageJsonFile['dew'].push("sk", identSk)
     fileHelper.writeFile(path + '/package.json', JSON.stringify(packageJsonFile))
-    fileHelper.writeFile(path + '/Dew.public', publicKey)
-    fileHelper.writeFile(path + '/Dew.secret', identAKInfo.ak + '\r\n' + identSk)
     console.log(chalk.green.bold.bgWhite('应用创建完成，请到 [' + path + '] 中查看。\r\n' +
         '===================\r\n' +
         '应用Id(AppId): ' + appId + '\r\n' +

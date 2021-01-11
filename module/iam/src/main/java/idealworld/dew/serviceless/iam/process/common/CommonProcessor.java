@@ -198,8 +198,8 @@ public class CommonProcessor extends EventBusProcessor {
                                                 TCAccountProcessor.addAccountRole(dto.accountId, appAdminRoleId, dto.tenantId, context)))
                         // 登录
                         .compose(resp ->
-                                loginWithoutAuth(dto.accountId, dto.openId, tenantRegisterReq.getAccountUserName(), dto.appId, dto.tenantId, context)))
-                .compose(identOptInfo -> context.helper.success( IdentOptCacheInfo.builder()
+                                loginWithoutAuth(dto.accountId,tenantRegisterReq.getTenantName(), dto.openId, tenantRegisterReq.getAccountUserName(), dto.appId, dto.tenantId, context)))
+                .compose(identOptInfo -> context.helper.success(IdentOptCacheInfo.builder()
                         .tenantId(dto.tenantId)
                         .appId(dto.appId)
                         .accountCode(identOptInfo.getAccountCode())
@@ -266,7 +266,7 @@ public class CommonProcessor extends EventBusProcessor {
                                                                                         .relAppId(accountRegisterReq.getRelAppId())
                                                                                         .build()))
                                                                         .compose(resp ->
-                                                                                loginWithoutAuth(accountId, openId, accountRegisterReq.getAk(),
+                                                                                loginWithoutAuth(accountId,accountRegisterReq.getName(), openId, accountRegisterReq.getAk(),
                                                                                         accountRegisterReq.getRelAppId(), tenantId,
                                                                                         context)
                                                                         )))
@@ -279,7 +279,7 @@ public class CommonProcessor extends EventBusProcessor {
                     log.info("login : [{}-{}] kind = {}, ak = {}", tenantId, accountLoginReq.getRelAppId(), accountLoginReq.getKind(), accountLoginReq.getAk());
                     var now = new Date().getTime();
                     return context.sql.getOne(
-                            String.format("SELECT accident.sk, acc.id, acc.open_id FROM %s AS accident" +
+                            String.format("SELECT accident.sk, acc.id, acc.name, acc.open_id FROM %s AS accident" +
                                             " INNER JOIN %s AS accapp ON accapp.rel_account_id = accident.rel_account_id" +
                                             " INNER JOIN %s AS tenantident ON tenantident.rel_tenant_id = accident.rel_tenant_id" +
                                             " INNER JOIN %s AS acc ON acc.id = accident.rel_account_id" +
@@ -303,21 +303,23 @@ public class CommonProcessor extends EventBusProcessor {
                                 }
                                 var identSk = accountInfo.getString("sk");
                                 var accountId = accountInfo.getLong("id");
+                                var accountName = accountInfo.getString("name");
                                 var openId = accountInfo.getString("open_id");
-                                return login(accountId, openId, accountLoginReq.getKind(), accountLoginReq.getAk(), accountLoginReq.getSk(), identSk, accountLoginReq.getRelAppId(), tenantId, context);
+                                return login(accountId, accountName, openId, accountLoginReq.getKind(), accountLoginReq.getAk(), accountLoginReq.getSk(), identSk, accountLoginReq.getRelAppId(), tenantId, context);
                             });
                 });
     }
 
-    public static Future<IdentOptInfo> login(Long accountId, String openId, AccountIdentKind kind, String ak, String inputSk, String persistedSk, Long appId, Long tenantId, ProcessContext context) {
+    public static Future<IdentOptInfo> login(Long accountId, String accountName, String openId, AccountIdentKind kind, String ak, String inputSk, String persistedSk, Long appId, Long tenantId, ProcessContext context) {
         return validateSK(kind, ak, inputSk, persistedSk, appId, tenantId, context)
-                .compose(resp -> loginWithoutAuth(accountId, openId, ak, appId, tenantId, context));
+                .compose(resp -> loginWithoutAuth(accountId, accountName, openId, ak, appId, tenantId, context));
     }
 
-    public static Future<IdentOptInfo> loginWithoutAuth(Long accountId, String openId, String ak, Long appId, Long tenantId, ProcessContext context) {
+    public static Future<IdentOptInfo> loginWithoutAuth(Long accountId, String accountName, String openId, String ak, Long appId, Long tenantId, ProcessContext context) {
         log.info("Login Success:  [{}-{}] ak {}", tenantId, appId, ak);
         String token = KeyHelper.generateToken();
         var optInfo = new IdentOptCacheInfo();
+        optInfo.setAccountName(accountName);
         optInfo.setAccountCode(openId);
         optInfo.setToken(token);
         optInfo.setAppId(appId);
@@ -336,6 +338,7 @@ public class CommonProcessor extends EventBusProcessor {
                     // TODO 有效时间
                     AuthCacheProcessor.setOptInfo(optInfo, IAMConstant.OBJECT_UNDEFINED, context);
                     return context.helper.success(IdentOptInfo.builder()
+                            .accountName(optInfo.getAccountName())
                             .accountCode(optInfo.getAccountCode())
                             .token(optInfo.getToken())
                             .roleInfo(optInfo.getRoleInfo())

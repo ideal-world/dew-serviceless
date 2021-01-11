@@ -24,6 +24,10 @@
     "name": "gudaoxuri",
     "email": "i@sunisle.org"
   },
+  "keywords": [
+    "dew",
+    "serverless"
+  ],
   "dependencies": {
     "@idealworld/sdk": "^0.1.13",
     "@types/node-rsa": "^1.0.0",

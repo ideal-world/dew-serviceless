@@ -24,6 +24,11 @@
     "name": "gudaoxuri",
     "email": "i@sunisle.org"
   },
+  "keywords": [
+    "dew",
+    "serverless",
+    "gulpplugin"
+  ],
   "dependencies": {
     "@idealworld/plugin-kernel": "^0.1.13",
     "@types/crypto-js": "^4.0.1",

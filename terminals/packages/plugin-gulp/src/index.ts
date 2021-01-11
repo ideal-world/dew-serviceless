@@ -16,16 +16,23 @@
 
 import * as through from 'through2'
 import * as gutil from 'gulp-util'
-import {checkAndReplace} from "@idealworld/plugin-kernel";
+import * as DewPlugin from "@idealworld/plugin-kernel";
 
 const PluginError = gutil.PluginError;
 const PLUGIN_NAME = 'Dew-Build';
 
-module.exports = function () {
+const fs = require('fs')
+const config = JSON.parse(fs.readFileSync('./package.json'))['dew']
+const serverUrl: string = config.serverUrl
+const appId: number = config.appId
+const ak: string = config.ak
+const sk: string = config.sk
+
+
+export function jvmPrepare() {
     return through.obj(function (file, enc, cb) {
         if (file.isBuffer()) {
-            // TODO 过滤非js文件
-            file.contents = Buffer.from(checkAndReplace(file.contents.toString('utf8')))
+            file.contents = Buffer.from(DewPlugin.replaceImport(file.contents.toString('utf8'),true))
             this.push(file)
             cb()
         }
@@ -35,3 +42,47 @@ module.exports = function () {
         }
     })
 }
+
+export function jvmBuild() {
+    return through.obj(function (file, enc, cb) {
+        if (file.isBuffer()) {
+            DewPlugin.sendTask(file.contents.toString('utf8'), serverUrl, appId, ak, sk)
+                .then(() => {
+                    cb()
+                })
+        }
+        if (file.isStream()) {
+            this.emit('error', new PluginError(PLUGIN_NAME, 'Streams are not supported!'))
+            cb()
+        }
+    })
+}
+
+export function jsPrepare() {
+    return through.obj(function (file, enc, cb) {
+        if (file.isBuffer()) {
+            file.contents = Buffer.from(DewPlugin.replaceImport(file.contents.toString('utf8'),false))
+            this.push(file)
+            cb()
+        }
+        if (file.isStream()) {
+            this.emit('error', new PluginError(PLUGIN_NAME, 'Streams are not supported!'))
+            cb()
+        }
+    })
+}
+
+export function jsBuild() {
+    return through.obj(function (file, enc, cb) {
+        if (file.isBuffer()) {
+            DewPlugin.rewriteAction(file.contents.toString('utf8'), 'xxx', appId)
+            cb()
+        }
+        if (file.isStream()) {
+            this.emit('error', new PluginError(PLUGIN_NAME, 'Streams are not supported!'))
+            cb()
+        }
+    })
+}
+
+

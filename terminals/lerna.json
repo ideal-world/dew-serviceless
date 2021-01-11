@@ -8,13 +8,6 @@
         "ignored-file",
         "*.md",
         "*.adoc"
-      ],
-      "message": "chore(release): publish"
-    },
-    "bootstrap": {
-      "ignore": "component-*",
-      "npmClientArgs": [
-        "--no-package-lock"
       ]
     }
   },

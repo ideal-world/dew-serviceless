@@ -36,6 +36,10 @@ export class TaskSDK {
 
     private readonly resourceSubjectCode: string
 
+    initTasks(funs: string,): Promise<void> {
+        return task<void>("initTasks", this.resourceSubjectCode, OptActionKind.CREATE, 'task', funs)
+    }
+
     create(taskCode: string, fun: string, cron?: string): Promise<void> {
         let query = ''
         if (cron) {

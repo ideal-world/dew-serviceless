@@ -28,12 +28,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 事件触发服务.
@@ -45,15 +42,20 @@ public class TaskProcessor extends EventBusProcessor {
 
     private static Vertx _vertx;
 
-    public TaskProcessor(String moduleName, TaskConfig config, Vertx vertx) {
+    public TaskProcessor(String moduleName, TaskConfig config, Vertx vertx, ProcessContext context) {
         super(moduleName);
         _vertx = vertx;
-        String dewSDK = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/DewSDK_JVM.js")))
-                .lines().collect(Collectors.joining("\n"));
-        ScriptProcessor.init(config.getGatewayServerUrl(), dewSDK);
+        ScriptProcessor.init(config.getGatewayServerUrl());
+        loadTasks(context);
     }
 
     {
+        // 初始化任务列表
+        addProcessor(OptActionKind.CREATE, "/task", eventBusContext ->
+                initTasks(
+                        eventBusContext.req.body(String.class),
+                        eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.context));
         // 添加当前应用的任务
         addProcessor(OptActionKind.CREATE, "/task/{taskCode}", eventBusContext ->
                 addTask(
@@ -84,7 +86,28 @@ public class TaskProcessor extends EventBusProcessor {
                         eventBusContext.req.body(List.class),
                         false,
                         eventBusContext.context));
+    }
 
+    public static void loadTasks(ProcessContext context) {
+        context.sql.list(new HashMap<>(), TaskDef.class)
+                .onSuccess(taskDefs -> {
+                    var initTask = taskDefs.stream().filter(def -> def.getCode().isBlank()).findAny().get();
+                    initTasks(initTask.getFun(), initTask.getRelAppId(), context);
+                    taskDefs.stream().filter(def -> !def.getCode().isBlank()).forEach(def -> addTask(def.getCode(), def.getCron(), def.getFun(), def.getRelAppId(), context));
+                })
+                .onFailure(e -> context.helper.error(e));
+    }
+
+    public static Future<Void> initTasks(String funs, Long appId, ProcessContext context) {
+        ScriptProcessor.init(appId, funs);
+        var taskDef = TaskDef.builder()
+                .code("")
+                .cron("")
+                .fun(funs)
+                .relAppId(appId)
+                .build();
+        return context.sql.save(taskDef)
+                .compose(resp -> context.helper.success());
     }
 
     public static Future<Void> addTask(String code, String cron, String fun, Long appId, ProcessContext context) {

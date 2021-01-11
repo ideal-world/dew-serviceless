@@ -9,7 +9,7 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
-    "target": "es6",
+    "target": "ESNext",
     "module": "commonjs",
     "strict": true,
     "noImplicitAny": false,

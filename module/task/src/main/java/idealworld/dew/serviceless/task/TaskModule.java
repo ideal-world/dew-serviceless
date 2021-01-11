@@ -17,6 +17,8 @@
 package idealworld.dew.serviceless.task;
 
 import idealworld.dew.framework.DewModule;
+import idealworld.dew.framework.dto.IdentOptInfo;
+import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.serviceless.task.process.TaskProcessor;
 import io.vertx.core.Future;
 
@@ -32,7 +34,11 @@ public class TaskModule extends DewModule<TaskConfig> {
 
     @Override
     protected Future<Void> start(TaskConfig config) {
-        new TaskProcessor(getModuleName(),config,vertx);
+        new TaskProcessor(getModuleName(), config, vertx, ProcessContext.builder()
+                .conf(config)
+                .moduleName(getModuleName())
+                .build()
+                .init(IdentOptInfo.builder().build()));
         return Future.succeededFuture();
     }
 
