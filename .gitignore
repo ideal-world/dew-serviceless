@@ -29,6 +29,7 @@ out/
 node_modules/
 *.tsbuildinfo
 dist/
+test-dist/
 yarn.lock
 .node/
 

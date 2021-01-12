@@ -21,18 +21,18 @@ import * as DewPlugin from "@idealworld/plugin-kernel";
 const PluginError = gutil.PluginError;
 const PLUGIN_NAME = 'Dew-Build';
 
-const fs = require('fs')
-const config = JSON.parse(fs.readFileSync('./package.json'))['dew']
-const serverUrl: string = config.serverUrl
-const appId: number = config.appId
-const ak: string = config.ak
-const sk: string = config.sk
+const path = require('path')
 
-
-export function jvmPrepare() {
+export function jvmPrepare(relativeBasePath: string) {
+    let basePath = path.join(process.cwd(), relativeBasePath)
     return through.obj(function (file, enc, cb) {
+        if (!file.path.startsWith(basePath)) {
+            cb()
+            return
+        }
         if (file.isBuffer()) {
-            file.contents = Buffer.from(DewPlugin.replaceImport(file.contents.toString('utf8'),true))
+            DewPlugin.generateJVMFile(basePath, file.path)
+            file.contents = Buffer.from(DewPlugin.replaceImport(file.contents.toString(enc), true))
             this.push(file)
             cb()
         }
@@ -46,7 +46,8 @@ export function jvmPrepare() {
 export function jvmBuild() {
     return through.obj(function (file, enc, cb) {
         if (file.isBuffer()) {
-            DewPlugin.sendTask(file.contents.toString('utf8'), serverUrl, appId, ak, sk)
+            console.log(file.contents.toString(enc))
+            DewPlugin.sendTask(file.contents.toString(enc))
                 .then(() => {
                     cb()
                 })
@@ -58,24 +59,12 @@ export function jvmBuild() {
     })
 }
 
-export function jsPrepare() {
-    return through.obj(function (file, enc, cb) {
-        if (file.isBuffer()) {
-            file.contents = Buffer.from(DewPlugin.replaceImport(file.contents.toString('utf8'),false))
-            this.push(file)
-            cb()
-        }
-        if (file.isStream()) {
-            this.emit('error', new PluginError(PLUGIN_NAME, 'Streams are not supported!'))
-            cb()
-        }
-    })
-}
-
 export function jsBuild() {
     return through.obj(function (file, enc, cb) {
         if (file.isBuffer()) {
-            DewPlugin.rewriteAction(file.contents.toString('utf8'), 'xxx', appId)
+            let content = file.contents.toString(enc)
+            content = DewPlugin.replaceImport(content, false)
+            DewPlugin.rewriteAction(content, 'xxx')
             cb()
         }
         if (file.isStream()) {

@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/plugin-gulp",
-  "version": "0.1.13",
+  "version": "0.1.15",
   "description": "Dew Serviceless plugin Gulp",
   "main": "dist/index",
   "typings": "dist/index",
@@ -13,6 +13,7 @@
     "build": "yarn run clean && yarn run compile && yarn run prePublish",
     "test": "jest",
     "testC": "jest --coverage --no-cache",
+    "testIT": "gulp test",
     "prePublish": "cpx ../../dist/plugin-gulp/src/** ./dist"
   },
   "license": "Apache-2.0",
@@ -30,7 +31,7 @@
     "gulpplugin"
   ],
   "dependencies": {
-    "@idealworld/plugin-kernel": "^0.1.13",
+    "@idealworld/plugin-kernel": "^0.1.15",
     "@types/crypto-js": "^4.0.1",
     "@types/through2": "^2.0.36",
     "gulp-util": "^3.0.8",
@@ -40,14 +41,11 @@
     "@types/jest": "^26.0.12",
     "@types/node": "^14.6.2",
     "@babel/core": "^7.12.10",
-    "@babel/preset-env": "^7.12.11",
-    "babelify": "^10.0.0",
     "browserify": "^16.5.2",
     "cpx": "1.5.0",
     "gulp": "^4.0.2",
-    "gulp-babel": "^8.0.0",
     "gulp-typescript": "^6.0.0-alpha.1",
-    "gulp-uglify": "^3.0.2",
+    "gulp-uglify-es": "^2.0.0",
     "jest": "^26.4.2",
     "rimraf": "^3.0.2",
     "ts-jest": "^26.3.0",
@@ -60,5 +58,11 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "92f0ec9a9087ecf0d9b24bcadedf27c6526d3176"
+  "gitHead": "92f0ec9a9087ecf0d9b24bcadedf27c6526d3176",
+  "dew": {
+    "serverUrl": "http://127.0.0.1:9000",
+    "appId": 1,
+    "ak": "xxxxx",
+    "sk": "yyyyyyyyy"
+  }
 }

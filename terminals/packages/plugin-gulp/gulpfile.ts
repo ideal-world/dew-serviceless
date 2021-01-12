@@ -14,56 +14,52 @@
  * limitations under the License.
  */
 
+import {jsBuild, jvmBuild, jvmPrepare} from "./src";
+
 const gulp = require("gulp")
-const {series, parallel} = require('gulp')
+const {series} = require('gulp')
+const glob = require('glob');
 const browserify = require("browserify")
-const babelify = require('babelify')
 const source = require('vinyl-source-stream')
 const buffer = require('vinyl-buffer')
-const uglify = require("gulp-uglify")
+const uglify = require("gulp-uglify-es").default
 const rm = require('rimraf')
-const tsify = require("tsify")
 let ts = require("gulp-typescript")
 let tsProject = ts.createProject('tsconfig.test.json')
 
+const _path = {
+    dist: './test_dist',
+    action: './test_dist/test/actions',
+}
+
 const _clean = (done) => {
-    rm('./test_dist', error => {
+    rm(_path.dist, error => {
         if (error) throw error
         done()
     })
 }
 
-const _ts = (done) => {
-    tsProject.src().pipe(tsProject()).js.pipe(gulp.dest('./test_dist'))
-    done()
+const _ts = () => {
+    return tsProject.src()
+        .pipe(tsProject()).js
+        .pipe(gulp.dest(_path.dist))
+        .pipe(jvmPrepare(_path.action))
 }
 
 function _jvmBuild() {
     return browserify({
-        basedir: '.',
-        debug: false,
-        entries: ['test_dist/actions/TodoAction1.test.ts','test_dist/actions/TodoAction2.test.ts'],
-        extensions: ['.js', '.jsx', 'tsx', '.json'],
+        entries: glob.sync(_path.action+'/JVM.js'),
         standalone: "JVM"
     })
-        .plugin(tsify)
-        .transform(babelify, {
-            presets: ['@babel/preset-env', '@babel/preset-react'],
-            plugins: [
-                '@babel/plugin-transform-runtime',
-                ['@babel/plugin-proposal-decorators', { 'legacy': true }],
-                ['@babel/plugin-proposal-class-properties', { 'loose': true }]
-            ]
-        })
         .bundle()
-        .pipe(source('JVM.js'))
+        .pipe(source('test.js'))
         .pipe(buffer())
-        .pipe(uglify())
-        .pipe(gulp.dest('./test_dist'))
+        /*.pipe(uglify())*/
+        .pipe(gulp.dest('../../../module/task/src/test/resources/'))
+        /*.pipe(jvmBuild())*/
 }
 
 
 module.exports = {
-    test: series(_clean, _ts),
+    test: series(_clean, _ts, _jvmBuild),
 }
-

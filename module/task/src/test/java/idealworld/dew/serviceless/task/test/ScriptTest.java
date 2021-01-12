@@ -18,9 +18,9 @@ package idealworld.dew.serviceless.task.test;
 
 import idealworld.dew.serviceless.task.process.ScriptProcessor;
 import idealworld.dew.serviceless.task.process.TaskProcessor;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Source;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -39,9 +40,10 @@ public class ScriptTest {
 
     @BeforeAll
     public static void before() {
-        String dewSDK = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/DewSDK_JVM.js")))
+        ScriptProcessor.init("http://127.0.0.1:9000");
+        String testJS = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/test.js")))
                 .lines().collect(Collectors.joining("\n"));
-        ScriptProcessor.init("http://127.0.0.1:9000", dewSDK);
+        ScriptProcessor.init(1L, testJS);
     }
 
     @Test
@@ -133,17 +135,113 @@ public class ScriptTest {
 
     }
 
+    /**
+     * 此测试先在 plugin-gulp中执行gulp test
+     */
     @Test
-    public void testGrammar(){
-        String dewSDK = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/DewSDK_JVM.js")))
-                .lines().collect(Collectors.joining("\n"));
-        String testJS = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/TodoAction.test.ts")))
-                .lines().collect(Collectors.joining("\n"));
-        Context context = Context.newBuilder().allowAllAccess(true).build();
-        context.eval(Source.create("js", "let global = this"));
-        context.eval(Source.create("js", dewSDK));
-        context.eval(Source.create("js", "const DewSDK = this.JVM.DewSDK"));
-        context.eval(Source.create("js", testJS));
+    public void testGrammar() {
+        var result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestStr", new ArrayList<>() {
+            {
+                add("测试");
+                add(100);
+                add(new ArrayList<>() {
+                    {
+                        add("1");
+                        add("2");
+                        add("3");
+                    }
+                });
+                add("ddddd");
+            }
+        });
+        Assertions.assertEquals("测试", result);
+        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestNum", new ArrayList<>() {
+            {
+                add("测试");
+                add(100);
+                add(new ArrayList<>() {
+                    {
+                        add("1");
+                        add("2");
+                        add("3");
+                    }
+                });
+                add("ddddd");
+            }
+        });
+        Assertions.assertEquals(100, result);
+        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestArr", new ArrayList<>() {
+            {
+                add("测试");
+                add(100);
+                add(new ArrayList<>() {
+                    {
+                        add("1");
+                        add("2");
+                        add("3");
+                    }
+                });
+                add("ddddd");
+            }
+        });
+        Assertions.assertEquals("3", ((JsonArray) result).getString(2));
+        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestObj", new ArrayList<>() {
+            {
+                add("测试");
+                add(100);
+                add(new ArrayList<>() {
+                    {
+                        add("1");
+                        add("2");
+                        add("3");
+                    }
+                });
+                add("ddddd");
+            }
+        });
+        Assertions.assertEquals("ddddd", result);
+        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestMap", new ArrayList<>() {
+            {
+                add(new HashMap<>() {
+                    {
+                        put("xx", "xx");
+                    }
+                });
+            }
+        });
+        Assertions.assertEquals("xx", ((JsonObject) result).getString("xx"));
+        Assertions.assertEquals("add", ((JsonObject) result).getString("add"));
+        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestDto", new ArrayList<>() {
+            {
+                add(new HashMap<>() {
+                    {
+                        put("content", "xx");
+                    }
+                });
+            }
+        });
+        Assertions.assertEquals("xx", ((JsonObject) result).getString("content"));
+        Assertions.assertEquals("100", ((JsonObject) result).getString("createUserId"));
+        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestDtos", new ArrayList<>() {
+            {
+                add(new ArrayList<>() {
+                    {
+                        add(new HashMap<>() {
+                            {
+                                put("content", "xx");
+                            }
+                        });
+                        add(new HashMap<>() {
+                            {
+                                put("content", "yy");
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        Assertions.assertEquals("yy", ((JsonArray) result).getJsonObject(1).getString("content"));
+        Assertions.assertEquals("100", ((JsonArray) result).getJsonObject(0).getString("createUserId"));
     }
 
 }

@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/sdk",
-  "version": "0.1.13",
+  "version": "0.1.15",
   "description": "Dew Serviceless SDK",
   "main": "dist/index",
   "typings": "dist/index",

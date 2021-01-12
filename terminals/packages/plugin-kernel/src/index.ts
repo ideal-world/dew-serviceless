@@ -18,6 +18,14 @@ import {Node} from "acorn";
 import * as JSASTHelper from "./util/JSASTHelper";
 import {DewSDK} from "@idealworld/sdk";
 
+const fs = require('fs')
+const path = require('path')
+const config = JSON.parse(fs.readFileSync('./package.json'))['dew']
+const serverUrl: string = config.serverUrl
+const appId: number = config.appId
+const ak: string = config.ak
+const sk: string = config.sk
+
 export function replaceImport(fileContent: string, toJVM: boolean): string {
     if (toJVM) {
         return fileContent.replace(/@idealworld\/sdk/g, '@idealworld/sdk/dist/jvm')
@@ -25,15 +33,30 @@ export function replaceImport(fileContent: string, toJVM: boolean): string {
     return fileContent.replace(/@idealworld\/sdk\/dist\/jvm/g, '@idealworld/sdk')
 }
 
-export function rewriteAction(fileContent: string, moduleName: string, appId: number): string {
-    let ast = JSASTHelper.parse(fileContent)
-    return replaceFunction(fileContent, ast, moduleName + '_' + appId)
+export function generateJVMFile(basePath: string, filePath: string) {
+    let jvmPath = path.join(basePath, 'JVM.js')
+    if (!fs.existsSync(jvmPath)) {
+        fs.writeFileSync(jvmPath, `"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const sdk = require("@idealworld/sdk/dist/jvm");
+exports.DewSDK = sdk.DewSDK`)
+    }
+    let rawFileName = filePath.substring(basePath.length + 1, filePath.lastIndexOf('.'));
+    let fileName = rawFileName.replace(/\./g,'_')
+    fs.appendFileSync(jvmPath, `
+const ` + fileName + ` = require("./` + rawFileName + `");
+exports.` + fileName + ` = ` + fileName);
 }
 
-export function sendTask(fileContent: string, serverUrl: string, appId: number, ak: string, sk: string): Promise<void> {
+export function sendTask(fileContent: string): Promise<void> {
     DewSDK.init(serverUrl, appId)
     DewSDK.setting.aksk(ak, sk)
     return DewSDK.task.initTasks(fileContent)
+}
+
+export function rewriteAction(fileContent: string, moduleName: string): string {
+    let ast = JSASTHelper.parse(fileContent)
+    return replaceFunction(fileContent, ast, moduleName + '_' + appId)
 }
 
 function replaceFunction(fileContent: string, ast: Node, taskCode: string): string {
