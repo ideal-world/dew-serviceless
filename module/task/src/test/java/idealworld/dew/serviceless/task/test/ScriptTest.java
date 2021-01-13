@@ -44,6 +44,8 @@ public class ScriptTest {
         String testJS = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/test.js")))
                 .lines().collect(Collectors.joining("\n"));
         ScriptProcessor.init(1L, testJS);
+        ScriptProcessor.init(2L, testJS);
+        ScriptProcessor.init(3L, testJS);
     }
 
     @Test
@@ -56,13 +58,13 @@ public class ScriptTest {
             ScriptProcessor.execute(1L, "test1", new ArrayList<>());
             Assertions.fail();
         } catch (Exception e) {
-            Assertions.assertEquals("TypeError: (t.adapter || u.adapter) is not a function", e.getMessage());
+            Assertions.assertEquals("java.net.ConnectException: Connection refused: no further information", e.getMessage());
         }
         try {
             ScriptProcessor.execute(1L, "test2", new ArrayList<>());
             Assertions.fail();
         } catch (Exception e) {
-            Assertions.assertEquals("TypeError: (t.adapter || u.adapter) is not a function", e.getMessage());
+            Assertions.assertEquals("java.net.ConnectException: Connection refused: no further information", e.getMessage());
         }
         try {
             ScriptProcessor.execute(1L, "test3", new ArrayList<>());
@@ -136,7 +138,7 @@ public class ScriptTest {
     }
 
     /**
-     * 此测试先在 plugin-gulp中执行gulp test
+     * 此测试先在 plugin-gulp 中执行 gulp testToTaskModule 以获得 test.js 文件
      */
     @Test
     public void testGrammar() {

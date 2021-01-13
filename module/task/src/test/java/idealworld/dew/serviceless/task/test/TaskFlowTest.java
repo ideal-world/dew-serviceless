@@ -27,6 +27,7 @@ import idealworld.dew.framework.fun.test.DewTest;
 import idealworld.dew.serviceless.task.TaskModule;
 import idealworld.dew.serviceless.task.domain.TaskDef;
 import idealworld.dew.serviceless.task.domain.TaskInst;
+import idealworld.dew.serviceless.task.process.TaskProcessor;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -36,9 +37,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public class TaskFlowTest extends DewTest {
 
@@ -49,13 +53,49 @@ public class TaskFlowTest extends DewTest {
 
     private static final String MODULE_NAME = new TaskModule().getModuleName();
 
+    private static String testJS = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/test.js")))
+            .lines().collect(Collectors.joining("\n"));
+
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {
         System.getProperties().put("dew.profile", "test");
         vertx.deployVerticle(new TaskApplicationTest(), testContext.succeedingThenComplete());
     }
 
-    private Tuple2<Buffer, Throwable> request(OptActionKind actionKind, String uri, String body) {
+    @SneakyThrows
+    @Test
+    public void testTimer(Vertx vertx, VertxTestContext testContext) {
+        request(OptActionKind.CREATE, "http://xxx/task", testJS);
+        Assertions.assertNull(request(OptActionKind.CREATE, "http://xxx/task/codexx?cron=" + URLEncoder.encode("/5 * * * * ?", StandardCharsets.UTF_8), "Dewxx.xx()")._1);
+        Assertions.assertNull(request(OptActionKind.CREATE, "http://xxx/task/codeyy?cron=" + URLEncoder.encode("/5 * * * * ?", StandardCharsets.UTF_8), "1+1")._1);
+        var taskDefs = await(FunSQLClient.choose(MODULE_NAME).list(new HashMap<>(), TaskDef.class))._0;
+        Assertions.assertEquals(3, taskDefs.size());
+        Assertions.assertEquals("codexx", taskDefs.get(1).getCode());
+        Thread.sleep(50000);
+        var taskInsts = await(FunSQLClient.choose(MODULE_NAME).list(new HashMap<>(), TaskInst.class))._0;
+        Assertions.assertTrue(taskInsts.stream().anyMatch(TaskInst::getSuccess));
+        Assertions.assertTrue(taskInsts.stream().anyMatch(i -> !i.getSuccess()));
+        testContext.completeNow();
+    }
+
+    @SneakyThrows
+    @Test
+    public void testGrammar(Vertx vertx, VertxTestContext testContext) {
+        request(OptActionKind.CREATE, "http://xxx/task", testJS);
+        Assertions.assertEquals("测试", request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestStr", "[\"测试\",100,[\"1\",\"2\",\"3\"],\"ddddd\"]")._0.toString());
+        Assertions.assertEquals(100, Integer.parseInt(request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestNum", "[\"测试\",100,[\"1\",\"2\",\"3\"],\"ddddd\"]")._0.toString()));
+        Assertions.assertEquals("3", request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestArr", "[\"测试\",100,[\"1\",\"2\",\"3\"],\"ddddd\"]")._0.toJsonArray().getString(2));
+        Assertions.assertEquals("ddddd", request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestObj", "[\"测试\",100,[\"1\",\"2\",\"3\"],\"ddddd\"]")._0.toString());
+        Assertions.assertEquals("xx", request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestMap", "[{\"xx\":\"xx\"}]")._0.toJsonObject().getString("xx"));
+        Assertions.assertEquals("add", request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestMap", "[{\"xx\":\"xx\"}]")._0.toJsonObject().getString("add"));
+        Assertions.assertEquals("xx", request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestDto", "[{\"content\":\"xx\"}]")._0.toJsonObject().getString("content"));
+        Assertions.assertEquals("100", request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestDto", "[{\"content\":\"xx\"}]")._0.toJsonObject().getString("createUserId"));
+        Assertions.assertEquals("yy", request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestDtos", "[[{\"content\":\"xx\"},{\"content\":\"yy\"}]]")._0.toJsonArray().getJsonObject(1).getString("content"));
+        Assertions.assertEquals("100", request(OptActionKind.CREATE, "http://xxx/exec/TodoAction2_test.ioTestDtos", "[[{\"content\":\"xx\"},{\"content\":\"yy\"}]]")._0.toJsonArray().getJsonObject(0).getString("createUserId"));
+        testContext.completeNow();
+    }
+
+    private static Tuple2<Buffer, Throwable> request(OptActionKind actionKind, String uri, String body) {
         var header = new HashMap<String, String>();
         var identOptInfo = IdentOptCacheInfo.builder()
                 .tenantId(1L)
@@ -70,20 +110,4 @@ public class TaskFlowTest extends DewTest {
                         header);
         return awaitRequest(req);
     }
-
-    @SneakyThrows
-    @Test
-    public void testFlow(Vertx vertx, VertxTestContext testContext) {
-        Assertions.assertNull(request(OptActionKind.CREATE, "http://xxx/task/codexx?cron=" + URLEncoder.encode("/5 * * * * ?", StandardCharsets.UTF_8), "Dewxx.xx()")._1);
-        Assertions.assertNull(request(OptActionKind.CREATE, "http://xxx/task/codeyy?cron=" + URLEncoder.encode("/5 * * * * ?", StandardCharsets.UTF_8), "1+1")._1);
-        var taskDefs = await(FunSQLClient.choose(MODULE_NAME).list(new HashMap<>(), TaskDef.class))._0;
-        Assertions.assertEquals(2, taskDefs.size());
-        Assertions.assertEquals("codexx", taskDefs.get(0).getCode());
-        Thread.sleep(60000);
-        var taskInsts = await(FunSQLClient.choose(MODULE_NAME).list(new HashMap<>(), TaskInst.class))._0;
-        Assertions.assertTrue(taskInsts.stream().anyMatch(TaskInst::getSuccess));
-        Assertions.assertTrue(taskInsts.stream().anyMatch(i -> !i.getSuccess()));
-        testContext.completeNow();
-    }
-
 }

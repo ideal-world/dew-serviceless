@@ -35,7 +35,7 @@ public class ScriptExchangeHelper {
 
     public static Object req(String url, Map header, Object data) {
         var result = $.http.post(url, data, header);
-        log.trace("Http POST request {} response: {}", url, result);
+        log.trace("[Script]Http POST request {} response: {}", url, result);
         return result;
     }
 

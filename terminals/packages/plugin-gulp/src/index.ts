@@ -17,6 +17,7 @@
 import * as through from 'through2'
 import * as gutil from 'gulp-util'
 import * as DewPlugin from "@idealworld/plugin-kernel";
+import * as fs from "fs";
 
 const PluginError = gutil.PluginError;
 const PLUGIN_NAME = 'Dew-Build';
@@ -32,8 +33,7 @@ export function jvmPrepare(relativeBasePath: string) {
         }
         if (file.isBuffer()) {
             DewPlugin.generateJVMFile(basePath, file.path)
-            file.contents = Buffer.from(DewPlugin.replaceImport(file.contents.toString(enc), true))
-            this.push(file)
+            fs.writeFileSync(file.path, DewPlugin.replaceImport(file.contents.toString(enc), true))
             cb()
         }
         if (file.isStream()) {
@@ -43,12 +43,12 @@ export function jvmPrepare(relativeBasePath: string) {
     })
 }
 
-export function jvmBuild() {
+export function jvmBuild(relativeBasePath: string) {
     return through.obj(function (file, enc, cb) {
         if (file.isBuffer()) {
-            console.log(file.contents.toString(enc))
             DewPlugin.sendTask(file.contents.toString(enc))
                 .then(() => {
+                    DewPlugin.deleteJVMFile(path.join(process.cwd(), relativeBasePath))
                     cb()
                 })
         }
@@ -62,9 +62,12 @@ export function jvmBuild() {
 export function jsBuild() {
     return through.obj(function (file, enc, cb) {
         if (file.isBuffer()) {
+            let fileName = file.path.substring(file.path.lastIndexOf(path.sep) + 1, file.path.lastIndexOf('.'))
             let content = file.contents.toString(enc)
             content = DewPlugin.replaceImport(content, false)
-            DewPlugin.rewriteAction(content, 'xxx')
+            content = DewPlugin.rewriteAction(content, fileName)
+            content = DewPlugin.initDewSDK(content)
+            fs.writeFileSync(file.path, content)
             cb()
         }
         if (file.isStream()) {

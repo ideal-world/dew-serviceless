@@ -28,7 +28,9 @@ const sk: string = config.sk
 
 export function replaceImport(fileContent: string, toJVM: boolean): string {
     if (toJVM) {
-        return fileContent.replace(/@idealworld\/sdk/g, '@idealworld/sdk/dist/jvm')
+        if (fileContent.indexOf('require("@idealworld/sdk")') !== -1) {
+            return fileContent.replace(/@idealworld\/sdk/g, '@idealworld/sdk/dist/jvm')
+        }
     }
     return fileContent.replace(/@idealworld\/sdk\/dist\/jvm/g, '@idealworld/sdk')
 }
@@ -42,10 +44,17 @@ const sdk = require("@idealworld/sdk/dist/jvm");
 exports.DewSDK = sdk.DewSDK`)
     }
     let rawFileName = filePath.substring(basePath.length + 1, filePath.lastIndexOf('.'));
-    let fileName = rawFileName.replace(/\./g,'_')
+    let fileName = rawFileName.replace(/\./g, '_')
     fs.appendFileSync(jvmPath, `
 const ` + fileName + ` = require("./` + rawFileName + `");
 exports.` + fileName + ` = ` + fileName);
+}
+
+export function deleteJVMFile(basePath: string) {
+    let file = path.join(basePath, 'JVM.js')
+    if (fs.existsSync(file)) {
+        fs.unlinkSync(file)
+    }
 }
 
 export function sendTask(fileContent: string): Promise<void> {
@@ -54,12 +63,19 @@ export function sendTask(fileContent: string): Promise<void> {
     return DewSDK.task.initTasks(fileContent)
 }
 
-export function rewriteAction(fileContent: string, moduleName: string): string {
-    let ast = JSASTHelper.parse(fileContent)
-    return replaceFunction(fileContent, ast, moduleName + '_' + appId)
+export function initDewSDK(fileContent: string): string {
+    return fileContent + '\n' +
+        'const {DewSDK} = require("@idealworld/sdk");\n' +
+        'DewSDK.init("' + serverUrl + '", ' + appId + ');'
 }
 
-function replaceFunction(fileContent: string, ast: Node, taskCode: string): string {
+export function rewriteAction(fileContent: string, moduleName: string): string {
+    moduleName = moduleName.replace(/\./g, '_')
+    let ast = JSASTHelper.parse(fileContent)
+    return replaceFunction(fileContent, ast, moduleName)
+}
+
+function replaceFunction(fileContent: string, ast: Node, moduleName: string): string {
     JSASTHelper.findAstOffsetByType(ast, ['FunctionDeclaration']).reverse()
         .forEach(node => {
             // @ts-ignore
@@ -69,7 +85,7 @@ function replaceFunction(fileContent: string, ast: Node, taskCode: string): stri
                 fileContent = fileContent.substring(0, node.start) + fileContent.substring(node.end + 1)
             } else {
                 // @ts-ignore
-                let funBody = '{\n  return DewSDK.task.execute("' + funName + '_' + taskCode + '", [' + (node.ast.params ? node.ast.params.map(p => p.name).join(', ') : '') + ']);\n}'
+                let funBody = '{\n  return DewSDK.task.execute("' + moduleName + '.' + funName + '", [' + (node.ast.params ? node.ast.params.map(p => p.name).join(', ') : '') + ']);\n}'
                 // @ts-ignore
                 fileContent = fileContent.substring(0, node.ast.body.start) + funBody + fileContent.substring(node.ast.body.end)
             }

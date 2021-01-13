@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/cli",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Dew Serviceless CLI",
   "main": "dist/index",
   "typings": "dist/index",
@@ -29,7 +29,7 @@
     "serverless"
   ],
   "dependencies": {
-    "@idealworld/sdk": "^0.1.15",
+    "@idealworld/sdk": "^0.1.16",
     "@types/inquirer": "^7.3.1",
     "chalk": "^4.1.0",
     "clear": "^0.1.0",

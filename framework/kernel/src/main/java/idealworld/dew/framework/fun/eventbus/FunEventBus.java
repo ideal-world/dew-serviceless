@@ -160,6 +160,10 @@ public class FunEventBus {
                                             var array = new JsonArray();
                                             ((List<?>) processResult).forEach(p -> array.add(JsonObject.mapFrom(p)));
                                             event.reply(array.toBuffer());
+                                        } else if (processResult instanceof JsonObject) {
+                                            event.reply(((JsonObject) processResult).toBuffer());
+                                        } else if (processResult instanceof JsonArray) {
+                                            event.reply(((JsonArray) processResult).toBuffer());
                                         } else {
                                             event.reply(JsonObject.mapFrom(processResult).toBuffer());
                                         }

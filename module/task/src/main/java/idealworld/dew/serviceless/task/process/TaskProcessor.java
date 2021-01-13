@@ -91,9 +91,11 @@ public class TaskProcessor extends EventBusProcessor {
     public static void loadTasks(ProcessContext context) {
         context.sql.list(new HashMap<>(), TaskDef.class)
                 .onSuccess(taskDefs -> {
-                    var initTask = taskDefs.stream().filter(def -> def.getCode().isBlank()).findAny().get();
-                    initTasks(initTask.getFun(), initTask.getRelAppId(), context);
-                    taskDefs.stream().filter(def -> !def.getCode().isBlank()).forEach(def -> addTask(def.getCode(), def.getCron(), def.getFun(), def.getRelAppId(), context));
+                    if (!taskDefs.isEmpty()) {
+                        var initTask = taskDefs.stream().filter(def -> def.getCode().isBlank()).findAny().get();
+                        initTasks(initTask.getFun(), initTask.getRelAppId(), context);
+                        taskDefs.stream().filter(def -> !def.getCode().isBlank()).forEach(def -> addTask(def.getCode(), def.getCron(), def.getFun(), def.getRelAppId(), context));
+                    }
                 })
                 .onFailure(e -> context.helper.error(e));
     }
@@ -106,8 +108,22 @@ public class TaskProcessor extends EventBusProcessor {
                 .fun(funs)
                 .relAppId(appId)
                 .build();
-        return context.sql.save(taskDef)
-                .compose(resp -> context.helper.success());
+        return context.sql.tx(context, () ->
+                context.sql.getOne(new HashMap<>() {
+                    {
+                        put("code", "");
+                        put("rel_app_id", appId);
+                    }
+                }, TaskDef.class)
+                        .compose(existTaskDef -> {
+                            if (existTaskDef!=null) {
+                                taskDef.setId(existTaskDef.getId());
+                                return context.sql.update(taskDef);
+                            } else {
+                                return context.sql.save(taskDef)
+                                        .compose(resp -> context.helper.success());
+                            }
+                        }));
     }
 
     public static Future<Void> addTask(String code, String cron, String fun, Long appId, ProcessContext context) {

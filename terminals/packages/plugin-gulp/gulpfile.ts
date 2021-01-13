@@ -32,34 +32,62 @@ const _path = {
     action: './test_dist/test/actions',
 }
 
-const _clean = (done) => {
+function _clean(done) {
     rm(_path.dist, error => {
         if (error) throw error
         done()
     })
 }
 
-const _ts = () => {
+function _jvmPrepare() {
     return tsProject.src()
         .pipe(tsProject()).js
         .pipe(gulp.dest(_path.dist))
         .pipe(jvmPrepare(_path.action))
 }
 
-function _jvmBuild() {
+function _jvmBuildToTaskModule() {
     return browserify({
-        entries: glob.sync(_path.action+'/JVM.js'),
+        entries: glob.sync(_path.action + '/JVM.js'),
         standalone: "JVM"
     })
         .bundle()
         .pipe(source('test.js'))
         .pipe(buffer())
-        /*.pipe(uglify())*/
+        .pipe(uglify())
         .pipe(gulp.dest('../../../module/task/src/test/resources/'))
-        /*.pipe(jvmBuild())*/
 }
 
+function _jvmBuild() {
+    return browserify({
+        entries: glob.sync(_path.action + '/JVM.js'),
+        standalone: "JVM"
+    })
+        .bundle()
+        .pipe(source('test.js'))
+        .pipe(buffer())
+        .pipe(uglify())
+        .pipe(jvmBuild(_path.action))
+}
+
+function _jsPrepare() {
+    return gulp.src(_path.action + "/**.js")
+        .pipe(jsBuild())
+        .pipe(gulp.dest(_path.action))
+}
+
+function _jsBuild() {
+    return browserify({
+        entries: glob.sync(_path.dist + "/**/*.js")
+    })
+        .bundle()
+        .pipe(source('bundle.js'))
+        .pipe(buffer())
+        .pipe(uglify())
+        .pipe(gulp.dest(_path.dist))
+}
 
 module.exports = {
-    test: series(_clean, _ts, _jvmBuild),
+    testToTaskModule: series(_clean, _jvmPrepare, _jvmBuildToTaskModule),
+    testIT: series(_clean, _jvmPrepare, _jvmBuild, _jsPrepare, _jsBuild),
 }

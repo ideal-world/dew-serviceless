@@ -20,7 +20,7 @@ create table if not exists dew_del_record
 (
     id bigint auto_increment
         primary key,
-    content text not null comment '删除内容，Json格式',
+    content longtext not null comment '删除内容，Json格式',
     create_time timestamp default CURRENT_TIMESTAMP null comment '创建时间',
     create_user varchar(255) not null comment '创建者OpenId',
     update_time timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
@@ -38,7 +38,7 @@ create table if not exists task_task_def
         primary key,
     code       varchar(255) not null comment '任务编码',
     cron       varchar(100) not null comment '定时配置',
-    fun        text         not null comment '执行函数',
+    fun        longtext     not null comment '执行函数',
     rel_app_id bigint       not null comment '关联应用Id',
     create_time timestamp default CURRENT_TIMESTAMP null comment '创建时间',
     create_user varchar(255) not null comment '创建者OpenId',

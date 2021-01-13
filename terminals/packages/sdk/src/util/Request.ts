@@ -21,7 +21,7 @@ const TOKEN_FLAG = 'Dew-Token'
 const REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri"
 const REQUEST_RESOURCE_ACTION_FLAG = "Dew-Resource-Action"
 
-const AUTHENTICATION_HEAD_NAME = 'Authentication'
+const AUTHENTICATION_HEAD_NAME = 'Authorization'
 const DATE_HEAD_NAME = 'Dew-Date'
 
 let _token: string = ''
@@ -70,7 +70,7 @@ export function setServerUrl(serverUrl: string): void {
     if (serverUrl.trim().endsWith("/")) {
         serverUrl = serverUrl.trim().substring(0, serverUrl.trim().length - 1)
     }
-    _serverUrl = serverUrl + '/exec'
+    _serverUrl = serverUrl
 }
 
 export function req<T>(name: string, resourceUri: string, optActionKind: OptActionKind, body?: any, headers?: JsonMap<any>, rawResult?: boolean): Promise<T> {
@@ -82,12 +82,13 @@ export function req<T>(name: string, resourceUri: string, optActionKind: OptActi
     }
     headers = headers ? headers : {}
     headers[TOKEN_FLAG] = _token ? _token : ''
-    let pathAndQuery = REQUEST_RESOURCE_URI_FLAG + '=' + encodeURIComponent(resourceUri) + '&' + REQUEST_RESOURCE_ACTION_FLAG + '=' + optActionKind
+    let pathAndQuery = '/exec?' + REQUEST_RESOURCE_ACTION_FLAG + '=' + optActionKind + '&' + REQUEST_RESOURCE_URI_FLAG + '=' + encodeURIComponent(resourceUri)
     generateAuthentication('post', pathAndQuery, headers)
-    console.log('[Dew]Request [%s]%s , GW = [%s]', optActionKind, resourceUri, _serverUrl)
+    let url = _serverUrl + pathAndQuery
+    console.log('[Dew]Request [%s]%s , GW = [%s]', optActionKind, resourceUri, url)
     return new Promise<T>((resolve, reject) => {
         ajax(
-            _serverUrl + '?' + pathAndQuery,
+            url,
             headers,
             typeof body === "undefined" ? "" : body
         )
@@ -105,8 +106,8 @@ export function req<T>(name: string, resourceUri: string, optActionKind: OptActi
                 }
             })
             .catch(error => {
-                console.error('请求错误 : [' + error.message + ']' + error.stack)
-                reject(error)
+                console.error('服务错误 : [' + error.message + ']' + error.stack)
+                reject(error.message)
             })
     })
 }
@@ -119,7 +120,7 @@ function generateAuthentication(method: string, pathAndQuery: string, headers: a
     let path = item[0]
     let query = item.length === 2 ? item[1] : ''
     if (query) {
-        query = query.split('&').sort((a, b) => a < b ? 1 : -1).join("&")
+        query = query.split('&').sort((a, b) => a < b ? -1 : 1).join("&")
     }
     let date = currentTime()
     headers[AUTHENTICATION_HEAD_NAME] = _ak + ':' + signature(method + '\n' + date + '\n' + path + '\n' + query, _sk)

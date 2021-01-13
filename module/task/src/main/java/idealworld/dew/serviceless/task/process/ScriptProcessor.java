@@ -17,6 +17,7 @@
 package idealworld.dew.serviceless.task.process;
 
 import com.ecfront.dew.common.exception.RTScriptException;
+import idealworld.dew.serviceless.task.helper.ScriptExchangeHelper;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
@@ -54,31 +55,42 @@ public class ScriptProcessor {
     }
 
     public static void init(Long appId, String funs) {
+        if (funs.contains("Java.type")) {
+            log.warn("[Script]Security warning,found the \"Java.type\" keyword");
+            throw new RTScriptException("不能使用 [Java.type] 功能");
+        }
         if (!SCRIPT_CONTAINER.containsKey(appId)) {
             LOCKS.putIfAbsent(appId, new ReentrantLock());
             LOCKS.get(appId).lock();
             try {
-                Context context = Context.newBuilder().allowAllAccess(true).allowHostAccess(HostAccess.newBuilder(HostAccess.ALL)
-                        .targetTypeMapping(BigDecimal.class, Double.class,
-                                (v) -> true,
-                                BigDecimal::doubleValue)
-                        .build()).build();
+                Context context = Context.newBuilder()
+                        .allowHostAccess(HostAccess.newBuilder(HostAccess.ALL)
+                                .targetTypeMapping(BigDecimal.class, Double.class,
+                                        (v) -> true,
+                                        BigDecimal::doubleValue)
+                                .build())
+                        .allowHostClassLookup(s -> s.equalsIgnoreCase(ScriptExchangeHelper.class.getName()))
+                        .build();
                 SCRIPT_CONTAINER.put(appId, context);
                 SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "let global = this"));
                 SCRIPT_CONTAINER.get(appId).eval(Source.create("js", funs));
-                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('idealworld.dew.serviceless.task.helper.ScriptExchangeHelper')"));
-                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = JVM.DewSDK\r\n" +
-                        "DewSDK.setting.ajax((url, headers, data) => {\r\n" +
-                        "  return new Promise((resolve, reject) => {\n\n" +
-                        "    resolve({data:JSON.parse($.req(url,headers,data))})\n\n" +
-                        "  })\n\n" +
-                        "})\r\n" +
-                        "DewSDK.setting.currentTime(() => {\r\n" +
-                        "  return $.currentTime()\r\n" +
-                        "})\r\n" +
-                        "DewSDK.setting.signature((text, key) => {\r\n" +
-                        "  return $.signature(text, key)\r\n" +
-                        "})\r\n"));
+                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('" + ScriptExchangeHelper.class.getName() + "')"));
+                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = JVM.DewSDK\n" +
+                        "DewSDK.setting.ajax((url, headers, data) => {\n" +
+                        "  return new Promise((resolve, reject) => {\n" +
+                        "    try{\n" +
+                        "      resolve({data:JSON.parse($.req(url,headers,data))})\n" +
+                        "    }catch(e){\n" +
+                        "      reject({\"message\": e.getMessage(),\"stack\": []})\n" +
+                        "    }\n" +
+                        "  })\n" +
+                        "})\n" +
+                        "DewSDK.setting.currentTime(() => {\n" +
+                        "  return $.currentTime()\n" +
+                        "})\n" +
+                        "DewSDK.setting.signature((text, key) => {\n" +
+                        "  return $.signature(text, key)\n" +
+                        "})\n"));
                 SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', '" + appId + "')"));
             } finally {
                 LOCKS.get(appId).unlock();
@@ -106,11 +118,17 @@ public class ScriptProcessor {
             Consumer<Object> then = (v) -> result[0] = v;
             Consumer<Object> catchy = (v) -> result[1] = v;
             var funNamePath = funName.split("\\.");
-            SCRIPT_CONTAINER.get(appId).getBindings("js").getMember("JVM").getMember(funNamePath[0]).getMember(funNamePath[1])
-                    .execute(compatibilityParameters(parameters).toArray())
-                    .invokeMember("then", then).invokeMember("catch", catchy);
+            var jsFun = SCRIPT_CONTAINER.get(appId).getBindings("js");
+            if (funNamePath.length == 1) {
+                jsFun = jsFun.getMember(funNamePath[0]);
+            } else {
+                jsFun = jsFun.getMember("JVM").getMember(funNamePath[0]).getMember(funNamePath[1]);
+            }
+            jsFun.execute(compatibilityParameters(parameters).toArray()).invokeMember("then", then).invokeMember("catch", catchy);
             if (result[1] != null && !result[1].toString().trim().isBlank()) {
-                throw new RTScriptException(result[1].toString().trim());
+                result[1] = result[1].toString().trim();
+                log.warn("[Script]Execute error: {}", result[1]);
+                throw new RTScriptException((String) result[1]);
             }
             return compatibilityResult(result[0]);
         } finally {
@@ -121,7 +139,7 @@ public class ScriptProcessor {
     private static List<?> compatibilityParameters(Collection<?> parameters) {
         return parameters.stream().map(p -> {
             if (p instanceof Map) {
-                return ProxyObject.fromMap((Map) p);
+                return new MapProxyObject((Map) p);
             } else if (p instanceof Collection) {
                 return compatibilityParameters((Collection) p);
             }
@@ -136,9 +154,12 @@ public class ScriptProcessor {
             return new JsonArray((List) (((Collection) result).stream()
                     .map(r -> compatibilityResult(r))
                     .collect(Collectors.toList())));
-        } else if (result instanceof ProxyObject) {
-            // TODO
-            ((ProxyObject) result).getMemberKeys();
+        } else if (result instanceof MapProxyObject) {
+            return ((MapProxyObject) result).getMap().entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, entry -> compatibilityResult(entry.getValue())));
+        } else if (result instanceof Value) {
+            // TODO 可能存在复杂类型
+            return result.toString();
         }
         return result;
     }

@@ -55,6 +55,7 @@ public abstract class DewTest {
         if (new File(scriptPath).exists()) {
             mysqlConfig.withInitScript("sql/init.sql");
         }
+        mysqlConfig.withCommand("--max_allowed_packet=10M");
         mysqlConfig.start();
         System.out.println("Test mysql port: " + mysqlConfig.getFirstMappedPort() + ", username: " + mysqlConfig.getUsername() + ", password: " + mysqlConfig.getPassword());
         System.getProperties().put("dew.config.funs.sql.host", mysqlConfig.getHost());

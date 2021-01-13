@@ -24,6 +24,7 @@ import idealworld.dew.framework.exception.BadRequestException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
@@ -32,9 +33,7 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -148,25 +147,39 @@ public class ProcessHelper {
             return null;
         }
         if (bodyClazz == Buffer.class) {
-            return (E)body;
+            return (E) body;
         }
         if (bodyClazz == String.class) {
             return (E) body.toString(StandardCharsets.UTF_8);
         }
-        var jsonBody = new JsonObject(body.toString(StandardCharsets.UTF_8));
-        trimValues(jsonBody, Arrays.asList(excludeKeys));
-        if(bodyClazz == JsonObject.class){
-            return (E)jsonBody;
+        var jsonBody = Json.decodeValue(body);
+        if (jsonBody instanceof JsonObject) {
+            trimValues((JsonObject) jsonBody, Arrays.asList(excludeKeys));
+            if (bodyClazz == JsonObject.class) {
+                return (E) jsonBody;
+            }
+            var beanBody = ((JsonObject) jsonBody).mapTo(bodyClazz);
+            var violations = VALIDATOR.validate(beanBody);
+            if (violations.isEmpty()) {
+                return beanBody;
+            }
+            var errorMsg = violations.stream()
+                    .map(violation -> "[" + violation.getPropertyPath().toString() + "]" + violation.getMessage())
+                    .collect(Collectors.joining("\n"));
+            throw new BadRequestException(errorMsg);
         }
-        var beanBody = jsonBody.mapTo(bodyClazz);
-        var violations = VALIDATOR.validate(beanBody);
-        if (violations.isEmpty()) {
-            return beanBody;
+        if (jsonBody instanceof JsonArray) {
+            if (bodyClazz == JsonArray.class) {
+                return (E) jsonBody;
+            }
+            if (bodyClazz == List.class) {
+                return (E) ((JsonArray) jsonBody).getList();
+            }
+            if (bodyClazz == Set.class) {
+                return (E) new HashSet<>(((JsonArray) jsonBody).getList());
+            }
         }
-        var errorMsg = violations.stream()
-                .map(violation -> "[" + violation.getPropertyPath().toString() + "]" + violation.getMessage())
-                .collect(Collectors.joining("\n"));
-        throw new BadRequestException(errorMsg);
+        throw new BadRequestException("无法将\"" + body.toString() + "\"转换成[" + bodyClazz.getName() + "]");
     }
 
     private static void trimValues(JsonObject json, List<String> excludeKeys) {

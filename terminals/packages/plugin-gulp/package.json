@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/plugin-gulp",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Dew Serviceless plugin Gulp",
   "main": "dist/index",
   "typings": "dist/index",
@@ -13,7 +13,8 @@
     "build": "yarn run clean && yarn run compile && yarn run prePublish",
     "test": "jest",
     "testC": "jest --coverage --no-cache",
-    "testIT": "gulp test",
+    "testToTaskModule": "gulp testToTaskModule",
+    "testIT": "gulp testIT",
     "prePublish": "cpx ../../dist/plugin-gulp/src/** ./dist"
   },
   "license": "Apache-2.0",
@@ -31,7 +32,7 @@
     "gulpplugin"
   ],
   "dependencies": {
-    "@idealworld/plugin-kernel": "^0.1.15",
+    "@idealworld/plugin-kernel": "^0.1.16",
     "@types/crypto-js": "^4.0.1",
     "@types/through2": "^2.0.36",
     "gulp-util": "^3.0.8",
@@ -62,7 +63,7 @@
   "dew": {
     "serverUrl": "http://127.0.0.1:9000",
     "appId": 1,
-    "ak": "xxxxx",
-    "sk": "yyyyyyyyy"
+    "ak": "0d944abfd33f4c2c92dbc81d413490e3",
+    "sk": "cc9511fd7b441204478cb3aac6663d5dfb80485b"
   }
 }

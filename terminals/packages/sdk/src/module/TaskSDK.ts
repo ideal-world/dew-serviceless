@@ -36,7 +36,7 @@ export class TaskSDK {
 
     private readonly resourceSubjectCode: string
 
-    initTasks(funs: string,): Promise<void> {
+    initTasks(funs: string): Promise<void> {
         return task<void>("initTasks", this.resourceSubjectCode, OptActionKind.CREATE, 'task', funs)
     }
 
@@ -71,5 +71,7 @@ export class TaskSDK {
 }
 
 function task<T>(name: string, resourceSubjectCode: string, optActionKind: OptActionKind, pathAndQuery: string, body?: any): Promise<T> {
-    return request.req<T>(name, 'task://' + resourceSubjectCode + '/' + pathAndQuery, optActionKind, body)
+    return request.req<T>(name, 'task://' + resourceSubjectCode + '/' + pathAndQuery, optActionKind, body,{
+        'Content-Type': 'text/plain'
+    })
 }

@@ -1220,7 +1220,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
       var TOKEN_FLAG = 'Dew-Token';
       var REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri";
       var REQUEST_RESOURCE_ACTION_FLAG = "Dew-Resource-Action";
-      var AUTHENTICATION_HEAD_NAME = 'Authentication';
+      var AUTHENTICATION_HEAD_NAME = 'Authorization';
       var DATE_HEAD_NAME = 'Dew-Date';
       var _token = '';
       var _serverUrl = '';

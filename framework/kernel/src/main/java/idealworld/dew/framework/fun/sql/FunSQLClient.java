@@ -135,12 +135,16 @@ public class FunSQLClient {
                 .execute(parameters)
                 .onSuccess(records -> {
                     try {
-                        var result = $.fun.stream(records.iterator())
-                                .map(rowJson -> returnClazz == JsonObject.class
-                                        ? (E) rowJson
-                                        : CaseFormatter.snakeToCamel(rowJson).mapTo(returnClazz))
-                                .collect(Collectors.toList());
-                        promise.complete(result);
+                        if (!records.iterator().hasNext()) {
+                            promise.complete(new ArrayList<>());
+                        } else {
+                            var result = $.fun.stream(records.iterator())
+                                    .map(rowJson -> returnClazz == JsonObject.class
+                                            ? (E) rowJson
+                                            : CaseFormatter.snakeToCamel(rowJson).mapTo(returnClazz))
+                                    .collect(Collectors.toList());
+                            promise.complete(result);
+                        }
                     } catch (Exception e) {
                         log.error("[SQL][{}]Select [{}] convert error: {}", code, sql, e.getMessage(), e);
                         promise.fail(e);
