@@ -20,22 +20,48 @@ import {DewSDK} from "@idealworld/sdk";
 
 const fs = require('fs')
 const path = require('path')
+const browserify = require("browserify")
+
 const config = JSON.parse(fs.readFileSync('./package.json'))['dew']
 const serverUrl: string = config.serverUrl
 const appId: number = config.appId
 const ak: string = config.ak
 const sk: string = config.sk
 
-export function replaceImport(fileContent: string, toJVM: boolean): string {
-    if (toJVM) {
-        if (fileContent.indexOf('require("@idealworld/sdk")') !== -1) {
-            return fileContent.replace(/@idealworld\/sdk/g, '@idealworld/sdk/dist/jvm')
-        }
-    }
-    return fileContent.replace(/@idealworld\/sdk\/dist\/jvm/g, '@idealworld/sdk')
+export async function dewBuild(relativeBasePath: string, testToDist?: string): Promise<void> {
+    let basePath = path.join(process.cwd(), relativeBasePath)
+    fs.readdirSync(basePath).forEach(fileName => {
+        let filePath = path.join(basePath, fileName)
+        generateJVMFile(basePath, filePath)
+        fs.writeFileSync(filePath, replaceImport(fs.readFileSync(filePath).toString('utf8'), true))
+    })
+    return new Promise((resolve, reject) => {
+        browserify({
+            entries: path.join(basePath, "JVM.js"),
+            standalone: "JVM"
+        })
+            .plugin('tinyify', {flat: true})
+            .bundle(async (err, buf) => {
+                let content = buf.toString()
+                if (!testToDist) {
+                    await sendTask(content)
+                } else {
+                    fs.writeFileSync(testToDist, content)
+                }
+                deleteJVMFile(basePath)
+                fs.readdirSync(basePath).forEach(fileName => {
+                    let filePath = path.join(basePath, fileName)
+                    let content = replaceImport(fs.readFileSync(filePath).toString('utf8'), false)
+                    content = rewriteAction(content, fileName.substring(0, fileName.lastIndexOf('.')))
+                    content = initDewSDK(content)
+                    fs.writeFileSync(filePath, content)
+                })
+                resolve()
+            })
+    });
 }
 
-export function generateJVMFile(basePath: string, filePath: string) {
+function generateJVMFile(basePath: string, filePath: string) {
     let jvmPath = path.join(basePath, 'JVM.js')
     if (!fs.existsSync(jvmPath)) {
         fs.writeFileSync(jvmPath, `"use strict";
@@ -50,27 +76,36 @@ const ` + fileName + ` = require("./` + rawFileName + `");
 exports.` + fileName + ` = ` + fileName);
 }
 
-export function deleteJVMFile(basePath: string) {
+function replaceImport(fileContent: string, toJVM: boolean): string {
+    if (toJVM) {
+        if (fileContent.indexOf('require("@idealworld/sdk")') !== -1) {
+            return fileContent.replace(/@idealworld\/sdk/g, '@idealworld/sdk/dist/jvm')
+        }
+    }
+    return fileContent.replace(/@idealworld\/sdk\/dist\/jvm/g, '@idealworld/sdk')
+}
+
+function sendTask(fileContent: string): Promise<void> {
+    DewSDK.init(serverUrl, appId)
+    DewSDK.setting.aksk(ak, sk)
+    return DewSDK.task.initTasks(fileContent)
+}
+
+function deleteJVMFile(basePath: string) {
     let file = path.join(basePath, 'JVM.js')
     if (fs.existsSync(file)) {
         fs.unlinkSync(file)
     }
 }
 
-export function sendTask(fileContent: string): Promise<void> {
-    DewSDK.init(serverUrl, appId)
-    DewSDK.setting.aksk(ak, sk)
-    return DewSDK.task.initTasks(fileContent)
-}
-
-export function initDewSDK(fileContent: string): string {
+function initDewSDK(fileContent: string): string {
     return fileContent + '\n' +
         'const {DewSDK} = require("@idealworld/sdk");\n' +
         'DewSDK.init("' + serverUrl + '", ' + appId + ');'
 }
 
-export function rewriteAction(fileContent: string, moduleName: string): string {
-    moduleName = moduleName.replace(/\./g, '_')
+function rewriteAction(fileContent: string, fileName: string): string {
+    let moduleName = fileName.replace(/\./g, '_')
     let ast = JSASTHelper.parse(fileContent)
     return replaceFunction(fileContent, ast, moduleName)
 }

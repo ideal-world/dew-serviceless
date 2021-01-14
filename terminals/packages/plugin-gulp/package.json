@@ -32,17 +32,12 @@
     "gulpplugin"
   ],
   "dependencies": {
-    "@idealworld/plugin-kernel": "^0.1.16",
-    "@types/crypto-js": "^4.0.1",
-    "@types/through2": "^2.0.36",
-    "gulp-util": "^3.0.8",
-    "through2": "^4.0.2"
+    "@idealworld/plugin-kernel": "^0.1.16"
   },
   "devDependencies": {
     "@types/jest": "^26.0.12",
     "@types/node": "^14.6.2",
     "@babel/core": "^7.12.10",
-    "browserify": "^16.5.2",
     "cpx": "1.5.0",
     "gulp": "^4.0.2",
     "gulp-typescript": "^6.0.0-alpha.1",
@@ -51,7 +46,6 @@
     "rimraf": "^3.0.2",
     "ts-jest": "^26.3.0",
     "ts-node": "^9.0.0",
-    "tsify": "^5.0.2",
     "typescript": "^4.0.2",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
@@ -63,7 +57,7 @@
   "dew": {
     "serverUrl": "http://127.0.0.1:9000",
     "appId": 1,
-    "ak": "0d944abfd33f4c2c92dbc81d413490e3",
-    "sk": "cc9511fd7b441204478cb3aac6663d5dfb80485b"
+    "ak": "fe02b192cd5943999d48ad6237f1bc65",
+    "sk": "9fb7aee9e271e99912614fbe8b980044e4462bee"
   }
 }

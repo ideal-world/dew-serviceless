@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {jsBuild, jvmBuild, jvmPrepare} from "./src";
+import {dewBuild} from "./src";
 
 const gulp = require("gulp")
 const {series} = require('gulp')
@@ -39,41 +39,18 @@ function _clean(done) {
     })
 }
 
-function _jvmPrepare() {
+function _ts() {
     return tsProject.src()
         .pipe(tsProject()).js
         .pipe(gulp.dest(_path.dist))
-        .pipe(jvmPrepare(_path.action))
 }
 
-function _jvmBuildToTaskModule() {
-    return browserify({
-        entries: glob.sync(_path.action + '/JVM.js'),
-        standalone: "JVM"
-    })
-        .bundle()
-        .pipe(source('test.js'))
-        .pipe(buffer())
-        .pipe(uglify())
-        .pipe(gulp.dest('../../../module/task/src/test/resources/'))
+function _dewBuild() {
+    return dewBuild(_path.action)
 }
 
-function _jvmBuild() {
-    return browserify({
-        entries: glob.sync(_path.action + '/JVM.js'),
-        standalone: "JVM"
-    })
-        .bundle()
-        .pipe(source('test.js'))
-        .pipe(buffer())
-        .pipe(uglify())
-        .pipe(jvmBuild(_path.action))
-}
-
-function _jsPrepare() {
-    return gulp.src(_path.action + "/**.js")
-        .pipe(jsBuild())
-        .pipe(gulp.dest(_path.action))
+function _dewTestBuild() {
+    return dewBuild(_path.action, '../../../module/task/src/test/resources/test.js')
 }
 
 function _jsBuild() {
@@ -88,6 +65,6 @@ function _jsBuild() {
 }
 
 module.exports = {
-    testToTaskModule: series(_clean, _jvmPrepare, _jvmBuildToTaskModule),
-    testIT: series(_clean, _jvmPrepare, _jvmBuild, _jsPrepare, _jsBuild),
+    testToTaskModule: series(_clean, _ts, _dewTestBuild),
+    testIT: series(_clean, _ts, _dewBuild, _jsBuild),
 }

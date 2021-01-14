@@ -14,67 +14,8 @@
  * limitations under the License.
  */
 
-import * as through from 'through2'
-import * as gutil from 'gulp-util'
 import * as DewPlugin from "@idealworld/plugin-kernel";
-import * as fs from "fs";
 
-const PluginError = gutil.PluginError;
-const PLUGIN_NAME = 'Dew-Build';
-
-const path = require('path')
-
-export function jvmPrepare(relativeBasePath: string) {
-    let basePath = path.join(process.cwd(), relativeBasePath)
-    return through.obj(function (file, enc, cb) {
-        if (!file.path.startsWith(basePath)) {
-            cb()
-            return
-        }
-        if (file.isBuffer()) {
-            DewPlugin.generateJVMFile(basePath, file.path)
-            fs.writeFileSync(file.path, DewPlugin.replaceImport(file.contents.toString(enc), true))
-            cb()
-        }
-        if (file.isStream()) {
-            this.emit('error', new PluginError(PLUGIN_NAME, 'Streams are not supported!'))
-            cb()
-        }
-    })
+export async function dewBuild(relativeBasePath: string, testToDist?: string): Promise<void> {
+    return DewPlugin.dewBuild(relativeBasePath, testToDist)
 }
-
-export function jvmBuild(relativeBasePath: string) {
-    return through.obj(function (file, enc, cb) {
-        if (file.isBuffer()) {
-            DewPlugin.sendTask(file.contents.toString(enc))
-                .then(() => {
-                    DewPlugin.deleteJVMFile(path.join(process.cwd(), relativeBasePath))
-                    cb()
-                })
-        }
-        if (file.isStream()) {
-            this.emit('error', new PluginError(PLUGIN_NAME, 'Streams are not supported!'))
-            cb()
-        }
-    })
-}
-
-export function jsBuild() {
-    return through.obj(function (file, enc, cb) {
-        if (file.isBuffer()) {
-            let fileName = file.path.substring(file.path.lastIndexOf(path.sep) + 1, file.path.lastIndexOf('.'))
-            let content = file.contents.toString(enc)
-            content = DewPlugin.replaceImport(content, false)
-            content = DewPlugin.rewriteAction(content, fileName)
-            content = DewPlugin.initDewSDK(content)
-            fs.writeFileSync(file.path, content)
-            cb()
-        }
-        if (file.isStream()) {
-            this.emit('error', new PluginError(PLUGIN_NAME, 'Streams are not supported!'))
-            cb()
-        }
-    })
-}
-
-

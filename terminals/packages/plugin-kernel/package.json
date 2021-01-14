@@ -30,8 +30,9 @@
   ],
   "dependencies": {
     "@idealworld/sdk": "^0.1.16",
-    "@types/node-rsa": "^1.0.0",
-    "acorn": "^8.0.4"
+    "acorn": "^8.0.4",
+    "browserify": "^17.0.0",
+    "tinyify": "^3.0.0"
   },
   "devDependencies": {
     "@types/jest": "^26.0.12",
