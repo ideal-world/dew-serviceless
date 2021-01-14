@@ -33,6 +33,19 @@ export const SDK = {
         serverUrl: function (serverUrl: string): void {
             request.setServerUrl(serverUrl)
         },
+        appId: function (appId: number): void {
+            request.setAppId(appId)
+            iamSDK.init(appId)
+            reldbSDK.init(appId)
+            cacheSDK.init(appId)
+            httpSDK.init(appId)
+            taskSDK.init(appId)
+            // 重新赋值一次
+            SDK.reldb = reldbSDK.reldbSDK()
+            SDK.cache = cacheSDK.cacheSDK()
+            SDK.http = httpSDK.httpSDK()
+            SDK.task = taskSDK.taskSDK()
+        },
         aksk: function (ak: string, sk: string): void {
             request.setAkSk(ak, sk)
         },
@@ -54,17 +67,8 @@ export const SDK = {
  * @param appId 当前应用Id
  */
 function init(serverUrl: string, appId: number): void {
-    request.setServerUrl(serverUrl)
-    iamSDK.init()
-    reldbSDK.init(appId)
-    cacheSDK.init(appId)
-    httpSDK.init(appId)
-    taskSDK.init(appId)
-    // 重新赋值一次
-    SDK.reldb = reldbSDK.reldbSDK()
-    SDK.cache = cacheSDK.cacheSDK()
-    SDK.http = httpSDK.httpSDK()
-    SDK.task = taskSDK.taskSDK()
+    SDK.setting.serverUrl(serverUrl)
+    SDK.setting.appId(appId)
 }
 
 

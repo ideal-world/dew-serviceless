@@ -181,7 +181,6 @@ const allSteps: any[] = [
             if (!val.trim()) {
                 return '请输入服务地址'
             }
-            DewSDK.setting.serverUrl(val)
             return true
         }
     }, {
@@ -197,7 +196,8 @@ const allSteps: any[] = [
 async function createApp(answers: any) {
     let confirmMessage
     if (!answers.createTenant) {
-        await DewSDK.iam.account.login(answers.tenantAdminUsername, answers.tenantAdminPassword, answers.tenantAdminAppId)
+        DewSDK.setting.appId(answers.tenantAdminAppId)
+        await DewSDK.iam.account.login(answers.tenantAdminUsername, answers.tenantAdminPassword)
         let tenantName = (await DewSDK.iam.tenant.fetch()).name
         confirmMessage = '即将在租户 [' + tenantName + '] 中创建应用 [' + answers.appName + ']'
     } else {
@@ -227,7 +227,7 @@ async function createApp(answers: any) {
     await gitHelper.clone(TEMPLATE_SIMPLE_GIT_ADDR, path, 1)
     let packageJsonFile = JSON.parse(fileHelper.readFile(path + '/package.json'))
     packageJsonFile['dependencies'].push("@idealworld/sdk", SDK_VERSION)
-    packageJsonFile['dependencies'].push("@idealworld/plugin-gulp", SDK_VERSION)
+    packageJsonFile['devDependencies'].push("@idealworld/plugin-gulp", SDK_VERSION)
     packageJsonFile['dew'].push("serverUrl", answers.serverUrl)
     packageJsonFile['dew'].push("appId", appId)
     packageJsonFile['dew'].push("ak", identAKInfo.ak)

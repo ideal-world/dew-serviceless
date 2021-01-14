@@ -68,6 +68,8 @@ public abstract class DewConfig {
             private Integer port = 9000;
             @Builder.Default
             private String allowedOriginPattern = "*";
+            @Builder.Default
+            private String allowedHeaders = "*";
 
         }
 

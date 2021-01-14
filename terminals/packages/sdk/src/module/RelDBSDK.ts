@@ -31,13 +31,13 @@ export function reldbSDK() {
 export class RelDBSDK {
 
     constructor(codePostfix: string) {
-        this.resourceSubjectCode = _appId + ".reldb." + codePostfix;
+        this.resourceSubjectCode = ".reldb." + codePostfix;
     }
 
     private readonly resourceSubjectCode: string
 
-    exec<T>(encryptedSql: string, parameters: any[]): Promise<T[]> {
-        return doExec<T>(this.resourceSubjectCode, encryptedSql, parameters)
+    exec<T>(sql: string, parameters: any[]): Promise<T[]> {
+        return doExec<T>(_appId + this.resourceSubjectCode, sql, parameters)
     }
 
     subject(codePostfix: string) {
@@ -46,13 +46,18 @@ export class RelDBSDK {
 
 }
 
-function doExec<T>(resourceSubjectCode: string, encryptedSql: string, parameters: any[]): Promise<T[]> {
-    let item = encryptedSql.split('|')
-    if (item.length !== 2) {
-        throw "该SQL语句没有加密 : " + encryptedSql
+function doExec<T>(resourceSubjectCode: string, rawSql: string, parameters: any[]): Promise<T[]> {
+    let sql = rawSql.trim().toLocaleLowerCase()
+    let action = sql.startsWith('select ') && sql.indexOf(' from ') !== -1 ? 'FETCH'
+        : sql.startsWith('insert ') && sql.indexOf(' into ') !== -1 && sql.indexOf(' values ') !== -1 ? 'CREATE'
+            : sql.startsWith('update ') && sql.indexOf(' set ') !== -1 && sql.indexOf(' where ') !== -1 ? 'MODIFY'
+                : sql.startsWith('delete ') && sql.indexOf(' where ') !== -1 ? 'DELETE'
+                    : sql.startsWith('create table ') ? 'CREATE' : null
+    if (action == null) {
+        throw 'SQL操作不合法:' + rawSql.trim()
     }
-    return request.req<T[]>('reldb', 'reldb://' + resourceSubjectCode, OptActionKind[item[0]], {
-        sql: item[1],
+    return request.req<T[]>('reldb', 'reldb://' + resourceSubjectCode, OptActionKind[action], {
+        sql: rawSql.trim(),
         parameters: parameters
     })
 }

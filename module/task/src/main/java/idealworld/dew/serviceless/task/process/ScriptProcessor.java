@@ -61,40 +61,40 @@ public class ScriptProcessor {
         }
         if (!SCRIPT_CONTAINER.containsKey(appId)) {
             LOCKS.putIfAbsent(appId, new ReentrantLock());
-            LOCKS.get(appId).lock();
-            try {
-                Context context = Context.newBuilder()
-                        .allowHostAccess(HostAccess.newBuilder(HostAccess.ALL)
-                                .targetTypeMapping(BigDecimal.class, Double.class,
-                                        (v) -> true,
-                                        BigDecimal::doubleValue)
-                                .build())
-                        .allowHostClassLookup(s -> s.equalsIgnoreCase(ScriptExchangeHelper.class.getName()))
-                        .build();
-                SCRIPT_CONTAINER.put(appId, context);
-                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "let global = this"));
-                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", funs));
-                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('" + ScriptExchangeHelper.class.getName() + "')"));
-                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = JVM.DewSDK\n" +
-                        "DewSDK.setting.ajax((url, headers, data) => {\n" +
-                        "  return new Promise((resolve, reject) => {\n" +
-                        "    try{\n" +
-                        "      resolve({data:JSON.parse($.req(url,headers,data))})\n" +
-                        "    }catch(e){\n" +
-                        "      reject({\"message\": e.getMessage(),\"stack\": []})\n" +
-                        "    }\n" +
-                        "  })\n" +
-                        "})\n" +
-                        "DewSDK.setting.currentTime(() => {\n" +
-                        "  return $.currentTime()\n" +
-                        "})\n" +
-                        "DewSDK.setting.signature((text, key) => {\n" +
-                        "  return $.signature(text, key)\n" +
-                        "})\n"));
-                SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', '" + appId + "')"));
-            } finally {
-                LOCKS.get(appId).unlock();
-            }
+        }
+        LOCKS.get(appId).lock();
+        try {
+            Context context = Context.newBuilder()
+                    .allowHostAccess(HostAccess.newBuilder(HostAccess.ALL)
+                            .targetTypeMapping(BigDecimal.class, Double.class,
+                                    (v) -> true,
+                                    BigDecimal::doubleValue)
+                            .build())
+                    .allowHostClassLookup(s -> s.equalsIgnoreCase(ScriptExchangeHelper.class.getName()))
+                    .build();
+            SCRIPT_CONTAINER.put(appId, context);
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "let global = this"));
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('" + ScriptExchangeHelper.class.getName() + "')"));
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", funs));
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = JVM.DewSDK\n" +
+                    "DewSDK.setting.ajax((url, headers, data) => {\n" +
+                    "  return new Promise((resolve, reject) => {\n" +
+                    "    try{\n" +
+                    "      resolve({data:JSON.parse($.req(url,headers,data))})\n" +
+                    "    }catch(e){\n" +
+                    "      reject({\"message\": e.getMessage(),\"stack\": []})\n" +
+                    "    }\n" +
+                    "  })\n" +
+                    "})\n" +
+                    "DewSDK.setting.currentTime(() => {\n" +
+                    "  return $.currentTime()\n" +
+                    "})\n" +
+                    "DewSDK.setting.signature((text, key) => {\n" +
+                    "  return $.signature(text, key)\n" +
+                    "})\n"));
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', " + appId + ")"));
+        } finally {
+            LOCKS.get(appId).unlock();
         }
     }
 

@@ -87,8 +87,10 @@ public class FunHttpServer {
     public void addRoutes(List<Route> routes) {
         var router = Router.router(vertx);
         var corsHandler = CorsHandler.create(httpServerConfig.getAllowedOriginPattern());
-        routes.stream()
-                .map(route -> {
+        corsHandler.allowedHeader(httpServerConfig.getAllowedHeaders());
+        corsHandler.allowedMethod(HttpMethod.OPTIONS);
+        routes
+                .forEach(route -> {
                     var currentRoute = router.route(route.getMethod(), route.getPath());
                     currentRoute.produces(route.getProduces());
                     if (route.getMethod() == HttpMethod.POST || route.getMethod() == HttpMethod.PUT) {
@@ -100,10 +102,8 @@ public class FunHttpServer {
                         log.warn("[HTTP][{}]Request error [{}] {}", code, ctx.statusCode(), ctx.failure().getMessage(), ctx.failure());
                         ctx.response().setStatusCode(statusCode).end("请求发生内部错误");
                     });
-                    return route.getMethod();
-                })
-                .collect(Collectors.toSet())
-                .forEach(corsHandler::allowedMethod);
+                    corsHandler.allowedMethod(route.getMethod());
+                });
         router.route().handler(corsHandler);
         httpServer.requestHandler(router)
                 .listen(httpServerConfig.getPort(), httpResult -> {

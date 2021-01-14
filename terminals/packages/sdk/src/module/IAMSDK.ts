@@ -25,7 +25,10 @@ const iamModuleName: string = 'iam'
 
 let _identOptInfo: IdentOptInfo
 
-export function init(): void {
+let _appId: number = 0
+
+export function init(appId: number): void {
+    _appId = appId
 }
 
 const auth = {
@@ -42,12 +45,12 @@ const auth = {
 }
 const account = {
 
-    login(userName: string, password: string, appId: number): Promise<IdentOptInfo> {
+    login(userName: string, password: string): Promise<IdentOptInfo> {
         request.setToken('')
         return request.req<IdentOptInfo>('login', 'http://' + iamModuleName + '/common/login', OptActionKind.CREATE, {
             ak: userName,
             sk: password,
-            relAppId: appId
+            relAppId: _appId
         })
             .then(identOptInfo => {
                 _identOptInfo = identOptInfo

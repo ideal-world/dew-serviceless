@@ -18,6 +18,7 @@ import {JsonMap} from "../domain/Basic";
 import {OptActionKind} from "../domain/Enum";
 
 const TOKEN_FLAG = 'Dew-Token'
+const APP_FLAG = 'Dew-App-Id'
 const REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri"
 const REQUEST_RESOURCE_ACTION_FLAG = "Dew-Resource-Action"
 
@@ -28,6 +29,7 @@ let _token: string = ''
 let _serverUrl: string = ''
 let _ak: string = ''
 let _sk: string = ''
+let _appId: number
 
 let ajax: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>
 let currentTime: () => string
@@ -39,6 +41,10 @@ export function mock(items: JsonMap<Function>) {
     for (let k in items) {
         MOCK_DATA[k.toLowerCase()] = items[k]
     }
+}
+
+export function addMock(code: string, fun: Function) {
+    MOCK_DATA[code.toLowerCase()] = fun
 }
 
 export function setAjaxImpl(impl: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>) {
@@ -53,8 +59,8 @@ export function setSignature(impl: (text: string, key: string) => string) {
     signature = impl
 }
 
-export function addMock(code: string, fun: Function) {
-    MOCK_DATA[code.toLowerCase()] = fun
+export function setAppId(appId: number): void {
+    _appId = appId
 }
 
 export function setToken(token: string): void {
@@ -81,6 +87,9 @@ export function req<T>(name: string, resourceUri: string, optActionKind: OptActi
         })
     }
     headers = headers ? headers : {}
+    if (_appId) {
+        headers[APP_FLAG] = _appId + ""
+    }
     headers[TOKEN_FLAG] = _token ? _token : ''
     let pathAndQuery = '/exec?' + REQUEST_RESOURCE_ACTION_FLAG + '=' + optActionKind + '&' + REQUEST_RESOURCE_URI_FLAG + '=' + encodeURIComponent(resourceUri)
     generateAuthentication('post', pathAndQuery, headers)

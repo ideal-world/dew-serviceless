@@ -32,29 +32,29 @@ export function httpSDK(): HttpSDK {
 export class HttpSDK {
 
     constructor(codePostfix: string) {
-        this.resourceSubjectCode = _appId + ".http." + codePostfix;
+        this.resourceSubjectCode = ".http." + codePostfix;
     }
 
     private readonly resourceSubjectCode: string
 
     get<T>(pathAndQuery: string, header?: JsonMap<any>): Promise<T> {
-        return http<T>(this.resourceSubjectCode, OptActionKind.FETCH, pathAndQuery, header)
+        return http<T>(_appId + this.resourceSubjectCode, OptActionKind.FETCH, pathAndQuery, header)
     }
 
     delete(pathAndQuery: string, header?: JsonMap<any>): Promise<void> {
-        return http<void>(this.resourceSubjectCode, OptActionKind.DELETE, pathAndQuery, header)
+        return http<void>(_appId + this.resourceSubjectCode, OptActionKind.DELETE, pathAndQuery, header)
     }
 
     post<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
-        return http<T>(this.resourceSubjectCode, OptActionKind.CREATE, pathAndQuery, header, body)
+        return http<T>(_appId + this.resourceSubjectCode, OptActionKind.CREATE, pathAndQuery, header, body)
     }
 
     put<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
-        return http<T>(this.resourceSubjectCode, OptActionKind.MODIFY, pathAndQuery, header, body)
+        return http<T>(_appId + this.resourceSubjectCode, OptActionKind.MODIFY, pathAndQuery, header, body)
     }
 
     patch<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
-        return http<T>(this.resourceSubjectCode, OptActionKind.PATCH, pathAndQuery, header, body)
+        return http<T>(_appId + this.resourceSubjectCode, OptActionKind.PATCH, pathAndQuery, header, body)
     }
 
     subject(codePostfix: string): HttpSDK {

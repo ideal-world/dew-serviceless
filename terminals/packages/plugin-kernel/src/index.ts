@@ -22,6 +22,8 @@ const fs = require('fs')
 const path = require('path')
 const browserify = require("browserify")
 
+const INIT_FUN_NAME = '_'
+
 const config = JSON.parse(fs.readFileSync('./package.json'))['dew']
 const serverUrl: string = config.serverUrl
 const appId: number = config.appId
@@ -42,6 +44,7 @@ export async function dewBuild(relativeBasePath: string, testToDist?: string): P
         })
             .plugin('tinyify', {flat: true})
             .bundle(async (err, buf) => {
+                if (err) throw err
                 let content = buf.toString()
                 if (!testToDist) {
                     await sendTask(content)
@@ -73,7 +76,10 @@ exports.DewSDK = sdk.DewSDK`)
     let fileName = rawFileName.replace(/\./g, '_')
     fs.appendFileSync(jvmPath, `
 const ` + fileName + ` = require("./` + rawFileName + `");
-exports.` + fileName + ` = ` + fileName);
+exports.` + fileName + ` = ` + fileName + `
+` + fileName + `._ && ` + fileName + `._()
+`
+    );
 }
 
 function replaceImport(fileContent: string, toJVM: boolean): string {
@@ -99,9 +105,9 @@ function deleteJVMFile(basePath: string) {
 }
 
 function initDewSDK(fileContent: string): string {
-    return fileContent + '\n' +
-        'const {DewSDK} = require("@idealworld/sdk");\n' +
-        'DewSDK.init("' + serverUrl + '", ' + appId + ');'
+    return 'const {DewSDK} = require("@idealworld/sdk");\n' +
+        'DewSDK.init("' + serverUrl + '", ' + appId + ');\n' +
+        fileContent
 }
 
 function rewriteAction(fileContent: string, fileName: string): string {
@@ -115,7 +121,7 @@ function replaceFunction(fileContent: string, ast: Node, moduleName: string): st
         .forEach(node => {
             // @ts-ignore
             let funName = node.ast.id.name
-            if (fileContent.indexOf('exports.' + funName + ' = ' + funName + ';') === -1) {
+            if (funName === INIT_FUN_NAME || fileContent.indexOf('exports.' + funName + ' = ' + funName + ';') === -1) {
                 // 内部方法，删除
                 fileContent = fileContent.substring(0, node.start) + fileContent.substring(node.end + 1)
             } else {
