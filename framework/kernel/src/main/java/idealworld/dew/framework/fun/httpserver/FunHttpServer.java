@@ -89,6 +89,7 @@ public class FunHttpServer {
         var corsHandler = CorsHandler.create(httpServerConfig.getAllowedOriginPattern());
         corsHandler.allowedHeader(httpServerConfig.getAllowedHeaders());
         corsHandler.allowedMethod(HttpMethod.OPTIONS);
+        router.route().handler(corsHandler);
         routes
                 .forEach(route -> {
                     var currentRoute = router.route(route.getMethod(), route.getPath());
@@ -104,7 +105,6 @@ public class FunHttpServer {
                     });
                     corsHandler.allowedMethod(route.getMethod());
                 });
-        router.route().handler(corsHandler);
         httpServer.requestHandler(router)
                 .listen(httpServerConfig.getPort(), httpResult -> {
                     if (httpResult.succeeded()) {

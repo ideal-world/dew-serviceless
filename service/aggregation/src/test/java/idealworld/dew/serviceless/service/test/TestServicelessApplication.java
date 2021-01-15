@@ -66,6 +66,16 @@ public class TestServicelessApplication extends ITBasicTest {
         }, iamToken, null, Long.class);
         req(OptActionKind.CREATE, "http://iam/console/app/resource/subject", new HashMap<String, Object>() {
             {
+                put("codePostfix", "todoDB");
+                put("kind", "RELDB");
+                put("name", "Todo示例数据库");
+                put("uri", "mysql://127.0.0.1:" + mysqlConfig.getFirstMappedPort() + "/" + mysqlConfig.getDatabaseName());
+                put("ak", mysqlConfig.getUsername());
+                put("sk", mysqlConfig.getPassword());
+            }
+        }, iamToken, null, Long.class);
+        req(OptActionKind.CREATE, "http://iam/console/app/resource/subject", new HashMap<String, Object>() {
+            {
                 put("codePostfix", "httpbin");
                 put("kind", "HTTP");
                 put("name", "httpbin API");

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addItem = exports.fetchItems = exports.init = exports.db = void 0;
-const jvm_1 = require("@idealworld/sdk");
-exports.db = jvm_1.DewSDK.reldb.subject("todoDB");
+exports.addItem = exports.fetchItems = exports.db = void 0;
+const sdk_1 = require("@idealworld/sdk");
+exports.db = sdk_1.DewSDK.reldb.subject("todoDB");
 async function init() {
     await exports.db.exec(`create table if not exists todo
 (
@@ -14,26 +14,26 @@ async function init() {
 comment '任务表'`, []);
     await exports.db.exec('insert into todo(content,create_user) values (?,?)', ['这是个示例', '']);
 }
-exports.init = init;
+init();
 async function fetchItems() {
     return doFetchItems();
 }
 exports.fetchItems = fetchItems;
 async function doFetchItems() {
-    if (jvm_1.DewSDK.iam.auth.fetch() == null) {
+    if (sdk_1.DewSDK.iam.auth.fetch() == null) {
         return [];
     }
-    if (jvm_1.DewSDK.iam.auth.fetch().roleInfo.some(r => r.defCode === 'APP_ADMIN')) {
+    if (sdk_1.DewSDK.iam.auth.fetch().roleInfo.some(r => r.defCode === 'APP_ADMIN')) {
         return exports.db.exec('select * from todo', []);
     }
-    return exports.db.exec('select * from todo where create_user = ?', [jvm_1.DewSDK.iam.auth.fetch().accountCode]);
+    return exports.db.exec('select * from todo where create_user = ?', [sdk_1.DewSDK.iam.auth.fetch().accountCode]);
 }
 async function addItem(content) {
-    if (jvm_1.DewSDK.iam.auth.fetch() == null) {
+    if (sdk_1.DewSDK.iam.auth.fetch() == null) {
         throw '请先登录';
     }
-    await jvm_1.DewSDK.cache.set("xxx", content);
-    return exports.db.exec('insert into todo(content,create_user) values (?, ?)', [content, jvm_1.DewSDK.iam.auth.fetch().accountCode])
+    await sdk_1.DewSDK.cache.set("xxx", content);
+    return exports.db.exec('insert into todo(content,create_user) values (?, ?)', [content, sdk_1.DewSDK.iam.auth.fetch().accountCode])
         .then(() => null);
 }
 exports.addItem = addItem;

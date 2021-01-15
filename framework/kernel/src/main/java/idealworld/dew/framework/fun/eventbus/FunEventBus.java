@@ -175,7 +175,7 @@ public class FunEventBus {
                                     if (e instanceof DewException) {
                                         event.fail(((DewException) e).getCode(), e.getMessage());
                                     } else {
-                                        event.fail(-1, e.getMessage());
+                                        event.fail(-1, e.getMessage() == null ? "请求错误" : e.getMessage());
                                     }
                                 });
                     } catch (Exception e) {

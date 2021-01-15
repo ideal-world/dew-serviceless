@@ -16,6 +16,7 @@
 
 package idealworld.dew.serviceless.task.test;
 
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.serviceless.task.process.ScriptProcessor;
 import idealworld.dew.serviceless.task.process.TaskProcessor;
 import io.vertx.core.json.JsonArray;
@@ -55,25 +56,25 @@ public class ScriptTest {
         ScriptProcessor.add(1L, "test3", "i+1");
         ScriptProcessor.add(1L, "test4", "1+1");
         try {
-            ScriptProcessor.execute(1L, "test1", new ArrayList<>());
+            ScriptProcessor.execute(1L, "test1", new ArrayList<>(), null);
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertEquals("java.net.ConnectException: Connection refused: no further information", e.getMessage());
         }
         try {
-            ScriptProcessor.execute(1L, "test2", new ArrayList<>());
+            ScriptProcessor.execute(1L, "test2", new ArrayList<>(), null);
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertEquals("java.net.ConnectException: Connection refused: no further information", e.getMessage());
         }
         try {
-            ScriptProcessor.execute(1L, "test3", new ArrayList<>());
+            ScriptProcessor.execute(1L, "test3", new ArrayList<>(), null);
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertEquals("ReferenceError: i is not defined", e.getMessage());
         }
         try {
-            ScriptProcessor.execute(1L, "test4", new ArrayList<>());
+            ScriptProcessor.execute(1L, "test4", new ArrayList<>(), null);
         } catch (Exception e) {
             Assertions.fail(e);
         }
@@ -95,8 +96,8 @@ public class ScriptTest {
             while (true) {
                 try {
                     ScriptProcessor.add(1L, "test1_1", "1+1");
-                    ScriptProcessor.execute(1L, "test1", new ArrayList<>());
-                    ScriptProcessor.execute(2L, "test2", new ArrayList<>());
+                    ScriptProcessor.execute(1L, "test1", new ArrayList<>(), null);
+                    ScriptProcessor.execute(2L, "test2", new ArrayList<>(), null);
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -107,8 +108,8 @@ public class ScriptTest {
         new Thread(() -> {
             while (true) {
                 try {
-                    ScriptProcessor.execute(1L, "test1", new ArrayList<>());
-                    ScriptProcessor.execute(2L, "test2", new ArrayList<>());
+                    ScriptProcessor.execute(1L, "test1", new ArrayList<>(), null);
+                    ScriptProcessor.execute(2L, "test2", new ArrayList<>(), null);
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -119,8 +120,8 @@ public class ScriptTest {
         new Thread(() -> {
             while (true) {
                 try {
-                    ScriptProcessor.execute(3L, "test3", new ArrayList<>());
-                    ScriptProcessor.execute(3L, "test3_1", new ArrayList<>());
+                    ScriptProcessor.execute(3L, "test3", new ArrayList<>(), null);
+                    ScriptProcessor.execute(3L, "test3_1", new ArrayList<>(), null);
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -142,6 +143,11 @@ public class ScriptTest {
      */
     @Test
     public void testGrammar() {
+        var result1 = ScriptProcessor.execute(1L, "TodoAction1_test.addItem", new ArrayList<>() {
+            {
+                add("测试");
+            }
+        }, IdentOptCacheInfo.builder().token("dddd").build());
         var result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestStr", new ArrayList<>() {
             {
                 add("测试");
@@ -155,7 +161,7 @@ public class ScriptTest {
                 });
                 add("ddddd");
             }
-        });
+        }, null);
         Assertions.assertEquals("测试", result);
         result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestNum", new ArrayList<>() {
             {
@@ -170,7 +176,7 @@ public class ScriptTest {
                 });
                 add("ddddd");
             }
-        });
+        }, null);
         Assertions.assertEquals(100, result);
         result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestArr", new ArrayList<>() {
             {
@@ -185,7 +191,7 @@ public class ScriptTest {
                 });
                 add("ddddd");
             }
-        });
+        }, null);
         Assertions.assertEquals("3", ((JsonArray) result).getString(2));
         result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestObj", new ArrayList<>() {
             {
@@ -200,7 +206,7 @@ public class ScriptTest {
                 });
                 add("ddddd");
             }
-        });
+        }, null);
         Assertions.assertEquals("ddddd", result);
         result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestMap", new ArrayList<>() {
             {
@@ -210,7 +216,7 @@ public class ScriptTest {
                     }
                 });
             }
-        });
+        }, null);
         Assertions.assertEquals("xx", ((JsonObject) result).getString("xx"));
         Assertions.assertEquals("add", ((JsonObject) result).getString("add"));
         result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestDto", new ArrayList<>() {
@@ -221,7 +227,7 @@ public class ScriptTest {
                     }
                 });
             }
-        });
+        }, null);
         Assertions.assertEquals("xx", ((JsonObject) result).getString("content"));
         Assertions.assertEquals("100", ((JsonObject) result).getString("createUserId"));
         result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestDtos", new ArrayList<>() {
@@ -241,7 +247,7 @@ public class ScriptTest {
                     }
                 });
             }
-        });
+        }, null);
         Assertions.assertEquals("yy", ((JsonArray) result).getJsonObject(1).getString("content"));
         Assertions.assertEquals("100", ((JsonArray) result).getJsonObject(0).getString("createUserId"));
     }

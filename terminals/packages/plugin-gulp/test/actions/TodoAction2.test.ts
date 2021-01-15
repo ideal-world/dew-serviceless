@@ -3,11 +3,11 @@ import {db, ItemDTO} from "./TodoAction1.test";
 import {JsonMap} from "@idealworld/sdk/dist/domain/Basic";
 
 export async function removeItem(itemId: number): Promise<null> {
-    if (DewSDK.iam.auth.fetch().roleInfo.some(r => r.defCode === 'APP_ADMIN')) {
+    if (DewSDK.iam.auth.fetch()?.roleInfo.some(r => r.defCode === 'APP_ADMIN')) {
         return db.exec('delete from todo where id = ? ', [itemId])
             .then(() => null)
     }
-    return db.exec('delete from todo where id = ? and create_user = ?', [itemId, DewSDK.iam.auth.fetch().accountCode])
+    return db.exec('delete from todo where id = ? and create_user = ?', [itemId, DewSDK.iam.auth.fetch()?.accountCode])
         .then(delRowNumber => {
             // TODO
             if (delRowNumber[0] === 1) {

@@ -104,17 +104,6 @@ public class ACResourceProcessor extends EventBusProcessor {
                             }
                         },
                         ResourceSubject.class), () -> new ConflictException("资源主体编码已存在"))
-                .compose(resp ->
-                        context.helper.existToError(
-                                context.sql.exists(
-                                        new HashMap<>() {
-                                            {
-                                                put("uri", resourceSubjectAddReq.getUri());
-                                                put("rel_app_id", relAppId);
-                                                put("rel_tenant_id", relTenantId);
-                                            }
-                                        },
-                                        ResourceSubject.class), () -> new ConflictException("资源主体URI已存在")))
                 .compose(resp -> {
                     var resourceSubject = context.helper.convert(resourceSubjectAddReq, ResourceSubject.class);
                     resourceSubject.setCode(resourceCode);
@@ -146,6 +135,9 @@ public class ACResourceProcessor extends EventBusProcessor {
 
     public static Future<Void> modifyResourceSubject(Long resourceSubjectId, ResourceSubjectModifyReq resourceSubjectModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
         var future = Future.succeededFuture();
+        if (resourceSubjectModifyReq.getUri() != null) {
+            resourceSubjectModifyReq.setUri(URIHelper.formatUri(resourceSubjectModifyReq.getUri()));
+        }
         var resourceSubject = context.helper.convert(resourceSubjectModifyReq, ResourceSubject.class);
         if (resourceSubjectModifyReq.getCodePostfix() != null) {
             if (resourceSubjectModifyReq.getKind() == null) {
@@ -168,22 +160,6 @@ public class ACResourceProcessor extends EventBusProcessor {
                                                 }
                                             },
                                             ResourceSubject.class), () -> new ConflictException("资源主体编码已存在")));
-        }
-        if (resourceSubjectModifyReq.getUri() != null) {
-            resourceSubjectModifyReq.setUri(URIHelper.formatUri(resourceSubjectModifyReq.getUri()));
-            future
-                    .compose(resp ->
-                            context.helper.existToError(
-                                    context.sql.exists(
-                                            new HashMap<>() {
-                                                {
-                                                    put("!id", resourceSubjectId);
-                                                    put("uri", resourceSubjectModifyReq.getUri());
-                                                    put("rel_app_id", relAppId);
-                                                    put("rel_tenant_id", relTenantId);
-                                                }
-                                            },
-                                            ResourceSubject.class), () -> new ConflictException("资源主体URI已存在")));
         }
         return future
                 .compose(resp ->

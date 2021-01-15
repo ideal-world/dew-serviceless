@@ -49,6 +49,10 @@ public class RelDBAuthPolicy {
             Map<AuthSubjectKind, List<String>> subjectInfo
     ) {
         Promise<AuthResultKind> promise = Promise.promise();
+        if(resourceInfo.isEmpty()){
+            promise.complete(AuthResultKind.ACCEPT);
+            return promise.future();
+        }
         authentication(moduleName, resourceInfo, subjectInfo, promise);
         return promise.future();
     }

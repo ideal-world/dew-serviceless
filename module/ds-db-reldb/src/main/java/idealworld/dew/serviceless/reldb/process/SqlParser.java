@@ -22,10 +22,7 @@ import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlDeleteStatement;
-import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlInsertStatement;
-import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlSelectQueryBlock;
-import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlUpdateStatement;
+import com.alibaba.druid.sql.dialect.mysql.ast.statement.*;
 import com.alibaba.druid.sql.parser.ParserException;
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.framework.dto.OptActionKind;
@@ -60,6 +57,8 @@ public class SqlParser {
                 return parseDelete((MySqlDeleteStatement) sqlStatement);
             } else if (sqlStatement instanceof SQLSelectStatement) {
                 return parseSelect((SQLSelectStatement) sqlStatement);
+            }else if(sqlStatement instanceof MySqlCreateTableStatement){
+                return parseCreate((MySqlCreateTableStatement) sqlStatement);
             } else {
                 log.warn("[SqlParser]The operation type {} is not supported yet", sqlStatement.getClass());
                 return null;
@@ -101,6 +100,17 @@ public class SqlParser {
         var tableNames = new HashMap<String, String>();
         var sqlItems = parseSelect(sqlStatement.getSelect().getQuery(), tableNames);
         return packageSqlAst(sqlItems);
+    }
+
+    private static List<SqlAst> parseCreate(MySqlCreateTableStatement sqlStatement) {
+        return new ArrayList<>(){
+            {
+                add(SqlAst.builder()
+                        .table(sqlStatement.getTableName())
+                        .actionKind(OptActionKind.CREATE)
+                        .build());
+            }
+        };
     }
 
     private static List<SqlItem> parseSelect(SQLSelectQuery sqlSelectQuery, Map<String, String> tableNames) {

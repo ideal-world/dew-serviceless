@@ -17,6 +17,7 @@
 package idealworld.dew.serviceless.task.process;
 
 import com.ecfront.dew.common.exception.RTScriptException;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.serviceless.task.helper.ScriptExchangeHelper;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -72,27 +73,12 @@ public class ScriptProcessor {
                             .build())
                     .allowHostClassLookup(s -> s.equalsIgnoreCase(ScriptExchangeHelper.class.getName()))
                     .build();
+            funs = funs.replace("DewSDK.init(\"REPLACE_IT\",-1)", "DewSDK.init('" + _gatewayServerUrl + "'," + appId + ")");
             SCRIPT_CONTAINER.put(appId, context);
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "let global = this"));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('" + ScriptExchangeHelper.class.getName() + "')"));
             SCRIPT_CONTAINER.get(appId).eval(Source.create("js", funs));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = JVM.DewSDK\n" +
-                    "DewSDK.setting.ajax((url, headers, data) => {\n" +
-                    "  return new Promise((resolve, reject) => {\n" +
-                    "    try{\n" +
-                    "      resolve({data:JSON.parse($.req(url,headers,data))})\n" +
-                    "    }catch(e){\n" +
-                    "      reject({\"message\": e.getMessage(),\"stack\": []})\n" +
-                    "    }\n" +
-                    "  })\n" +
-                    "})\n" +
-                    "DewSDK.setting.currentTime(() => {\n" +
-                    "  return $.currentTime()\n" +
-                    "})\n" +
-                    "DewSDK.setting.signature((text, key) => {\n" +
-                    "  return $.signature(text, key)\n" +
-                    "})\n"));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "DewSDK.init('" + _gatewayServerUrl + "', " + appId + ")"));
+            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = JVM.DewSDK\n"));
         } finally {
             LOCKS.get(appId).unlock();
         }
@@ -111,12 +97,17 @@ public class ScriptProcessor {
         SCRIPT_CONTAINER.remove(appId);
     }
 
-    public static Object execute(Long appId, String funName, List<?> parameters) {
+    public static Object execute(Long appId, String funName, List<?> parameters, IdentOptCacheInfo identOptCacheInfo) {
         LOCKS.get(appId).lock();
+        var createAuthFun = SCRIPT_CONTAINER.get(appId).getBindings("js").getMember("JVM").getMember("DewSDK").getMember("iam").getMember("auth").getMember("create");
         try {
             var result = new Object[2];
             Consumer<Object> then = (v) -> result[0] = v;
             Consumer<Object> catchy = (v) -> result[1] = v;
+            if (identOptCacheInfo!=null && identOptCacheInfo.getToken() != null && !identOptCacheInfo.getToken().isEmpty()) {
+                // Add Auth Info
+                createAuthFun.execute(JsonObject.mapFrom(identOptCacheInfo).toString());
+            }
             var funNamePath = funName.split("\\.");
             var jsFun = SCRIPT_CONTAINER.get(appId).getBindings("js");
             if (funNamePath.length == 1) {
@@ -132,6 +123,9 @@ public class ScriptProcessor {
             }
             return compatibilityResult(result[0]);
         } finally {
+            if (identOptCacheInfo!=null && identOptCacheInfo.getToken() != null && !identOptCacheInfo.getToken().isEmpty()) {
+                createAuthFun.execute("");
+            }
             LOCKS.get(appId).unlock();
         }
     }

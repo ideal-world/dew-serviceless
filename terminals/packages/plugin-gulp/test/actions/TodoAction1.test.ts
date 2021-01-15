@@ -29,10 +29,10 @@ async function doFetchItems(): Promise<ItemDTO[]> {
     if (DewSDK.iam.auth.fetch() == null) {
         return []
     }
-    if (DewSDK.iam.auth.fetch().roleInfo.some(r => r.defCode === 'APP_ADMIN')) {
+    if (DewSDK.iam.auth.fetch()?.roleInfo.some(r => r.defCode === 'APP_ADMIN')) {
         return db.exec('select * from todo', [])
     }
-    return db.exec('select * from todo where create_user = ?', [DewSDK.iam.auth.fetch().accountCode])
+    return db.exec('select * from todo where create_user = ?', [DewSDK.iam.auth.fetch()?.accountCode])
 }
 
 export async function addItem(content: string): Promise<null> {
@@ -40,6 +40,6 @@ export async function addItem(content: string): Promise<null> {
         throw '请先登录'
     }
     await DewSDK.cache.set("xxx", content)
-    return db.exec('insert into todo(content,create_user) values (?, ?)', [content, DewSDK.iam.auth.fetch().accountCode])
+    return db.exec('insert into todo(content,create_user) values (?, ?)', [content, DewSDK.iam.auth.fetch()?.accountCode])
         .then(() => null)
 }

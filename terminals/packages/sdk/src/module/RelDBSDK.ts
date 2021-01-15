@@ -56,9 +56,9 @@ function doExec<T>(resourceSubjectCode: string, rawSql: string, parameters: any[
     if (action == null) {
         throw 'SQL操作不合法:' + rawSql.trim()
     }
-    return request.req<T[]>('reldb', 'reldb://' + resourceSubjectCode, OptActionKind[action], {
+    return request.req<T[]>('reldb', 'reldb://' + resourceSubjectCode, OptActionKind[action], JSON.stringify({
         sql: rawSql.trim(),
         parameters: parameters
-    })
+    }))
 }
 

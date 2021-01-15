@@ -25,6 +25,13 @@ export function option(ecmaVersion: 3 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 2015 | 201
     _sourceType = sourceType
 }
 
+export type DewNode = {
+    start: number
+    end: number
+    type: string
+    ast: Node
+}
+
 export function parse(fileContent: string): Node {
     return Parser.parse(fileContent, {
         ecmaVersion: _ecmaVersion,
@@ -32,8 +39,8 @@ export function parse(fileContent: string): Node {
     })
 }
 
-export function findAstOffsetByType(ast: Node, types: string[]): { start: number, end: number, type: string, ast: Node }[] {
-    let offsets: { start: number, end: number, type: string, ast: Node }[] = []
+export function findAstOffsetByType(ast: Node, types: string[]): DewNode[] {
+    let offsets: DewNode[] = []
     if (types.some(t => t === ast.type)) {
         offsets.push({
             start: ast.start,

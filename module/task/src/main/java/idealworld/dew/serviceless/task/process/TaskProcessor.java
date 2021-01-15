@@ -16,6 +16,7 @@
 
 package idealworld.dew.serviceless.task.process;
 
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
@@ -85,6 +86,7 @@ public class TaskProcessor extends EventBusProcessor {
                         eventBusContext.req.identOptInfo.getAppId(),
                         eventBusContext.req.body(List.class),
                         false,
+                        eventBusContext.req.identOptInfo,
                         eventBusContext.context));
     }
 
@@ -116,7 +118,7 @@ public class TaskProcessor extends EventBusProcessor {
                     }
                 }, TaskDef.class)
                         .compose(existTaskDef -> {
-                            if (existTaskDef!=null) {
+                            if (existTaskDef != null) {
                                 taskDef.setId(existTaskDef.getId());
                                 return context.sql.update(taskDef);
                             } else {
@@ -133,7 +135,7 @@ public class TaskProcessor extends EventBusProcessor {
                 if (!context.cache.isLeader()) {
                     return;
                 }
-                execTask(code, appId, new ArrayList<>(), true, context);
+                execTask(code, appId, new ArrayList<>(), true, null, context);
             });
         }
         var taskDef = TaskDef.builder()
@@ -154,7 +156,7 @@ public class TaskProcessor extends EventBusProcessor {
                 if (!context.cache.isLeader()) {
                     return;
                 }
-                execTask(code, appId, new ArrayList<>(), true, context);
+                execTask(code, appId, new ArrayList<>(), true, null, context);
             });
         }
         return context.helper.notExistToError(
@@ -196,11 +198,11 @@ public class TaskProcessor extends EventBusProcessor {
                 .compose(resp -> context.helper.success());
     }
 
-    public static Future<Object> execTask(String code, Long appId, List<?> parameters, Boolean fromTimer, ProcessContext context) {
+    public static Future<Object> execTask(String code, Long appId, List<?> parameters, Boolean fromTimer, IdentOptCacheInfo identOptCacheInfo, ProcessContext context) {
         if (!fromTimer) {
             return _vertx.getOrCreateContext().executeBlocking(promise -> {
                 try {
-                    var result = ScriptProcessor.execute(appId, code, parameters);
+                    var result = ScriptProcessor.execute(appId, code, parameters, identOptCacheInfo);
                     promise.complete(result);
                 } catch (Exception e) {
                     log.warn("Execute task error: {}", e.getMessage(), e);
@@ -228,7 +230,7 @@ public class TaskProcessor extends EventBusProcessor {
                 .compose(taskInstId ->
                         _vertx.getOrCreateContext().executeBlocking(promise -> {
                             try {
-                                var result = ScriptProcessor.execute(appId, code, parameters);
+                                var result = ScriptProcessor.execute(appId, code, parameters, null);
                                 context.sql.update(taskInstId, TaskInst.builder()
                                         .endTime(System.currentTimeMillis())
                                         .success(true)

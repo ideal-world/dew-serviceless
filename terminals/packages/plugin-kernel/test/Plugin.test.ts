@@ -28,21 +28,15 @@ test('Test replace import', async () => {
 test('Test re-write action', async () => {
     let path = fsPath.resolve(process.cwd(), 'test', 'actions', 'TodoAction1.js')
     let fileContent = fs.readFileSync(path, 'utf8')
-    expect(rewriteAction(fileContent,'action1',1)).toEqual(`"use strict";
+    expect(rewriteAction(fileContent,'TodoAction1')).toEqual(`"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addItem = exports.fetchItems = exports.init = exports.db = void 0;
-const jvm_1 = require("@idealworld/sdk");
-exports.db = jvm_1.DewSDK.reldb.subject("todoDB");
-async function init() {
-  return DewSDK.task.execute("init_action1_1", []);
-}
-exports.init = init;
+exports.addItem = exports.fetchItems = void 0;
 async function fetchItems() {
-  return DewSDK.task.execute("fetchItems_action1_1", []);
+  return DewSDK.task.execute("TodoAction1.fetchItems", []);
 }
 exports.fetchItems = fetchItems;
 async function addItem(content) {
-  return DewSDK.task.execute("addItem_action1_1", [content]);
+  return DewSDK.task.execute("TodoAction1.addItem", [content]);
 }
 exports.addItem = addItem;
 `)

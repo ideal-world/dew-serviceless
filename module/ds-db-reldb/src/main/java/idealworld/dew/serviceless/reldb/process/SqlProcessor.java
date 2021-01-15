@@ -72,6 +72,7 @@ public class SqlProcessor extends EventBusProcessor {
         var sql = sqlInfo.getString("sql");
         var sqlAsts = SqlParser.parse(sql);
         if (sqlAsts == null) {
+            log.warn("Sql parse error: {}",sql);
             throw context.helper.error(new BadRequestException("请求的SQL解析错误"));
         }
         var resources = sqlAsts.stream()

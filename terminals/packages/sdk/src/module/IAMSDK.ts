@@ -23,7 +23,7 @@ import {Page} from "../domain/Basic";
 
 const iamModuleName: string = 'iam'
 
-let _identOptInfo: IdentOptInfo
+let _identOptInfo: IdentOptInfo | null
 
 let _appId: number = 0
 
@@ -32,15 +32,23 @@ export function init(appId: number): void {
 }
 
 const auth = {
-    fetchLoginInfo(): IdentOptInfo {
+    fetchLoginInfo(): IdentOptInfo | null {
         return _identOptInfo
     },
     createLoginInfo(identOptInfo: string): void {
-        auth.setLoginInfo(JSON.parse(identOptInfo))
+        if (identOptInfo === null || identOptInfo.trim() === '') {
+            auth.setLoginInfo(null)
+        } else {
+            auth.setLoginInfo(JSON.parse(identOptInfo))
+        }
     },
-    setLoginInfo(identOptInfo: IdentOptInfo): void {
+    setLoginInfo(identOptInfo: IdentOptInfo | null): void {
         _identOptInfo = identOptInfo
-        request.setToken(_identOptInfo.token)
+        if (_identOptInfo === null) {
+            request.setToken('')
+        } else {
+            request.setToken(_identOptInfo.token)
+        }
     },
 }
 const account = {
