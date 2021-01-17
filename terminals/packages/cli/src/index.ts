@@ -22,14 +22,12 @@ import figlet from "figlet";
 import * as fileHelper from './util/FileHelper';
 import fsPath from "path";
 import {DewSDK} from "@idealworld/sdk";
+import pack from "../package.json";
 
 const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless-template-simple.git'
 
-// TODO
-const GATEWAY_SERVER_URL = "http://127.0.0.1:9000";
-const SDK_VERSION = "1.0.0";
-
-DewSDK.init(GATEWAY_SERVER_URL, 0)
+const GATEWAY_SERVER_URL = "https://gateway.serviceless.org";
+const SDK_VERSION = pack.version;
 
 const createAppWithNewTenantSteps: any[] = [
     {
@@ -181,6 +179,7 @@ const allSteps: any[] = [
             if (!val.trim()) {
                 return '请输入服务地址'
             }
+            DewSDK.setting.serverUrl(val)
             return true
         }
     }, {
@@ -201,6 +200,7 @@ async function createApp(answers: any) {
         let tenantName = (await DewSDK.iam.tenant.fetch()).name
         confirmMessage = '即将在租户 [' + tenantName + '] 中创建应用 [' + answers.appName + ']'
     } else {
+        DewSDK.setting.appId(0)
         confirmMessage = '即将创建应用 [' + answers.appName + ']'
     }
     let confirmAnswer = await inquirer.prompt([{
@@ -220,32 +220,47 @@ async function createApp(answers: any) {
         appId = await DewSDK.iam.app.create(answers.appName)
     }
     let identAKInfo = (await DewSDK.iam.app.ident.list()).objects[0]
-    let identSk = await DewSDK.iam.app.ident.fetchSk(identAKInfo.ak)
+    let identSk = await DewSDK.iam.app.ident.fetchSk(identAKInfo.id)
 
     let path = fsPath.resolve(fileHelper.pwd(), answers.appName)
-    console.log(chalk.green('正在创建模板到 [' + path + ']'))
+    console.log(chalk.yellow('正在创建模板到 [' + path + ']'))
     await gitHelper.clone(TEMPLATE_SIMPLE_GIT_ADDR, path, 1)
-    let packageJsonFile = JSON.parse(fileHelper.readFile(path + '/package.json'))
-    packageJsonFile['dependencies'].push("@idealworld/sdk", SDK_VERSION)
-    packageJsonFile['devDependencies'].push("@idealworld/plugin-gulp", SDK_VERSION)
-    packageJsonFile['dew'].push("serverUrl", answers.serverUrl)
-    packageJsonFile['dew'].push("appId", appId)
-    fileHelper.writeFile(path + '/dew.crt', JSON.stringify({
+    let packagePath = fsPath.resolve(path, 'package.json')
+    console.log(chalk.yellow('正在添加基本信息到 [' + packagePath + ']'))
+    let packageJsonFile = JSON.parse(fileHelper.readFile(packagePath))
+    if (!packageJsonFile.hasOwnProperty('dependencies')) {
+        packageJsonFile['dependencies'] = {}
+    }
+    if (!packageJsonFile.hasOwnProperty('devDependencies')) {
+        packageJsonFile['devDependencies'] = {}
+    }
+    packageJsonFile['dependencies']['@idealworld/sdk'] = SDK_VERSION
+    packageJsonFile['devDependencies']['@idealworld/plugin-gulp'] = SDK_VERSION
+    packageJsonFile['dew'] = {
+        "serverUrl": answers.serverUrl,
+        "appId": appId
+    }
+    fileHelper.writeFile(packagePath, JSON.stringify(packageJsonFile, null, 2))
+    let dewCrtPath = fsPath.resolve(path, 'dew.crt')
+    console.log(chalk.yellow('正在添加认证信息到 [' + dewCrtPath + ']'))
+    fileHelper.writeFile(dewCrtPath, JSON.stringify({
         "ak": identAKInfo.ak,
         "sk": identSk
-    }))
-    if (fileHelper.exists(path + '/.gitignore')) {
-        if (fileHelper.readFile(path + '/.gitignore').indexOf('dew.crt') === -1) {
-            fileHelper.append(path + '/.gitignore', '\ndew.crt')
+    }, null, 2))
+    let gitignorePath = fsPath.resolve(path, '.gitignore')
+    if (fileHelper.exists(gitignorePath)) {
+        if (fileHelper.readFile(gitignorePath).indexOf('dew.crt') === -1) {
+            fileHelper.append(gitignorePath, '\ndew.crt')
         }
     } else {
-        fileHelper.writeFile(path + '/.gitignore', '\ndew.crt')
+        fileHelper.writeFile(gitignorePath, '\ndew.crt')
     }
     console.log(chalk.green.bold.bgWhite('应用创建完成，请到 [' + path + '] 中查看。\r\n' +
         '===================\r\n' +
         '应用Id(AppId): ' + appId + '\r\n' +
         '应用管理员: ' + answers.tenantAdminUsername + '\r\n' +
         '管理员密码: ' + answers.tenantAdminPassword + '\r\n' +
+        '[dew.crt]存放了密钥数据，请妥善保存！\r\n' +
         '==================='))
 }
 

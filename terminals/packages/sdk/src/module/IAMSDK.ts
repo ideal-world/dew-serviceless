@@ -162,7 +162,7 @@ const app = {
     listAppIdents(): Promise<Page<AppIdentResp>> {
         return request.req<Page<AppIdentResp>>('listAppIdents', 'http://' + iamModuleName + '/console/app/app/ident', OptActionKind.FETCH)
     },
-    fetchAppIdentSk(identId: string): Promise<string> {
+    fetchAppIdentSk(identId: number): Promise<string> {
         return request.req<string>('fetchAppIdentSk', 'http://' + iamModuleName + '/console/app/app/ident/' + identId + '/sk', OptActionKind.FETCH)
     },
 

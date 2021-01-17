@@ -46,9 +46,7 @@
   },
   "dew": {
     "serverUrl": "",
-    "appId": 0,
-    "ak": "",
-    "sk": ""
+    "appId": 0
   },
   "publishConfig": {
     "access": "public"
