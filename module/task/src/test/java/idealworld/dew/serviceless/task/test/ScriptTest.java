@@ -16,7 +16,6 @@
 
 package idealworld.dew.serviceless.task.test;
 
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.serviceless.task.process.ScriptProcessor;
 import idealworld.dew.serviceless.task.process.TaskProcessor;
 import io.vertx.core.json.JsonArray;
@@ -143,11 +142,6 @@ public class ScriptTest {
      */
     @Test
     public void testGrammar() {
-        var result1 = ScriptProcessor.execute(1L, "TodoAction1_test.addItem", new ArrayList<>() {
-            {
-                add("测试");
-            }
-        }, IdentOptCacheInfo.builder().token("dddd").build());
         var result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestStr", new ArrayList<>() {
             {
                 add("测试");
@@ -193,6 +187,10 @@ public class ScriptTest {
             }
         }, null);
         Assertions.assertEquals("3", ((JsonArray) result).getString(2));
+        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestArr2", new ArrayList<>(), null);
+        Assertions.assertEquals("xxxcxccc", ((JsonArray) result).getString(0));
+        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestArr3", new ArrayList<>(), null);
+        Assertions.assertEquals("xxxcxccc", ((JsonArray) result).getJsonObject(0).getString("content"));
         result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestObj", new ArrayList<>() {
             {
                 add("测试");

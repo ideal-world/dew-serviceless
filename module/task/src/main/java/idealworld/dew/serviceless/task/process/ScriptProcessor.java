@@ -19,6 +19,8 @@ package idealworld.dew.serviceless.task.process;
 import com.ecfront.dew.common.exception.RTScriptException;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.serviceless.task.helper.ScriptExchangeHelper;
+import io.netty.buffer.Unpooled;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +32,8 @@ import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyObject;
 
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.ByteBuffer;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -67,6 +67,61 @@ public class ScriptProcessor {
         try {
             Context context = Context.newBuilder()
                     .allowHostAccess(HostAccess.newBuilder(HostAccess.ALL)
+                            // FIXED https://github.com/oracle/graaljs/issues/214
+                            .targetTypeMapping(
+                                    List.class,
+                                    Object.class,
+                                    Objects::nonNull,
+                                    v -> v,
+                                    HostAccess.TargetMappingPrecedence.HIGHEST)
+                            .targetTypeMapping(
+                                    Number.class,
+                                    Byte.class,
+                                    Objects::nonNull,
+                                    Number::byteValue,
+                                    HostAccess.TargetMappingPrecedence.HIGHEST)
+                            .targetTypeMapping(
+                                    Value.class,
+                                    JsonArray.class,
+                                    Value::hasArrayElements,
+                                    v -> {
+                                        if (v.isProxyObject()) {
+                                            var p = v.asProxyObject();
+                                            // special case, if the value is a proxy and JsonArray, just unwrap
+                                            if (p instanceof JsonArray) {
+                                                return (JsonArray) p;
+                                            }
+                                        }
+                                        return new JsonArray(v.as(List.class));
+                                    },
+                                    HostAccess.TargetMappingPrecedence.HIGH)
+                            .targetTypeMapping(
+                                    Value.class,
+                                    JsonObject.class,
+                                    v -> v.hasMembers() && !v.hasArrayElements(),
+                                    v -> {
+                                        if (v.isProxyObject()) {
+                                            var p = v.asProxyObject();
+                                            // special case, if the value is a proxy and JsonObject, just unwrap
+                                            if (p instanceof JsonObject) {
+                                                return (JsonObject) p;
+                                            }
+                                        }
+                                        return new JsonObject(v.as(Map.class));
+                                    },
+                                    HostAccess.TargetMappingPrecedence.HIGH)
+                            .targetTypeMapping(
+                                    Value.class,
+                                    Buffer.class,
+                                    v -> v.hasMember("__jbuffer"),
+                                    v -> Buffer.buffer(Unpooled.wrappedBuffer(v.getMember("__jbuffer").as(ByteBuffer.class))),
+                                    HostAccess.TargetMappingPrecedence.LOW)
+                            .targetTypeMapping(
+                                    Value.class,
+                                    Set.class,
+                                    Value::hasArrayElements,
+                                    v -> new HashSet(v.as(List.class)),
+                                    HostAccess.TargetMappingPrecedence.LOW)
                             .targetTypeMapping(BigDecimal.class, Double.class,
                                     (v) -> true,
                                     BigDecimal::doubleValue)
@@ -104,9 +159,11 @@ public class ScriptProcessor {
             var result = new Object[2];
             Consumer<Object> then = (v) -> result[0] = v;
             Consumer<Object> catchy = (v) -> result[1] = v;
-            if (identOptCacheInfo!=null && identOptCacheInfo.getToken() != null && !identOptCacheInfo.getToken().isEmpty()) {
+            if (identOptCacheInfo != null && identOptCacheInfo.getToken() != null && !identOptCacheInfo.getToken().isEmpty()) {
                 // Add Auth Info
                 createAuthFun.execute(JsonObject.mapFrom(identOptCacheInfo).toString());
+            } else {
+                createAuthFun.execute("");
             }
             var funNamePath = funName.split("\\.");
             var jsFun = SCRIPT_CONTAINER.get(appId).getBindings("js");
@@ -123,9 +180,6 @@ public class ScriptProcessor {
             }
             return compatibilityResult(result[0]);
         } finally {
-            if (identOptCacheInfo!=null && identOptCacheInfo.getToken() != null && !identOptCacheInfo.getToken().isEmpty()) {
-                createAuthFun.execute("");
-            }
             LOCKS.get(appId).unlock();
         }
     }

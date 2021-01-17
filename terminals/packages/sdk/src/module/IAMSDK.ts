@@ -23,7 +23,7 @@ import {Page} from "../domain/Basic";
 
 const iamModuleName: string = 'iam'
 
-let _identOptInfo: IdentOptInfo | null
+let _identOptInfo: IdentOptInfo | null = null
 
 let _appId: number = 0
 

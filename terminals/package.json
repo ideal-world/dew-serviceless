@@ -7,7 +7,7 @@
   "scripts": {
     "clean": "rimraf ./dist && lerna run clean",
     "build": "lerna run build",
-    "deploy": "lerna run prePublish && lerna publish --skip-git",
+    "deploy": "lerna run prePublish && lerna publish",
     "test": "lerna run test"
   },
   "author": "gudaoxuri",

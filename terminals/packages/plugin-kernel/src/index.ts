@@ -24,10 +24,11 @@ const path = require('path')
 const browserify = require("browserify")
 
 const config = JSON.parse(fs.readFileSync('./package.json'))['dew']
+const crt = JSON.parse(fs.readFileSync('./dew.crt'))
 const serverUrl: string = config.serverUrl
 const appId: number = config.appId
-const ak: string = config.ak
-const sk: string = config.sk
+const ak: string = crt.ak
+const sk: string = crt.sk
 
 export async function dewBuild(relativeBasePath: string, testToDist?: string): Promise<void> {
     let basePath = path.join(process.cwd(), relativeBasePath)
@@ -123,7 +124,6 @@ export function deleteJVMFile(basePath: string) {
 
 export function initDewSDK(fileContent: string): string {
     return 'const {DewSDK} = require("@idealworld/sdk");\n' +
-        'DewSDK.init("' + serverUrl + '", ' + appId + ');\n' +
         fileContent
 }
 

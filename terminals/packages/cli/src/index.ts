@@ -230,9 +230,17 @@ async function createApp(answers: any) {
     packageJsonFile['devDependencies'].push("@idealworld/plugin-gulp", SDK_VERSION)
     packageJsonFile['dew'].push("serverUrl", answers.serverUrl)
     packageJsonFile['dew'].push("appId", appId)
-    packageJsonFile['dew'].push("ak", identAKInfo.ak)
-    packageJsonFile['dew'].push("sk", identSk)
-    fileHelper.writeFile(path + '/package.json', JSON.stringify(packageJsonFile))
+    fileHelper.writeFile(path + '/dew.crt', JSON.stringify({
+        "ak": identAKInfo.ak,
+        "sk": identSk
+    }))
+    if (fileHelper.exists(path + '/.gitignore')) {
+        if (fileHelper.readFile(path + '/.gitignore').indexOf('dew.crt') === -1) {
+            fileHelper.append(path + '/.gitignore', '\ndew.crt')
+        }
+    } else {
+        fileHelper.writeFile(path + '/.gitignore', '\ndew.crt')
+    }
     console.log(chalk.green.bold.bgWhite('应用创建完成，请到 [' + path + '] 中查看。\r\n' +
         '===================\r\n' +
         '应用Id(AppId): ' + appId + '\r\n' +
