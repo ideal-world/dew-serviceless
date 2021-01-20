@@ -20,7 +20,7 @@ import com.ecfront.dew.common.Page;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
-import idealworld.dew.framework.exception.UnAuthorizedException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
@@ -204,15 +204,14 @@ public class ACRoleProcessor extends EventBusProcessor {
                 .compose(resp ->
                         context.helper.notExistToError(
                                 context.sql.getOne(
-                                        new HashMap<String, Object>() {
+                                        new HashMap<String,Object>() {
                                             {
                                                 put("id", roleAddReq.getRelRoleDefId());
                                                 put("rel_app_id", relAppId);
                                                 put("rel_tenant_id", relTenantId);
                                             }
                                         },
-                                        RoleDef.class), () -> new UnAuthorizedException("对应的角色定义不合法"))
-                )
+                                        RoleDef.class), () -> new NotFoundException("找不到对应的角色定义")))
                 .compose(fetchRoleDef -> {
                     if (roleAddReq.getName() == null) {
                         if (roleAddReq.getRelGroupNodeId() != DewConstant.OBJECT_UNDEFINED) {
@@ -228,7 +227,7 @@ public class ACRoleProcessor extends EventBusProcessor {
                                                     put("rel_app_id", relAppId);
                                                     put("rel_tenant_id", relTenantId);
                                                 }
-                                            }), () -> new UnAuthorizedException("对应的群组节点不合法"))
+                                            }), () -> new NotFoundException("找不到对应的群组节点"))
                                     .compose(fetchGroupNodeName -> {
                                         roleAddReq.setName(fetchGroupNodeName.getString("name") + " ");
                                         return context.helper.success();

@@ -18,7 +18,7 @@ package idealworld.dew.framework.test;
 
 import com.ecfront.dew.common.$;
 import idealworld.dew.framework.DewConfig;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.fun.auth.AuthCacheProcessor;
 import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
@@ -44,9 +44,9 @@ public class AuthCacheTest extends DewTest {
         await(FunCacheClient.init("", vertx, DewConfig.FunConfig.CacheConfig.builder()
                 .uri("redis://localhost:" + redisConfig.getFirstMappedPort())
                 .build()));
-        var identCacheOpt = IdentOptCacheInfo.builder()
+        var identCacheOpt = IdentOptExchangeInfo.builder()
                 .token($.field.createUUID())
-                .accountCode("1")
+                .accountId(1L)
                 .build();
         var context = ProcessContext.builder()
                 .moduleName("")
@@ -60,7 +60,7 @@ public class AuthCacheTest extends DewTest {
         IntStream.range(0, 10)
                 .mapToObj(i -> new Thread(() -> {
                     while (counter.addAndGet(-1) >= 0) {
-                        await(AuthCacheProcessor.setOptInfo(IdentOptCacheInfo.builder()
+                        await(AuthCacheProcessor.setOptInfo(IdentOptExchangeInfo.builder()
                                 .token($.field.createUUID())
                                 .accountCode("1")
                                 .build(), 0L, context));

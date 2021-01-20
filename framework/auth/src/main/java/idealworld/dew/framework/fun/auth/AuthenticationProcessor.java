@@ -17,7 +17,8 @@
 package idealworld.dew.framework.fun.auth;
 
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.DewConstant;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectOperatorKind;
@@ -59,13 +60,13 @@ public class AuthenticationProcessor {
         AuthenticationProcessor.groupNodeLength = groupNodeLength;
     }
 
-    public static Map<AuthSubjectKind, List<String>> packageSubjectInfo(IdentOptCacheInfo identOptInfo) {
+    public static Map<AuthSubjectKind, List<String>> packageSubjectInfo(IdentOptExchangeInfo identOptInfo) {
         var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
         if (identOptInfo != null) {
             if (identOptInfo.getAccountCode() != null) {
                 subjectInfo.put(AuthSubjectKind.ACCOUNT, new ArrayList<>() {
                     {
-                        add(identOptInfo.getAccountCode().toString());
+                        add(identOptInfo.getAccountCode());
                     }
                 });
             }
@@ -76,17 +77,17 @@ public class AuthenticationProcessor {
             }
             if (identOptInfo.getRoleInfo() != null && !identOptInfo.getRoleInfo().isEmpty()) {
                 subjectInfo.put(AuthSubjectKind.ROLE, identOptInfo.getRoleInfo().stream()
-                        .map(r -> r.getId()+"")
+                        .map(r -> r.getId() + "")
                         .collect(Collectors.toList()));
             }
-            if (identOptInfo.getAppId() != null) {
+            if (identOptInfo.getUnauthorizedAppId() != null && identOptInfo.getUnauthorizedAppId()!=DewConstant.OBJECT_UNDEFINED) {
                 subjectInfo.put(AuthSubjectKind.APP, new ArrayList<>() {
                     {
                         add(identOptInfo.getAppId().toString());
                     }
                 });
             }
-            if (identOptInfo.getTenantId() != null) {
+            if (identOptInfo.getUnauthorizedTenantId() != null && identOptInfo.getUnauthorizedTenantId()!=DewConstant.OBJECT_UNDEFINED) {
                 subjectInfo.put(AuthSubjectKind.TENANT, new ArrayList<>() {
                     {
                         add(identOptInfo.getTenantId().toString());

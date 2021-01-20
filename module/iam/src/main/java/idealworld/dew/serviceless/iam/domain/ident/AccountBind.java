@@ -38,11 +38,6 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 public class AccountBind extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 源租户Id
     @NotNull
     private Long fromTenantId;
@@ -58,5 +53,10 @@ public class AccountBind extends SafeEntity {
     // 绑定使用的账号认证类型名称
     @NotNull
     private AccountIdentKind identKind;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

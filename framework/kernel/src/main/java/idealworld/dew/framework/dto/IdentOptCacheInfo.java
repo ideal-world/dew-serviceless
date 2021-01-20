@@ -34,6 +34,7 @@ public class IdentOptCacheInfo extends IdentOptInfo {
 
     @Builder.Default
     private String tokenKind = DewConstant.PARAM_DEFAULT_TOKEN_KIND_FLAG;
+    private Long accountId;
     private Long appId;
     private Long tenantId;
 

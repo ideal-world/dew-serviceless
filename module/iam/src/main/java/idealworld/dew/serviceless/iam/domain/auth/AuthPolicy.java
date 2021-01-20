@@ -45,11 +45,12 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class AuthPolicy extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
+    // 生效时间
+    @NotNull
+    protected Long effectiveTime;
+    // 失效时间
+    @NotNull
+    protected Long expiredTime;
     // 关联权限主体类型名称
     @NotNull
     private AuthSubjectKind relSubjectKind;
@@ -61,12 +62,6 @@ public class AuthPolicy extends SafeEntity {
     // 关联权限主体运算类型名称
     @NotNull
     private AuthSubjectOperatorKind subjectOperator;
-    // 生效时间
-    @NotNull
-    protected Long effectiveTime;
-    // 失效时间
-    @NotNull
-    protected Long expiredTime;
     // 关联资源Id
     @NotNull
     private Long relResourceId;
@@ -85,5 +80,10 @@ public class AuthPolicy extends SafeEntity {
     // 关联租户Id
     @NotNull
     private Long relTenantId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

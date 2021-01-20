@@ -33,7 +33,7 @@ export const SDK = {
         serverUrl: function (serverUrl: string): void {
             request.setServerUrl(serverUrl)
         },
-        appId: function (appId: number): void {
+        appId: function (appId: string): void {
             request.setAppId(appId)
             iamSDK.init(appId)
             reldbSDK.init(appId)
@@ -66,7 +66,7 @@ export const SDK = {
  * @param serverUrl 服务网关地址
  * @param appId 当前应用Id
  */
-function init(serverUrl: string, appId: number): void {
+function init(serverUrl: string, appId: string): void {
     SDK.setting.serverUrl(serverUrl)
     SDK.setting.appId(appId)
 }

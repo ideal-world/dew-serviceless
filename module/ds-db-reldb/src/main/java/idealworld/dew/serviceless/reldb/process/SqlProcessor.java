@@ -19,8 +19,9 @@ package idealworld.dew.serviceless.reldb.process;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.exception.BadRequestException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.AuthenticationProcessor;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
@@ -48,7 +49,7 @@ public class SqlProcessor extends EventBusProcessor {
         addProcessor("", eventBusContext ->
                 exec(
                         eventBusContext.req.header.get(DewConstant.REQUEST_RESOURCE_URI_FLAG),
-                        new JsonObject($.security.decodeBase64ToString(eventBusContext.req.header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptCacheInfo.class),
+                        new JsonObject($.security.decodeBase64ToString(eventBusContext.req.header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptExchangeInfo.class),
                         eventBusContext.req.body(String.class),
                         eventBusContext.context));
     }
@@ -60,10 +61,10 @@ public class SqlProcessor extends EventBusProcessor {
         authPolicy = _authPolicy;
     }
 
-    public static Future<Buffer> exec(String resourceUriWithoutPath, IdentOptCacheInfo identOptCacheInfo, String strBody, ProcessContext context) {
+    public static Future<Buffer> exec(String resourceUriWithoutPath, IdentOptExchangeInfo identOptCacheInfo, String strBody, ProcessContext context) {
         var resourceSubjectCode = URIHelper.newURI(resourceUriWithoutPath).getHost();
         if (!FunSQLClient.contains(resourceSubjectCode)) {
-            throw context.helper.error(new BadRequestException("请求的资源主题[" + resourceSubjectCode + "]不存在"));
+            throw context.helper.error(new NotFoundException("找不到请求的资源主体[" + resourceSubjectCode + "]"));
         }
         if (strBody == null || strBody.isBlank()) {
             throw context.helper.error(new BadRequestException("缺少SQL信息"));

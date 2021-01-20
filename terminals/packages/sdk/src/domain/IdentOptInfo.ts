@@ -18,16 +18,7 @@ export type IdentOptInfo = {
     token: string
     accountName: string
     accountCode: string
-    roleInfo: RoleInfo[]
-    groupInfo: GroupInfo[]
-}
-
-export type IdentOptCacheInfo = {
-    tenantId: string
-    appId: string
-    token: string
-    accountName: string
-    accountCode: string
+    appCode: string
     roleInfo: RoleInfo[]
     groupInfo: GroupInfo[]
 }

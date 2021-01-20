@@ -38,11 +38,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class AccountIdent extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 账号认证类型名称
     @NotNull
     private AccountIdentKind kind;
@@ -68,5 +63,10 @@ public class AccountIdent extends SafeEntity {
     // 关联租户Id
     @NotNull
     private Long relTenantId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

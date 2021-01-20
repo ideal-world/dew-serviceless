@@ -103,11 +103,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class Resource extends AppBasedEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // URI
     @NotNull
     @NotBlank
@@ -140,5 +135,10 @@ public class Resource extends AppBasedEntity {
     // 关联资源主体Id
     @NotNull
     private Long relResourceSubjectId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

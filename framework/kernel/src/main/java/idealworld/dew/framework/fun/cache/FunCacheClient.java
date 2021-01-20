@@ -232,6 +232,15 @@ public class FunCacheClient {
         );
     }
 
+    public Future<Boolean> exists(String key, Integer cacheSec) {
+        if (cacheSec == null || cacheSec <= 0) {
+            return exists(key);
+        }
+        return LocalCacheHelper.getSetF(CACHE_KEY_PREFIX + key + "-get", cacheSec,
+                () -> exists(key)
+        );
+    }
+
     public Future<Boolean> exists(String... keys) {
         return Future.future(promise ->
                 redisAPI.exists(Arrays.asList(keys))

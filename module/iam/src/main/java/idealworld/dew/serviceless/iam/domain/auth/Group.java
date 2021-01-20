@@ -38,11 +38,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class Group extends AppBasedEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 群组编码
     @NotNull
     @NotBlank
@@ -69,5 +64,10 @@ public class Group extends AppBasedEntity {
     // 关联群起始组节点Id，用于多树合成
     @NotNull
     private Long relGroupNodeId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

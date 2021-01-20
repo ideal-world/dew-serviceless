@@ -23,7 +23,7 @@ import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
-import idealworld.dew.framework.exception.UnAuthorizedException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.serviceless.iam.domain.auth.AccountGroup;
@@ -224,7 +224,7 @@ public class TCAccountProcessor  extends EventBusProcessor {
                                 put("rel_tenant_id", relTenantId);
                             }
                         },
-                        Account.class), () -> new UnAuthorizedException("关联账号不合法"))
+                        Account.class), () -> new NotFoundException("找不到对应的关联账号"))
                 .compose(resp ->
                         context.helper.existToError(context.sql.exists(
                                 new HashMap<>() {
@@ -275,7 +275,7 @@ public class TCAccountProcessor  extends EventBusProcessor {
                                 put("rel_tenant_id", relTenantId);
                             }
                         },
-                        AccountIdent.class), () -> new UnAuthorizedException("账号认证不合法"))
+                        AccountIdent.class), () -> new NotFoundException("找不到对应的账号认证"))
                 .compose(accountIdent -> {
                     var accountIdentAk = accountIdentModifyReq.getAk() != null ? accountIdentModifyReq.getAk() : accountIdent.getAk();
                     return context.helper.existToError(
@@ -368,7 +368,7 @@ public class TCAccountProcessor  extends EventBusProcessor {
                                 put("id", accountAppId);
                             }
                         },
-                        AccountApp.class), () -> new UnAuthorizedException("账号应用关联不合法"))
+                        AccountApp.class), () -> new NotFoundException("找不到对应的账号应用"))
                 .compose(fetchAccountAppResult ->
                         IAMBasicProcessor.checkAccountMembership(
                                 fetchAccountAppResult.getRelAccountId(),
@@ -406,7 +406,7 @@ public class TCAccountProcessor  extends EventBusProcessor {
                                 put("id", accountGroupId);
                             }
                         },
-                        AccountGroup.class), () -> new UnAuthorizedException("账号群组关联不合法"))
+                        AccountGroup.class), () -> new NotFoundException("找不到对应的账号群组"))
                 .compose(fetchAccountGroupResult ->
                         IAMBasicProcessor.checkAccountMembership(
                                 fetchAccountGroupResult.getRelAccountId(),
@@ -438,7 +438,7 @@ public class TCAccountProcessor  extends EventBusProcessor {
                                 put("id", accountRoleId);
                             }
                         },
-                        AccountRole.class), () -> new UnAuthorizedException("账号角色关联不合法"))
+                        AccountRole.class), () -> new NotFoundException("找不到对应的账号角色"))
                 .compose(fetchAccountRoleResult ->
                         IAMBasicProcessor.checkAccountMembership(
                                 fetchAccountRoleResult.getRelAccountId(),

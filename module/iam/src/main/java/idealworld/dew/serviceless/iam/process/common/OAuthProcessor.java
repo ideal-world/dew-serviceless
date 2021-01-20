@@ -20,6 +20,7 @@ import com.ecfront.dew.common.tuple.Tuple3;
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.framework.exception.BadRequestException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
@@ -28,6 +29,7 @@ import idealworld.dew.serviceless.iam.domain.auth.Resource;
 import idealworld.dew.serviceless.iam.domain.auth.ResourceSubject;
 import idealworld.dew.serviceless.iam.domain.ident.Account;
 import idealworld.dew.serviceless.iam.domain.ident.AccountIdent;
+import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
 import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
@@ -55,72 +57,80 @@ public class OAuthProcessor {
     private static final WechatXCXAPI WECHAT_XCXAPI = new WechatXCXAPI();
 
     public static Future<IdentOptInfo> login(AccountOAuthLoginReq accountOAuthLoginReq, ProcessContext context) {
-        return IAMBasicProcessor.getEnabledTenantIdByAppId(accountOAuthLoginReq.getRelAppId(), false, context)
-                .compose(tenantId ->
-                        checkAndGetAkSk(accountOAuthLoginReq.getKind(), accountOAuthLoginReq.getRelAppId(), tenantId, context)
-                                .compose(checkAndGetAkSk -> {
-                                    PlatformAPI platformAPI = checkAndGetAkSk._0;
-                                    var oauthAk = checkAndGetAkSk._1;
-                                    var oauthSk = checkAndGetAkSk._2;
-                                    return platformAPI.getUserInfo(accountOAuthLoginReq.getCode(), oauthAk, oauthSk, accountOAuthLoginReq.getRelAppId(), context)
-                                            .compose(oauthUserInfo -> {
-                                                var accessToken = oauthUserInfo._0;
-                                                var userInfo = oauthUserInfo._1;
-                                                return context.sql.getOne(
-                                                        String.format("SELECT acc.id, acc.status FROM %s AS ident" +
-                                                                        " INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
-                                                                        " WHERE ident.kind = #{kind} AND ident.ak = #{open_id} AND ident.rel_tenant_id = #{tenant_id}",
-                                                                new AccountIdent().tableName(), new Account().tableName()),
-                                                        new HashMap<>() {
-                                                            {
-                                                                put("kind", accountOAuthLoginReq.getKind());
-                                                                put("open_id", userInfo.getOpenid());
-                                                                put("tenant_id", tenantId);
-                                                            }
-                                                        })
-                                                        .compose(accountInfo -> {
-                                                            Long accountId = null;
-                                                            if (accountInfo != null) {
-                                                                accountId = accountInfo.getLong("id");
-                                                                if (CommonStatus.parse(accountInfo.getString("status")) == CommonStatus.DISABLED) {
-                                                                    context.helper.error(new BadRequestException("用户状态异常"));
-                                                                }
-                                                            }
-                                                            if (accountId == null) {
-                                                                log.info("OAuth Register : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), JsonObject.mapFrom(accountOAuthLoginReq).toString());
-                                                                return CommonProcessor.registerAccount(AccountRegisterReq.builder()
-                                                                        .name("")
-                                                                        .kind(accountOAuthLoginReq.getKind())
-                                                                        .ak(userInfo.getOpenid())
-                                                                        .sk(accessToken)
-                                                                        .relAppId(accountOAuthLoginReq.getRelAppId())
-                                                                        .build(), context)
-                                                                        .onFailure(e -> {
-                                                                            if (e instanceof MySQLException && e.getMessage().startsWith("Duplicate entry")) {
-                                                                                log.info("OAuth Login : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), JsonObject.mapFrom(accountOAuthLoginReq).toString());
-                                                                                CommonProcessor.login(AccountLoginReq.builder()
-                                                                                        .kind(accountOAuthLoginReq.getKind())
-                                                                                        .ak(userInfo.getOpenid())
-                                                                                        .sk(accessToken)
-                                                                                        .relAppId(accountOAuthLoginReq.getRelAppId())
-                                                                                        .build(), context);
-                                                                            } else {
-                                                                                context.helper.error(e);
+        return context.sql.getOne(String.format("SELECT id FROM %s WHERE open_id = #{open_id}", new App().tableName()), new HashMap<>() {
+            {
+                put("open_id", accountOAuthLoginReq.getRelAppCode());
+            }
+        })
+                .compose(appInfo -> {
+                    var appId = appInfo.getLong("id");
+                    return IAMBasicProcessor.getEnabledTenantIdByAppId(appId, false, context)
+                            .compose(tenantId ->
+                                    checkAndGetAkSk(accountOAuthLoginReq.getKind(), appId, tenantId, context)
+                                            .compose(checkAndGetAkSk -> {
+                                                PlatformAPI platformAPI = checkAndGetAkSk._0;
+                                                var oauthAk = checkAndGetAkSk._1;
+                                                var oauthSk = checkAndGetAkSk._2;
+                                                return platformAPI.getUserInfo(accountOAuthLoginReq.getCode(), oauthAk, oauthSk, appId, context)
+                                                        .compose(oauthUserInfo -> {
+                                                            var accessToken = oauthUserInfo._0;
+                                                            var userInfo = oauthUserInfo._1;
+                                                            return context.sql.getOne(
+                                                                    String.format("SELECT acc.id, acc.status FROM %s AS ident" +
+                                                                                    " INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
+                                                                                    " WHERE ident.kind = #{kind} AND ident.ak = #{open_id} AND ident.rel_tenant_id = #{tenant_id}",
+                                                                            new AccountIdent().tableName(), new Account().tableName()),
+                                                                    new HashMap<>() {
+                                                                        {
+                                                                            put("kind", accountOAuthLoginReq.getKind());
+                                                                            put("open_id", userInfo.getOpenid());
+                                                                            put("tenant_id", tenantId);
+                                                                        }
+                                                                    })
+                                                                    .compose(accountInfo -> {
+                                                                        Long accountId = null;
+                                                                        if (accountInfo != null) {
+                                                                            accountId = accountInfo.getLong("id");
+                                                                            if (CommonStatus.parse(accountInfo.getString("status")) == CommonStatus.DISABLED) {
+                                                                                context.helper.error(new BadRequestException("用户状态异常"));
                                                                             }
-                                                                        })
-                                                                        .onSuccess(identOptInfo -> context.helper.success(identOptInfo));
-                                                            } else {
-                                                                log.info("OAuth Login : [{}-{}] {}", tenantId, accountOAuthLoginReq.getRelAppId(), JsonObject.mapFrom(accountOAuthLoginReq).toString());
-                                                                return CommonProcessor.login(AccountLoginReq.builder()
-                                                                        .kind(accountOAuthLoginReq.getKind())
-                                                                        .ak(userInfo.getOpenid())
-                                                                        .sk(accessToken)
-                                                                        .relAppId(accountOAuthLoginReq.getRelAppId())
-                                                                        .build(), context);
-                                                            }
+                                                                        }
+                                                                        if (accountId == null) {
+                                                                            log.info("OAuth Register : [{}-{}] {}", tenantId, appId, JsonObject.mapFrom(accountOAuthLoginReq).toString());
+                                                                            return CommonProcessor.registerAccount(AccountRegisterReq.builder()
+                                                                                    .name("")
+                                                                                    .kind(accountOAuthLoginReq.getKind())
+                                                                                    .ak(userInfo.getOpenid())
+                                                                                    .sk(accessToken)
+                                                                                    .relAppCode(accountOAuthLoginReq.getRelAppCode())
+                                                                                    .build(), context)
+                                                                                    .onFailure(e -> {
+                                                                                        if (e instanceof MySQLException && e.getMessage().startsWith("Duplicate entry")) {
+                                                                                            log.info("OAuth Login : [{}-{}] {}", tenantId, appId, JsonObject.mapFrom(accountOAuthLoginReq).toString());
+                                                                                            CommonProcessor.login(AccountLoginReq.builder()
+                                                                                                    .kind(accountOAuthLoginReq.getKind())
+                                                                                                    .ak(userInfo.getOpenid())
+                                                                                                    .sk(accessToken)
+                                                                                                    .relAppCode(accountOAuthLoginReq.getRelAppCode())
+                                                                                                    .build(), context);
+                                                                                        } else {
+                                                                                            context.helper.error(e);
+                                                                                        }
+                                                                                    })
+                                                                                    .onSuccess(identOptInfo -> context.helper.success(identOptInfo));
+                                                                        } else {
+                                                                            log.info("OAuth Login : [{}-{}] {}", tenantId, appId, JsonObject.mapFrom(accountOAuthLoginReq).toString());
+                                                                            return CommonProcessor.login(AccountLoginReq.builder()
+                                                                                    .kind(accountOAuthLoginReq.getKind())
+                                                                                    .ak(userInfo.getOpenid())
+                                                                                    .sk(accessToken)
+                                                                                    .relAppCode(accountOAuthLoginReq.getRelAppCode())
+                                                                                    .build(), context);
+                                                                        }
+                                                                    });
                                                         });
-                                            });
-                                }));
+                                            }));
+                });
     }
 
     public static Future<String> getAccessToken(AccountIdentKind oauthKind, Long relAppId, Long relTenantId, ProcessContext context) {
@@ -159,11 +169,11 @@ public class OAuthProcessor {
                                 put("expose_kind_tenant", ExposeKind.TENANT);
                                 put("expose_kind_global", ExposeKind.GLOBAL);
                                 put("kind", ResourceKind.OAUTH);
-                                put("code", appId+ IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                                put("code", appId + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
                                         + ResourceKind.OAUTH.toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
                                         + kind.toString());
                             }
-                        }), () -> new BadRequestException("对应的OAuth资源主体不存在"))
+                        }), () -> new NotFoundException("找不到对应的OAuth资源主体"))
                 .compose(oauthResourceSubject -> {
                     var oauthAk = oauthResourceSubject.getString("ak");
                     var oauthSk = oauthResourceSubject.getString("sk");

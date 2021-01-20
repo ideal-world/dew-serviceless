@@ -18,9 +18,9 @@ package idealworld.dew.framework.fun.eventbus;
 
 import com.ecfront.dew.common.$;
 import idealworld.dew.framework.DewConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
-import idealworld.dew.framework.exception.BadRequestException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.util.AntPathMatcher;
 import idealworld.dew.framework.util.URIHelper;
 import io.vertx.core.Future;
@@ -74,8 +74,8 @@ public class EventBusDispatcher {
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
-                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptCacheInfo.class)
-                                            : new IdentOptCacheInfo())
+                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptExchangeInfo.class)
+                                            : new IdentOptExchangeInfo())
                             .build())
                     .context(ProcessContext.builder()
                             .conf(config)
@@ -91,7 +91,7 @@ public class EventBusDispatcher {
                 .findAny();
         if (matchedPathTemplate.isEmpty()) {
             log.warn("[EventBus]Can't found process by [{}] {}", actionKind.toString(), pathRequest);
-            throw new BadRequestException("请求[" + actionKind.toString() + ":" + pathRequest + "]找不到对应的处理器");
+            throw new NotFoundException("找不到对应的请求[" + actionKind.toString() + ":" + pathRequest + "]处理器");
         } else {
             var pathPattern = matchedPathTemplate.get();
             var params = PATH_MATCHER.extractUriTemplateVariables(pathPattern, pathRequest);
@@ -103,8 +103,8 @@ public class EventBusDispatcher {
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
-                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptCacheInfo.class)
-                                            : new IdentOptCacheInfo())
+                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptExchangeInfo.class)
+                                            : new IdentOptExchangeInfo())
                             .build())
                     .context(ProcessContext.builder()
                             .conf(config)

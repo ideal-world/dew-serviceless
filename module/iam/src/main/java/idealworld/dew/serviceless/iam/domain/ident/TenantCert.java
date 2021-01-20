@@ -43,11 +43,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class TenantCert extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 凭证类型名称
     @NotNull
     @NotBlank
@@ -59,6 +54,11 @@ public class TenantCert extends SafeEntity {
     // 关联租户Id
     @NotNull
     private Long relTenantId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 
 }

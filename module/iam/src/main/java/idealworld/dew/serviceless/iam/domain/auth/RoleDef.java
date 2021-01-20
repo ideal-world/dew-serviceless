@@ -37,11 +37,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class RoleDef extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 角色定义编码
     @NotNull
     @NotBlank
@@ -61,5 +56,10 @@ public class RoleDef extends SafeEntity {
     // 关联租户Id
     @NotNull
     private Long relTenantId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

@@ -18,7 +18,7 @@ package idealworld.dew.serviceless.gateway.process;
 
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.AuthenticationProcessor;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
@@ -47,7 +47,7 @@ public class GatewayAuthHandler extends AuthHttpHandler {
     public void handle(RoutingContext ctx) {
         var resourceUri = (URI) ctx.get(DewAuthConstant.REQUEST_RESOURCE_URI_FLAG);
         var action = (OptActionKind) ctx.get(DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG);
-        var identOptCacheInfo = (IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
+        var identOptCacheInfo = (IdentOptExchangeInfo) ctx.get(CONTEXT_INFO);
         var subjectInfo = AuthenticationProcessor.packageSubjectInfo(identOptCacheInfo);
         authPolicy.authentication(getModuleName(), action.toString().toLowerCase(), resourceUri, subjectInfo)
                 .onSuccess(authResultKind -> {

@@ -17,9 +17,9 @@
 import * as request from "../util/Request";
 import {OptActionKind} from "../domain/Enum";
 
-let _appId: number = 0
+let _appId: string = ''
 
-export function init(appId: number): void {
+export function init(appId: string): void {
     _appId = appId
 }
 

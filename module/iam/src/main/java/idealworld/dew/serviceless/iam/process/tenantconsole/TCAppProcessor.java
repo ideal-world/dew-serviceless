@@ -61,6 +61,7 @@ public class TCAppProcessor extends EventBusProcessor {
 
 
     public static Future<Long> addApp(AppAddReq appAddReq, Long relTenantId, ProcessContext context) {
+        var appCode = $.field.createShortUUID();
         return context.helper.existToError(
                 context.sql.exists(
                         new HashMap<>() {
@@ -73,6 +74,7 @@ public class TCAppProcessor extends EventBusProcessor {
                 .compose(resp -> {
                     var app = $.bean.copyProperties(appAddReq, App.class);
                     var keys = $.security.asymmetric.generateKeys("RSA", 1024);
+                    app.setOpenId($.field.createShortUUID());
                     app.setPubKey(keys.get("PublicKey"));
                     app.setPriKey(keys.get("PrivateKey"));
                     app.setRelTenantId(relTenantId);
@@ -80,7 +82,7 @@ public class TCAppProcessor extends EventBusProcessor {
                     return context.sql.save(app);
                 })
                 .compose(appId ->
-                        ExchangeProcessor.enableApp(appId, relTenantId, context)
+                        ExchangeProcessor.enableApp(appCode, appId, relTenantId, context)
                                 .compose(r ->
                                         context.helper.success(appId)));
     }
@@ -112,15 +114,21 @@ public class TCAppProcessor extends EventBusProcessor {
                                     }
                                 },
                                 context.helper.convert(appModifyReq, App.class)))
-                .compose(resp -> {
+                .compose(resp ->
+                        context.sql.getOne(String.format("SELECT open_id FROM %s WHERE id = #{id}", new App().tableName()), new HashMap<>() {
+                            {
+                                put("id", appId);
+                            }
+                        }))
+                .compose(appInfo -> {
                     if (appModifyReq.getStatus() != null) {
                         if (appModifyReq.getStatus() == CommonStatus.ENABLED) {
-                            return ExchangeProcessor.enableApp(appId, relTenantId, context);
+                            return ExchangeProcessor.enableApp(appInfo.getString("open_id"), appId, relTenantId, context);
                         } else {
-                            return ExchangeProcessor.disableApp(appId, relTenantId, context);
+                            return ExchangeProcessor.disableApp(appInfo.getString("open_id"), appId, relTenantId, context);
                         }
                     }
-                    return context.helper.success(resp);
+                    return context.helper.success(null);
                 });
     }
 

@@ -40,6 +40,11 @@ import javax.validation.constraints.Size;
 @EqualsAndHashCode(callSuper = true)
 public class AppResp extends IdResp {
 
+    // 应用对外主键
+    @NotNull
+    @NotBlank
+    @Size(max = 100)
+    private String openId;
     // 应用名称
     @NotNull
     @NotBlank

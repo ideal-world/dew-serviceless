@@ -82,7 +82,7 @@ public class ExposeTest extends IAMBasicTest {
         var resourceSubjectId = req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
                 .codePostfix("testApp")
                 .kind(ResourceKind.HTTP)
-                .name("测试应用资源主题")
+                .name("测试应用资源主体")
                 .uri("http://test-app")
                 .build(), Long.class)._0;
         // 添加当前应用的资源
@@ -149,7 +149,7 @@ public class ExposeTest extends IAMBasicTest {
         var test2ResourceSubjectId = req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
                 .codePostfix("test2App")
                 .kind(ResourceKind.HTTP)
-                .name("测试2应用资源主题")
+                .name("测试2应用资源主体")
                 .uri("http://test2-app")
                 .build(), Long.class)._0;
         // 添加当前应用的资源

@@ -29,7 +29,7 @@ let _token: string = ''
 let _serverUrl: string = ''
 let _ak: string = ''
 let _sk: string = ''
-let _appId: number
+let _appId: string
 
 let ajax: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>
 let currentTime: () => string
@@ -59,7 +59,7 @@ export function setSignature(impl: (text: string, key: string) => string) {
     signature = impl
 }
 
-export function setAppId(appId: number): void {
+export function setAppId(appId: string): void {
     _appId = appId
 }
 
@@ -88,7 +88,7 @@ export function req<T>(name: string, resourceUri: string, optActionKind: OptActi
     }
     headers = headers ? headers : {}
     if (_appId) {
-        headers[APP_FLAG] = _appId + ""
+        headers[APP_FLAG] = _appId
     }
     headers[TOKEN_FLAG] = _token ? _token : ''
     let pathAndQuery = '/exec?' + REQUEST_RESOURCE_ACTION_FLAG + '=' + optActionKind + '&' + REQUEST_RESOURCE_URI_FLAG + '=' + encodeURIComponent(resourceUri)

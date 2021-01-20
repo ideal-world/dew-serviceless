@@ -19,6 +19,7 @@ package idealworld.dew.serviceless.cache.process;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.BadRequestException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
@@ -54,7 +55,7 @@ public class CacheProcessor extends EventBusProcessor {
         var resourceUri = URIHelper.newURI(strResourceUri);
         var resourceSubjectCode = resourceUri.getHost();
         if (!FunCacheClient.contains(resourceSubjectCode)) {
-            throw context.helper.error(new BadRequestException("请求的资源主题[" + resourceSubjectCode + "]不存在"));
+            throw context.helper.error(new NotFoundException("找不到请求的资源主体[" + resourceSubjectCode + "]"));
         }
         var resourcePath = resourceUri.getPath().substring(1).split("/");
         if (resourcePath.length < 1) {
@@ -121,7 +122,7 @@ public class CacheProcessor extends EventBusProcessor {
                     return cacheClient.hdel(key, fieldName);
                 }
             default:
-                throw context.helper.error(new BadRequestException("请求操作不存在"));
+                throw context.helper.error(new NotFoundException("找不到对应的请求操作"));
         }
     }
 

@@ -18,7 +18,7 @@ package idealworld.dew.serviceless.http.process;
 
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.OptActionKind;
-import idealworld.dew.framework.exception.BadRequestException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
@@ -56,7 +56,7 @@ public class HttpProcessor extends EventBusProcessor {
         var resourceUri = URIHelper.newURI(strResourceUri);
         var resourceSubjectCode = resourceUri.getHost();
         if (!FunHttpClient.contains(resourceSubjectCode)) {
-            throw context.helper.error(new BadRequestException("请求的资源主题[" + resourceSubjectCode + "]不存在"));
+            throw context.helper.error(new NotFoundException("找不到请求的资源主体[" + resourceSubjectCode + "]"));
         }
         HttpMethod httpMethod = HttpMethod.GET;
         switch (actionKind) {

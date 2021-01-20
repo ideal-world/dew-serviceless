@@ -8,7 +8,7 @@ async function init() {
 (
     id bigint auto_increment primary key,
     create_time timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-    create_user varchar(255) not null comment '创建者OpenId',
+    create_user bigint not null comment '创建者Id',
     content varchar(255) not null comment '内容'
 )
 comment '任务表'`, []);

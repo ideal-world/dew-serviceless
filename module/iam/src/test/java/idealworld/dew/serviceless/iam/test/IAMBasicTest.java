@@ -20,7 +20,7 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.AuthCacheProcessor;
@@ -29,6 +29,7 @@ import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.framework.fun.test.DewTest;
 import idealworld.dew.serviceless.iam.IAMConfig;
 import idealworld.dew.serviceless.iam.IAMModule;
+import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.process.common.dto.account.AccountLoginReq;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -54,7 +55,8 @@ public class IAMBasicTest extends DewTest {
     }
 
     private static IAMConfig iamConfig;
-    private ProcessContext context = ProcessContext.builder().moduleName(MODULE_NAME).build().init(IdentOptCacheInfo.builder().build());
+    private static ProcessContext context;
+    protected static String iamAppCode;
     private String token = null;
 
     @BeforeAll
@@ -62,7 +64,15 @@ public class IAMBasicTest extends DewTest {
         var iamApplicationTest = new IAMApplicationTest();
         var mapIamConfig = (Map) iamApplicationTest.loadConfig().getModules().get(0).getConfig();
         iamConfig = mapIamConfig != null ? JsonObject.mapFrom(mapIamConfig).mapTo(IAMConfig.class) : IAMConfig.builder().build();
-        vertx.deployVerticle(iamApplicationTest, testContext.succeedingThenComplete());
+        vertx.deployVerticle(iamApplicationTest, event -> {
+            context = ProcessContext.builder().moduleName(MODULE_NAME).build().init(IdentOptExchangeInfo.builder().build());
+            context.sql.getOne(1L, App.class)
+                    .onSuccess(app -> {
+                        iamAppCode = app.getOpenId();
+                        testContext.completeNow();
+                    })
+                    .onFailure(testContext::failNow);
+        });
     }
 
     protected <E> Tuple2<Page<E>, Throwable> reqPage(String pathAndQuery, Long pageNumber, Long pageSize, Class<E> returnClazz) {
@@ -137,7 +147,7 @@ public class IAMBasicTest extends DewTest {
                 ? Buffer.buffer((String) body, "utf-8")
                 : JsonObject.mapFrom(body).toBuffer();
         var header = new HashMap<String, String>();
-        var identOptInfo = token == null ? IdentOptCacheInfo.builder().build() : await(AuthCacheProcessor.getOptInfo(token, context))._0.get();
+        var identOptInfo = token == null ? IdentOptExchangeInfo.builder().build() : await(AuthCacheProcessor.getOptInfo(token, context))._0.get();
         header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
         var req = FunEventBus.choose(MODULE_NAME)
                 .request(MODULE_NAME,
@@ -149,14 +159,14 @@ public class IAMBasicTest extends DewTest {
     }
 
     protected void loginBySystemAdmin() {
-        loginBySystemAdmin(1L);
+        loginBySystemAdmin(iamAppCode);
     }
 
-    protected void loginBySystemAdmin(Long appId) {
+    protected void loginBySystemAdmin(String appCode) {
         token = req(OptActionKind.CREATE, "/common/login", AccountLoginReq.builder()
                 .ak(iamConfig.getApp().getIamAdminName())
                 .sk(iamConfig.getApp().getIamAdminPwd())
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._0.getToken();
     }
 

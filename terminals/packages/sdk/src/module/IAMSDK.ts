@@ -15,7 +15,7 @@
  */
 
 import * as request from "../util/Request";
-import {IdentOptCacheInfo, IdentOptInfo} from "../domain/IdentOptInfo";
+import {IdentOptInfo} from "../domain/IdentOptInfo";
 import {AccountIdentKind, AuthSubjectKind, OptActionKind, ResourceKind} from "../domain/Enum";
 import {TenantResp} from "../domain/Tenant";
 import {AppIdentResp} from "../domain/App";
@@ -25,9 +25,9 @@ const iamModuleName: string = 'iam'
 
 let _identOptInfo: IdentOptInfo | null = null
 
-let _appId: number = 0
+let _appId: string = ''
 
-export function init(appId: number): void {
+export function init(appId: string): void {
     _appId = appId
 }
 
@@ -58,7 +58,7 @@ const account = {
         return request.req<IdentOptInfo>('login', 'http://' + iamModuleName + '/common/login', OptActionKind.CREATE, {
             ak: userName,
             sk: password,
-            relAppId: _appId
+            relAppCode: _appId
         })
             .then(identOptInfo => {
                 _identOptInfo = identOptInfo
@@ -135,8 +135,8 @@ const authPolicy = {
 
 const tenant = {
 
-    registerTenant(tenantName: string, appName: string, tenantAdminUsername: string, tenantAdminPassword: string): Promise<IdentOptCacheInfo> {
-        return request.req<IdentOptCacheInfo>('createTenant', 'http://' + iamModuleName + '/common/tenant', OptActionKind.CREATE, {
+    registerTenant(tenantName: string, appName: string, tenantAdminUsername: string, tenantAdminPassword: string): Promise<IdentOptInfo> {
+        return request.req<IdentOptInfo>('createTenant', 'http://' + iamModuleName + '/common/tenant', OptActionKind.CREATE, {
             tenantName: tenantName,
             appName: appName,
             accountUserName: tenantAdminUsername,

@@ -18,6 +18,7 @@ package idealworld.dew.framework.fun.auth;
 
 import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -37,11 +38,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AuthCacheProcessor {
 
-    public static Future<Optional<IdentOptCacheInfo>> getOptInfo(String token, ProcessContext context) {
+    public static Future<Optional<IdentOptExchangeInfo>> getOptInfo(String token, ProcessContext context) {
         return context.cache.get(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token)
                 .compose(optInfoStr -> {
                     if (optInfoStr != null && !optInfoStr.isEmpty()) {
-                        return context.helper.success(Optional.of(new JsonObject(optInfoStr).mapTo(IdentOptCacheInfo.class)));
+                        var identOpt = new JsonObject(optInfoStr).mapTo(IdentOptExchangeInfo.class);
+                        identOpt.setUnauthorizedAppId(identOpt.getAppId());
+                        identOpt.setUnauthorizedTenantId(identOpt.getUnauthorizedTenantId());
+                        return context.helper.success(Optional.of(identOpt));
                     } else {
                         return context.helper.success(Optional.empty());
                     }

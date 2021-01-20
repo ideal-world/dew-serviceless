@@ -37,11 +37,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class Role extends AppBasedEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 关联角色定义Id
     @NotNull
     private Long relRoleDefId;
@@ -56,5 +51,10 @@ public class Role extends AppBasedEntity {
     // 显示排序，asc
     @NotNull
     private Integer sort;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

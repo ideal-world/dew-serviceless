@@ -19,7 +19,7 @@ package idealworld.dew.serviceless.gateway.process;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
@@ -52,7 +52,7 @@ public class GatewayDistributeHandler extends AuthHttpHandler {
 
     @Override
     public void handle(RoutingContext ctx) {
-        var identOptInfo = (IdentOptCacheInfo) ctx.get(CONTEXT_INFO);
+        var identOptInfo = (IdentOptExchangeInfo) ctx.get(CONTEXT_INFO);
         var actionKind = (OptActionKind) ctx.get(DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG);
         var uri = (URI) ctx.get(DewAuthConstant.REQUEST_RESOURCE_URI_FLAG);
         Buffer body = ctx.getBody();
@@ -103,7 +103,7 @@ public class GatewayDistributeHandler extends AuthHttpHandler {
                         // 外部调用带上返回的HTTP Header
                         resp._1.forEach((k, v) -> ctx.response().putHeader(k, v));
                     }
-                    ctx.end(JsonHelper.appendBuffer(new JsonObject().put("code", "200"),"body", resp._0).toBuffer());
+                    ctx.end(JsonHelper.appendBuffer(new JsonObject().put("code", "200"), "body", resp._0).toBuffer());
                 })
                 .onFailure(e -> error(ctx, e));
     }

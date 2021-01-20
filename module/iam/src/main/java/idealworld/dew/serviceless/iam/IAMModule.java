@@ -18,7 +18,7 @@ package idealworld.dew.serviceless.iam;
 
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.DewModule;
-import idealworld.dew.framework.dto.IdentOptInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectOperatorKind;
@@ -82,7 +82,7 @@ public class IAMModule extends DewModule<IAMConfig> {
                 .conf(config)
                 .moduleName(getModuleName())
                 .build()
-                .init(IdentOptInfo.builder().build());
+                .init(IdentOptCacheInfo.builder().build());
         return exchangeProcessor.init(context)
                 .compose(resp -> context.sql.count(
                         new HashMap<>(),

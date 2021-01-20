@@ -42,11 +42,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class Account extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     /**
      * OpenId是账号对外提供的主键，给业务方使用，用于标识账号唯一性的字段。
      */
@@ -83,5 +78,10 @@ public class Account extends SafeEntity {
     // 账号状态
     @NotNull
     private CommonStatus status;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

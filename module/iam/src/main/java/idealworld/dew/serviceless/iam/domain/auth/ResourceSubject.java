@@ -39,14 +39,14 @@ import javax.validation.constraints.Size;
  * <p>
  * e.g.
  * <p>
- * uri = menu:///
+ * uri = menu://iam
  * <p>
  * {@link ResourceKind#ELEMENT}:
  * uri = 元素路径
  * <p>
  * e.g.
  * <p>
- * uri = element:///
+ * uri = element://iam
  * <p>
  * {@link ResourceKind#HTTP}:
  * uri = API路径
@@ -54,7 +54,7 @@ import javax.validation.constraints.Size;
  * e.g.
  * <p>
  * uri = http://10.20.0.10:8080/iam
- * uri = https://iam-service/iam
+ * uri = https://iam/iam
  * <p>
  * {@link ResourceKind#RELDB}:
  * uri = 数据库连接地址
@@ -92,11 +92,6 @@ import javax.validation.constraints.Size;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class ResourceSubject extends SafeEntity {
-
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
 
     // 资源主体编码
     @NotNull
@@ -148,5 +143,10 @@ public class ResourceSubject extends SafeEntity {
     // 关联租户Id
     @NotNull
     private Long relTenantId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

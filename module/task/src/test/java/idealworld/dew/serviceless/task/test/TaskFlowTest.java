@@ -19,7 +19,7 @@ package idealworld.dew.serviceless.task.test;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
@@ -97,8 +97,10 @@ public class TaskFlowTest extends DewTest {
 
     private static Tuple2<Buffer, Throwable> request(OptActionKind actionKind, String uri, String body) {
         var header = new HashMap<String, String>();
-        var identOptInfo = IdentOptCacheInfo.builder()
+        var identOptInfo = IdentOptExchangeInfo.builder()
                 .tenantId(1L)
+                .unauthorizedTenantId(1L)
+                .appId(1L)
                 .appId(1L)
                 .build();
         header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));

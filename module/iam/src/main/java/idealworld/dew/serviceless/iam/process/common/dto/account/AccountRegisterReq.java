@@ -64,9 +64,11 @@ public class AccountRegisterReq implements Serializable {
     @NotBlank
     @Size(max = 255)
     private String sk;
-    // 关联应用Id
+    // 关联应用OpenId
     @NotNull
-    private Long relAppId;
+    @NotBlank
+    @Size(max = 100)
+    private String relAppCode;
 
 
 }

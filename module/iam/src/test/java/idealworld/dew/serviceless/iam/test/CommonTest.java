@@ -26,6 +26,7 @@ import idealworld.dew.serviceless.iam.process.appconsole.dto.resource.ResourceSu
 import idealworld.dew.serviceless.iam.process.common.dto.account.*;
 import idealworld.dew.serviceless.iam.process.common.dto.tenant.TenantRegisterReq;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppAddReq;
+import idealworld.dew.serviceless.iam.process.tenantconsole.dto.app.AppResp;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.tenant.TenantIdentAddReq;
 import idealworld.dew.serviceless.iam.process.tenantconsole.dto.tenant.TenantModifyReq;
 import io.vertx.core.Vertx;
@@ -35,20 +36,19 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 public class CommonTest extends IAMBasicTest {
 
-    private Long appId;
+    private String appCode;
 
     @BeforeEach
     public void before(Vertx vertx, VertxTestContext testContext) {
         loginBySystemAdmin();
         // 添加当前租户的应用
-        appId = req(OptActionKind.CREATE, "/console/tenant/app", AppAddReq.builder()
+        var appId = req(OptActionKind.CREATE, "/console/tenant/app", AppAddReq.builder()
                 .name("testAPP")
                 .build(), Long.class)._0;
+        appCode = req(OptActionKind.FETCH, "/console/tenant/app/" + appId, null, AppResp.class)._0.getOpenId();
         removeToken();
         testContext.completeNow();
     }
@@ -86,7 +86,7 @@ public class CommonTest extends IAMBasicTest {
                 .kind(AccountIdentKind.EMAIL)
                 .ak("1")
                 .sk("s")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._1.getMessage().contains("对应租户不存在、未启用或禁止注册"));
         req(OptActionKind.PATCH, "/console/tenant/tenant", TenantModifyReq.builder()
                 .allowAccountRegister(true)
@@ -97,35 +97,35 @@ public class CommonTest extends IAMBasicTest {
                 .kind(AccountIdentKind.EMAIL)
                 .ak("1")
                 .sk("s")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._1.getMessage());
         Assertions.assertEquals("认证名规则不合法", req(OptActionKind.CREATE, "/common/account", AccountRegisterReq.builder()
                 .name("孤岛旭日")
                 .kind(AccountIdentKind.USERNAME)
                 .ak("1")
                 .sk("s")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._1.getMessage());
         Assertions.assertEquals("认证密钥规则不合法", req(OptActionKind.CREATE, "/common/account", AccountRegisterReq.builder()
                 .name("ss")
                 .kind(AccountIdentKind.USERNAME)
                 .ak("gdxr")
                 .sk("s")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._1.getMessage());
         identOptInfo = req(OptActionKind.CREATE, "/common/account", AccountRegisterReq.builder()
                 .name("ss")
                 .kind(AccountIdentKind.USERNAME)
                 .ak("gdxr")
                 .sk("ownc3@ds")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._0;
         Assertions.assertEquals("账号凭证[gdxr]已存在", req(OptActionKind.CREATE, "/common/account", AccountRegisterReq.builder()
                 .name("ss")
                 .kind(AccountIdentKind.USERNAME)
                 .ak("gdxr")
                 .sk("ownc3@ds")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._1.getMessage());
         Assertions.assertNotNull(identOptInfo.getAccountCode());
 
@@ -133,17 +133,17 @@ public class CommonTest extends IAMBasicTest {
         Assertions.assertEquals("登录认证[gdx]不存在或已过期或是（应用关联）账号不存在", req(OptActionKind.CREATE, "/common/login", AccountLoginReq.builder()
                 .ak("gdx")
                 .sk("ownc3@s")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._1.getMessage());
         Assertions.assertEquals("用户名或密码错误", req(OptActionKind.CREATE, "/common/login", AccountLoginReq.builder()
                 .ak("gdxr")
                 .sk("ownc3@s")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._1.getMessage());
         identOptInfo = req(OptActionKind.CREATE, "/common/login", AccountLoginReq.builder()
                 .ak("gdxr")
                 .sk("ownc3@ds")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._0;
         Assertions.assertNotNull(identOptInfo.getAccountCode());
 
@@ -189,14 +189,14 @@ public class CommonTest extends IAMBasicTest {
         identOptInfo = req(OptActionKind.CREATE, "/common/login", AccountLoginReq.builder()
                 .ak("gdxr")
                 .sk("sds240!#")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._0;
         setToken(identOptInfo.getToken());
         Assertions.assertNotNull(req(OptActionKind.DELETE, "/common/account", null, Void.class));
         Assertions.assertEquals("登录认证[gdxr]不存在或已过期或是（应用关联）账号不存在", req(OptActionKind.CREATE, "/common/login", AccountLoginReq.builder()
                 .ak("gdxr")
                 .sk("ownc3@ds")
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build(), IdentOptInfo.class)._1.getMessage());
 
         testContext.completeNow();
@@ -208,10 +208,10 @@ public class CommonTest extends IAMBasicTest {
         var oauth = $.file.readAllByClassPath("oauth-info.secret", "UTF-8");
         var oauthJson = new JsonObject(oauth);
 
-        Assertions.assertEquals("对应的OAuth资源主体不存在", req(OptActionKind.CREATE, "/common/oauth/login", AccountOAuthLoginReq.builder()
+        Assertions.assertEquals("找不到对应的OAuth资源主体", req(OptActionKind.CREATE, "/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
                 .code("ownc3@s")
-                .relAppId(1L)
+                .relAppCode(iamAppCode)
                 .build(), IdentOptInfo.class)._1.getMessage());
         loginBySystemAdmin();
         var resourceSubjectId = req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
@@ -231,13 +231,13 @@ public class CommonTest extends IAMBasicTest {
         Assertions.assertTrue(req(OptActionKind.CREATE, "/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
                 .code("ownc3@s")
-                .relAppId(1L)
+                .relAppCode(iamAppCode)
                 .build(), IdentOptInfo.class)._1.getMessage().contains("invalid code"));
         // code只能用一次
         /*Assertions.assertEquals("应用[1]对应租户不存在、未启用或禁止注册", req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
                 .code(oauthJson.get("wechat-xcx").get("code").asText())
-                .relAppId(1L)
+                .relAppCode(iamAppCode)
                 .build(), IdentOptInfo.class)._1.getMessage());*/
         loginBySystemAdmin();
         req(OptActionKind.PATCH, "/console/tenant/tenant", TenantModifyReq.builder()
@@ -248,7 +248,7 @@ public class CommonTest extends IAMBasicTest {
       /*  Assertions.assertEquals("认证类型不存在或已禁用", req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
                 .code(oauthJson.get("wechat-xcx").get("code").asText())
-                .relAppId(1L)
+                .relAppCode(iamAppCode)
                 .build(), IdentOptInfo.class)._1.getMessage());*/
         loginBySystemAdmin();
         Assertions.assertNull(req(OptActionKind.CREATE, "/console/tenant/tenant/ident", TenantIdentAddReq.builder()
@@ -260,14 +260,14 @@ public class CommonTest extends IAMBasicTest {
         var identOptInfo = req(OptActionKind.CREATE, "/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
                 .code(oauthJson.getJsonObject("wechat-xcx").getString("code"))
-                .relAppId(1L)
+                .relAppCode(iamAppCode)
                 .build(), IdentOptInfo.class)._0;
         Assertions.assertNotNull(identOptInfo.getAccountCode());
         // 登录 code只能用一次
        /* identOptInfo = req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
                 .code(oauthJson.get("wechat-xcx").get("code").asText())
-                .relAppId(1L)
+                .relAppCode(iamAppCode)
                 .build(), IdentOptInfo.class)._0;
         Assertions.assertNotNull(identOptInfo.getAccountCode());*/
         testContext.completeNow();

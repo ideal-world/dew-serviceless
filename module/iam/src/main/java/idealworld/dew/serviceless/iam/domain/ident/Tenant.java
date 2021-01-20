@@ -42,11 +42,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class Tenant extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 租户名称
     @NotNull
     @NotBlank
@@ -68,5 +63,10 @@ public class Tenant extends SafeEntity {
     // 租户状态
     @NotNull
     private CommonStatus status;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

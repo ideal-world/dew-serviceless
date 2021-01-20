@@ -16,7 +16,7 @@
 
 package idealworld.dew.serviceless.task.process;
 
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
@@ -165,7 +165,7 @@ public class TaskProcessor extends EventBusProcessor {
                         put("code", code);
                         put("rel_app_id", appId);
                     }
-                }, TaskDef.class), () -> new NotFoundException("任务[" + code + "]不存在"))
+                }, TaskDef.class), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
                 .compose(resp ->
                         context.sql.update(new HashMap<>() {
                             {
@@ -187,7 +187,7 @@ public class TaskProcessor extends EventBusProcessor {
                         put("code", code);
                         put("rel_app_id", appId);
                     }
-                }, TaskDef.class), () -> new NotFoundException("任务[" + code + "]不存在"))
+                }, TaskDef.class), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
                 .compose(resp ->
                         context.sql.softDelete(new HashMap<>() {
                             {
@@ -198,7 +198,7 @@ public class TaskProcessor extends EventBusProcessor {
                 .compose(resp -> context.helper.success());
     }
 
-    public static Future<Object> execTask(String code, Long appId, List<?> parameters, Boolean fromTimer, IdentOptCacheInfo identOptCacheInfo, ProcessContext context) {
+    public static Future<Object> execTask(String code, Long appId, List<?> parameters, Boolean fromTimer, IdentOptExchangeInfo identOptCacheInfo, ProcessContext context) {
         if (!fromTimer) {
             return _vertx.getOrCreateContext().executeBlocking(promise -> {
                 try {
@@ -217,7 +217,7 @@ public class TaskProcessor extends EventBusProcessor {
                         put("code", code);
                         put("rel_app_id", appId);
                     }
-                }, TaskDef.class), () -> new NotFoundException("任务[" + code + "]不存在"))
+                }, TaskDef.class), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
                 .compose(taskDef ->
                         context.sql.save(TaskInst.builder()
                                 .startTime(System.currentTimeMillis())

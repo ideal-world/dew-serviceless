@@ -37,11 +37,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class GroupNode extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 节点编码
     @NotNull
     @Size(max = 1000)
@@ -63,5 +58,10 @@ public class GroupNode extends SafeEntity {
     // 关联群组Id
     @NotNull
     private Long relGroupId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

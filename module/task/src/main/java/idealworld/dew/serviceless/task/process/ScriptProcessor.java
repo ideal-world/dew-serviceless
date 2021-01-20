@@ -17,7 +17,7 @@
 package idealworld.dew.serviceless.task.process;
 
 import com.ecfront.dew.common.exception.RTScriptException;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.serviceless.task.helper.ScriptExchangeHelper;
 import io.netty.buffer.Unpooled;
 import io.vertx.core.buffer.Buffer;
@@ -152,7 +152,7 @@ public class ScriptProcessor {
         SCRIPT_CONTAINER.remove(appId);
     }
 
-    public static Object execute(Long appId, String funName, List<?> parameters, IdentOptCacheInfo identOptCacheInfo) {
+    public static Object execute(Long appId, String funName, List<?> parameters, IdentOptExchangeInfo identOptCacheInfo) {
         LOCKS.get(appId).lock();
         var createAuthFun = SCRIPT_CONTAINER.get(appId).getBindings("js").getMember("JVM").getMember("DewSDK").getMember("iam").getMember("auth").getMember("create");
         try {

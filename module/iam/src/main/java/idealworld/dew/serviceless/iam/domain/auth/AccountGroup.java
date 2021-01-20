@@ -35,17 +35,17 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 public class AccountGroup extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_" + super.tableName();
-    }
-
     // 关联群组节点Id
     @NotNull
     private Long relGroupNodeId;
     // 关联账号Id
     @NotNull
     private Long relAccountId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 
 }

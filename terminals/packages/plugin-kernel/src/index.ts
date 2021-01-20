@@ -26,7 +26,7 @@ const browserify = require("browserify")
 const config = JSON.parse(fs.readFileSync('./package.json'))['dew']
 const crt = JSON.parse(fs.readFileSync('./dew.crt'))
 const serverUrl: string = config.serverUrl
-const appId: number = config.appId
+const appId: string = config.appId
 const ak: string = crt.ak
 const sk: string = crt.sk
 

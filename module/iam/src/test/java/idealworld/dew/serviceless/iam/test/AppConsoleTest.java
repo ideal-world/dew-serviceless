@@ -96,12 +96,12 @@ public class AppConsoleTest extends IAMBasicTest {
                 .name("mysql")
                 .uri("mysql://xxxxx")
                 .build(), Long.class)._1.getMessage());
-        Assertions.assertEquals("资源主体URI已存在", req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
+        Assertions.assertNull(req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
                 .codePostfix("defaultmysql2")
                 .kind(ResourceKind.RELDB)
                 .name("mysql")
                 .uri("mysql://xxxxx")
-                .build(), Long.class)._1.getMessage());
+                .build(), Long.class)._1);
 
         // 修改当前应用的某个资源主体
         Assertions.assertNull(req(OptActionKind.PATCH, "/console/app/resource/subject/" + resourceSubjectId, ResourceSubjectModifyReq.builder()
@@ -118,14 +118,14 @@ public class AppConsoleTest extends IAMBasicTest {
 
         // 获取当前应用的资源主体列表信息
         var resourceSubjectResps = reqList("/console/app/resource/subject", ResourceSubjectResp.class)._0;
-        Assertions.assertEquals(3, resourceSubjectResps.size());
-        Assertions.assertEquals("MYSQL", resourceSubjectResps.get(2).getName());
+        Assertions.assertTrue(resourceSubjectResps.size() >= 4);
+        Assertions.assertTrue(resourceSubjectResps.stream().anyMatch(r -> r.getName().equals("MYSQL")));
         resourceSubjectResps = reqList("/console/app/resource/subject?kind=" + ResourceKind.RELDB.toString(), ResourceSubjectResp.class)._0;
-        Assertions.assertEquals(1, resourceSubjectResps.size());
-        Assertions.assertEquals("MYSQL", resourceSubjectResps.get(0).getName());
+        Assertions.assertTrue(resourceSubjectResps.size() >= 2);
+        Assertions.assertTrue(resourceSubjectResps.stream().anyMatch(r -> r.getName().equals("MYSQL")));
         resourceSubjectResps = reqList("/console/app/resource/subject?kind=" + ResourceKind.HTTP.toString(), ResourceSubjectResp.class)._0;
-        Assertions.assertEquals(1, resourceSubjectResps.size());
-        Assertions.assertEquals("用户权限中心 APIs", resourceSubjectResps.get(0).getName());
+        Assertions.assertTrue(resourceSubjectResps.size() >= 1);
+        Assertions.assertTrue(resourceSubjectResps.stream().anyMatch(r -> r.getName().equals("用户权限中心 APIs")));
         resourceSubjectResps = reqList("/console/app/resource/subject?kind=" + ResourceKind.HTTP.toString() + "&name=权限", ResourceSubjectResp.class)._0;
         Assertions.assertEquals(1, resourceSubjectResps.size());
         Assertions.assertEquals("用户权限中心 APIs", resourceSubjectResps.get(0).getName());
@@ -156,8 +156,8 @@ public class AppConsoleTest extends IAMBasicTest {
 
         // 获取当前应用的资源列表信息
         var resourceResps = reqList("/console/app/resource", ResourceResp.class)._0;
-        Assertions.assertEquals(5, resourceResps.size());
-        Assertions.assertEquals("MYSQL IAM DB", resourceResps.get(4).getName());
+        Assertions.assertTrue(resourceResps.size() >= 5);
+        Assertions.assertTrue(resourceResps.stream().anyMatch(r -> r.getName().equals("MYSQL IAM DB")));
 
         // 删除当前应用的某个资源
         Assertions.assertNull(req(OptActionKind.DELETE, "/console/app/resource/" + resourceId, null, Void.class)._1);
@@ -207,7 +207,7 @@ public class AppConsoleTest extends IAMBasicTest {
                 .name("理想世界")
                 .busCode("xxx")
                 .build(), Long.class)._0;
-        Assertions.assertEquals("关联群组不合法", req(OptActionKind.CREATE, "/console/app/group/10/node", GroupNodeAddReq.builder()
+        Assertions.assertEquals("找不到对应的关联群组", req(OptActionKind.CREATE, "/console/app/group/10/node", GroupNodeAddReq.builder()
                 .name("理想世界")
                 .build(), Long.class)._1.getMessage());
 
@@ -341,7 +341,7 @@ public class AppConsoleTest extends IAMBasicTest {
         Assertions.assertEquals("角色已存在", req(OptActionKind.CREATE, "/console/app/role", RoleAddReq.builder()
                 .relRoleDefId(roleDefId)
                 .build(), Long.class)._1.getMessage());
-        Assertions.assertEquals("对应的群组节点不合法", req(OptActionKind.CREATE, "/console/app/role", RoleAddReq.builder()
+        Assertions.assertEquals("找不到对应的群组节点", req(OptActionKind.CREATE, "/console/app/role", RoleAddReq.builder()
                 .relRoleDefId(roleDefId)
                 .relGroupNodeId(100L)
                 .build(), Long.class)._1.getMessage());
@@ -386,7 +386,7 @@ public class AppConsoleTest extends IAMBasicTest {
                 .resultKind(AuthResultKind.ACCEPT)
                 .build(), Void.class)._1);
         var authPolicyId = reqPage("/console/app/authpolicy", 1L, 1L, AuthPolicyResp.class)._0.getObjects().get(0).getId();
-        Assertions.assertEquals("权限策略对应的资源不合法", req(OptActionKind.CREATE, "/console/app/authpolicy", AuthPolicyAddReq.builder()
+        Assertions.assertEquals("找不到对应的权限策略", req(OptActionKind.CREATE, "/console/app/authpolicy", AuthPolicyAddReq.builder()
                 .relSubjectKind(AuthSubjectKind.ACCOUNT)
                 .relSubjectIds("1")
                 .subjectOperator(AuthSubjectOperatorKind.EQ)

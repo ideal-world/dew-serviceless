@@ -200,7 +200,7 @@ async function createApp(answers: any) {
         let tenantName = (await DewSDK.iam.tenant.fetch()).name
         confirmMessage = '即将在租户 [' + tenantName + '] 中创建应用 [' + answers.appName + ']'
     } else {
-        DewSDK.setting.appId(0)
+        DewSDK.setting.appId('')
         confirmMessage = '即将创建应用 [' + answers.appName + ']'
     }
     let confirmAnswer = await inquirer.prompt([{
@@ -215,7 +215,7 @@ async function createApp(answers: any) {
     if (answers.createTenant) {
         let identOptInfo = await DewSDK.iam.tenant.register(answers.tenantName, answers.appName, answers.tenantAdminUsername, answers.tenantAdminPassword)
         DewSDK.iam.auth.set(identOptInfo)
-        appId = identOptInfo.appId
+        appId = identOptInfo.appCode
     } else {
         appId = await DewSDK.iam.app.create(answers.appName)
     }

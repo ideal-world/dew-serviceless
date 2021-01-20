@@ -35,16 +35,16 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 public class AccountApp extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 关联应用Id
     @NotNull
     private Long relAppId;
     // 关联账号Id
     @NotNull
     private Long relAccountId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

@@ -149,10 +149,10 @@ public class IAMBasicProcessor {
                 return context.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString())
                         .compose(accessToken -> {
                             if (accessToken == null) {
-                                context.helper.error(new BadRequestException("Access Token不存在"));
+                                context.helper.error(new UnAuthorizedException("Access Token不存在"));
                             }
                             if (!accessToken.equalsIgnoreCase(sk)) {
-                                context.helper.error(new BadRequestException("Access Token错误"));
+                                context.helper.error(new UnAuthorizedException("Access Token错误"));
                             }
                             return context.helper.success("");
                         });

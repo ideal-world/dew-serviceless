@@ -20,7 +20,7 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewAuthConfig;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.LocalResourceCache;
 import idealworld.dew.framework.fun.auth.dto.ResourceExchange;
@@ -60,9 +60,11 @@ public class ExchangeHelper {
                         return Future.succeededFuture();
                     }
                     var header = new HashMap<String, String>();
-                    var identOptInfo = IdentOptCacheInfo.builder()
+                    var identOptInfo = IdentOptExchangeInfo.builder()
                             .tenantId(config.getTenantId())
                             .appId(config.getAppId())
+                            .unauthorizedTenantId(config.getTenantId())
+                            .unauthorizedAppId(config.getAppId())
                             .build();
                     header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
                     return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX+"resource?kind=" + kind, null, header)
@@ -110,9 +112,11 @@ public class ExchangeHelper {
                         return Future.succeededFuture();
                     }
                     var header = new HashMap<String, String>();
-                    var identOptInfo = IdentOptCacheInfo.builder()
+                    var identOptInfo = IdentOptExchangeInfo.builder()
                             .tenantId(config.getTenantId())
                             .appId(config.getAppId())
+                            .unauthorizedTenantId(config.getTenantId())
+                            .unauthorizedAppId(config.getAppId())
                             .build();
                     header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
                     return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX+"resource/subject?kind=" + kind.toString(), null, header)

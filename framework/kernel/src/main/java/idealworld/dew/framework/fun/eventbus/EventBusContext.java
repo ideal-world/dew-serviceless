@@ -16,7 +16,7 @@
 
 package idealworld.dew.framework.fun.eventbus;
 
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import io.vertx.core.buffer.Buffer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -54,7 +54,7 @@ public class EventBusContext {
         public Map<String, String> header = new HashMap<>();
         private Object body;
         @Builder.Default
-        public IdentOptCacheInfo identOptInfo = IdentOptCacheInfo.builder().build();
+        public IdentOptExchangeInfo identOptInfo = IdentOptExchangeInfo.builder().build();
 
         public Long pageNumber() {
             return Long.parseLong(params.getOrDefault("pageNumber", "1"));

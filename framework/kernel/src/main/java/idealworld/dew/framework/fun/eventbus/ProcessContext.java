@@ -16,9 +16,10 @@
 
 package idealworld.dew.framework.fun.eventbus;
 
+import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SafeEntity;
-import idealworld.dew.framework.dto.IdentOptInfo;
+import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.fun.httpclient.FunHttpClient;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
@@ -36,9 +37,9 @@ import java.util.Map;
 @AllArgsConstructor
 public class ProcessContext {
 
-    private IdentOptInfo identOptInfo;
+    private IdentOptCacheInfo identOptInfo;
 
-    public ProcessContext init(IdentOptInfo identOptInfo) {
+    public ProcessContext init(IdentOptCacheInfo identOptInfo) {
         this.identOptInfo = identOptInfo;
         if ((funStatus == null || funStatus.containsKey("sql") && funStatus.get("sql")) && FunSQLClient.contains(moduleName)) {
             sql = FunSQLClient.choose(moduleName);
@@ -75,14 +76,14 @@ public class ProcessContext {
         if (entity instanceof SafeEntity) {
             if (insert) {
                 ((SafeEntity) entity).setCreateUser(
-                        identOptInfo.getAccountCode() != null
-                                ? (String) identOptInfo.getAccountCode() :
-                                "");
+                        identOptInfo.getAccountId() != null
+                                ? identOptInfo.getAccountId() :
+                                DewConstant.OBJECT_UNDEFINED);
             }
             ((SafeEntity) entity).setUpdateUser(
-                    identOptInfo.getAccountCode() != null
-                            ? (String) identOptInfo.getAccountCode() :
-                            "");
+                    identOptInfo.getAccountId() != null
+                            ? identOptInfo.getAccountId() :
+                            DewConstant.OBJECT_UNDEFINED);
         }
     }
 

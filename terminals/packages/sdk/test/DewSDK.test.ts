@@ -18,7 +18,8 @@
 import {DewSDK} from "@idealworld/sdk";
 
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000"
-const APP_ID = 1
+// TODO
+const APP_ID = ''
 const USERNAME = "dew"
 const PASSWORD = "TestPwd1d"
 
@@ -27,7 +28,7 @@ beforeAll(() => {
 })
 
 test('Test iam sdk', async () => {
-    let identOptInfo = await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
+    let identOptInfo = await DewSDK.iam.account.login(USERNAME, PASSWORD)
     expect(identOptInfo.roleInfo[0].name).toContain('管理员')
     let menus = await DewSDK.iam.resource.menu.fetch()
     expect(menus.length).toBe(1)
@@ -92,7 +93,7 @@ test('Test cache sdk', async () => {
 })
 
 test('Test reldb sdk', async () => {
-    await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
+    await DewSDK.iam.account.login(USERNAME, PASSWORD)
     let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
     let accounts = await DewSDK.reldb.exec('select name from iam_account', [])
     expect(accounts.length).toBe(1)
@@ -149,7 +150,7 @@ test('Test task sdk', async done => {
     setTimeout(async () => {
         await DewSDK.task.delete("invoke")
         await DewSDK.task.delete("timer")
-        await DewSDK.iam.account.login(USERNAME, PASSWORD, APP_ID)
+        await DewSDK.iam.account.login(USERNAME, PASSWORD)
         let accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['后台添加用户'])
         expect(accounts.length).toBe(1)
         accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['定时添加用户'])

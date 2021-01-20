@@ -37,11 +37,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class AppIdent extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
     // 应用认证用途
     @NotNull
     @NotBlank
@@ -63,5 +58,10 @@ public class AppIdent extends SafeEntity {
     // 关联应用Id
     @NotNull
     private Long relAppId;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

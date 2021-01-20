@@ -41,7 +41,9 @@ public class IdentOptInfo {
     @Builder.Default
     private String accountName = "";
     @Builder.Default
-    private Object accountCode = "";
+    private String accountCode = "";
+    @Builder.Default
+    private String appCode = "";
     @Builder.Default
     private Set<RoleInfo> roleInfo = new HashSet<>();
     @Builder.Default

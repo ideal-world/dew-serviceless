@@ -14,34 +14,27 @@
  * limitations under the License.
  */
 
-package idealworld.dew.framework.domain;
+package idealworld.dew.framework.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-
 /**
- * Safe entity.
+ * token opt info.
  *
  * @author gudaoxuri
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public abstract class SafeEntity extends IdEntity {
+@AllArgsConstructor
+public class IdentOptExchangeInfo extends IdentOptCacheInfo {
 
-    @NotNull
-    private Long createUser;
-    @NotNull
-    private Long updateUser;
-    @NotNull
-    private LocalDateTime createTime;
-    @NotNull
-    private LocalDateTime updateTime;
+    private Long unauthorizedAppId;
+    private Long unauthorizedTenantId;
 
 }

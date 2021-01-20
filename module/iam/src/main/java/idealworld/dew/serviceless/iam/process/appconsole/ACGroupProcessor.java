@@ -19,7 +19,7 @@ package idealworld.dew.serviceless.iam.process.appconsole;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
-import idealworld.dew.framework.exception.UnAuthorizedException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
@@ -235,7 +235,7 @@ public class ACGroupProcessor extends EventBusProcessor {
                                         put("rel_app_id", relAppId);
                                     }
                                 },
-                                Group.class), () -> new ConflictException("关联群组不合法"))
+                                Group.class), () -> new NotFoundException("找不到对应的关联群组"))
                         .compose(resp ->
                                 packageGroupNodeCode(groupId, groupNodeAddReq.getParentId(), groupNodeAddReq.getSiblingId(), null,
                                         (IAMConfig) context.conf, context.sql, context)
@@ -274,7 +274,7 @@ public class ACGroupProcessor extends EventBusProcessor {
                                         put("rel_tenant_id", relTenantId);
                                     }
                                 },
-                                GroupNode.class), () -> new UnAuthorizedException("关联群组不合法"))
+                                GroupNode.class), () -> new NotFoundException("找不到对应的关联群组"))
                         .compose(fetchGroupNode -> {
                             if (groupNodeModifyReq.getParentId() != DewConstant.OBJECT_UNDEFINED || groupNodeModifyReq.getSiblingId() != DewConstant.OBJECT_UNDEFINED) {
                                 return packageGroupNodeCode(fetchGroupNode.getRelGroupId(), groupNodeModifyReq.getParentId(),

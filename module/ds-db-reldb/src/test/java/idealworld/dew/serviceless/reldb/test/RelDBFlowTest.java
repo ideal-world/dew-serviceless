@@ -20,7 +20,7 @@ import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.DewConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.*;
 import idealworld.dew.framework.fun.cache.FunCacheClient;
@@ -58,8 +58,10 @@ public class RelDBFlowTest extends DewTest {
         vertx.deployVerticle(new RelDBApplicationTest(), testContext.succeedingThenComplete());
     }
 
-    private Tuple2<Buffer, Throwable> request(String subjectCode, String body, IdentOptCacheInfo identOptCacheInfo) {
+    private Tuple2<Buffer, Throwable> request(String subjectCode, String body, IdentOptExchangeInfo identOptCacheInfo) {
         var header = new HashMap<String, String>();
+        identOptCacheInfo.setUnauthorizedTenantId(identOptCacheInfo.getUnauthorizedTenantId());
+        identOptCacheInfo.setUnauthorizedAppId(identOptCacheInfo.getUnauthorizedAppId());
         header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptCacheInfo).toString(), StandardCharsets.UTF_8));
         var req = FunEventBus.choose(MODULE_NAME)
                 .request(MODULE_NAME,
@@ -73,13 +75,15 @@ public class RelDBFlowTest extends DewTest {
     @SneakyThrows
     @Test
     public void testFlow(Vertx vertx, VertxTestContext testContext) {
-        var identOptCacheInfo = IdentOptCacheInfo.builder()
+        var identOptCacheInfo = IdentOptExchangeInfo.builder()
                 .accountCode("a01")
                 .appId(1000L)
                 .tenantId(2000L)
+                .unauthorizedAppId(1000L)
+                .unauthorizedTenantId(2000L)
                 .token("token01")
                 .build();
-        Assertions.assertEquals("请求的资源主题[1.reldb.subjectCodexx]不存在", request("1.reldb.subjectCodexx", "{\"sql\":\"select name from iam_account\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
+        Assertions.assertEquals("找不到请求的资源主体[1.reldb.subjectCodexx]", request("1.reldb.subjectCodexx", "{\"sql\":\"select name from iam_account\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
 
         // 添加资源主体
         FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resourcesubject.reldb/subjectCodexx",

@@ -41,12 +41,13 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * 权限策略交互处理器.
+ *
  * @author gudaoxuri
  */
 @Slf4j
@@ -68,19 +69,19 @@ public class ExchangeProcessor extends EventBusProcessor {
     }
 
     private Future<Void> cacheAppIdents(ProcessContext context) {
-            if (!context.cache.isLeader()) {
-                return context.helper.success();
-            }
+        if (!context.cache.isLeader()) {
+            return context.helper.success();
+        }
         return context.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
-                                " INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
-                                " INNER JOIN %s tenant ON tenant.id = app.rel_tenant_id AND tenant.status = #{status}" +
+                                " INNER JOIN %s AS app ON app.id = ident.rel_app_id AND app.status = #{status}" +
+                                " INNER JOIN %s AS tenant ON tenant.id = app.rel_tenant_id AND tenant.status = #{status}" +
                                 " WHERE ident.valid_time > #{valid_time}",
                         new AppIdent().tableName(), new App().tableName(), new Tenant().tableName()),
                 new HashMap<>() {
                     {
                         put("status", CommonStatus.ENABLED);
-                        put("valid_time", new Date());
+                        put("valid_time", System.currentTimeMillis());
                     }
                 })
                 .compose(appIdents ->
@@ -161,14 +162,14 @@ public class ExchangeProcessor extends EventBusProcessor {
     public static Future<Void> enableTenant(Long tenantId, ProcessContext context) {
         return context.sql.list(
                 String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time FROM %s AS ident" +
-                                " INNER JOIN %s app ON app.id = ident.rel_app_id AND app.status = #{status}" +
+                                " INNER JOIN %s AS app ON app.id = ident.rel_app_id AND app.status = #{status}" +
                                 " WHERE app.rel_tenant_id = #{rel_tenant_id} AND ident.valid_time > #{valid_time}",
                         new AppIdent().tableName(), new App().tableName()),
                 new HashMap<>() {
                     {
                         put("status", CommonStatus.ENABLED);
                         put("rel_tenant_id", tenantId);
-                        put("valid_time", new Date());
+                        put("valid_time", System.currentTimeMillis());
                     }
                 })
                 .compose(appIdents ->
@@ -204,7 +205,7 @@ public class ExchangeProcessor extends EventBusProcessor {
                 .compose(resp -> context.helper.success());
     }
 
-    public static Future<Void> enableApp(Long appId, Long tenantId, ProcessContext context) {
+    public static Future<Void> enableApp(String appCode, Long appId, Long tenantId, ProcessContext context) {
         return context.sql.getOne(
                 new HashMap<>() {
                     {
@@ -215,7 +216,7 @@ public class ExchangeProcessor extends EventBusProcessor {
                 .compose(app -> {
                     var publicKey = app.getPubKey();
                     var privateKey = app.getPriKey();
-                    return context.cache.set(IAMConstant.CACHE_APP_INFO + appId, tenantId + "\n" + publicKey + "\n" + privateKey);
+                    return context.cache.set(IAMConstant.CACHE_APP_INFO + appCode, appId + "\n" + tenantId + "\n" + publicKey + "\n" + privateKey);
                 })
                 .compose(resp ->
                         context.sql.list(
@@ -224,7 +225,7 @@ public class ExchangeProcessor extends EventBusProcessor {
                                 new HashMap<>() {
                                     {
                                         put("rel_app_id", appId);
-                                        put("valid_time", new Date());
+                                        put("valid_time", System.currentTimeMillis());
                                     }
                                 }))
                 .compose(appIdents ->
@@ -232,14 +233,14 @@ public class ExchangeProcessor extends EventBusProcessor {
                                 .map(appIdent -> {
                                     var ak = appIdent.getString("ak");
                                     var sk = appIdent.getString("sk");
-                                    var validTime = appIdent.getLong("ident.valid_time");
+                                    var validTime = appIdent.getLong("valid_time");
                                     return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
                                 })
                                 .collect(Collectors.toList())))
                 .compose(resp -> context.helper.success());
     }
 
-    public static Future<Void> disableApp(Long appId, Long tenantId, ProcessContext context) {
+    public static Future<Void> disableApp(String appCode, Long appId, Long tenantId, ProcessContext context) {
         return context.sql.list(
                 new HashMap<>() {
                     {
@@ -250,7 +251,7 @@ public class ExchangeProcessor extends EventBusProcessor {
                 .compose(appIdents ->
                         CompositeFuture.all(appIdents.stream().map(appIdent -> deleteAppIdent(appIdent.getAk(), context)).collect(Collectors.toList()))
                 )
-                .compose(resp -> context.cache.del(IAMConstant.CACHE_APP_INFO + appId));
+                .compose(resp -> context.cache.del(IAMConstant.CACHE_APP_INFO + appCode));
     }
 
     public static Future<Void> changeAppIdent(AppIdent appIdent, Long appId, Long tenantId, ProcessContext context) {

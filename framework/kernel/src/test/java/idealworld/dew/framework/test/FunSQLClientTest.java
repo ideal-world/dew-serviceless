@@ -17,6 +17,7 @@
 package idealworld.dew.framework.test;
 
 import idealworld.dew.framework.DewConfig;
+import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SafeEntity;
 import idealworld.dew.framework.domain.SoftDelEntity;
@@ -175,13 +176,13 @@ public class FunSQLClientTest extends DewTest {
     public void testEntity(Vertx vertx, VertxTestContext testContext) {
         funSQLClient.addEntityByInsertFun = entity -> {
             if (entity instanceof SafeEntity) {
-                ((SafeEntity) entity).setCreateUser("");
-                ((SafeEntity) entity).setUpdateUser("");
+                ((SafeEntity) entity).setCreateUser(DewConstant.OBJECT_UNDEFINED);
+                ((SafeEntity) entity).setUpdateUser(DewConstant.OBJECT_UNDEFINED);
             }
         };
         funSQLClient.addEntityByUpdateFun = entity -> {
             if (entity instanceof SafeEntity) {
-                ((SafeEntity) entity).setUpdateUser("");
+                ((SafeEntity) entity).setUpdateUser(DewConstant.OBJECT_UNDEFINED);
             }
         };
         Future.succeededFuture()

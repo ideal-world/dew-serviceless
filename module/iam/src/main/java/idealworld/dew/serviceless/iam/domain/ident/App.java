@@ -40,11 +40,11 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class App extends SafeEntity {
 
-    @Override
-    public String tableName() {
-        return "iam_"+super.tableName();
-    }
-
+    // 应用对外主键
+    @NotNull
+    @NotBlank
+    @Size(max = 100)
+    private String openId;
     // 应用名称
     @NotNull
     @NotBlank
@@ -76,5 +76,10 @@ public class App extends SafeEntity {
     // 应用状态
     @NotNull
     private CommonStatus status;
+
+    @Override
+    public String tableName() {
+        return "iam_" + super.tableName();
+    }
 
 }

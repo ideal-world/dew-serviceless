@@ -60,7 +60,7 @@ public class HttpFlowTest extends DewTest {
     @SneakyThrows
     @Test
     public void testFlow(Vertx vertx, VertxTestContext testContext) {
-        Assertions.assertEquals("请求的资源主题[1.http.httpbin]不存在", request(OptActionKind.CREATE, "http://1.http.httpbin/post", "测试内容")._1.getMessage());
+        Assertions.assertEquals("找不到请求的资源主体[1.http.httpbin]", request(OptActionKind.CREATE, "http://1.http.httpbin/post", "测试内容")._1.getMessage());
 
         // 添加资源主体
         FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resourcesubject.http/httpbin",

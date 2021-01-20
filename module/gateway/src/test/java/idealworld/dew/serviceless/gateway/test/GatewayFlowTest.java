@@ -221,7 +221,7 @@ public class GatewayFlowTest extends DewTest {
                         }
                     });
             Assertions.assertEquals(200, result.statusCode);
-            Assertions.assertEquals("请求的资源主题[httpbin.org]不存在", Resp.generic(result.result, Object.class).getMessage());
+            Assertions.assertEquals("找不到请求的资源主体[httpbin.org]", Resp.generic(result.result, Object.class).getMessage());
             testContext.completeNow();
         });
 
