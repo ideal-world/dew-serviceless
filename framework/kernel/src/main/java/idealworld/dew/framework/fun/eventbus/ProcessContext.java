@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,15 @@ import java.util.Map;
 @AllArgsConstructor
 public class ProcessContext {
 
+    @Builder.Default
+    public ProcessHelper helper = new ProcessHelper();
+    public Object conf;
+    public Map<String, Boolean> funStatus;
+    public String moduleName;
+    public FunSQLClient sql;
+    public FunCacheClient cache;
+    public FunHttpClient http;
+    public FunEventBus eb;
     private IdentOptCacheInfo identOptInfo;
 
     public ProcessContext init(IdentOptCacheInfo identOptInfo) {
@@ -61,16 +70,6 @@ public class ProcessContext {
         }
         return this;
     }
-
-    @Builder.Default
-    public ProcessHelper helper = new ProcessHelper();
-    public Object conf;
-    public Map<String, Boolean> funStatus;
-    public String moduleName;
-    public FunSQLClient sql;
-    public FunCacheClient cache;
-    public FunHttpClient http;
-    public FunEventBus eb;
 
     private <E extends IdEntity> void addSafeInfo(E entity, Boolean insert) {
         if (entity instanceof SafeEntity) {

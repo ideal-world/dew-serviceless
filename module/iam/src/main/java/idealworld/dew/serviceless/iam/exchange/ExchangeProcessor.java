@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,10 +53,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ExchangeProcessor extends EventBusProcessor {
 
-    public ExchangeProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         addProcessor(OptActionKind.FETCH, DewConstant.REQUEST_INNER_PATH_PREFIX + "resource/subject", eventBusContext ->
                 findResourceSubjects(eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.context));
@@ -64,38 +60,8 @@ public class ExchangeProcessor extends EventBusProcessor {
                 findResources(eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.context));
     }
 
-    public Future<Void> init(ProcessContext context) {
-        return cacheAppIdents(context);
-    }
-
-    private Future<Void> cacheAppIdents(ProcessContext context) {
-        if (!context.cache.isLeader()) {
-            return context.helper.success();
-        }
-        return context.sql.list(
-                String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
-                                " INNER JOIN %s AS app ON app.id = ident.rel_app_id AND app.status = #{status}" +
-                                " INNER JOIN %s AS tenant ON tenant.id = app.rel_tenant_id AND tenant.status = #{status}" +
-                                " WHERE ident.valid_time > #{valid_time}",
-                        new AppIdent().tableName(), new App().tableName(), new Tenant().tableName()),
-                new HashMap<>() {
-                    {
-                        put("status", CommonStatus.ENABLED);
-                        put("valid_time", System.currentTimeMillis());
-                    }
-                })
-                .compose(appIdents ->
-                        CompositeFuture.all(appIdents.stream()
-                                .map(appIdent -> {
-                                    var ak = appIdent.getString("ak");
-                                    var sk = appIdent.getString("sk");
-                                    var appId = appIdent.getLong("rel_app_id");
-                                    var validTime = appIdent.getLong("valid_time");
-                                    var tenantId = appIdent.getLong("rel_tenant_id");
-                                    return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
-                                })
-                                .collect(Collectors.toList())))
-                .compose(resp -> context.helper.success());
+    public ExchangeProcessor(String moduleName) {
+        super(moduleName);
     }
 
     private static Future<List<ResourceSubjectExchange>> findResourceSubjects(String kind, ProcessContext context) {
@@ -324,6 +290,40 @@ public class ExchangeProcessor extends EventBusProcessor {
                 + resourceUri.replace("//", "") + ":"
                 + actionKind.toString().toLowerCase();
         return context.cache.del(key);
+    }
+
+    public Future<Void> init(ProcessContext context) {
+        return cacheAppIdents(context);
+    }
+
+    private Future<Void> cacheAppIdents(ProcessContext context) {
+        if (!context.cache.isLeader()) {
+            return context.helper.success();
+        }
+        return context.sql.list(
+                String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
+                                " INNER JOIN %s AS app ON app.id = ident.rel_app_id AND app.status = #{status}" +
+                                " INNER JOIN %s AS tenant ON tenant.id = app.rel_tenant_id AND tenant.status = #{status}" +
+                                " WHERE ident.valid_time > #{valid_time}",
+                        new AppIdent().tableName(), new App().tableName(), new Tenant().tableName()),
+                new HashMap<>() {
+                    {
+                        put("status", CommonStatus.ENABLED);
+                        put("valid_time", System.currentTimeMillis());
+                    }
+                })
+                .compose(appIdents ->
+                        CompositeFuture.all(appIdents.stream()
+                                .map(appIdent -> {
+                                    var ak = appIdent.getString("ak");
+                                    var sk = appIdent.getString("sk");
+                                    var appId = appIdent.getLong("rel_app_id");
+                                    var validTime = appIdent.getLong("valid_time");
+                                    var tenantId = appIdent.getLong("rel_tenant_id");
+                                    return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
+                                })
+                                .collect(Collectors.toList())))
+                .compose(resp -> context.helper.success());
     }
 
     @Data

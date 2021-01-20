@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class EventBusDispatcherTest extends DewTest {
         Future.succeededFuture()
                 .compose(resp -> EventBusDispatcher.chooseProcess("", null, null, OptActionKind.MODIFY, "/app", "q=测试", new HashMap<>(), null))
                 .onFailure(e -> {
-                    Assertions.assertEquals("请求[MODIFY:/app]找不到对应的处理器", e.getMessage());
+                    Assertions.assertEquals("找不到对应的请求[MODIFY:/app]处理器", e.getMessage());
                     count.countDown();
                 });
 
@@ -85,7 +85,7 @@ public class EventBusDispatcherTest extends DewTest {
                 .compose(resp -> EventBusDispatcher.chooseProcess("", null, null, OptActionKind.CREATE, "/app/n1/k1/disabled", "q=测试", new HashMap<>(),
                         JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer()))
                 .onFailure(e -> {
-                    Assertions.assertEquals("请求[CREATE:/app/n1/k1/disabled]找不到对应的处理器", e.getMessage());
+                    Assertions.assertEquals("找不到对应的请求[CREATE:/app/n1/k1/disabled]处理器", e.getMessage());
                     count.countDown();
                 });
         count.await();

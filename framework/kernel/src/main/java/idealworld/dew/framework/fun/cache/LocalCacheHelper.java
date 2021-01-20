@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class LocalCacheHelper extends idealworld.dew.framework.util.CacheHelper 
                         });
             } else {
                 log.trace("[Cache]Hit [{}]", key);
-                promise.complete((E)valueInfo.get()[1]);
+                promise.complete((E) valueInfo.get()[1]);
             }
         });
 

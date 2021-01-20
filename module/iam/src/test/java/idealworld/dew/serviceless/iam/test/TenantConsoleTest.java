@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import idealworld.dew.serviceless.iam.process.tenantconsole.dto.tenant.*;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TenantConsoleTest extends IAMBasicTest {

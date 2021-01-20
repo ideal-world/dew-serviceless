@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,24 +33,56 @@ public class AntPathMatcher {
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{[^/]+?}");
 
     private static final char[] WILDCARD_CHARS = {'*', '?', '{'};
-
-    private String pathSeparator;
-
-    private PathSeparatorPatternCache pathSeparatorPatternCache;
-
-    private boolean caseSensitive = true;
-
-    private boolean trimTokens = false;
-
-    private volatile Boolean cachePatterns;
-
-    private final Map<String, String[]> tokenizedPatternCache = new ConcurrentHashMap<>(256);
-
     final Map<String, AntPathStringMatcher> stringMatcherCache = new ConcurrentHashMap<>(256);
+    private final Map<String, String[]> tokenizedPatternCache = new ConcurrentHashMap<>(256);
+    private String pathSeparator;
+    private PathSeparatorPatternCache pathSeparatorPatternCache;
+    private boolean caseSensitive = true;
+    private boolean trimTokens = false;
+    private volatile Boolean cachePatterns;
 
     public AntPathMatcher() {
         this.pathSeparator = DEFAULT_PATH_SEPARATOR;
         this.pathSeparatorPatternCache = new PathSeparatorPatternCache(DEFAULT_PATH_SEPARATOR);
+    }
+
+    public static String[] tokenizeToStringArray(
+            String str, String delimiters, boolean trimTokens, boolean ignoreEmptyTokens) {
+
+        if (str == null) {
+            return new String[]{};
+        }
+
+        StringTokenizer st = new StringTokenizer(str, delimiters);
+        List<String> tokens = new ArrayList<>();
+        while (st.hasMoreTokens()) {
+            String token = st.nextToken();
+            if (trimTokens) {
+                token = token.trim();
+            }
+            if (!ignoreEmptyTokens || token.length() > 0) {
+                tokens.add(token);
+            }
+        }
+        return toStringArray(tokens);
+    }
+
+    private static String[] toStringArray(Collection<String> collection) {
+        return (!(collection == null || collection.isEmpty()) ? collection.toArray(new String[]{}) : new String[]{});
+    }
+
+    private static boolean hasText(String str) {
+        return (str != null && !str.isEmpty() && containsText(str));
+    }
+
+    private static boolean containsText(CharSequence str) {
+        int strLen = str.length();
+        for (int i = 0; i < strLen; i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void setCaseSensitive(boolean caseSensitive) {
@@ -653,44 +685,5 @@ public class AntPathMatcher {
         public String getEndsOnDoubleWildCard() {
             return this.endsOnDoubleWildCard;
         }
-    }
-
-    public static String[] tokenizeToStringArray(
-            String str, String delimiters, boolean trimTokens, boolean ignoreEmptyTokens) {
-
-        if (str == null) {
-            return new String[]{};
-        }
-
-        StringTokenizer st = new StringTokenizer(str, delimiters);
-        List<String> tokens = new ArrayList<>();
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            if (trimTokens) {
-                token = token.trim();
-            }
-            if (!ignoreEmptyTokens || token.length() > 0) {
-                tokens.add(token);
-            }
-        }
-        return toStringArray(tokens);
-    }
-
-    private static String[] toStringArray(Collection<String> collection) {
-        return (!(collection == null || collection.isEmpty()) ? collection.toArray(new String[]{}) : new String[]{});
-    }
-
-    private static boolean hasText(String str) {
-        return (str != null && !str.isEmpty() && containsText(str));
-    }
-
-    private static boolean containsText(CharSequence str) {
-        int strLen = str.length();
-        for (int i = 0; i < strLen; i++) {
-            if (!Character.isWhitespace(str.charAt(i))) {
-                return true;
-            }
-        }
-        return false;
     }
 }

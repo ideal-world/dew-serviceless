@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,64 @@ public class ProcessHelper {
 
     private static final ValidatorFactory VALIDATOR_FACTORY = Validation.buildDefaultValidatorFactory();
     private static final Validator VALIDATOR = VALIDATOR_FACTORY.getValidator();
+
+    static <E> E parseBody(Buffer body, Class<E> bodyClazz, String... excludeKeys) {
+        if (bodyClazz == Void.class) {
+            return null;
+        }
+        if (bodyClazz == Buffer.class) {
+            return (E) body;
+        }
+        if (bodyClazz == String.class) {
+            return (E) body.toString(StandardCharsets.UTF_8);
+        }
+        var jsonBody = Json.decodeValue(body);
+        if (jsonBody instanceof JsonObject) {
+            trimValues((JsonObject) jsonBody, Arrays.asList(excludeKeys));
+            if (bodyClazz == JsonObject.class) {
+                return (E) jsonBody;
+            }
+            var beanBody = ((JsonObject) jsonBody).mapTo(bodyClazz);
+            var violations = VALIDATOR.validate(beanBody);
+            if (violations.isEmpty()) {
+                return beanBody;
+            }
+            var errorMsg = violations.stream()
+                    .map(violation -> "[" + violation.getPropertyPath().toString() + "]" + violation.getMessage())
+                    .collect(Collectors.joining("\n"));
+            throw new BadRequestException(errorMsg);
+        }
+        if (jsonBody instanceof JsonArray) {
+            if (bodyClazz == JsonArray.class) {
+                return (E) jsonBody;
+            }
+            if (bodyClazz == List.class) {
+                return (E) ((JsonArray) jsonBody).getList();
+            }
+            if (bodyClazz == Set.class) {
+                return (E) new HashSet<>(((JsonArray) jsonBody).getList());
+            }
+        }
+        throw new BadRequestException("无法将\"" + body.toString() + "\"转换成[" + bodyClazz.getName() + "]");
+    }
+
+    private static void trimValues(JsonObject json, List<String> excludeKeys) {
+        json.stream()
+                .filter(j -> !excludeKeys.contains(j.getKey()))
+                .forEach(j -> {
+                    if (j.getValue() instanceof JsonObject) {
+                        trimValues((JsonObject) j.getValue(), excludeKeys.stream().map(k -> k.substring(j.getKey().length() + 1)).collect(Collectors.toList()));
+                    } else if (j.getValue() instanceof JsonArray) {
+                        ((JsonArray) j.getValue()).forEach(i -> {
+                            if (j instanceof JsonObject) {
+                                trimValues((JsonObject) i, excludeKeys.stream().map(k -> k.substring(j.getKey().length() + 1)).collect(Collectors.toList()));
+                            }
+                        });
+                    } else if (j.getValue() instanceof String) {
+                        json.put(j.getKey(), ((String) j.getValue()).trim());
+                    }
+                });
+    }
 
     public Future<Void> success() {
         return Future.succeededFuture();
@@ -139,65 +197,6 @@ public class ProcessHelper {
                     }
                 })
                 .onFailure(promise::fail);
-    }
-
-
-    static <E> E parseBody(Buffer body, Class<E> bodyClazz, String... excludeKeys) {
-        if (bodyClazz == Void.class) {
-            return null;
-        }
-        if (bodyClazz == Buffer.class) {
-            return (E) body;
-        }
-        if (bodyClazz == String.class) {
-            return (E) body.toString(StandardCharsets.UTF_8);
-        }
-        var jsonBody = Json.decodeValue(body);
-        if (jsonBody instanceof JsonObject) {
-            trimValues((JsonObject) jsonBody, Arrays.asList(excludeKeys));
-            if (bodyClazz == JsonObject.class) {
-                return (E) jsonBody;
-            }
-            var beanBody = ((JsonObject) jsonBody).mapTo(bodyClazz);
-            var violations = VALIDATOR.validate(beanBody);
-            if (violations.isEmpty()) {
-                return beanBody;
-            }
-            var errorMsg = violations.stream()
-                    .map(violation -> "[" + violation.getPropertyPath().toString() + "]" + violation.getMessage())
-                    .collect(Collectors.joining("\n"));
-            throw new BadRequestException(errorMsg);
-        }
-        if (jsonBody instanceof JsonArray) {
-            if (bodyClazz == JsonArray.class) {
-                return (E) jsonBody;
-            }
-            if (bodyClazz == List.class) {
-                return (E) ((JsonArray) jsonBody).getList();
-            }
-            if (bodyClazz == Set.class) {
-                return (E) new HashSet<>(((JsonArray) jsonBody).getList());
-            }
-        }
-        throw new BadRequestException("无法将\"" + body.toString() + "\"转换成[" + bodyClazz.getName() + "]");
-    }
-
-    private static void trimValues(JsonObject json, List<String> excludeKeys) {
-        json.stream()
-                .filter(j -> !excludeKeys.contains(j.getKey()))
-                .forEach(j -> {
-                    if (j.getValue() instanceof JsonObject) {
-                        trimValues((JsonObject) j.getValue(), excludeKeys.stream().map(k -> k.substring(j.getKey().length() + 1)).collect(Collectors.toList()));
-                    } else if (j.getValue() instanceof JsonArray) {
-                        ((JsonArray) j.getValue()).forEach(i -> {
-                            if (j instanceof JsonObject) {
-                                trimValues((JsonObject) i, excludeKeys.stream().map(k -> k.substring(j.getKey().length() + 1)).collect(Collectors.toList()));
-                            }
-                        });
-                    } else if (j.getValue() instanceof String) {
-                        json.put(j.getKey(), ((String) j.getValue()).trim());
-                    }
-                });
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,6 @@ import java.util.stream.Collectors;
  */
 public class ACResourceProcessor extends EventBusProcessor {
 
-    public ACResourceProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         // 添加当前应用的资源主体
         addProcessor(OptActionKind.CREATE, "/console/app/resource/subject", eventBusContext ->
@@ -87,6 +83,10 @@ public class ACResourceProcessor extends EventBusProcessor {
         // 删除当前应用的某个资源
         addProcessor(OptActionKind.DELETE, "/console/app/resource/{resourceId}", eventBusContext ->
                 deleteResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+    }
+
+    public ACResourceProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<Long> addResourceSubject(ResourceSubjectAddReq resourceSubjectAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
@@ -279,7 +279,7 @@ public class ACResourceProcessor extends EventBusProcessor {
                 .compose(resp ->
                         context.helper.notExistToError(
                                 context.sql.getOne(
-                                        new HashMap<String,Object>() {
+                                        new HashMap<String, Object>() {
                                             {
                                                 put("id", resourceSubjectId);
                                                 put("rel_app_id", relAppId);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,15 +48,15 @@ import java.util.stream.Collectors;
 public class IAMBasicTest extends DewTest {
 
     protected static final String MODULE_NAME = new IAMModule().getModuleName();
+    protected static String iamAppCode;
+    private static IAMConfig iamConfig;
+    private static ProcessContext context;
 
     static {
         enableRedis();
         enableMysql();
     }
 
-    private static IAMConfig iamConfig;
-    private static ProcessContext context;
-    protected static String iamAppCode;
     private String token = null;
 
     @BeforeAll

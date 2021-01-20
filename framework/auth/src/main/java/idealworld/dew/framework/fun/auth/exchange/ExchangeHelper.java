@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class ExchangeHelper {
                             .unauthorizedAppId(config.getAppId())
                             .build();
                     header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
-                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX+"resource?kind=" + kind, null, header)
+                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX + "resource?kind=" + kind, null, header)
                             .compose(result -> {
                                 var resources = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
                                 for (var resource : resources) {
@@ -119,7 +119,7 @@ public class ExchangeHelper {
                             .unauthorizedAppId(config.getAppId())
                             .build();
                     header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
-                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX+"resource/subject?kind=" + kind.toString(), null, header)
+                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX + "resource/subject?kind=" + kind.toString(), null, header)
                             .compose(result -> {
                                 var resourceSubjects = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
                                 for (var resourceSubject : resourceSubjects) {

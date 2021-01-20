@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,6 @@ import java.util.HashMap;
  */
 public class TCAppProcessor extends EventBusProcessor {
 
-    public TCAppProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         // 添加当前租户的应用
         addProcessor(OptActionKind.CREATE, "/console/tenant/app", eventBusContext ->
@@ -59,6 +55,9 @@ public class TCAppProcessor extends EventBusProcessor {
                 pageApps(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 
+    public TCAppProcessor(String moduleName) {
+        super(moduleName);
+    }
 
     public static Future<Long> addApp(AppAddReq appAddReq, Long relTenantId, ProcessContext context) {
         var appCode = $.field.createShortUUID();

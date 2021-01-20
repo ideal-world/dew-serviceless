@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,10 +68,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CommonProcessor extends EventBusProcessor {
 
-    public CommonProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         // 注册租户
         addProcessor(OptActionKind.CREATE, "/common/tenant", eventBusContext ->
@@ -105,14 +101,8 @@ public class CommonProcessor extends EventBusProcessor {
                 findResources(eventBusContext.req.params.get("kind"), eventBusContext.req.identOptInfo.getUnauthorizedAppId(), eventBusContext.req.identOptInfo.getUnauthorizedTenantId(), eventBusContext.context));
     }
 
-    private static class RegisterTenantDataDTO {
-
-        public Long tenantId;
-        public Long appId;
-        public Long accountId;
-        public String appCode;
-        public String accountCode;
-
+    public CommonProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<IdentOptInfo> registerTenant(TenantRegisterReq tenantRegisterReq, ProcessContext context) {
@@ -538,6 +528,16 @@ public class CommonProcessor extends EventBusProcessor {
             default:
                 return context.helper.success();
         }
+    }
+
+    private static class RegisterTenantDataDTO {
+
+        public Long tenantId;
+        public Long appId;
+        public Long accountId;
+        public String appCode;
+        public String accountCode;
+
     }
 
 }

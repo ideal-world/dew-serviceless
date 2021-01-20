@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,10 +48,6 @@ import java.util.stream.Collectors;
  */
 public class ACAuthPolicyProcessor extends EventBusProcessor {
 
-    public ACAuthPolicyProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         // 添加当前应用的权限策略
         addProcessor(OptActionKind.CREATE, "/console/app/authpolicy", eventBusContext ->
@@ -68,6 +64,10 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
         // 删除当前应用的某个权限策略
         addProcessor(OptActionKind.DELETE, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
                 deleteAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+    }
+
+    public ACAuthPolicyProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<Void> addAuthPolicy(AuthPolicyAddReq authPolicyAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
@@ -313,7 +313,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                     return context.helper.success();
                 })
                 .compose(resp ->
-                        context.helper.notExistToError(context.sql.getOne(new HashMap<String,Object>() {
+                        context.helper.notExistToError(context.sql.getOne(new HashMap<String, Object>() {
                             {
                                 put("id", authPolicyId);
                                 put("rel_app_id", relAppId);

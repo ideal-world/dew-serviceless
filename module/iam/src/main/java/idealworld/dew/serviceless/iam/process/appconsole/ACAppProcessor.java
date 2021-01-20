@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,6 @@ import java.util.HashMap;
  */
 public class ACAppProcessor extends EventBusProcessor {
 
-    public ACAppProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         // 添加当前应用的认证
         addProcessor(OptActionKind.CREATE, "/console/app/app/ident", eventBusContext ->
@@ -65,6 +61,10 @@ public class ACAppProcessor extends EventBusProcessor {
         // 获取当前应用的私钥
         addProcessor(OptActionKind.FETCH, "/console/app/app/privateKey", eventBusContext ->
                 showPrivateKey(eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+    }
+
+    public ACAppProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<Long> addAppIdent(AppIdentAddReq appIdentAddReq, Long relAppId, Long relTenantId, ProcessContext context) {

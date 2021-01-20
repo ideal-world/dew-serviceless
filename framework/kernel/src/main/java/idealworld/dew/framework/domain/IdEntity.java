@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,16 @@ import java.io.Serializable;
 @NoArgsConstructor
 public abstract class IdEntity implements Serializable {
 
-    public String tableName() {
-        var clazzName = this.getClass().getSimpleName();
-        clazzName = clazzName.substring(0, 1).toLowerCase() + clazzName.substring(1);
-        return CaseFormatter.camelToSnake(clazzName);
-    }
-
     /**
      * The Id.
      */
     @NotNull
     protected Long id;
+
+    public String tableName() {
+        var clazzName = this.getClass().getSimpleName();
+        clazzName = clazzName.substring(0, 1).toLowerCase() + clazzName.substring(1);
+        return CaseFormatter.camelToSnake(clazzName);
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,7 +288,7 @@ public class FunCacheClientTest extends DewTest {
                 })
                 .compose(resp -> {
                     var promise = Promise.promise();
-                    vertx.setTimer(1000, t -> promise.complete());
+                    vertx.setTimer(3000, t -> promise.complete());
                     return promise.future();
                 })
                 .onSuccess(resp -> {

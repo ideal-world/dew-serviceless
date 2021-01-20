@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,7 @@ public class DewAuthConstant extends DewConstant {
     public static final String CACHE_TOKEN_INFO_FLAG = "dew:iam:token:info:";
     // AccountCode 关联 Tokens : <account code>:<token kind##current time>:<token>
     public static final String CACHE_TOKEN_ID_REL_FLAG = "dew:iam:token:id:rel:";
-
-    public static String GROUP_CODE_NODE_CODE_SPLIT = "#";
-
     public static final String MODULE_IAM_NAME = "iam";
+    public static String GROUP_CODE_NODE_CODE_SPLIT = "#";
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,12 @@ import javax.validation.constraints.Size;
 @EqualsAndHashCode(callSuper = true)
 public class AuthPolicyResp extends IdResp {
 
+    // 生效时间
+    @NotNull
+    protected Long effectiveTime;
+    // 失效时间
+    @NotNull
+    protected Long expiredTime;
     // 关联权限主体类型名称
     @NotNull
     private AuthSubjectKind relSubjectKind;
@@ -54,12 +60,6 @@ public class AuthPolicyResp extends IdResp {
     // 关联权限主体运算类型名称
     @NotNull
     private AuthSubjectOperatorKind subjectOperator;
-    // 生效时间
-    @NotNull
-    protected Long effectiveTime;
-    // 失效时间
-    @NotNull
-    protected Long expiredTime;
     // 关联资源Id
     @NotNull
     private Long relResourceId;

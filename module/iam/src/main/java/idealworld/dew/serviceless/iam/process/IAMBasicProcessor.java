@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -375,7 +375,7 @@ public class IAMBasicProcessor {
                                 " INNER JOIN %s role ON role.id = accrole.rel_role_id" +
                                 " INNER JOIN %s role_def ON role_def.id = role.rel_role_def_id" +
                                 " WHERE accrole.rel_account_id = #{rel_account_id}",
-                        new AccountRole().tableName(), new Role().tableName(),new RoleDef().tableName()),
+                        new AccountRole().tableName(), new Role().tableName(), new RoleDef().tableName()),
                 new HashMap<>() {
                     {
                         put("rel_account_id", accountId);

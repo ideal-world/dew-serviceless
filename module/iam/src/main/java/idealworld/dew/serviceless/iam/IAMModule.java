@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,26 +93,6 @@ public class IAMModule extends DewModule<IAMConfig> {
                     }
                     return initData(config, context);
                 });
-    }
-
-    private static class InitDataDTO {
-
-        public Long tenantId;
-        public Long appId;
-        public Long systemRoleDefAdminId;
-        public Long tenantRoleDefAdminId;
-        public Long appRoleDefAdminId;
-        public Long systemRoleAdminId;
-        public Long tenantRoleAdminId;
-        public Long appRoleAdminId;
-        public Long groupId;
-        public Long iamAccountId;
-        public Long iamAPIResourceSubjectId;
-        public Long iamMenuResourceSubjectId;
-        public Long systemAPIResourceId;
-        public Long tenantAPIResourceId;
-        public Long appAPIResourceId;
-
     }
 
     private Future<Void> initData(IAMConfig iamConfig, ProcessContext context) {
@@ -376,6 +356,26 @@ public class IAMModule extends DewModule<IAMConfig> {
     @Override
     protected boolean enabledSQLFun() {
         return true;
+    }
+
+    private static class InitDataDTO {
+
+        public Long tenantId;
+        public Long appId;
+        public Long systemRoleDefAdminId;
+        public Long tenantRoleDefAdminId;
+        public Long appRoleDefAdminId;
+        public Long systemRoleAdminId;
+        public Long tenantRoleAdminId;
+        public Long appRoleAdminId;
+        public Long groupId;
+        public Long iamAccountId;
+        public Long iamAPIResourceSubjectId;
+        public Long iamMenuResourceSubjectId;
+        public Long systemAPIResourceId;
+        public Long tenantAPIResourceId;
+        public Long appAPIResourceId;
+
     }
 
 }

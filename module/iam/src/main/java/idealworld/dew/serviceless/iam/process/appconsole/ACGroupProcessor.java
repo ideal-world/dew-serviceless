@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,6 @@ import java.util.stream.IntStream;
  */
 public class ACGroupProcessor extends EventBusProcessor {
 
-    public ACGroupProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         // 添加当前应用的群组
         addProcessor(OptActionKind.CREATE, "/console/app/group", eventBusContext ->
@@ -85,6 +81,10 @@ public class ACGroupProcessor extends EventBusProcessor {
         // 删除当前应用某个群组的节点
         addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}/node/{groupNodeId}", eventBusContext ->
                 deleteGroupNode(Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+    }
+
+    public ACGroupProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<Long> addGroup(GroupAddReq groupAddReq, Long relAppId, Long relTenantId, ProcessContext context) {

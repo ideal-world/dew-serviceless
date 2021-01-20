@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ import java.util.Map;
 @ExtendWith(VertxExtension.class)
 public abstract class DewTest {
 
+    protected static GenericContainer redisConfig;
+    protected static JdbcDatabaseContainer mysqlConfig;
+
     static {
         System.getProperties().put("dew.profile", "test");
         ObjectMapper mapper = io.vertx.core.json.jackson.DatabindCodec.mapper();
@@ -64,10 +67,6 @@ public abstract class DewTest {
         System.getProperties().put("dew.config.funs.sql.userName", mysqlConfig.getUsername());
         System.getProperties().put("dew.config.funs.sql.password", mysqlConfig.getPassword());
     }
-
-    protected static GenericContainer redisConfig;
-    protected static JdbcDatabaseContainer mysqlConfig;
-
 
     @SneakyThrows
     protected static <E> Tuple2<E, Throwable> await(Future<E> future) {

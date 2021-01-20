@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FunEventBus {
 
     private static final Map<String, FunEventBus> EVENT_BUS = new ConcurrentHashMap<>();
-    private String code;
     protected EventBus eventBus;
+    private String code;
 
     public static Future<Void> init(String code, Vertx vertx, DewConfig.FunConfig.EventBusConfig eventBusConfig) {
         var dewEventBus = new FunEventBus();

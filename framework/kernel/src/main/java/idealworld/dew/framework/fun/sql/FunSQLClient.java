@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,8 @@ import java.util.stream.Collectors;
 public class FunSQLClient {
 
     private static final Map<String, FunSQLClient> SQL_CLIENTS = new ConcurrentHashMap<>();
-
+    public Consumer addEntityByInsertFun;
+    public Consumer addEntityByUpdateFun;
     private String code;
     private SqlClient client;
 
@@ -365,7 +366,6 @@ public class FunSQLClient {
         return delete(sql, whereParameters);
     }
 
-
     public Future<Void> delete(String sql, Map<String, Object> parameters) {
         return update(sql, parameters);
     }
@@ -549,9 +549,6 @@ public class FunSQLClient {
                 });
         return promise.future();
     }
-
-    public Consumer addEntityByInsertFun;
-    public Consumer addEntityByUpdateFun;
 
     private <E extends IdEntity> JsonObject convertToJson(E entity, Boolean insert) {
         if (insert && addEntityByInsertFun != null) {

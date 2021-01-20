@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,15 @@ import java.util.Map;
 @AllArgsConstructor
 public class EventBusContext {
 
-    public EventBusContext init() {
-        context.init(req.identOptInfo);
-        return this;
-    }
-
     @Builder.Default
     public Request req = new Request();
     @Builder.Default
     public ProcessContext context = new ProcessContext();
+
+    public EventBusContext init() {
+        context.init(req.identOptInfo);
+        return this;
+    }
 
     @Builder
     @NoArgsConstructor
@@ -52,9 +52,9 @@ public class EventBusContext {
         public Map<String, String> params = new HashMap<>();
         @Builder.Default
         public Map<String, String> header = new HashMap<>();
-        private Object body;
         @Builder.Default
         public IdentOptExchangeInfo identOptInfo = IdentOptExchangeInfo.builder().build();
+        private Object body;
 
         public Long pageNumber() {
             return Long.parseLong(params.getOrDefault("pageNumber", "1"));

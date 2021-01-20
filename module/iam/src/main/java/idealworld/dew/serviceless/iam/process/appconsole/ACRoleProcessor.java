@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,6 @@ import java.util.List;
  */
 public class ACRoleProcessor extends EventBusProcessor {
 
-    public ACRoleProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         // 添加当前应用的角色定义
         addProcessor(OptActionKind.CREATE, "/console/app/role/def", eventBusContext ->
@@ -81,6 +77,10 @@ public class ACRoleProcessor extends EventBusProcessor {
         // 删除当前应用的某个角色
         addProcessor(OptActionKind.DELETE, "/console/app/role/{roleId}", eventBusContext ->
                 deleteRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+    }
+
+    public ACRoleProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<Long> addRoleDef(RoleDefAddReq roleDefAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
@@ -204,7 +204,7 @@ public class ACRoleProcessor extends EventBusProcessor {
                 .compose(resp ->
                         context.helper.notExistToError(
                                 context.sql.getOne(
-                                        new HashMap<String,Object>() {
+                                        new HashMap<String, Object>() {
                                             {
                                                 put("id", roleAddReq.getRelRoleDefId());
                                                 put("rel_app_id", relAppId);

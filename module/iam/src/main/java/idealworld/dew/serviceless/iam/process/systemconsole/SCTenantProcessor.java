@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@ import io.vertx.core.Future;
 public class SCTenantProcessor extends EventBusProcessor {
 
 
-    public SCTenantProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         // 添加租户
         addProcessor(OptActionKind.CREATE, "/console/system/tenant", eventBusContext ->
                 addTenant(eventBusContext.req.body(TenantAddReq.class), eventBusContext.context));
+    }
+
+    public SCTenantProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<Long> addTenant(TenantAddReq tenantAddReq, ProcessContext context) {

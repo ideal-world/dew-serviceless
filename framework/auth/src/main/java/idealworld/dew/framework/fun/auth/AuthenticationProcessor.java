@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,14 +80,14 @@ public class AuthenticationProcessor {
                         .map(r -> r.getId() + "")
                         .collect(Collectors.toList()));
             }
-            if (identOptInfo.getUnauthorizedAppId() != null && identOptInfo.getUnauthorizedAppId()!=DewConstant.OBJECT_UNDEFINED) {
+            if (identOptInfo.getUnauthorizedAppId() != null && identOptInfo.getUnauthorizedAppId() != DewConstant.OBJECT_UNDEFINED) {
                 subjectInfo.put(AuthSubjectKind.APP, new ArrayList<>() {
                     {
                         add(identOptInfo.getAppId().toString());
                     }
                 });
             }
-            if (identOptInfo.getUnauthorizedTenantId() != null && identOptInfo.getUnauthorizedTenantId()!=DewConstant.OBJECT_UNDEFINED) {
+            if (identOptInfo.getUnauthorizedTenantId() != null && identOptInfo.getUnauthorizedTenantId() != DewConstant.OBJECT_UNDEFINED) {
                 subjectInfo.put(AuthSubjectKind.TENANT, new ArrayList<>() {
                     {
                         add(identOptInfo.getTenantId().toString());

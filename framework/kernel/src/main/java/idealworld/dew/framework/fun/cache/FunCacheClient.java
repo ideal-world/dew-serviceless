@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,13 +49,11 @@ public class FunCacheClient {
     private static final String CACHE_KEY_ELECTION_PREFIX = "dew:cluster:election:";
     private static final Map<String, FunCacheClient> REDIS_CLIENTS = new ConcurrentHashMap<>();
     private final String instanceId = $.field.createUUID();
+    protected AtomicBoolean leader = new AtomicBoolean(false);
     private String code;
     private Integer electionPeriodSec;
-    protected AtomicBoolean leader = new AtomicBoolean(false);
     private Vertx innerVertx;
     private RedisAPI redisAPI;
-    private Redis subRedis;
-    private Redis pubRedis;
     private RedisConnection subRedisConn;
     private RedisConnection pubRedisConn;
 
@@ -86,7 +84,7 @@ public class FunCacheClient {
                     log.error("[Redis][{}]Connection error: {}", code, e.getMessage(), e);
                     throw new RTException(e);
                 });
-        redisClient.subRedis = Redis.createClient(
+        Redis.createClient(
                 vertx,
                 new RedisOptions()
                         .setConnectionString(config.getUri())
@@ -100,7 +98,7 @@ public class FunCacheClient {
                     log.error("[Redis][{}]Subscribe connection error: {}", code, conn.cause().getMessage(), conn.cause());
                     throw new RTException(conn.cause());
                 });
-        redisClient.pubRedis = Redis.createClient(
+        Redis.createClient(
                 vertx,
                 new RedisOptions()
                         .setConnectionString(config.getUri())

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,6 @@ import java.util.HashMap;
  */
 public class TCTenantProcessor extends EventBusProcessor {
 
-    public TCTenantProcessor(String moduleName) {
-        super(moduleName);
-    }
-
     {
         // 修改当前租户
         addProcessor(OptActionKind.PATCH, "/console/tenant/tenant", eventBusContext ->
@@ -79,6 +75,10 @@ public class TCTenantProcessor extends EventBusProcessor {
         // 删除当前租户的某个认证
         addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
                 deleteTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+    }
+
+    public TCTenantProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<Void> modifyTenant(TenantModifyReq tenantModifyReq, Long relTenantId, ProcessContext context) {

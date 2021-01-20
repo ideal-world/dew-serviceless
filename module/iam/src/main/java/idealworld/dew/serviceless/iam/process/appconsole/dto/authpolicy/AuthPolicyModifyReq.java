@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,10 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class AuthPolicyModifyReq implements Serializable {
 
+    // 生效时间
+    protected Long effectiveTime;
+    // 失效时间
+    protected Long expiredTime;
     // 关联权限主体类型
     private AuthSubjectKind relSubjectKind;
     // 关联权限主体Ids,有多个时逗号分隔
@@ -46,10 +50,6 @@ public class AuthPolicyModifyReq implements Serializable {
     private String relSubjectIds;
     // 关联权限主体运算类型
     private AuthSubjectOperatorKind subjectOperator;
-    // 生效时间
-    protected Long effectiveTime;
-    // 失效时间
-    protected Long expiredTime;
     // 关联资源Id
     private Long relResourceId;
     // 操作类型

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,12 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class AuthPolicyAddReq implements Serializable {
 
+    // 生效时间
+    @Builder.Default
+    protected Long effectiveTime = DewConstant.MIN_TIME;
+    // 失效时间
+    @Builder.Default
+    protected Long expiredTime = DewConstant.MAX_TIME;
     // 关联权限主体类型
     @NotNull
     private AuthSubjectKind relSubjectKind;
@@ -53,12 +59,6 @@ public class AuthPolicyAddReq implements Serializable {
     // 关联权限主体运算类型
     @NotNull
     private AuthSubjectOperatorKind subjectOperator;
-    // 生效时间
-    @Builder.Default
-    protected Long effectiveTime = DewConstant.MIN_TIME;
-    // 失效时间
-    @Builder.Default
-    protected Long expiredTime = DewConstant.MAX_TIME;
     // 关联资源Id
     @NotNull
     private Long relResourceId;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020. gudaoxuri
+ * Copyright 2021. gudaoxuri
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,7 @@ import java.util.List;
  *
  * @author gudaoxuri
  */
-public class TCAccountProcessor  extends EventBusProcessor {
-
-    public TCAccountProcessor(String moduleName) {
-        super(moduleName);
-    }
+public class TCAccountProcessor extends EventBusProcessor {
 
     {
         // 添加当前租户的账号
@@ -100,6 +96,10 @@ public class TCAccountProcessor  extends EventBusProcessor {
         // 删除当前租户某个账号的某个关联角色
         addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/role/{accountRoleId}", eventBusContext ->
                 deleteAccountRole(Long.parseLong(eventBusContext.req.params.get("accountRoleId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+    }
+
+    public TCAccountProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<Long> addAccount(AccountAddReq accountAddReq, Long relTenantId, ProcessContext context) {
