@@ -21,7 +21,7 @@ import com.ecfront.dew.common.StandardCode;
 import com.ecfront.dew.common.exception.RTException;
 import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.DewConstant;
-import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.cache.FunCacheClient;
@@ -86,7 +86,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
         OptActionKind actionKind;
         try {
             resourceUri = URIHelper.newURI(URLDecoder.decode(queryMap.get(DewAuthConstant.REQUEST_RESOURCE_URI_FLAG), StandardCharsets.UTF_8));
-            if(resourceUri.getPath().toLowerCase().startsWith(DewConstant.REQUEST_INNER_PATH_PREFIX)){
+            if (resourceUri.getPath().toLowerCase().startsWith(DewConstant.REQUEST_INNER_PATH_PREFIX)) {
                 error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "请求资源不合法", ctx);
                 return;
             }
@@ -114,25 +114,26 @@ public class GatewayIdentHandler extends AuthHttpHandler {
             if (!ctx.request().headers().contains(security.getAppId())
                     || ctx.request().headers().get(security.getAppId()).trim().isBlank()) {
                 // E.g. 注册租户
-                var identOptCacheInfo = new IdentOptCacheInfo();
-                identOptCacheInfo.setAppId(DewAuthConstant.OBJECT_UNDEFINED);
-                identOptCacheInfo.setTenantId(DewAuthConstant.OBJECT_UNDEFINED);
+                var identOptCacheInfo = new IdentOptExchangeInfo();
+                identOptCacheInfo.setUnauthorizedAppId(DewAuthConstant.OBJECT_UNDEFINED);
+                identOptCacheInfo.setUnauthorizedTenantId(DewAuthConstant.OBJECT_UNDEFINED);
                 ctx.put(CONTEXT_INFO, identOptCacheInfo);
                 ctx.next();
                 return;
             }
-            var appId = Long.parseLong(ctx.request().headers().get(security.getAppId().trim()));
-            FunCacheClient.choose(getModuleName()).get(DewAuthConstant.CACHE_APP_INFO + appId, security.getAppInfoCacheExpireSec())
+            var appCode = ctx.request().headers().get(security.getAppId().trim());
+            FunCacheClient.choose(getModuleName()).get(DewAuthConstant.CACHE_APP_INFO + appCode, security.getAppInfoCacheExpireSec())
                     .onSuccess(appInfo -> {
                         if (appInfo == null) {
                             error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "认证错误，AppId不合法", ctx);
                             return;
                         }
                         var appInfoItems = appInfo.split("\n");
-                        var tenantId = Long.parseLong(appInfoItems[0]);
-                        var identOptCacheInfo = new IdentOptCacheInfo();
-                        identOptCacheInfo.setAppId(appId);
-                        identOptCacheInfo.setTenantId(tenantId);
+                        var appId = Long.parseLong(appInfoItems[0]);
+                        var tenantId = Long.parseLong(appInfoItems[1]);
+                        var identOptCacheInfo = new IdentOptExchangeInfo();
+                        identOptCacheInfo.setUnauthorizedAppId(appId);
+                        identOptCacheInfo.setUnauthorizedTenantId(tenantId);
                         ctx.put(CONTEXT_INFO, identOptCacheInfo);
                         ctx.next();
                     })
@@ -145,12 +146,14 @@ public class GatewayIdentHandler extends AuthHttpHandler {
             FunCacheClient.choose(getModuleName()).get(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token, security.getTokenCacheExpireSec())
                     .onSuccess(optInfo -> {
                         var identOptInfo = optInfo != null
-                                ? new JsonObject(optInfo).mapTo(IdentOptCacheInfo.class)
+                                ? new JsonObject(optInfo).mapTo(IdentOptExchangeInfo.class)
                                 : null;
                         if (optInfo == null) {
                             error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "认证错误，Token不合法", ctx);
                             return;
                         }
+                        identOptInfo.setUnauthorizedAppId(identOptInfo.getAppId());
+                        identOptInfo.setUnauthorizedTenantId(identOptInfo.getUnauthorizedTenantId());
                         identOptInfo.setToken(token);
                         ctx.put(CONTEXT_INFO, identOptInfo);
                         ctx.next();
@@ -202,9 +205,11 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                         error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "认证错误，签名不合法", ctx);
                         return;
                     }
-                    var identOptInfo = new IdentOptCacheInfo();
+                    var identOptInfo = new IdentOptExchangeInfo();
                     identOptInfo.setAppId(appId);
                     identOptInfo.setTenantId(tenantId);
+                    identOptInfo.setUnauthorizedAppId(appId);
+                    identOptInfo.setUnauthorizedTenantId(tenantId);
                     ctx.put(CONTEXT_INFO, identOptInfo);
                     ctx.next();
                 })

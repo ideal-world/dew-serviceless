@@ -22,9 +22,7 @@ import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.framework.dto.OptActionKind;
-import idealworld.dew.framework.exception.BadRequestException;
 import idealworld.dew.framework.exception.ConflictException;
-import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.auth.AuthCacheProcessor;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
@@ -35,10 +33,7 @@ import idealworld.dew.serviceless.iam.IAMConfig;
 import idealworld.dew.serviceless.iam.IAMConstant;
 import idealworld.dew.serviceless.iam.domain.auth.Resource;
 import idealworld.dew.serviceless.iam.domain.auth.ResourceSubject;
-import idealworld.dew.serviceless.iam.domain.ident.Account;
-import idealworld.dew.serviceless.iam.domain.ident.AccountApp;
-import idealworld.dew.serviceless.iam.domain.ident.AccountIdent;
-import idealworld.dew.serviceless.iam.domain.ident.TenantIdent;
+import idealworld.dew.serviceless.iam.domain.ident.*;
 import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
 import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
@@ -61,7 +56,6 @@ import idealworld.dew.serviceless.iam.process.tenantconsole.dto.tenant.TenantIde
 import io.vertx.core.Future;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -99,16 +93,16 @@ public class CommonProcessor extends EventBusProcessor {
                 logout(eventBusContext.req.identOptInfo, eventBusContext.context));
         // 修改账号
         addProcessor(OptActionKind.PATCH, "/common/account", eventBusContext ->
-                changeInfo(eventBusContext.req.body(AccountChangeReq.class), (String) eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.context));
+                changeInfo(eventBusContext.req.body(AccountChangeReq.class), eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.context));
         // 修改账号认证
         addProcessor(OptActionKind.PATCH, "/common/account/ident", eventBusContext ->
-                changeIdent(eventBusContext.req.body(AccountIdentChangeReq.class), (String) eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.context));
+                changeIdent(eventBusContext.req.body(AccountIdentChangeReq.class), eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.context));
         // 注销账号
         addProcessor(OptActionKind.DELETE, "/common/account", eventBusContext ->
-                unRegister((String) eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.context));
+                unRegister(eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.context));
         // 获取资源
         addProcessor(OptActionKind.FETCH, "/common/resource", eventBusContext ->
-                findResources(eventBusContext.req.params.get("kind"), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                findResources(eventBusContext.req.params.get("kind"), eventBusContext.req.identOptInfo.getUnauthorizedAppId(), eventBusContext.req.identOptInfo.getUnauthorizedTenantId(), eventBusContext.context));
     }
 
     private static class RegisterTenantDataDTO {
@@ -116,11 +110,12 @@ public class CommonProcessor extends EventBusProcessor {
         public Long tenantId;
         public Long appId;
         public Long accountId;
-        public String openId;
+        public String appCode;
+        public String accountCode;
 
     }
 
-    public static Future<IdentOptCacheInfo> registerTenant(TenantRegisterReq tenantRegisterReq, ProcessContext context) {
+    public static Future<IdentOptInfo> registerTenant(TenantRegisterReq tenantRegisterReq, ProcessContext context) {
         var iamConfig = (IAMConfig) context.conf;
         if (!iamConfig.getAllowTenantRegister()) {
             context.helper.error(new ConflictException("当前设置不允许自助注册租户"));
@@ -157,9 +152,12 @@ public class CommonProcessor extends EventBusProcessor {
                                 TCAppProcessor.addApp(AppAddReq.builder()
                                         .name(tenantRegisterReq.getAppName())
                                         .build(), dto.tenantId, context))
+                        .compose(appId ->
+                                TCAppProcessor.getApp(appId, dto.tenantId, context))
                         // 初始化应用认证
-                        .compose(appId -> {
-                            dto.appId = appId;
+                        .compose(app -> {
+                            dto.appId = app.getId();
+                            dto.appCode = app.getOpenId();
                             return ACAppProcessor.addAppIdent(AppIdentAddReq.builder()
                                     .note("")
                                     .build(), dto.appId, dto.tenantId, context);
@@ -176,7 +174,7 @@ public class CommonProcessor extends EventBusProcessor {
                         // 初始化账号认证
                         .compose(account -> {
                             dto.accountId = account.getId();
-                            dto.openId = account.getOpenId();
+                            dto.accountCode = account.getOpenId();
                             return TCAccountProcessor.addAccountIdent(dto.accountId,
                                     AccountIdentAddReq.builder()
                                             .kind(AccountIdentKind.USERNAME)
@@ -198,130 +196,140 @@ public class CommonProcessor extends EventBusProcessor {
                                                 TCAccountProcessor.addAccountRole(dto.accountId, appAdminRoleId, dto.tenantId, context)))
                         // 登录
                         .compose(resp ->
-                                loginWithoutAuth(dto.accountId,tenantRegisterReq.getTenantName(), dto.openId, tenantRegisterReq.getAccountUserName(), dto.appId, dto.tenantId, context)))
-                .compose(identOptInfo -> context.helper.success(IdentOptCacheInfo.builder()
-                        .tenantId(dto.tenantId)
-                        .appId(dto.appId)
-                        .accountCode(identOptInfo.getAccountCode())
-                        .token(identOptInfo.getToken())
-                        .groupInfo(identOptInfo.getGroupInfo())
-                        .roleInfo(identOptInfo.getRoleInfo())
-                        .build()));
+                                loginWithoutAuth(dto.accountId, tenantRegisterReq.getTenantName(), dto.accountCode, tenantRegisterReq.getAccountUserName(),
+                                        dto.appId, dto.appCode, dto.tenantId, context)));
     }
 
     public static Future<IdentOptInfo> registerAccount(AccountRegisterReq accountRegisterReq, ProcessContext context) {
-        var openId = $.field.createUUID();
+        var accountCode = $.field.createUUID();
         return context.sql.tx(context, () ->
-                IAMBasicProcessor.getEnabledTenantIdByAppId(accountRegisterReq.getRelAppId(), true, context)
-                        .compose(tenantId ->
-                                context.helper.existToError(
-                                        context.sql.exists(
-                                                new HashMap<>() {
-                                                    {
-                                                        put("ak", accountRegisterReq.getAk());
-                                                        put("kind", accountRegisterReq.getKind());
-                                                        put("rel_tenant_id", tenantId);
-                                                    }
-                                                },
-                                                AccountIdent.class
-                                        ), () -> new ConflictException("账号凭证[" + accountRegisterReq.getAk() + "]已存在"))
-                                        .compose(resp ->
-                                                context.sql.save(Account.builder()
-                                                        .name(accountRegisterReq.getName())
-                                                        .avatar(accountRegisterReq.getAvatar())
-                                                        .parameters(accountRegisterReq.getParameters())
-                                                        .openId(openId)
-                                                        .parentId(DewConstant.OBJECT_UNDEFINED)
-                                                        .status(CommonStatus.ENABLED)
-                                                        .relTenantId(tenantId)
-                                                        .build()))
-                                        .compose(accountId ->
-                                                IAMBasicProcessor.validRuleAndGetValidEndTime(
-                                                        accountRegisterReq.getKind(),
-                                                        accountRegisterReq.getAk(),
-                                                        accountRegisterReq.getSk(),
-                                                        tenantId,
-                                                        context
-                                                )
-                                                        .compose(validRuleAndGetValidEndTime ->
-                                                                IAMBasicProcessor.processIdentSk(accountRegisterReq.getKind(),
-                                                                        accountRegisterReq.getAk(),
-                                                                        accountRegisterReq.getSk(),
-                                                                        accountRegisterReq.getRelAppId(),
-                                                                        tenantId,
-                                                                        context)
-                                                                        .compose(processIdentSk ->
-                                                                                context.sql.save(AccountIdent.builder()
-                                                                                        .kind(accountRegisterReq.getKind())
-                                                                                        .ak(accountRegisterReq.getAk())
-                                                                                        .sk(processIdentSk)
-                                                                                        .validStartTime(System.currentTimeMillis())
-                                                                                        .validEndTime(validRuleAndGetValidEndTime)
-                                                                                        .relAccountId(accountId)
-                                                                                        .relTenantId(tenantId)
-                                                                                        .build()))
-                                                                        .compose(resp ->
-                                                                                context.sql.save(AccountApp.builder()
-                                                                                        .relAccountId(accountId)
-                                                                                        .relAppId(accountRegisterReq.getRelAppId())
-                                                                                        .build()))
-                                                                        .compose(resp ->
-                                                                                loginWithoutAuth(accountId,accountRegisterReq.getName(), openId, accountRegisterReq.getAk(),
-                                                                                        accountRegisterReq.getRelAppId(), tenantId,
-                                                                                        context)
-                                                                        )))
-                        ));
+                context.sql.getOne(String.format("SELECT id  FROM %s WHERE open_id = #{open_id}", new App().tableName()), new HashMap<>() {
+                    {
+                        put("open_id", accountRegisterReq.getRelAppCode());
+                    }
+                })
+                        .compose(appInfo -> {
+                            var appId = appInfo.getLong("id");
+                            return IAMBasicProcessor.getEnabledTenantIdByAppId(appId, true, context)
+                                    .compose(tenantId ->
+                                            context.helper.existToError(
+                                                    context.sql.exists(
+                                                            new HashMap<>() {
+                                                                {
+                                                                    put("ak", accountRegisterReq.getAk());
+                                                                    put("kind", accountRegisterReq.getKind());
+                                                                    put("rel_tenant_id", tenantId);
+                                                                }
+                                                            },
+                                                            AccountIdent.class
+                                                    ), () -> new ConflictException("账号凭证[" + accountRegisterReq.getAk() + "]已存在"))
+                                                    .compose(resp ->
+                                                            context.sql.save(Account.builder()
+                                                                    .name(accountRegisterReq.getName())
+                                                                    .avatar(accountRegisterReq.getAvatar())
+                                                                    .parameters(accountRegisterReq.getParameters())
+                                                                    .openId(accountCode)
+                                                                    .parentId(DewConstant.OBJECT_UNDEFINED)
+                                                                    .status(CommonStatus.ENABLED)
+                                                                    .relTenantId(tenantId)
+                                                                    .build()))
+                                                    .compose(accountId ->
+                                                            IAMBasicProcessor.validRuleAndGetValidEndTime(
+                                                                    accountRegisterReq.getKind(),
+                                                                    accountRegisterReq.getAk(),
+                                                                    accountRegisterReq.getSk(),
+                                                                    tenantId,
+                                                                    context
+                                                            )
+                                                                    .compose(validRuleAndGetValidEndTime ->
+                                                                            IAMBasicProcessor.processIdentSk(accountRegisterReq.getKind(),
+                                                                                    accountRegisterReq.getAk(),
+                                                                                    accountRegisterReq.getSk(),
+                                                                                    appId,
+                                                                                    tenantId,
+                                                                                    context)
+                                                                                    .compose(processIdentSk ->
+                                                                                            context.sql.save(AccountIdent.builder()
+                                                                                                    .kind(accountRegisterReq.getKind())
+                                                                                                    .ak(accountRegisterReq.getAk())
+                                                                                                    .sk(processIdentSk)
+                                                                                                    .validStartTime(System.currentTimeMillis())
+                                                                                                    .validEndTime(validRuleAndGetValidEndTime)
+                                                                                                    .relAccountId(accountId)
+                                                                                                    .relTenantId(tenantId)
+                                                                                                    .build()))
+                                                                                    .compose(resp ->
+                                                                                            context.sql.save(AccountApp.builder()
+                                                                                                    .relAccountId(accountId)
+                                                                                                    .relAppId(appId)
+                                                                                                    .build()))
+                                                                                    .compose(resp ->
+                                                                                            loginWithoutAuth(accountId, accountRegisterReq.getName(), accountCode, accountRegisterReq.getAk(),
+                                                                                                    appId, accountRegisterReq.getRelAppCode(), tenantId,
+                                                                                                    context)
+                                                                                    )))
+                                    );
+                        }));
     }
 
     public static Future<IdentOptInfo> login(AccountLoginReq accountLoginReq, ProcessContext context) {
-        return IAMBasicProcessor.getEnabledTenantIdByAppId(accountLoginReq.getRelAppId(), false, context)
-                .compose(tenantId -> {
-                    log.info("login : [{}-{}] kind = {}, ak = {}", tenantId, accountLoginReq.getRelAppId(), accountLoginReq.getKind(), accountLoginReq.getAk());
-                    var now = new Date().getTime();
-                    return context.sql.getOne(
-                            String.format("SELECT accident.sk, acc.id, acc.name, acc.open_id FROM %s AS accident" +
-                                            " INNER JOIN %s AS accapp ON accapp.rel_account_id = accident.rel_account_id" +
-                                            " INNER JOIN %s AS tenantident ON tenantident.rel_tenant_id = accident.rel_tenant_id" +
-                                            " INNER JOIN %s AS acc ON acc.id = accident.rel_account_id" +
-                                            " WHERE tenantident.kind = #{kind} AND accident.kind = #{kind} AND accident.ak = #{ak}" +
-                                            " AND accident.valid_start_time < #{now} AND accident.valid_end_time > #{now}" +
-                                            " AND acc.rel_tenant_id = #{rel_tenant_id} AND acc.status = #{status}",
-                                    new AccountIdent().tableName(), new AccountApp().tableName(), new TenantIdent().tableName(), new Account().tableName()),
-                            new HashMap<>() {
-                                {
-                                    put("kind", accountLoginReq.getKind());
-                                    put("ak", accountLoginReq.getAk());
-                                    put("now", now);
-                                    put("rel_tenant_id", tenantId);
-                                    put("status", CommonStatus.ENABLED);
-                                }
-                            })
-                            .compose(accountInfo -> {
-                                if (accountInfo == null) {
-                                    log.warn("Login Fail: [{}-{}] AK {} doesn't exist or has expired or account doesn't exist", tenantId, accountLoginReq.getRelAppId(), accountLoginReq.getAk());
-                                    context.helper.error(new BadRequestException("登录认证[" + accountLoginReq.getAk() + "]不存在或已过期或是（应用关联）账号不存在"));
-                                }
-                                var identSk = accountInfo.getString("sk");
-                                var accountId = accountInfo.getLong("id");
-                                var accountName = accountInfo.getString("name");
-                                var openId = accountInfo.getString("open_id");
-                                return login(accountId, accountName, openId, accountLoginReq.getKind(), accountLoginReq.getAk(), accountLoginReq.getSk(), identSk, accountLoginReq.getRelAppId(), tenantId, context);
+        return context.sql.getOne(String.format("SELECT id  FROM %s WHERE open_id = #{open_id}", new App().tableName()), new HashMap<>() {
+            {
+                put("open_id", accountLoginReq.getRelAppCode());
+            }
+        })
+                .compose(appInfo -> {
+                    var appId = appInfo.getLong("id");
+                    return IAMBasicProcessor.getEnabledTenantIdByAppId(appId, false, context)
+                            .compose(tenantId -> {
+                                log.info("login : [{}-{}] kind = {}, ak = {}", tenantId, appId, accountLoginReq.getKind(), accountLoginReq.getAk());
+                                var now = System.currentTimeMillis();
+                                return context.sql.getOne(
+                                        String.format("SELECT accident.sk, acc.id, acc.name, acc.open_id FROM %s AS accident" +
+                                                        " INNER JOIN %s AS accapp ON accapp.rel_account_id = accident.rel_account_id" +
+                                                        " INNER JOIN %s AS tenantident ON tenantident.rel_tenant_id = accident.rel_tenant_id" +
+                                                        " INNER JOIN %s AS acc ON acc.id = accident.rel_account_id" +
+                                                        " WHERE tenantident.kind = #{kind} AND accident.kind = #{kind} AND accident.ak = #{ak}" +
+                                                        " AND accident.valid_start_time < #{now} AND accident.valid_end_time > #{now}" +
+                                                        " AND acc.rel_tenant_id = #{rel_tenant_id} AND acc.status = #{status}",
+                                                new AccountIdent().tableName(), new AccountApp().tableName(), new TenantIdent().tableName(), new Account().tableName()),
+                                        new HashMap<>() {
+                                            {
+                                                put("kind", accountLoginReq.getKind());
+                                                put("ak", accountLoginReq.getAk());
+                                                put("now", now);
+                                                put("rel_tenant_id", tenantId);
+                                                put("status", CommonStatus.ENABLED);
+                                            }
+                                        })
+                                        .compose(accountInfo -> {
+                                            if (accountInfo == null) {
+                                                log.warn("Login Fail: [{}-{}] AK {} doesn't exist or has expired or account doesn't exist", tenantId, appId, accountLoginReq.getAk());
+                                                context.helper.error(new UnAuthorizedException("登录认证[" + accountLoginReq.getAk() + "]不存在或已过期或是（应用关联）账号不存在"));
+                                            }
+                                            var identSk = accountInfo.getString("sk");
+                                            var accountId = accountInfo.getLong("id");
+                                            var accountName = accountInfo.getString("name");
+                                            var accountCode = accountInfo.getString("open_id");
+                                            return login(accountId, accountName, accountCode, accountLoginReq.getKind(), accountLoginReq.getAk(), accountLoginReq.getSk(), identSk, appId, accountLoginReq.getRelAppCode(), tenantId, context);
+                                        });
                             });
                 });
     }
 
-    public static Future<IdentOptInfo> login(Long accountId, String accountName, String openId, AccountIdentKind kind, String ak, String inputSk, String persistedSk, Long appId, Long tenantId, ProcessContext context) {
+    public static Future<IdentOptInfo> login(Long accountId, String accountName, String accountCode, AccountIdentKind kind, String ak, String inputSk, String persistedSk, Long appId, String appCode, Long tenantId, ProcessContext context) {
         return validateSK(kind, ak, inputSk, persistedSk, appId, tenantId, context)
-                .compose(resp -> loginWithoutAuth(accountId, accountName, openId, ak, appId, tenantId, context));
+                .compose(resp -> loginWithoutAuth(accountId, accountName, accountCode, ak, appId, appCode, tenantId, context));
     }
 
-    public static Future<IdentOptInfo> loginWithoutAuth(Long accountId, String accountName, String openId, String ak, Long appId, Long tenantId, ProcessContext context) {
+    public static Future<IdentOptInfo> loginWithoutAuth(Long accountId, String accountName, String openId, String ak, Long appId, String appCode, Long tenantId, ProcessContext context) {
         log.info("Login Success:  [{}-{}] ak {}", tenantId, appId, ak);
         String token = KeyHelper.generateToken();
         var optInfo = new IdentOptCacheInfo();
         optInfo.setAccountName(accountName);
         optInfo.setAccountCode(openId);
         optInfo.setToken(token);
+        optInfo.setAppCode(appCode);
         optInfo.setAppId(appId);
         optInfo.setTenantId(tenantId);
         return IAMBasicProcessor.findRoleInfo(accountId, context)
@@ -340,6 +348,7 @@ public class CommonProcessor extends EventBusProcessor {
                     return context.helper.success(IdentOptInfo.builder()
                             .accountName(optInfo.getAccountName())
                             .accountCode(optInfo.getAccountCode())
+                            .appCode(optInfo.getAppCode())
                             .token(optInfo.getToken())
                             .roleInfo(optInfo.getRoleInfo())
                             .groupInfo(optInfo.getGroupInfo())
@@ -348,18 +357,21 @@ public class CommonProcessor extends EventBusProcessor {
     }
 
     public static Future<IdentOptInfo> fetchLoginInfo(String token, ProcessContext context) {
+        if (token.isBlank()) {
+            throw context.helper.error(new UnAuthorizedException("用户未登录"));
+        }
         return AuthCacheProcessor.getOptInfo(token, context)
                 .compose(info -> {
                     if (info.isPresent()) {
                         return context.helper.success(info.get());
                     }
-                    throw context.helper.error(new NotFoundException("Token无效"));
+                    throw context.helper.error(new UnAuthorizedException("Token无效"));
                 });
     }
 
     public static Future<Void> logout(IdentOptInfo identOptInfo, ProcessContext context) {
-        if (((String) identOptInfo.getAccountCode()).isBlank()) {
-            context.helper.error(new UnAuthorizedException("用户未登录"));
+        if ((identOptInfo.getAccountCode()).isBlank()) {
+            throw context.helper.error(new UnAuthorizedException("用户未登录"));
         }
         log.info("Logout Account {} by token {}", identOptInfo.getAccountCode(), identOptInfo.getToken());
         return AuthCacheProcessor.removeOptInfo(identOptInfo.getToken(), context);
@@ -367,7 +379,7 @@ public class CommonProcessor extends EventBusProcessor {
 
     public static Future<Void> changeInfo(AccountChangeReq accountChangeReq, String relOpenId, ProcessContext context) {
         if (relOpenId.isBlank()) {
-            context.helper.error(new UnAuthorizedException("用户未登录"));
+            throw context.helper.error(new UnAuthorizedException("用户未登录"));
         }
         return context.sql.update(
                 new HashMap<>() {
@@ -381,7 +393,7 @@ public class CommonProcessor extends EventBusProcessor {
 
     public static Future<Void> changeIdent(AccountIdentChangeReq accountIdentChangeReq, String relOpenId, Long relAppId, ProcessContext context) {
         if (relOpenId.isBlank()) {
-            context.helper.error(new UnAuthorizedException("用户未登录"));
+            throw context.helper.error(new UnAuthorizedException("用户未登录"));
         }
         return IAMBasicProcessor.getEnabledTenantIdByOpenId(relOpenId, context)
                 .compose(tenantId ->
@@ -428,7 +440,7 @@ public class CommonProcessor extends EventBusProcessor {
 
     public static Future<Void> unRegister(String relOpenId, ProcessContext context) {
         if (relOpenId.isBlank()) {
-            context.helper.error(new UnAuthorizedException("用户未登录"));
+            throw context.helper.error(new UnAuthorizedException("用户未登录"));
         }
         return context.sql.update(
                 new HashMap<>() {
@@ -489,7 +501,7 @@ public class CommonProcessor extends EventBusProcessor {
             case PHONE:
                 return context.helper.notExistToError(
                         context.cache.get(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + tenantId + ":" + ak),
-                        () -> new BadRequestException("验证码不存在或已过期，请重新获取"))
+                        () -> new UnAuthorizedException("验证码不存在或已过期，请重新获取"))
                         .compose(tmpSk -> {
                             if (tmpSk.equalsIgnoreCase(inputSk)) {
                                 context.cache.del(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + tenantId + ":" + ak);
@@ -502,24 +514,24 @@ public class CommonProcessor extends EventBusProcessor {
                                             context.cache.del(IAMConstant.CACHE_ACCOUNT_VCODE_TMP_REL + tenantId + ":" + ak);
                                             context.cache.del(IAMConstant.CACHE_ACCOUNT_VCODE_ERROR_TIMES + tenantId + ":" + ak);
                                             // TODO 需要特殊标记表示验证码过期
-                                            context.helper.error(new BadRequestException("验证码不存在或已过期，请重新获取"));
+                                            context.helper.error(new UnAuthorizedException("验证码不存在或已过期，请重新获取"));
                                         }
-                                        throw context.helper.error(new BadRequestException("验证码错误"));
+                                        throw context.helper.error(new UnAuthorizedException("验证码错误"));
                                     });
                         });
             case USERNAME:
                 if (!$.security.digest.validate(ak + inputSk, storageSk, "SHA-512")) {
-                    context.helper.error(new BadRequestException("用户名或密码错误"));
+                    context.helper.error(new UnAuthorizedException("用户名或密码错误"));
                 }
                 return context.helper.success();
             case WECHAT_XCX:
                 return context.cache.get(IAMConstant.CACHE_ACCESS_TOKEN + relAppId + ":" + identKind.toString())
                         .compose(accessToken -> {
                             if (accessToken == null) {
-                                context.helper.error(new BadRequestException("Access Token不存在"));
+                                context.helper.error(new UnAuthorizedException("Access Token不存在"));
                             }
                             if (!accessToken.equalsIgnoreCase(inputSk)) {
-                                context.helper.error(new BadRequestException("Access Token错误"));
+                                context.helper.error(new UnAuthorizedException("Access Token错误"));
                             }
                             return context.helper.success();
                         });
