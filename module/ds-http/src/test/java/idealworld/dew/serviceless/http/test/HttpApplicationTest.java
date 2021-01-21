@@ -20,6 +20,11 @@ import idealworld.dew.framework.DewAuthApplication;
 import idealworld.dew.framework.DewAuthConfig;
 import io.vertx.core.Future;
 
+/**
+ * HTTP测试类.
+ *
+ * @author gudaoxuri
+ */
 public class HttpApplicationTest extends DewAuthApplication<HttpApplicationTest.TestDewHttpConfig> {
 
     @Override

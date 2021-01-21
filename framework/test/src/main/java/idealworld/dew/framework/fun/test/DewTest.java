@@ -31,6 +31,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.File;
 import java.util.Map;
 
+/**
+ * 测试基础类.
+ *
+ * @author gudaoxuri
+ */
 @Testcontainers
 @ExtendWith(VertxExtension.class)
 public abstract class DewTest {

@@ -21,6 +21,8 @@ import io.vertx.core.json.JsonObject;
 
 
 /**
+ * JSON辅助类.
+ *
  * @author gudaoxuri
  */
 public class JsonHelper {

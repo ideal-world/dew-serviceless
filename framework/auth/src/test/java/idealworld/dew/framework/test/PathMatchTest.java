@@ -27,6 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 路径匹配测试.
+ *
+ * @author gudaoxuri
+ */
 public class PathMatchTest extends DewTest {
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();

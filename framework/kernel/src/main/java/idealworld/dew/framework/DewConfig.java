@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Basic config.
+ * 基础配置信息.
  *
  * @author gudaoxuri
  */

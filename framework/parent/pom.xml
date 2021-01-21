@@ -47,7 +47,7 @@
         <snakeyaml.version>1.27</snakeyaml.version>
         <mysql.version>8.0.21</mysql.version>
         <logback.version>1.2.3</logback.version>
-        <graalvm.version>20.2.0</graalvm.version>
+        <graalvm.version>21.0.0</graalvm.version>
 
         <validation-api.version>2.0.1.Final</validation-api.version>
         <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>

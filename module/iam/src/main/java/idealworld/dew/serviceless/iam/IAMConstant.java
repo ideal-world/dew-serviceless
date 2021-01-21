@@ -19,7 +19,7 @@ package idealworld.dew.serviceless.iam;
 import idealworld.dew.framework.DewAuthConstant;
 
 /**
- * 全局常量.
+ * IAM常量.
  *
  * @author gudaoxuri
  */

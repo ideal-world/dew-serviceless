@@ -25,7 +25,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
- * Id entity.
+ * 带主键的父实体.
  *
  * @author gudaoxuri
  */

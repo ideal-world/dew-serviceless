@@ -22,6 +22,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
+ * 模块间资源传输对象.
+ *
  * @author gudaoxuri
  */
 @Data

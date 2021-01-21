@@ -19,7 +19,7 @@ package idealworld.dew.framework.util;
 import com.ecfront.dew.common.$;
 
 /**
- * Key helper.
+ * 认证处理辅助类.
  *
  * @author gudaoxuri
  */

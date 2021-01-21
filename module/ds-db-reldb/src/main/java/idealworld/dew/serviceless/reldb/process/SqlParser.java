@@ -34,6 +34,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * SQL解析器.
+ *
  * @author gudaoxuri
  */
 @Slf4j
@@ -57,7 +59,7 @@ public class SqlParser {
                 return parseDelete((MySqlDeleteStatement) sqlStatement);
             } else if (sqlStatement instanceof SQLSelectStatement) {
                 return parseSelect((SQLSelectStatement) sqlStatement);
-            }else if(sqlStatement instanceof MySqlCreateTableStatement){
+            } else if (sqlStatement instanceof MySqlCreateTableStatement) {
                 return parseCreate((MySqlCreateTableStatement) sqlStatement);
             } else {
                 log.warn("[SqlParser]The operation type {} is not supported yet", sqlStatement.getClass());
@@ -103,7 +105,7 @@ public class SqlParser {
     }
 
     private static List<SqlAst> parseCreate(MySqlCreateTableStatement sqlStatement) {
-        return new ArrayList<>(){
+        return new ArrayList<>() {
             {
                 add(SqlAst.builder()
                         .table(sqlStatement.getTableName())
@@ -201,6 +203,10 @@ public class SqlParser {
     }
 
 
+    private enum FieldKind {
+        RETURN, CONDITION, EFFECT
+    }
+
     @Data
     @Builder
     public static class SqlAst {
@@ -215,7 +221,6 @@ public class SqlParser {
         private List<String> returnFields = new LinkedList<>();
 
     }
-
 
     @Data
     private static class SqlItem {
@@ -241,10 +246,6 @@ public class SqlParser {
                     break;
             }
         }
-    }
-
-    private enum FieldKind {
-        RETURN, CONDITION, EFFECT
     }
 
 }

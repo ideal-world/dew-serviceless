@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 事件总线上下文.
+ *
  * @author gudaoxuri
  */
 @Builder

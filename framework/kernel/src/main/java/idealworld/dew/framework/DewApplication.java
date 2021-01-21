@@ -35,6 +35,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+/**
+ * 服务启动基础类.
+ *
+ * @param <C>
+ */
 @Slf4j
 public abstract class DewApplication<C extends DewConfig> extends AbstractVerticle {
 

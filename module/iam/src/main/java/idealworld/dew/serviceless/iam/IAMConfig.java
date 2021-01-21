@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 
 
 /**
- * Gateway config.
+ * IAM配置.
  *
  * @author gudaoxuri
  */

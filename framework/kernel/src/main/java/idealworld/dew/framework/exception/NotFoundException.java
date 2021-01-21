@@ -19,6 +19,8 @@ package idealworld.dew.framework.exception;
 import com.ecfront.dew.common.StandardCode;
 
 /**
+ * 找不到对象错误.
+ *
  * @author gudaoxuri
  */
 public class NotFoundException extends DewException {

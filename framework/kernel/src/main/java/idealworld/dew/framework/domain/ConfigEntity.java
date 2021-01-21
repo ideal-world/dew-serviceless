@@ -26,7 +26,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * Config entity.
+ * 通用配置实体.
  *
  * @author gudaoxuri
  */

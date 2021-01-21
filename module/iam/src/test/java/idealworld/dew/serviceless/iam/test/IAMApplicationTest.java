@@ -20,6 +20,11 @@ import idealworld.dew.framework.DewApplication;
 import idealworld.dew.framework.DewConfig;
 import io.vertx.core.Future;
 
+/**
+ * IAM测试类.
+ *
+ * @author gudaoxuri
+ */
 public class IAMApplicationTest extends DewApplication<IAMApplicationTest.TestDewGatewayConfig> {
 
     @Override
@@ -34,8 +39,6 @@ public class IAMApplicationTest extends DewApplication<IAMApplicationTest.TestDe
 
     public static class TestDewGatewayConfig extends DewConfig {
 
-
     }
-
 
 }

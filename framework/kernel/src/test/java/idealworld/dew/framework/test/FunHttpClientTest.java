@@ -29,6 +29,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * HTTP操作入口测试.
+ *
+ * @author gudaoxuri
+ */
 public class FunHttpClientTest extends DewTest {
 
     @BeforeAll

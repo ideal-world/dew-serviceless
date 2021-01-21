@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.function.Supplier;
 
 /**
+ * 本地缓存辅助类.
+ *
  * @author gudaoxuri
  */
 @Slf4j

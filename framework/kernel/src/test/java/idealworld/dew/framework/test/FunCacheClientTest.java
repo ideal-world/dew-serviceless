@@ -34,6 +34,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * 缓存操作入口测试.
+ *
+ * @author gudaoxuri
+ */
 @Slf4j
 public class FunCacheClientTest extends DewTest {
 

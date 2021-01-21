@@ -50,6 +50,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
+ * SQL操作入口.
+ *
  * @author gudaoxuri
  */
 @Slf4j

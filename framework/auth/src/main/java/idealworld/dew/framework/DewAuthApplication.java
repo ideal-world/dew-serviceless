@@ -19,6 +19,11 @@ package idealworld.dew.framework;
 import idealworld.dew.framework.fun.auth.exchange.ExchangeHelper;
 import io.vertx.core.Future;
 
+/**
+ * 带数据交互处理的认证启动类.
+ *
+ * @param <C>
+ */
 public abstract class DewAuthApplication<C extends DewAuthConfig> extends DewApplication<C> {
 
     protected Future<?> start(C config) {

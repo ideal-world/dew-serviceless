@@ -19,6 +19,8 @@ package idealworld.dew.framework.exception;
 import com.ecfront.dew.common.exception.RTException;
 
 /**
+ * 错误基础类.
+ *
  * @author gudaoxuri
  */
 public abstract class DewException extends RTException {

@@ -28,11 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 鉴权策略.
- * <p>
- * Redis格式：
- * <p>
- * 资源类型:资源URI:资源操作类型 = {权限主体运算类型:{权限主体类型:[权限主体Id]}}
+ * 关系型数据库鉴权策略.
  *
  * @author gudaoxuri
  */
@@ -49,7 +45,7 @@ public class RelDBAuthPolicy {
             Map<AuthSubjectKind, List<String>> subjectInfo
     ) {
         Promise<AuthResultKind> promise = Promise.promise();
-        if(resourceInfo.isEmpty()){
+        if (resourceInfo.isEmpty()) {
             promise.complete(AuthResultKind.ACCEPT);
             return promise.future();
         }

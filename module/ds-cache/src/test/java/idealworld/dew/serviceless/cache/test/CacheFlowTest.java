@@ -35,13 +35,18 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 
+/**
+ * 缓存流程测试.
+ *
+ * @author gudaoxuri
+ */
 public class CacheFlowTest extends DewTest {
+
+    private static final String MODULE_NAME = new CacheModule().getModuleName();
 
     static {
         enableRedis();
     }
-
-    private static final String MODULE_NAME = new CacheModule().getModuleName();
 
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {

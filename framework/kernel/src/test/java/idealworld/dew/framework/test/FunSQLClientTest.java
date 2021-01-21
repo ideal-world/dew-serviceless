@@ -39,6 +39,11 @@ import org.junit.jupiter.api.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * SQL操作入口测试.
+ *
+ * @author gudaoxuri
+ */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FunSQLClientTest extends DewTest {
 

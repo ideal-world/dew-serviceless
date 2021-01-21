@@ -20,6 +20,11 @@ import idealworld.dew.framework.DewAuthApplication;
 import idealworld.dew.framework.DewAuthConfig;
 import io.vertx.core.Future;
 
+/**
+ * 关系型数据库测试类.
+ *
+ * @author gudaoxuri
+ */
 public class RelDBApplicationTest extends DewAuthApplication<RelDBApplicationTest.TestDewRelDBConfig> {
 
     @Override

@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 事件总线分发器.
+ *
  * @author gudaoxuri
  */
 @Slf4j

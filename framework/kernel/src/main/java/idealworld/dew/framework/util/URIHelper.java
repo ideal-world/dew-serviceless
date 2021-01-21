@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * URI处理辅助类.
+ *
  * @author gudaoxuri
  */
 public class URIHelper {

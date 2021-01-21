@@ -25,6 +25,11 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Camel与Snake风格转换类测试.
+ *
+ * @author gudaoxuri
+ */
 public class CaseFormatterTest extends DewTest {
 
     @SneakyThrows

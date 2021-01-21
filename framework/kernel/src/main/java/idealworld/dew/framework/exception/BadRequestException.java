@@ -19,6 +19,8 @@ package idealworld.dew.framework.exception;
 import com.ecfront.dew.common.StandardCode;
 
 /**
+ * 请求格式错误.
+ *
  * @author gudaoxuri
  */
 public class BadRequestException extends DewException {

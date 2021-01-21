@@ -26,6 +26,8 @@ import io.vertx.core.Vertx;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * HTTP数据交互处理器.
+ *
  * @author gudaoxuri
  */
 @Slf4j

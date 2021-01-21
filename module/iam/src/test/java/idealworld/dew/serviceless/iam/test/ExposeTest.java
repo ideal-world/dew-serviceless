@@ -37,6 +37,11 @@ import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * 开放等级测试.
+ *
+ * @author gudaoxuri
+ */
 public class ExposeTest extends IAMBasicTest {
 
     @Test

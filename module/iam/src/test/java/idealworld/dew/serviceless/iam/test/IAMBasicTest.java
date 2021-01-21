@@ -45,6 +45,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * IAM测试基础类.
+ *
+ * @author gudaoxuri
+ */
 public class IAMBasicTest extends DewTest {
 
     protected static final String MODULE_NAME = new IAMModule().getModuleName();

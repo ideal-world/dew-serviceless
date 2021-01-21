@@ -36,6 +36,11 @@ import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * 事件总线分发器测试.
+ *
+ * @author gudaoxuri
+ */
 public class EventBusDispatcherTest extends DewTest {
 
     @SneakyThrows

@@ -30,6 +30,8 @@ import lombok.NoArgsConstructor;
 import java.util.Map;
 
 /**
+ * 请求处理上下文.
+ *
  * @author gudaoxuri
  */
 @Builder

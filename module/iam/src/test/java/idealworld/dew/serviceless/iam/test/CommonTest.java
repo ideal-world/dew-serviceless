@@ -37,6 +37,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+/**
+ * 基础服务测试.
+ *
+ * @author gudaoxuri
+ */
 public class CommonTest extends IAMBasicTest {
 
     private String appCode;

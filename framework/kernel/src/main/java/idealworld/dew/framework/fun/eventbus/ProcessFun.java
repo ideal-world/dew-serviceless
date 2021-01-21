@@ -18,6 +18,11 @@ package idealworld.dew.framework.fun.eventbus;
 
 import io.vertx.core.Future;
 
+/**
+ * 请求处理函数.
+ *
+ * @param <OUT>
+ */
 @FunctionalInterface
 public interface ProcessFun<OUT> {
 

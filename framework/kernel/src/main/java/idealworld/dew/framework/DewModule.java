@@ -34,6 +34,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * 模块基础类.
+ *
+ * @param <C>
+ */
 @Slf4j
 public abstract class DewModule<C extends Object> extends AbstractVerticle {
 

@@ -26,7 +26,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * Basic soft del entity.
+ * 软删记录实体.
  *
  * @author gudaoxuri
  */

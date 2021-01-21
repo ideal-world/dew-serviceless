@@ -25,7 +25,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 /**
- * Safe entity.
+ * 带安全信息的实体.
  *
  * @author gudaoxuri
  */

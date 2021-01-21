@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
- * token opt info.
+ * Token对象，用于模块间传输.
  *
  * @author gudaoxuri
  */
@@ -34,7 +34,9 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class IdentOptExchangeInfo extends IdentOptCacheInfo {
 
+    // 不被信任的应用Id，直接来自于外部传入未做校验
     private Long unauthorizedAppId;
+    // 不被信任的租户Id，直接来自于外部传入未做校验
     private Long unauthorizedTenantId;
 
 }

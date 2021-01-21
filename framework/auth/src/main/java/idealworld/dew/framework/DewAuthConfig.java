@@ -20,7 +20,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 /**
- * Basic config.
+ * 权限基础配置信息.
  *
  * @author gudaoxuri
  */

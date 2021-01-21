@@ -23,6 +23,11 @@ import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * 系统控制台下的租户控制器测试.
+ *
+ * @author gudaoxuri
+ */
 public class SystemConsoleTest extends IAMBasicTest {
 
     @Test

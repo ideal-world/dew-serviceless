@@ -32,6 +32,11 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
+/**
+ * 权限测试.
+ *
+ * @author gudaoxuri
+ */
 public class AuthCacheTest extends DewTest {
 
     static {

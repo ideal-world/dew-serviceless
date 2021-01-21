@@ -19,7 +19,7 @@ package idealworld.dew.serviceless.cache;
 import idealworld.dew.framework.DewConstant;
 
 /**
- * 常量池.
+ * 缓存常量.
  *
  * @author gudaoxuri
  */

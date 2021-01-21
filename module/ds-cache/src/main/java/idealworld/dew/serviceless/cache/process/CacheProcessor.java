@@ -30,16 +30,12 @@ import io.vertx.core.buffer.Buffer;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 缓存服务.
+ * 缓存控制器.
  *
  * @author gudaoxuri
  */
 @Slf4j
 public class CacheProcessor extends EventBusProcessor {
-
-    public CacheProcessor(String moduleName) {
-        super(moduleName);
-    }
 
     {
         addProcessor("/**", eventBusContext ->
@@ -50,6 +46,9 @@ public class CacheProcessor extends EventBusProcessor {
                         eventBusContext.context));
     }
 
+    public CacheProcessor(String moduleName) {
+        super(moduleName);
+    }
 
     public static Future<?> exec(OptActionKind actionKind, String strResourceUri, Buffer body, ProcessContext context) {
         var resourceUri = URIHelper.newURI(strResourceUri);

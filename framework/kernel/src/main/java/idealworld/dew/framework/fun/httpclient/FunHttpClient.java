@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * HTTP操作入口.
+ *
  * @author gudaoxuri
  */
 @Slf4j

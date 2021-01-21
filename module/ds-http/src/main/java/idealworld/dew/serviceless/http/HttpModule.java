@@ -22,6 +22,8 @@ import idealworld.dew.serviceless.http.process.HttpProcessor;
 import io.vertx.core.Future;
 
 /**
+ * HTTP模块.
+ *
  * @author gudaoxuri
  */
 public class HttpModule extends DewModule<HttpConfig> {

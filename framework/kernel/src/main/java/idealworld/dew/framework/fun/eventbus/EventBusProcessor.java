@@ -19,6 +19,8 @@ package idealworld.dew.framework.fun.eventbus;
 import idealworld.dew.framework.dto.OptActionKind;
 
 /**
+ * 事件总线处理器.
+ *
  * @author gudaoxuri
  */
 public class EventBusProcessor {

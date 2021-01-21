@@ -20,6 +20,11 @@ import idealworld.dew.framework.DewAuthApplication;
 import idealworld.dew.framework.DewAuthConfig;
 import io.vertx.core.Future;
 
+/**
+ * 缓存测试类.
+ *
+ * @author gudaoxuri
+ */
 public class CacheApplicationTest extends DewAuthApplication<CacheApplicationTest.TestDewCacheConfig> {
 
     @Override

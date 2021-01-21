@@ -22,6 +22,8 @@ import idealworld.dew.serviceless.cache.process.CacheProcessor;
 import io.vertx.core.Future;
 
 /**
+ * 缓存模块.
+ *
  * @author gudaoxuri
  */
 public class CacheModule extends DewModule<CacheConfig> {

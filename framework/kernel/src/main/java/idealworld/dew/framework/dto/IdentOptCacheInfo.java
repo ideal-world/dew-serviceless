@@ -21,7 +21,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 /**
- * token opt info.
+ * Token对象，写入到缓存中.
  *
  * @author gudaoxuri
  */

@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
- * Cache helper.
+ * 缓存辅助类.
  *
  * @author gudaoxuri
  */

@@ -34,12 +34,17 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 
+/**
+ * HTTP流程测试.
+ *
+ * @author gudaoxuri
+ */
 public class HttpFlowTest extends DewTest {
+
+    private static final String MODULE_NAME = new HttpModule().getModuleName();
 
     static {
     }
-
-    private static final String MODULE_NAME = new HttpModule().getModuleName();
 
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {

@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * token opt info.
+ * Token对象，返回给终端使用.
  *
  * @author gudaoxuri
  */

@@ -19,6 +19,8 @@ package idealworld.dew.framework.util;
 import io.vertx.core.json.JsonObject;
 
 /**
+ * Camel与Snake风格转换类.
+ *
  * @author gudaoxuri
  */
 public class CaseFormatter {

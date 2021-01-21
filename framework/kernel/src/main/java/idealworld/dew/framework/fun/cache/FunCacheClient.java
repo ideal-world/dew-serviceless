@@ -40,6 +40,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
+ * 缓存操作入口.
+ *
  * @author gudaoxuri
  */
 @Slf4j

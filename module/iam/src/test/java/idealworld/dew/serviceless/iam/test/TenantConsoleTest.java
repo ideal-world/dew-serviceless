@@ -29,6 +29,11 @@ import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.*;
 
+/**
+ * 租户控制台下的租户控制器测试.
+ *
+ * @author gudaoxuri
+ */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TenantConsoleTest extends IAMBasicTest {
 

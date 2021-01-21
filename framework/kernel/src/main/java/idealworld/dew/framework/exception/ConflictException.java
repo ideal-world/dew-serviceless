@@ -19,6 +19,8 @@ package idealworld.dew.framework.exception;
 import com.ecfront.dew.common.StandardCode;
 
 /**
+ * 资源冲突错误.
+ *
  * @author gudaoxuri
  */
 public class ConflictException extends DewException {

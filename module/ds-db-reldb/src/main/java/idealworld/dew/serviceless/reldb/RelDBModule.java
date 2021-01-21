@@ -19,10 +19,12 @@ package idealworld.dew.serviceless.reldb;
 import idealworld.dew.framework.DewModule;
 import idealworld.dew.serviceless.reldb.exchange.RelDBExchangeProcessor;
 import idealworld.dew.serviceless.reldb.process.RelDBAuthPolicy;
-import idealworld.dew.serviceless.reldb.process.SqlProcessor;
+import idealworld.dew.serviceless.reldb.process.RelDBProcessor;
 import io.vertx.core.Future;
 
 /**
+ * 关系型数据库模块.
+ *
  * @author gudaoxuri
  */
 public class RelDBModule extends DewModule<RelDBConfig> {
@@ -35,7 +37,7 @@ public class RelDBModule extends DewModule<RelDBConfig> {
     @Override
     protected Future<Void> start(RelDBConfig config) {
         var authPolicy = new RelDBAuthPolicy(getModuleName(), config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
-        new SqlProcessor(authPolicy, getModuleName());
+        new RelDBProcessor(authPolicy, getModuleName());
         return RelDBExchangeProcessor.init(getModuleName(), config, vertx);
     }
 

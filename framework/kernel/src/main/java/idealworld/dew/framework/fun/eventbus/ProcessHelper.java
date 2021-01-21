@@ -39,6 +39,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
+ * 请求处理辅助类.
+ *
  * @author gudaoxuri
  */
 public class ProcessHelper {

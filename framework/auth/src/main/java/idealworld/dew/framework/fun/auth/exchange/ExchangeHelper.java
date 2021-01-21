@@ -41,6 +41,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
+ * 模块间数据交互处理器.
+ *
  * @author gudaoxuri
  */
 @Slf4j

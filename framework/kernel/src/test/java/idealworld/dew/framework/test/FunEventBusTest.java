@@ -41,6 +41,11 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * 事件总线操作入口测试.
+ *
+ * @author gudaoxuri
+ */
 public class FunEventBusTest extends DewTest {
 
     @BeforeAll

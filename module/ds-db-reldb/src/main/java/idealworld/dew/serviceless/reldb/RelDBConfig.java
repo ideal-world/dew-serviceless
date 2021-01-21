@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 
 
 /**
- * RelDB config.
+ * 关联型数据库配置.
  *
  * @author gudaoxuri
  */

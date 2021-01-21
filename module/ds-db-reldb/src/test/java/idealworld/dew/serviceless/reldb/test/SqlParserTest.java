@@ -24,6 +24,11 @@ import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * SQL解析测试.
+ *
+ * @author gudaoxuri
+ */
 public class SqlParserTest extends DewTest {
 
     @Test

@@ -17,7 +17,7 @@
 package idealworld.dew.framework;
 
 /**
- * 全局常量.
+ * 权限全局常量.
  *
  * @author gudaoxuri
  */

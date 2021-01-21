@@ -39,7 +39,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-
+/**
+ * 事件总线操作入口.
+ *
+ * @author gudaoxuri
+ */
 @Slf4j
 public class FunEventBus {
 

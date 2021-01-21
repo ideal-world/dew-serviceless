@@ -40,6 +40,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 
+/**
+ * 应用控制台测试.
+ *
+ * @author gudaoxuri
+ */
 public class AppConsoleTest extends IAMBasicTest {
 
     @BeforeEach

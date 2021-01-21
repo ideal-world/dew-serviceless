@@ -19,6 +19,8 @@ package idealworld.dew.framework.exception;
 import com.ecfront.dew.common.StandardCode;
 
 /**
+ * 服务内部错误.
+ *
  * @author gudaoxuri
  */
 public class ServiceException extends DewException {

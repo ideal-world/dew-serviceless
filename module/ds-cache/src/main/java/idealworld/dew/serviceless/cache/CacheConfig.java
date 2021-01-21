@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 
 
 /**
- * Http config.
+ * 缓存配置.
  *
  * @author gudaoxuri
  */

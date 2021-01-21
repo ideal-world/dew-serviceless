@@ -43,14 +43,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 关系型数据库流程测试.
+ *
+ * @author gudaoxuri
+ */
 public class RelDBFlowTest extends DewTest {
+
+    private static final String MODULE_NAME = new RelDBModule().getModuleName();
 
     static {
         enableRedis();
         enableMysql();
     }
-
-    private static final String MODULE_NAME = new RelDBModule().getModuleName();
 
     @BeforeAll
     public static void before(Vertx vertx, VertxTestContext testContext) {

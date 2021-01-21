@@ -31,16 +31,12 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 
 /**
- * Http服务.
+ * HTTP控制器.
  *
  * @author gudaoxuri
  */
 @Slf4j
 public class HttpProcessor extends EventBusProcessor {
-
-    public HttpProcessor(String moduleName) {
-        super(moduleName);
-    }
 
     {
         addProcessor("/**", eventBusContext ->
@@ -50,6 +46,10 @@ public class HttpProcessor extends EventBusProcessor {
                         eventBusContext.req.body(Buffer.class),
                         eventBusContext.req.header,
                         eventBusContext.context));
+    }
+
+    public HttpProcessor(String moduleName) {
+        super(moduleName);
     }
 
     public static Future<Buffer> exec(OptActionKind actionKind, String strResourceUri, Buffer body, Map<String, String> header, ProcessContext context) {

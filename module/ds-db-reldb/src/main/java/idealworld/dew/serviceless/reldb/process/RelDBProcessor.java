@@ -38,12 +38,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 /**
- * SQL服务.
+ * 关系型数据库控制器.
  *
  * @author gudaoxuri
  */
 @Slf4j
-public class SqlProcessor extends EventBusProcessor {
+public class RelDBProcessor extends EventBusProcessor {
+
+    private static RelDBAuthPolicy authPolicy;
 
     {
         addProcessor("", eventBusContext ->
@@ -54,9 +56,7 @@ public class SqlProcessor extends EventBusProcessor {
                         eventBusContext.context));
     }
 
-    private static RelDBAuthPolicy authPolicy;
-
-    public SqlProcessor(RelDBAuthPolicy _authPolicy, String moduleName) {
+    public RelDBProcessor(RelDBAuthPolicy _authPolicy, String moduleName) {
         super(moduleName);
         authPolicy = _authPolicy;
     }
@@ -73,7 +73,7 @@ public class SqlProcessor extends EventBusProcessor {
         var sql = sqlInfo.getString("sql");
         var sqlAsts = SqlParser.parse(sql);
         if (sqlAsts == null) {
-            log.warn("Sql parse error: {}",sql);
+            log.warn("Sql parse error: {}", sql);
             throw context.helper.error(new BadRequestException("请求的SQL解析错误"));
         }
         var resources = sqlAsts.stream()

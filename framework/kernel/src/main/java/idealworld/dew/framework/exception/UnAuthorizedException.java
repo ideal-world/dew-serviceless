@@ -19,6 +19,8 @@ package idealworld.dew.framework.exception;
 import com.ecfront.dew.common.StandardCode;
 
 /**
+ * 认证鉴权错误.
+ *
  * @author gudaoxuri
  */
 public class UnAuthorizedException extends DewException {

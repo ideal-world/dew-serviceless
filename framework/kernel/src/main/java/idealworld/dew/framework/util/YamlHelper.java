@@ -21,7 +21,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
 
 /**
- * Yaml Helper
+ * Yaml处理辅助类.
  *
  * @author gudaoxuri
  */
