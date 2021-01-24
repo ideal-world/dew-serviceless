@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * 事件触发服务.
+ * 任务控制器.
  *
  * @author gudaoxuri
  */

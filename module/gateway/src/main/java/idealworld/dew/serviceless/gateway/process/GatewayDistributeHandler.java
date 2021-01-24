@@ -36,7 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 /**
- * 鉴权处理器
+ * 分发处理器.
  *
  * @author gudaoxuri
  */
@@ -96,7 +96,8 @@ public class GatewayDistributeHandler extends AuthHttpHandler {
                 actionKind,
                 uri.toString(),
                 body,
-                header)
+                header,
+                distribute.getGatewayTimeoutMS())
                 .onSuccess(resp -> {
                     if (ResourceKind.parse(uri.getScheme().toLowerCase()) == ResourceKind.HTTP
                             && !uri.getHost().equalsIgnoreCase(distribute.getIamModuleName())) {

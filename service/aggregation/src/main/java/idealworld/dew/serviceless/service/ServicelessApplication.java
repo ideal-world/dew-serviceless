@@ -19,6 +19,11 @@ package idealworld.dew.serviceless.service;
 import idealworld.dew.framework.DewAuthApplication;
 import io.vertx.core.Future;
 
+/**
+ * 集合服务启动类.
+ *
+ * @author gudaoxuri
+ */
 public class ServicelessApplication extends DewAuthApplication<ServicelessConfig> {
 
     @Override

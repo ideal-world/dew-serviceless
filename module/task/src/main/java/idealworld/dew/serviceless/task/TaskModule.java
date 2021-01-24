@@ -23,6 +23,8 @@ import idealworld.dew.serviceless.task.process.TaskProcessor;
 import io.vertx.core.Future;
 
 /**
+ * 任务模块.
+ *
  * @author gudaoxuri
  */
 public class TaskModule extends DewModule<TaskConfig> {

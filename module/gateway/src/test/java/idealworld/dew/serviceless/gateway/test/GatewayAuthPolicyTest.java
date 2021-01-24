@@ -43,6 +43,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 网关鉴权策略测试.
+ *
+ * @author gudaoxuri
+ */
 public class GatewayAuthPolicyTest extends DewTest {
 
     static {

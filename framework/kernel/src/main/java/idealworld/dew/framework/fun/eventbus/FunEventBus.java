@@ -86,12 +86,19 @@ public class FunEventBus {
     }
 
     public Future<Tuple2<Buffer, Map<String, String>>> request(String moduleName, OptActionKind actionKind, String uri, Buffer body, Map<String, String> header) {
+        return request(moduleName, actionKind, uri, body, header, null);
+    }
+
+    public Future<Tuple2<Buffer, Map<String, String>>> request(String moduleName, OptActionKind actionKind, String uri, Buffer body, Map<String, String> header, Long timeoutMs) {
         Promise<Tuple2<Buffer, Map<String, String>>> promise = Promise.promise();
         var deliveryOptions = new DeliveryOptions()
                 .addHeader(DewConstant.REQUEST_RESOURCE_ACTION_FLAG, actionKind.toString())
                 .addHeader(DewConstant.REQUEST_RESOURCE_URI_FLAG, uri);
         if (header != null) {
             header.forEach(deliveryOptions::addHeader);
+        }
+        if (timeoutMs != null) {
+            deliveryOptions.setSendTimeout(timeoutMs);
         }
         eventBus.request(moduleName,
                 body,

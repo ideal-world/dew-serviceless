@@ -27,7 +27,7 @@ import java.util.Map;
 
 
 /**
- * Gateway config.
+ * 网关配置.
  *
  * @author gudaoxuri
  */

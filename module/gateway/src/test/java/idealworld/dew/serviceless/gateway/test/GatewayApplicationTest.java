@@ -20,6 +20,11 @@ import idealworld.dew.framework.DewApplication;
 import idealworld.dew.framework.DewConfig;
 import io.vertx.core.Future;
 
+/**
+ * 网关测试启动类.
+ *
+ * @author gudaoxuri
+ */
 public class GatewayApplicationTest extends DewApplication<GatewayApplicationTest.TestDewGatewayConfig> {
 
     @Override

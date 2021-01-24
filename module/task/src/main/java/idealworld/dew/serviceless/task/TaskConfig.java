@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 
 
 /**
- * Task config.
+ * 任务配置.
  *
  * @author gudaoxuri
  */

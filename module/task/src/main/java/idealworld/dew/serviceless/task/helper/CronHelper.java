@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Cron辅助类.
+ *
  * @author gudaoxuri
  */
 @Slf4j

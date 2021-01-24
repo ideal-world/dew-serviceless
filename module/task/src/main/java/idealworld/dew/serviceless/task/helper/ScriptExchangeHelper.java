@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 /**
+ * 脚本语言交互辅助类.
+ *
  * @author gudaoxuri
  */
 @Slf4j

@@ -20,6 +20,11 @@ import idealworld.dew.framework.DewAuthApplication;
 import idealworld.dew.framework.DewAuthConfig;
 import io.vertx.core.Future;
 
+/**
+ * 任务测试启动类.
+ *
+ * @author gudoaxuri
+ */
 public class TaskApplicationTest extends DewAuthApplication<TaskApplicationTest.TestDewTaskConfig> {
 
     @Override

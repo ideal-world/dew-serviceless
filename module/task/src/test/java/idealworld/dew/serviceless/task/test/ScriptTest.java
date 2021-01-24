@@ -34,6 +34,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
+ * 脚本测试.
+ *
  * @author gudaoxuri
  */
 public class ScriptTest {

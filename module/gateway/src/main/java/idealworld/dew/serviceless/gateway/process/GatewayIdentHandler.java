@@ -45,7 +45,7 @@ import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 /**
- * 认证处理器
+ * 认证处理器.
  *
  * @author gudaoxuri
  */
@@ -62,10 +62,15 @@ public class GatewayIdentHandler extends AuthHttpHandler {
     @SneakyThrows
     @Override
     public void handle(RoutingContext ctx) {
+        var remoteIP = getIP(ctx.request());
         log.trace("[Process]Received {}:{}{} from {}",
                 ctx.request().method(),
                 ctx.request().path(),
-                ctx.request().query() == null ? "" : "?" + ctx.request().query(), getIP(ctx.request()));
+                ctx.request().query() == null ? "" : "?" + ctx.request().query(), remoteIP);
+        if (security.getBlockIps().containsKey(remoteIP)) {
+            error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "请求IP不合法", ctx);
+            return;
+        }
         // checker
         if (ctx.request().query() == null || ctx.request().query().trim().isBlank()) {
             error(StandardCode.BAD_REQUEST, GatewayIdentHandler.class, "请求格式不合法，缺少query", ctx);

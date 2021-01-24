@@ -44,6 +44,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
+/**
+ * 任务流程测试.
+ *
+ * @author gudaoxuri
+ */
 public class TaskFlowTest extends DewTest {
 
     static {
@@ -53,7 +58,7 @@ public class TaskFlowTest extends DewTest {
 
     private static final String MODULE_NAME = new TaskModule().getModuleName();
 
-    private static String testJS = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/test.js")))
+    private static final String testJS = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/test.js")))
             .lines().collect(Collectors.joining("\n"));
 
     @BeforeAll

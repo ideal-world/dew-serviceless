@@ -19,7 +19,7 @@ package idealworld.dew.framework.fun.httpserver;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * HTTP 处理器.
+ * HTTP处理器.
  *
  * @author gudaoxuri
  */

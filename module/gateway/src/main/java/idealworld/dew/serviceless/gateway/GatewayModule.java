@@ -29,6 +29,8 @@ import io.vertx.core.http.HttpMethod;
 import java.util.Arrays;
 
 /**
+ * 网关模块.
+ *
  * @author gudaoxuri
  */
 public class GatewayModule extends DewModule<GatewayConfig> {

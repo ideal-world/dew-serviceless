@@ -40,6 +40,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
+ * 脚本处理器.
+ *
  * @author gudaoxuri
  */
 @Slf4j

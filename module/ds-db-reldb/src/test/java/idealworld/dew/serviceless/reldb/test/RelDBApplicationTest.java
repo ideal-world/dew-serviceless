@@ -21,7 +21,7 @@ import idealworld.dew.framework.DewAuthConfig;
 import io.vertx.core.Future;
 
 /**
- * 关系型数据库测试类.
+ * 关系型数据库测试启动类.
  *
  * @author gudaoxuri
  */

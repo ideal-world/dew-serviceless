@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.net.URI;
 
 /**
- * 鉴权处理器
+ * 鉴权处理器.
  *
  * @author gudaoxuri
  */

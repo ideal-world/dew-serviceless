@@ -21,7 +21,7 @@ import idealworld.dew.framework.DewAuthConfig;
 import io.vertx.core.Future;
 
 /**
- * 缓存测试类.
+ * 缓存测试启动类.
  *
  * @author gudaoxuri
  */

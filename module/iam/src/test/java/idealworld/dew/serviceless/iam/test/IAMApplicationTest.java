@@ -21,7 +21,7 @@ import idealworld.dew.framework.DewConfig;
 import io.vertx.core.Future;
 
 /**
- * IAM测试类.
+ * IAM测试启动类.
  *
  * @author gudaoxuri
  */

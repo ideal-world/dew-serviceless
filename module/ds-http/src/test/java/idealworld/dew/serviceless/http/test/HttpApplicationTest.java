@@ -21,7 +21,7 @@ import idealworld.dew.framework.DewAuthConfig;
 import io.vertx.core.Future;
 
 /**
- * HTTP测试类.
+ * HTTP测试启动类.
  *
  * @author gudaoxuri
  */

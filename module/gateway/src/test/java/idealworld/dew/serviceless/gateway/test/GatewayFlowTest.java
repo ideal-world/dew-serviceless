@@ -44,6 +44,11 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.TimeZone;
 
+/**
+ * 网关流程测试.
+ *
+ * @author gudaoxuri
+ */
 public class GatewayFlowTest extends DewTest {
 
     static {
@@ -105,7 +110,7 @@ public class GatewayFlowTest extends DewTest {
                 "测试内容");
         Assertions.assertEquals(200, result.statusCode);
         var data = new JsonObject(result.result);
-        Assertions.assertEquals("测试内容",data.getJsonObject("body").getString("data"));
+        Assertions.assertEquals("测试内容", data.getJsonObject("body").getString("data"));
         testContext.completeNow();
     }
 
@@ -147,7 +152,7 @@ public class GatewayFlowTest extends DewTest {
                     });
             Assertions.assertEquals(200, result.statusCode);
             var data = new JsonObject(result.result);
-            Assertions.assertEquals("测试内容",data.getJsonObject("body").getString("data"));
+            Assertions.assertEquals("测试内容", data.getJsonObject("body").getString("data"));
             testContext.completeNow();
         });
     }
