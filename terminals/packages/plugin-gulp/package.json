@@ -1,6 +1,6 @@
 {
   "name": "@idealworld/plugin-gulp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Dew Serviceless plugin Gulp",
   "main": "dist/index",
   "typings": "dist/index",
@@ -32,7 +32,7 @@
     "gulpplugin"
   ],
   "dependencies": {
-    "@idealworld/plugin-kernel": "^0.2.0"
+    "@idealworld/plugin-kernel": "^0.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
