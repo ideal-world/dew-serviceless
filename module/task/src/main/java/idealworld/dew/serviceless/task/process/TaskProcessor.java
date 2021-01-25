@@ -16,9 +16,11 @@
 
 package idealworld.dew.serviceless.task.process;
 
+import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.NotFoundException;
+import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.serviceless.task.TaskConfig;
@@ -52,33 +54,49 @@ public class TaskProcessor extends EventBusProcessor {
 
     {
         // 初始化任务列表
-        addProcessor(OptActionKind.CREATE, "/task", eventBusContext ->
-                initTasks(
-                        eventBusContext.req.body(String.class),
-                        eventBusContext.req.identOptInfo.getAppId(),
-                        eventBusContext.context));
+        addProcessor(OptActionKind.CREATE, "/task", eventBusContext -> {
+            if (!eventBusContext.req.identOptInfo.getAccountCode().equalsIgnoreCase(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG)) {
+                throw new UnAuthorizedException("该方法仅允许AKSK认证模式下使用");
+            }
+            return initTasks(
+                    eventBusContext.req.body(String.class),
+                    eventBusContext.req.identOptInfo.getAppId(),
+                    eventBusContext.context);
+        });
         // 添加当前应用的任务
-        addProcessor(OptActionKind.CREATE, "/task/{taskCode}", eventBusContext ->
-                addTask(
-                        eventBusContext.req.params.get("taskCode"),
-                        eventBusContext.req.params.getOrDefault("cron", ""),
-                        eventBusContext.req.body(String.class),
-                        eventBusContext.req.identOptInfo.getAppId(),
-                        eventBusContext.context));
+        addProcessor(OptActionKind.CREATE, "/task/{taskCode}", eventBusContext -> {
+            if (!eventBusContext.req.identOptInfo.getAccountCode().equalsIgnoreCase(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG)) {
+                throw new UnAuthorizedException("该方法仅允许AKSK认证模式下使用");
+            }
+            return addTask(
+                    eventBusContext.req.params.get("taskCode"),
+                    eventBusContext.req.params.getOrDefault("cron", ""),
+                    eventBusContext.req.body(String.class),
+                    eventBusContext.req.identOptInfo.getAppId(),
+                    eventBusContext.context);
+        });
         // 修改当前应用的某个任务
-        addProcessor(OptActionKind.MODIFY, "/task/{taskCode}", eventBusContext ->
-                modifyTask(
-                        eventBusContext.req.params.get("taskCode"),
-                        eventBusContext.req.params.getOrDefault("cron", ""),
-                        eventBusContext.req.body(String.class),
-                        eventBusContext.req.identOptInfo.getAppId(),
-                        eventBusContext.context));
+        addProcessor(OptActionKind.MODIFY, "/task/{taskCode}", eventBusContext -> {
+            if (!eventBusContext.req.identOptInfo.getAccountCode().equalsIgnoreCase(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG)) {
+                throw new UnAuthorizedException("该方法仅允许AKSK认证模式下使用");
+            }
+            return modifyTask(
+                    eventBusContext.req.params.get("taskCode"),
+                    eventBusContext.req.params.getOrDefault("cron", ""),
+                    eventBusContext.req.body(String.class),
+                    eventBusContext.req.identOptInfo.getAppId(),
+                    eventBusContext.context);
+        });
         // 删除当前应用的某个任务
-        addProcessor(OptActionKind.DELETE, "/task/{taskCode}", eventBusContext ->
-                deleteTask(
-                        eventBusContext.req.params.get("taskCode"),
-                        eventBusContext.req.identOptInfo.getAppId(),
-                        eventBusContext.context));
+        addProcessor(OptActionKind.DELETE, "/task/{taskCode}", eventBusContext -> {
+            if (!eventBusContext.req.identOptInfo.getAccountCode().equalsIgnoreCase(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG)) {
+                throw new UnAuthorizedException("该方法仅允许AKSK认证模式下使用");
+            }
+            return deleteTask(
+                    eventBusContext.req.params.get("taskCode"),
+                    eventBusContext.req.identOptInfo.getAppId(),
+                    eventBusContext.context);
+        });
         // 执行当前应用的某个任务
         addProcessor(OptActionKind.CREATE, "/exec/{taskCode}", eventBusContext ->
                 execTask(

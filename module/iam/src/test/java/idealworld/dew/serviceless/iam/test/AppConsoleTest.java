@@ -96,7 +96,7 @@ public class AppConsoleTest extends IAMBasicTest {
                 .uri("mysql://xxxxx")
                 .build(), Long.class)._0;
         Assertions.assertEquals("资源主体编码已存在", req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .codePostfix("defaultmysql")
+                .codePostfix(" defaultmysql ")
                 .kind(ResourceKind.RELDB)
                 .name("mysql")
                 .uri("mysql://xxxxx")

@@ -16,7 +16,6 @@
 
 package idealworld.dew.serviceless.service.test;
 
-import com.ecfront.dew.common.$;
 import idealworld.dew.framework.dto.OptActionKind;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
@@ -29,18 +28,10 @@ import java.util.Map;
 
 public class TodoTest extends ITBasicTest {
 
-    private static final Integer APP_ID = 2;
-
-    private String publicKey;
-
-    private String encrypt(String sql) {
-        return $.security.encodeBytesToBase64($.security.asymmetric.encrypt(sql.getBytes(), $.security.asymmetric.getPublicKey(publicKey, "RSA"), 1024, "RSA/ECB/OAEPWithSHA1AndMGF1Padding"));
-    }
-
     @Test
     public void testTodo(Vertx vertx, VertxTestContext testContext) {
         // 注册租户
-        var appAdminIdentOpt = req(OptActionKind.CREATE, "http://iam/common/tenant", new HashMap<String, Object>() {
+        var appAdminIdentOpt =  req(OptActionKind.CREATE, "http://iam/common/tenant", new HashMap<String, Object>() {
             {
                 put("tenantName", "测试租户1");
                 put("appName", "测试应用");
@@ -50,8 +41,9 @@ public class TodoTest extends ITBasicTest {
         }, null, null, Map.class);
         Assertions.assertNotNull(appAdminIdentOpt);
         var appAdminToken = appAdminIdentOpt.get("token").toString();
-        // 获取当前应用的公钥
-        publicKey = req(OptActionKind.FETCH, "http://iam/console/app/app/publicKey", "", appAdminToken, null, String.class);
+        var appCode = appAdminIdentOpt.get("appCode").toString();
+        // 获取应用Id
+        var appId = req(OptActionKind.FETCH, "http://iam/console/tenant/app/id?appCode="+appCode, null, appAdminToken, null, Long.class);
         // 添加角色定义
         var roleDefId = req(OptActionKind.CREATE, "http://iam/console/app/role/def", new HashMap<String, Object>() {
             {
@@ -80,15 +72,15 @@ public class TodoTest extends ITBasicTest {
             }
         }, appAdminToken, null, Long.class);
         // 添加普通用户到应用
-        req(OptActionKind.CREATE, "http://iam/console/tenant/account/" + accountId + "/app/" + APP_ID, "", appAdminToken, null, Long.class);
+        req(OptActionKind.CREATE, "http://iam/console/tenant/account/" + accountId + "/app/" + appId, "", appAdminToken, null, Long.class);
         // 添加普通用户到角色
         req(OptActionKind.CREATE, "http://iam/console/tenant/account/" + accountId + "/role/" + roleId, "", appAdminToken, null, Long.class);
         // 普通用户登录
-         req(OptActionKind.CREATE, "http://iam/common/login", new HashMap<String, Object>() {
+        req(OptActionKind.CREATE, "http://iam/common/login", new HashMap<String, Object>() {
             {
                 put("ak", "gdxr");
                 put("sk", "sossd#@x3");
-                put("relAppId", APP_ID);
+                put("relAppCode", appCode);
             }
         }, null, null, Map.class);
         // 测试二次登录时Redis中的Token是否正常
@@ -96,7 +88,7 @@ public class TodoTest extends ITBasicTest {
             {
                 put("ak", "gdxr");
                 put("sk", "sossd#@x3");
-                put("relAppId", APP_ID);
+                put("relAppCode", appCode);
             }
         }, null, null, Map.class);
         var userToken = userIdentOpt.get("token").toString();
@@ -128,12 +120,12 @@ public class TodoTest extends ITBasicTest {
         // 应用管理员添加数据库资源
         var resourceId = req(OptActionKind.CREATE, "http://iam/console/app/resource", new HashMap<String, Object>() {
             {
-                put("name", "todoDB Task表");
-                put("pathAndQuery", "/task");
+                put("name", "todoDB ToDo表");
+                put("pathAndQuery", "/TODO/**");
                 put("relResourceSubjectId", resourceSubjectId);
             }
         }, appAdminToken, null, Long.class);
-        // 普通用户可以操作task表
+        // 普通用户可以操作todo表
         req(OptActionKind.CREATE, "http://iam/console/app/authpolicy", new HashMap<String, Object>() {
             {
                 put("relSubjectKind", "ROLE");
@@ -145,9 +137,9 @@ public class TodoTest extends ITBasicTest {
         }, appAdminToken, null, Void.class);
         // 未注册用户不能添加记录
         try {
-            req(OptActionKind.CREATE, "reldb://" + APP_ID + ".reldb.todoDB", new HashMap<String, Object>() {
+            req(OptActionKind.CREATE, "reldb://" + appCode + ".reldb.todoDB", new HashMap<String, Object>() {
                 {
-                    put("sql", encrypt("insert into task(content, create_user, update_user) values (?, ?, ?)"));
+                    put("sql","insert into todo(content, create_user, update_user) values (?, ?, ?)");
                     put("parameters", new ArrayList<>() {
                         {
                             add(userIdentOpt.get("accountCode"));
@@ -161,9 +153,9 @@ public class TodoTest extends ITBasicTest {
         } catch (Exception ignored) {
         }
         // 注册用户添加记录
-        reqList(OptActionKind.CREATE, "reldb://" + APP_ID + ".reldb.todoDB", new HashMap<String, Object>() {
+        reqList(OptActionKind.CREATE, "reldb://" +  appCode + ".reldb.todoDB", new HashMap<String, Object>() {
             {
-                put("sql", encrypt("insert into task(content, create_user, update_user) values (?, ?, ?)"));
+                put("sql", "insert into todo(content, create_user, update_user) values (?, ?, ?)");
                 put("parameters", new ArrayList<>() {
                     {
                         add("还款");
@@ -174,9 +166,9 @@ public class TodoTest extends ITBasicTest {
             }
         }, userToken, null, Map.class);
         // 注册用户获取所有记录
-        var taskList = reqList(OptActionKind.FETCH, "reldb://" + APP_ID + ".reldb.todoDB", new HashMap<String, Object>() {
+        var todoList = reqList(OptActionKind.FETCH, "reldb://" + appCode + ".reldb.todoDB", new HashMap<String, Object>() {
             {
-                put("sql", encrypt("select * from task where create_user = ?"));
+                put("sql", "select * from todo where create_user = ?");
                 put("parameters", new ArrayList<>() {
                     {
                         add(userIdentOpt.get("accountCode"));
@@ -184,8 +176,8 @@ public class TodoTest extends ITBasicTest {
                 });
             }
         }, userToken, null, Map.class);
-        Assertions.assertEquals(1, taskList.size());
-        Assertions.assertEquals("还款", taskList.get(0).get("content"));
+        Assertions.assertEquals(1, todoList.size());
+        Assertions.assertEquals("还款", todoList.get(0).get("content"));
         testContext.completeNow();
     }
 

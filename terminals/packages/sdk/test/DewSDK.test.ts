@@ -16,20 +16,27 @@
 
 
 import {DewSDK} from "@idealworld/sdk";
+import {ResourceKind} from "../src/domain/Enum";
 
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000"
-// TODO
-const APP_ID = ''
+
+// 请先启动 TestServicelessApplication 并修改此变量
+let APP_ID = 'apd10636b51ed84fd5986ade4bc8832543'
 const USERNAME = "dew"
 const PASSWORD = "TestPwd1d"
 
-beforeAll(() => {
+beforeEach(async () => {
     DewSDK.init(GATEWAY_SERVER_URL, APP_ID)
 })
 
 test('Test iam sdk', async () => {
-    let identOptInfo = await DewSDK.iam.account.login(USERNAME, PASSWORD)
+    let identOptInfo = await DewSDK.iam.tenant.register('t1', 'a1', USERNAME, PASSWORD)
+    let newAppCode = identOptInfo.appCode
+    DewSDK.setting.appId(newAppCode)
+    identOptInfo = await DewSDK.iam.account.login(USERNAME, PASSWORD)
     expect(identOptInfo.roleInfo[0].name).toContain('管理员')
+    let resourceSubjectId = await DewSDK.iam.resource.subject.create('menu', ResourceKind.MENU, '菜单', 'menu://iam', '', '')
+    await DewSDK.iam.resource.create('用户模块', '/user', resourceSubjectId)
     let menus = await DewSDK.iam.resource.menu.fetch()
     expect(menus.length).toBe(1)
     let eles = await DewSDK.iam.resource.ele.fetch()
@@ -96,7 +103,6 @@ test('Test reldb sdk', async () => {
     await DewSDK.iam.account.login(USERNAME, PASSWORD)
     let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
     let accounts = await DewSDK.reldb.exec('select name from iam_account', [])
-    expect(accounts.length).toBe(1)
     // @ts-ignore
     expect(accounts[0].name).toBe('dew')
     accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['dew'])
@@ -106,56 +112,66 @@ test('Test reldb sdk', async () => {
     accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['dew2'])
     expect(accounts.length).toBe(0)
     // subject
-    accounts = await DewSDK.reldb.subject(APP_ID + '.reldb.default').exec('select name from iam_account', [])
-    expect(accounts.length).toBe(1)
+    accounts = await DewSDK.reldb.subject('default').exec('select name from iam_account', [])
     // @ts-ignore
     expect(accounts[0].name).toBe('dew')
 })
 
 test('Test http sdk', async () => {
     // get
-    let getR = await DewSDK.http.subject("1.http.httpbin").get<any>('/get')
+    let getR = await DewSDK.http.subject("httpbin").get<any>('/get')
     expect(getR.body.url).toBe('https://127.0.0.1/get')
-    getR = await DewSDK.http.subject("1.http.httpbin").get<any>('/get', {
+    getR = await DewSDK.http.subject("httpbin").get<any>('/get', {
         'Customer-A': 'AAA'
     })
     expect(getR.body.headers['Customer-A']).toBe('AAA')
     // delete
-    await DewSDK.http.subject("1.http.httpbin").delete('/delete')
+    await DewSDK.http.subject("httpbin").delete('/delete')
     // post
-    let postR = await DewSDK.http.subject("1.http.httpbin").post<any>('/post', 'some data')
+    let postR = await DewSDK.http.subject("httpbin").post<any>('/post', 'some data')
     expect(postR.body.data).toBe('some data')
     // put
-    let putR = await DewSDK.http.subject("1.http.httpbin").put<any>('/put', 'some data')
+    let putR = await DewSDK.http.subject("httpbin").put<any>('/put', 'some data')
     expect(putR.body.data).toBe('some data')
     // patch
-    let patchR = await DewSDK.http.subject("1.http.httpbin").patch<any>('/patch', 'some data')
+    let patchR = await DewSDK.http.subject("httpbin").patch<any>('/patch', 'some data')
     expect(patchR.body.data).toBe('some data')
 }, 200000)
 
 test('Test task sdk', async done => {
-    await DewSDK.task.create("invoke", `
-      await DewSDK.iam.account.login('` + USERNAME + `', '` + PASSWORD + `', ` + APP_ID + `)
-      await DewSDK.iam.account.register("后台添加用户")
-      `)
+    await DewSDK.iam.account.login(USERNAME, PASSWORD)
+    let ident = (await DewSDK.iam.app.ident.list()).objects[0]
+    let sk = (await DewSDK.iam.app.ident.fetchSk(ident.id))
+    DewSDK.setting.aksk(ident.ak, sk)
+
+    await DewSDK.task.initTasks(`
+const JVM = {
+  DewSDK: {
+    iam: {
+      auth: {
+        create: function(){
+          return ''
+        }
+      }
+    }
+  }
+}
+async function add(x, y){
+  return x + y
+}
+    `)
     await DewSDK.task.create("timer", `
-    await DewSDK.iam.account.login('` + USERNAME + `', '` + PASSWORD + `', ` + APP_ID + `)
-    await DewSDK.iam.account.register("xxxx")
+$.info(message)
     `, '/5 * * * * ?')
     await DewSDK.task.modify("timer", `
-    await DewSDK.iam.account.login('` + USERNAME + `', '` + PASSWORD + `', ` + APP_ID + `)
-    await DewSDK.iam.account.register("定时添加用户")
+$.info('>>> timer ')
+return 'timer'
     `, '/5 * * * * ?')
-    await DewSDK.task.execute("invoke",[])
+    expect(await DewSDK.task.execute("add", [10, 20])).toBe(30)
+    expect(await DewSDK.task.execute("timer", [])).toBe('timer')
     setTimeout(async () => {
-        await DewSDK.task.delete("invoke")
         await DewSDK.task.delete("timer")
-        await DewSDK.iam.account.login(USERNAME, PASSWORD)
-        let accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['后台添加用户'])
-        expect(accounts.length).toBe(1)
-        accounts = await DewSDK.reldb.exec('select name from iam_account where name = ?', ['定时添加用户'])
-        expect(accounts.length).toBeGreaterThan(1)
         done()
-    }, 30000)
-}, 200000)
+    }, 10000)
+}, 15000)
 

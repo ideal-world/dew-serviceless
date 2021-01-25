@@ -50,6 +50,9 @@ public class TCAppProcessor extends EventBusProcessor {
         // 获取当前租户的某个应用信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/app/{appId}", eventBusContext ->
                 getApp(Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+        // 获取当前租户的某个应用的Id
+        addProcessor(OptActionKind.FETCH, "/console/tenant/app/id", eventBusContext ->
+                getAppIdByCode(eventBusContext.req.params.get("appCode"), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的应用列表信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/app", eventBusContext ->
                 pageApps(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
@@ -60,7 +63,7 @@ public class TCAppProcessor extends EventBusProcessor {
     }
 
     public static Future<Long> addApp(AppAddReq appAddReq, Long relTenantId, ProcessContext context) {
-        var appCode = $.field.createShortUUID();
+        var appCode = "ap" + $.field.createUUID().toLowerCase();
         return context.helper.existToError(
                 context.sql.exists(
                         new HashMap<>() {
@@ -73,7 +76,7 @@ public class TCAppProcessor extends EventBusProcessor {
                 .compose(resp -> {
                     var app = $.bean.copyProperties(appAddReq, App.class);
                     var keys = $.security.asymmetric.generateKeys("RSA", 1024);
-                    app.setOpenId($.field.createShortUUID());
+                    app.setOpenId(appCode);
                     app.setPubKey(keys.get("PublicKey"));
                     app.setPriKey(keys.get("PrivateKey"));
                     app.setRelTenantId(relTenantId);
@@ -141,6 +144,10 @@ public class TCAppProcessor extends EventBusProcessor {
                 },
                 App.class)
                 .compose(app -> context.helper.success(app, AppResp.class));
+    }
+
+    public static Future<Long> getAppIdByCode(String appCode, Long relTenantId, ProcessContext context) {
+        return IAMBasicProcessor.getAppIdByCode(appCode, relTenantId, context);
     }
 
     public static Future<Page<AppResp>> pageApps(String name, Long pageNumber, Long pageSize, Long relTenantId, ProcessContext context) {

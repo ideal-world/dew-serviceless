@@ -21,8 +21,8 @@ import {replaceImport, rewriteAction} from "../src";
 test('Test replace import', async () => {
     let path = fsPath.resolve(process.cwd(), 'test', 'actions', 'TodoAction1.js')
     let fileContent = fs.readFileSync(path, 'utf8')
-    expect(replaceImport(fileContent,true)).toContain(`const jvm_1 = require("@idealworld/sdk/dist/jvm");`)
-    expect(replaceImport(fileContent,false)).toContain(`const jvm_1 = require("@idealworld/sdk");`)
+    expect(replaceImport(fileContent,true)).toContain(`const sdk_1 = require("@idealworld/sdk/dist/jvm");`)
+    expect(replaceImport(fileContent,false)).toContain(`const sdk_1 = require("@idealworld/sdk");`)
 })
 
 test('Test re-write action', async () => {

@@ -32,6 +32,7 @@ import idealworld.dew.serviceless.iam.domain.auth.Resource;
 import idealworld.dew.serviceless.iam.domain.auth.ResourceSubject;
 import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import idealworld.dew.serviceless.iam.exchange.ExchangeProcessor;
+import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.resource.*;
 import io.vertx.core.Future;
 
@@ -90,46 +91,49 @@ public class ACResourceProcessor extends EventBusProcessor {
     }
 
     public static Future<Long> addResourceSubject(ResourceSubjectAddReq resourceSubjectAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
-        var resourceCode = relAppId + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
-                + resourceSubjectAddReq.getKind().toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
-                + resourceSubjectAddReq.getCodePostfix();
-        resourceSubjectAddReq.setUri(URIHelper.formatUri(resourceSubjectAddReq.getUri()));
-        return context.helper.existToError(
-                context.sql.exists(
-                        new HashMap<>() {
-                            {
-                                put("code", resourceCode);
-                                put("rel_app_id", relAppId);
-                                put("rel_tenant_id", relTenantId);
-                            }
-                        },
-                        ResourceSubject.class), () -> new ConflictException("资源主体编码已存在"))
-                .compose(resp -> {
-                    var resourceSubject = context.helper.convert(resourceSubjectAddReq, ResourceSubject.class);
-                    resourceSubject.setCode(resourceCode);
-                    resourceSubject.setRelTenantId(relTenantId);
-                    resourceSubject.setRelAppId(relAppId);
-                    return context.sql.save(resourceSubject);
-                })
-                .compose(resourceSubjectId -> context.sql.getOne(resourceSubjectId, ResourceSubject.class))
-                .compose(resourceSubject -> {
-                    ExchangeProcessor.publish(
-                            OptActionKind.CREATE,
-                            ResourceSubject.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind(),
-                            resourceSubject.getId(),
-                            ResourceSubjectExchange.builder()
-                                    .code(resourceSubject.getCode())
-                                    .name(resourceSubject.getName())
-                                    .kind(resourceSubject.getKind())
-                                    .uri(resourceSubject.getUri())
-                                    .ak(resourceSubject.getAk())
-                                    .sk(resourceSubject.getSk())
-                                    .platformAccount(resourceSubject.getPlatformAccount())
-                                    .platformProjectId(resourceSubject.getPlatformProjectId())
-                                    .timeoutMs(resourceSubject.getTimeoutMs())
-                                    .build(),
-                            context);
-                    return context.helper.success(resourceSubject.getId());
+        return IAMBasicProcessor.getAppCodeById(relAppId, relTenantId, context)
+                .compose(appCode -> {
+                    var resourceCode = appCode + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                            + resourceSubjectAddReq.getKind().toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                            + resourceSubjectAddReq.getCodePostfix();
+                    resourceSubjectAddReq.setUri(URIHelper.formatUri(resourceSubjectAddReq.getUri()));
+                    return context.helper.existToError(
+                            context.sql.exists(
+                                    new HashMap<>() {
+                                        {
+                                            put("code", resourceCode);
+                                            put("rel_app_id", relAppId);
+                                            put("rel_tenant_id", relTenantId);
+                                        }
+                                    },
+                                    ResourceSubject.class), () -> new ConflictException("资源主体编码已存在"))
+                            .compose(resp -> {
+                                var resourceSubject = context.helper.convert(resourceSubjectAddReq, ResourceSubject.class);
+                                resourceSubject.setCode(resourceCode);
+                                resourceSubject.setRelTenantId(relTenantId);
+                                resourceSubject.setRelAppId(relAppId);
+                                return context.sql.save(resourceSubject);
+                            })
+                            .compose(resourceSubjectId -> context.sql.getOne(resourceSubjectId, ResourceSubject.class))
+                            .compose(resourceSubject -> {
+                                ExchangeProcessor.publish(
+                                        OptActionKind.CREATE,
+                                        ResourceSubject.class.getSimpleName().toLowerCase() + "." + resourceSubject.getKind(),
+                                        resourceSubject.getId(),
+                                        ResourceSubjectExchange.builder()
+                                                .code(resourceSubject.getCode())
+                                                .name(resourceSubject.getName())
+                                                .kind(resourceSubject.getKind())
+                                                .uri(resourceSubject.getUri())
+                                                .ak(resourceSubject.getAk())
+                                                .sk(resourceSubject.getSk())
+                                                .platformAccount(resourceSubject.getPlatformAccount())
+                                                .platformProjectId(resourceSubject.getPlatformProjectId())
+                                                .timeoutMs(resourceSubject.getTimeoutMs())
+                                                .build(),
+                                        context);
+                                return context.helper.success(resourceSubject.getId());
+                            });
                 });
     }
 
@@ -143,23 +147,26 @@ public class ACResourceProcessor extends EventBusProcessor {
             if (resourceSubjectModifyReq.getKind() == null) {
                 throw new BadRequestException("资源主体编码后缀与类型必须同时存在");
             }
-            var resourceSubjectCode = relAppId + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
-                    + resourceSubjectModifyReq.getKind().toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
-                    + resourceSubjectModifyReq.getCodePostfix();
-            resourceSubject.setCode(resourceSubjectCode);
-            future
-                    .compose(resp ->
-                            context.helper.existToError(
-                                    context.sql.exists(
-                                            new HashMap<>() {
-                                                {
-                                                    put("!id", resourceSubjectId);
-                                                    put("code", resourceSubjectCode);
-                                                    put("rel_app_id", relAppId);
-                                                    put("rel_tenant_id", relTenantId);
-                                                }
-                                            },
-                                            ResourceSubject.class), () -> new ConflictException("资源主体编码已存在")));
+            future =
+                    IAMBasicProcessor.getAppCodeById(relAppId, relTenantId, context)
+                            .compose(appCode -> {
+                                var resourceSubjectCode = appCode + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                                        + resourceSubjectModifyReq.getKind().toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                                        + resourceSubjectModifyReq.getCodePostfix();
+                                resourceSubject.setCode(resourceSubjectCode);
+                                return context.helper.existToError(
+                                        context.sql.exists(
+                                                new HashMap<>() {
+                                                    {
+                                                        put("!id", resourceSubjectId);
+                                                        put("code", resourceSubjectCode);
+                                                        put("rel_app_id", relAppId);
+                                                        put("rel_tenant_id", relTenantId);
+                                                    }
+                                                },
+                                                ResourceSubject.class), () -> new ConflictException("资源主体编码已存在"));
+                            })
+                            .compose(resp -> context.helper.success(null));
         }
         return future
                 .compose(resp ->

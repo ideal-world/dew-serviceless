@@ -19,7 +19,10 @@ package idealworld.dew.serviceless.service;
 import idealworld.dew.framework.DewAuthConfig;
 
 /**
+ * 聚合服务配置.
+ *
  * @author gudaoxuri
  */
 public class ServicelessConfig extends DewAuthConfig {
+
 }

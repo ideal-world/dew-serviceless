@@ -29,6 +29,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.BeforeAll;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 
@@ -56,7 +58,7 @@ public class ITBasicTest extends DewTest {
             header.put("Dew-App-Id", appId + "");
         }
         var response = $.http.postWrap(gatewayServerUrl + "?"
-                + DewConstant.REQUEST_RESOURCE_URI_FLAG + "=" + resourceUri
+                + DewConstant.REQUEST_RESOURCE_URI_FLAG + "=" + URLEncoder.encode(resourceUri, StandardCharsets.UTF_8)
                 + "&"
                 + DewConstant.REQUEST_RESOURCE_ACTION_FLAG + "=" + optActionKind.toString(), body == null || body instanceof String ? Buffer.buffer() : JsonObject.mapFrom(body).toString(), header);
         if (response.statusCode != 200) {

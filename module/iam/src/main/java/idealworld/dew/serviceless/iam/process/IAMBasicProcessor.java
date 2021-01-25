@@ -21,6 +21,7 @@ import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.framework.exception.BadRequestException;
+import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.serviceless.iam.IAMConstant;
@@ -421,6 +422,34 @@ public class IAMBasicProcessor {
                             .collect(Collectors.toSet());
                     return context.helper.success(groupInfos);
                 });
+    }
+
+    public static Future<String> getAppCodeById(Long appId, Long relTenantId, ProcessContext context) {
+        if (appId == null || appId == DewConstant.OBJECT_UNDEFINED) {
+            throw new NotFoundException("找不到对应的应用");
+        }
+        return context.helper.notExistToError(
+                context.sql.getOne(String.format("SELECT open_id FROM %s WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}", new App().tableName()), new HashMap<>() {
+                    {
+                        put("id", appId);
+                        put("rel_tenant_id", relTenantId);
+                    }
+                }), () -> new NotFoundException("找不到对应的应用"))
+                .compose(resp -> context.helper.success(resp.getString("open_id")));
+    }
+
+    public static Future<Long> getAppIdByCode(String appCode, Long relTenantId, ProcessContext context) {
+        if (appCode == null || appCode.trim().isEmpty()) {
+            throw new NotFoundException("找不到对应的应用");
+        }
+        return context.helper.notExistToError(
+                context.sql.getOne(String.format("SELECT id FROM %s WHERE open_id = #{open_id} AND rel_tenant_id = #{rel_tenant_id}", new App().tableName()), new HashMap<>() {
+                    {
+                        put("open_id", appCode);
+                        put("rel_tenant_id", relTenantId);
+                    }
+                }), () -> new NotFoundException("找不到对应的应用"))
+                .compose(resp -> context.helper.success(resp.getLong("id")));
     }
 
 }

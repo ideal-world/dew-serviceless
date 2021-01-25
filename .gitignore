@@ -39,3 +39,4 @@ yarn.lock
 *-prod.yaml
 *-prod.json
 *.secret
+*.crt

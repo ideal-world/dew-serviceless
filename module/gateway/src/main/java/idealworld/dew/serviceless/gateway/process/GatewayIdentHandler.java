@@ -66,7 +66,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
         log.trace("[Process]Received {}:{}{} from {}",
                 ctx.request().method(),
                 ctx.request().path(),
-                ctx.request().query() == null ? "" : "?" + ctx.request().query(), remoteIP);
+                ctx.request().query() == null ? "" : "?" + URLDecoder.decode(ctx.request().query(), StandardCharsets.UTF_8), remoteIP);
         if (security.getBlockIps().containsKey(remoteIP)) {
             error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "请求IP不合法", ctx);
             return;
@@ -158,7 +158,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                             return;
                         }
                         identOptInfo.setUnauthorizedAppId(identOptInfo.getAppId());
-                        identOptInfo.setUnauthorizedTenantId(identOptInfo.getUnauthorizedTenantId());
+                        identOptInfo.setUnauthorizedTenantId(identOptInfo.getTenantId());
                         identOptInfo.setToken(token);
                         ctx.put(CONTEXT_INFO, identOptInfo);
                         ctx.next();
@@ -215,6 +215,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                     identOptInfo.setTenantId(tenantId);
                     identOptInfo.setUnauthorizedAppId(appId);
                     identOptInfo.setUnauthorizedTenantId(tenantId);
+                    identOptInfo.setAccountCode(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG);
                     ctx.put(CONTEXT_INFO, identOptInfo);
                     ctx.next();
                 })

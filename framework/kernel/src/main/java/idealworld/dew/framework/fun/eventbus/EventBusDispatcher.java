@@ -89,7 +89,7 @@ public class EventBusDispatcher {
         }
         var matchedPathTemplate = PROCESSORS.get(moduleName).get(actionKind).keySet()
                 .stream()
-                .filter(pathPattern -> PATH_MATCHER.match(pathPattern, pathRequest))
+                .filter(pathPattern -> PATH_MATCHER.match(pathPattern.toLowerCase(), pathRequest.toLowerCase()))
                 .findAny();
         if (matchedPathTemplate.isEmpty()) {
             log.warn("[EventBus]Can't found process by [{}] {}", actionKind.toString(), pathRequest);

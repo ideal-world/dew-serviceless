@@ -55,7 +55,7 @@
   },
   "gitHead": "92f0ec9a9087ecf0d9b24bcadedf27c6526d3176",
   "dew": {
-    "serverUrl": "http://127.0.0.1:9000",
-    "appId": 1
+    "serverUrl": "",
+    "appId": ""
   }
 }

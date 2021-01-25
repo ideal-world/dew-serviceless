@@ -172,10 +172,10 @@ public class CommonProcessor extends EventBusProcessor {
                                             .sk(tenantRegisterReq.getAccountPassword())
                                             .build(), dto.tenantId, context);
                         })
-                        //  初始化账号应用
+                        // 初始化账号应用
                         .compose(resp ->
                                 TCAccountProcessor.addAccountApp(dto.accountId, dto.appId, dto.tenantId, context))
-                        //  初始化账号角色
+                        // 初始化账号角色
                         .compose(resp ->
                                 ACRoleProcessor.getTenantAdminRoleId(context)
                                         .compose(tenantAdminRoleId ->
@@ -191,7 +191,7 @@ public class CommonProcessor extends EventBusProcessor {
     }
 
     public static Future<IdentOptInfo> registerAccount(AccountRegisterReq accountRegisterReq, ProcessContext context) {
-        var accountCode = $.field.createUUID();
+        var accountCode = "ac" + $.field.createUUID();
         return context.sql.tx(context, () ->
                 context.sql.getOne(String.format("SELECT id  FROM %s WHERE open_id = #{open_id}", new App().tableName()), new HashMap<>() {
                     {

@@ -67,7 +67,10 @@ public class LocalResourceCache {
         if (!LOCAL_RESOURCES.get(resourceKind).containsKey(actionKind)) {
             LOCAL_RESOURCES.get(resourceKind).put(actionKind, new CopyOnWriteArrayList<>());
         }
-        LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(resourceUri);
+        if (!LOCAL_RESOURCES.get(resourceKind).get(actionKind).contains(resourceUri)) {
+            // 聚合服务中不同模块可能存在重复订阅添加，E.g. 网关、RelDB都会订阅reldb的资源主题
+            LOCAL_RESOURCES.get(resourceKind).get(actionKind).add(resourceUri);
+        }
     }
 
     public static void removeLocalResource(URI resourceUri, String actionKind) {

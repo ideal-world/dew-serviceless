@@ -109,7 +109,7 @@ public class TCAccountProcessor extends EventBusProcessor {
 
     public static Future<Account> innerAddAccount(AccountAddReq accountAddReq, Long relTenantId, ProcessContext context) {
         var account = context.helper.convert(accountAddReq, Account.class);
-        account.setOpenId($.field.createUUID());
+        account.setOpenId("ac" + $.field.createUUID());
         account.setParentId(DewConstant.OBJECT_UNDEFINED);
         account.setRelTenantId(relTenantId);
         account.setStatus(CommonStatus.ENABLED);

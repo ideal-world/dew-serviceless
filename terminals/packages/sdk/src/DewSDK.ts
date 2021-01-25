@@ -47,6 +47,7 @@ export const SDK = {
             SDK.task = taskSDK.taskSDK()
         },
         aksk: function (ak: string, sk: string): void {
+            request.setToken("")
             request.setAkSk(ak, sk)
         },
         ajax: function (impl: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>): void {

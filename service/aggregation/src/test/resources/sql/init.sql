@@ -30,15 +30,15 @@
  * limitations under the License.
  */
 
-create table if not exists task
+create table if not exists todo
 (
     id          bigint auto_increment
         primary key,
     content     varchar(255)                        not null comment '内容',
     create_time timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-    create_user bigint                              not null comment '创建者Id',
+    create_user varchar(255)                        not null comment '创建者OpenId',
     update_time timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
-    update_user bigint                              not null comment '最后一次修改者Id'
+    update_user varchar(255)                        not null comment '最后一次修改者OpenId'
 )
     comment '任务表';
 

@@ -34,6 +34,7 @@ public class DewAuthConstant extends DewConstant {
     // AccountCode 关联 Tokens : <account code>:<token kind##current time>:<token>
     public static final String CACHE_TOKEN_ID_REL_FLAG = "dew:iam:token:id:rel:";
     public static final String MODULE_IAM_NAME = "iam";
-    public static String GROUP_CODE_NODE_CODE_SPLIT = "#";
+    public static final String GROUP_CODE_NODE_CODE_SPLIT = "#";
+    public static final String AK_SK_IDENT_ACCOUNT_FLAG = "AK-SK-LOGIN";
 
 }

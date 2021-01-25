@@ -31,7 +31,7 @@ public class KeyHelper {
      * @return the string
      */
     public static String generateToken() {
-        return $.security.digest.digest(
+        return "tk" + $.security.digest.digest(
                 $.field.createUUID().replaceAll("\\-", ""),
                 "MD5"
         );
@@ -43,7 +43,7 @@ public class KeyHelper {
      * @return the string
      */
     public static String generateAk() {
-        return $.field.createUUID().replaceAll("\\-", "");
+        return "ak" + $.field.createUUID().replaceAll("\\-", "");
     }
 
     /**
@@ -53,7 +53,7 @@ public class KeyHelper {
      * @return the string
      */
     public static String generateSk(String key) {
-        return $.security.digest.digest(
+        return "sk" + $.security.digest.digest(
                 key + $.field.createUUID().replaceAll("\\-", ""),
                 "SHA1"
         );

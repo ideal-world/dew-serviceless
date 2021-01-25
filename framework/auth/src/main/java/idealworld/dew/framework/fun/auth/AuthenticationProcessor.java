@@ -63,7 +63,7 @@ public class AuthenticationProcessor {
     public static Map<AuthSubjectKind, List<String>> packageSubjectInfo(IdentOptExchangeInfo identOptInfo) {
         var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
         if (identOptInfo != null) {
-            if (identOptInfo.getAccountCode() != null) {
+            if (identOptInfo.getAccountCode() != null && !identOptInfo.getAccountCode().isEmpty()) {
                 subjectInfo.put(AuthSubjectKind.ACCOUNT, new ArrayList<>() {
                     {
                         add(identOptInfo.getAccountCode());
@@ -83,14 +83,14 @@ public class AuthenticationProcessor {
             if (identOptInfo.getUnauthorizedAppId() != null && identOptInfo.getUnauthorizedAppId() != DewConstant.OBJECT_UNDEFINED) {
                 subjectInfo.put(AuthSubjectKind.APP, new ArrayList<>() {
                     {
-                        add(identOptInfo.getAppId().toString());
+                        add(identOptInfo.getUnauthorizedAppId().toString());
                     }
                 });
             }
             if (identOptInfo.getUnauthorizedTenantId() != null && identOptInfo.getUnauthorizedTenantId() != DewConstant.OBJECT_UNDEFINED) {
                 subjectInfo.put(AuthSubjectKind.TENANT, new ArrayList<>() {
                     {
-                        add(identOptInfo.getTenantId().toString());
+                        add(identOptInfo.getUnauthorizedTenantId().toString());
                     }
                 });
             }
@@ -270,7 +270,7 @@ public class AuthenticationProcessor {
                                 && !uri.getPath().equalsIgnoreCase(resourceUri.getPath())
                                 && (uri.getRawQuery() == null && resourceUri.getRawQuery() == null
                                 || uri.getRawQuery().equalsIgnoreCase(resourceUri.getRawQuery()))
-                                && PATH_MATCHER.match(uri.getPath(), resourceUri.getPath())
+                                && PATH_MATCHER.match(uri.getPath().toLowerCase(), resourceUri.getPath().toLowerCase())
                 )
                 .sorted((uri1, uri2) -> comparator.compare(uri1.getPath(), uri2.getPath()))
                 .map(URI::toString);
