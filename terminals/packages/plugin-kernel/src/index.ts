@@ -30,6 +30,12 @@ const appId: string = config.appId
 const ak: string = crt.ak
 const sk: string = crt.sk
 
+/**
+ * Dew构建核心方法.
+ *
+ * @param relativeBasePath 要构建到后台的执行目录的相对路径
+ * @param testToDist 是否是测试，不为空时会将编译的文件发送到后台，为空时仅测用将编译的文件写入到指定的目录
+ */
 export async function dewBuild(relativeBasePath: string, testToDist?: string): Promise<void> {
     let basePath = path.join(process.cwd(), relativeBasePath)
     fs.readdirSync(basePath).forEach(fileName => {
@@ -45,8 +51,8 @@ export async function dewBuild(relativeBasePath: string, testToDist?: string): P
             .bundle(async (err, buf) => {
                 if (err) throw err
                 let content = buf.toString()
-                content = (await minify(content,{
-                    ecma:2020
+                content = (await minify(content, {
+                    ecma: 2020
                 })).code
                 if (!testToDist) {
                     await sendTask(content)

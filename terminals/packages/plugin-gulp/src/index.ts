@@ -16,6 +16,12 @@
 
 import * as DewPlugin from "@idealworld/plugin-kernel";
 
+/**
+ * Dew构建核心方法.
+ *
+ * @param relativeBasePath 要构建到后台的执行目录的相对路径
+ * @param testToDist 是否是测试，不为空时会将编译的文件发送到后台，为空时仅测用将编译的文件写入到指定的目录
+ */
 export async function dewBuild(relativeBasePath: string, testToDist?: string): Promise<void> {
     return DewPlugin.dewBuild(relativeBasePath, testToDist)
 }

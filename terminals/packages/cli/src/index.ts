@@ -264,6 +264,10 @@ async function createApp(answers: any) {
         '==================='))
 }
 
+/**
+ * 执行入口.
+ *
+ */
 export async function run() {
     clear()
     console.log(chalk.green(figlet.textSync('Dew CLI', {horizontalLayout: 'full'})))
