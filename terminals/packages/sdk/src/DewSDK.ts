@@ -22,7 +22,15 @@ import * as reldbSDK from "./module/RelDBSDK";
 import * as taskSDK from "./module/TaskSDK";
 import {JsonMap} from "./domain/Basic";
 
+/**
+ * Dew SDK.
+ */
 export const SDK = {
+    /**
+     * 初始化SDK.
+     * @param serverUrl 服务网关地址
+     * @param appId 当前应用Id
+     */
     init: init,
     iam: iamSDK.iamSDK,
     reldb: reldbSDK.reldbSDK(),
@@ -62,11 +70,6 @@ export const SDK = {
     }
 }
 
-/**
- * 初始化SDK
- * @param serverUrl 服务网关地址
- * @param appId 当前应用Id
- */
 function init(serverUrl: string, appId: string): void {
     SDK.setting.serverUrl(serverUrl)
     SDK.setting.appId(appId)
