@@ -32,6 +32,7 @@ export const SDK = {
      * @param appId 当前应用Id
      */
     init: init,
+    conf: loadConfig,
     iam: iamSDK.iamSDK,
     reldb: reldbSDK.reldbSDK(),
     cache: cacheSDK.cacheSDK(),
@@ -73,6 +74,24 @@ export const SDK = {
 function init(serverUrl: string, appId: string): void {
     SDK.setting.serverUrl(serverUrl)
     SDK.setting.appId(appId)
+}
+
+function loadConfig(confContext: string | any, envName: string): any {
+    const config = typeof confContext === "string" ? JSON.parse(confContext.trim()) : confContext
+    console.log("Load config " + envName + " ENV ")
+    if (config.hasOwnProperty('env') && config['env'].hasOwnProperty(envName)) {
+        let envConfig = config['env'][envName]
+        delete config['env']
+        for (let k in config) {
+            if (!envConfig.hasOwnProperty(k)) {
+                envConfig[k] = config[k]
+            }
+        }
+        return envConfig
+    } else {
+        delete config['env']
+        return config
+    }
 }
 
 

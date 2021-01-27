@@ -57,6 +57,6 @@ public class TaskDef extends SafeEntity {
     @NotBlank
     private String fun;
     @NotNull
-    private Long relAppId;
+    private String relAppCode;
 
 }

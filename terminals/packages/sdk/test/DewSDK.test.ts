@@ -175,3 +175,46 @@ return 'timer'
     }, 10000)
 }, 15000)
 
+test("Test config", () => {
+    let devConfig = DewSDK.conf(`
+{
+    "ak":"ak1",
+    "sk":"sk1",
+    "env":{
+        "dev":{
+            "ak":"ak_dev",
+            "sk":"sk_dev",
+            "db":{
+                "url":"mysqlxxxx"
+            }
+        },
+        "test":{
+        },
+        "prod":{
+        }
+    }
+}
+`, 'dev')
+    expect(devConfig).toStrictEqual({"ak": "ak_dev", "db": {"url": "mysqlxxxx"}, "sk": "sk_dev"})
+    let testConfig = DewSDK.conf(`
+{
+    "ak":"ak1",
+    "sk":"sk1",
+    "env":{
+        "dev":{
+            "ak":"ak_dev",
+            "sk":"sk_dev",
+            "db":{
+                "url":"mysqlxxxx"
+            }
+        },
+        "test":{
+        },
+        "prod":{
+        }
+    }
+}
+`, 'test')
+    expect(testConfig).toStrictEqual({"ak": "ak1", "sk": "sk1"})
+})
+

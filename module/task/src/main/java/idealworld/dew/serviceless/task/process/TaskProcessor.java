@@ -60,7 +60,7 @@ public class TaskProcessor extends EventBusProcessor {
             }
             return initTasks(
                     eventBusContext.req.body(String.class),
-                    eventBusContext.req.identOptInfo.getAppId(),
+                    eventBusContext.req.identOptInfo.getAppCode(),
                     eventBusContext.context);
         });
         // 添加当前应用的任务
@@ -72,7 +72,7 @@ public class TaskProcessor extends EventBusProcessor {
                     eventBusContext.req.params.get("taskCode"),
                     eventBusContext.req.params.getOrDefault("cron", ""),
                     eventBusContext.req.body(String.class),
-                    eventBusContext.req.identOptInfo.getAppId(),
+                    eventBusContext.req.identOptInfo.getAppCode(),
                     eventBusContext.context);
         });
         // 修改当前应用的某个任务
@@ -84,7 +84,7 @@ public class TaskProcessor extends EventBusProcessor {
                     eventBusContext.req.params.get("taskCode"),
                     eventBusContext.req.params.getOrDefault("cron", ""),
                     eventBusContext.req.body(String.class),
-                    eventBusContext.req.identOptInfo.getAppId(),
+                    eventBusContext.req.identOptInfo.getAppCode(),
                     eventBusContext.context);
         });
         // 删除当前应用的某个任务
@@ -94,14 +94,14 @@ public class TaskProcessor extends EventBusProcessor {
             }
             return deleteTask(
                     eventBusContext.req.params.get("taskCode"),
-                    eventBusContext.req.identOptInfo.getAppId(),
+                    eventBusContext.req.identOptInfo.getAppCode(),
                     eventBusContext.context);
         });
         // 执行当前应用的某个任务
         addProcessor(OptActionKind.CREATE, "/exec/{taskCode}", eventBusContext ->
                 execTask(
                         eventBusContext.req.params.get("taskCode"),
-                        eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getAppCode(),
                         eventBusContext.req.body(List.class),
                         false,
                         eventBusContext.req.identOptInfo,
@@ -113,26 +113,27 @@ public class TaskProcessor extends EventBusProcessor {
                 .onSuccess(taskDefs -> {
                     if (!taskDefs.isEmpty()) {
                         var initTask = taskDefs.stream().filter(def -> def.getCode().isBlank()).findAny().get();
-                        initTasks(initTask.getFun(), initTask.getRelAppId(), context);
-                        taskDefs.stream().filter(def -> !def.getCode().isBlank()).forEach(def -> addTask(def.getCode(), def.getCron(), def.getFun(), def.getRelAppId(), context));
+
+                        initTasks(initTask.getFun(), initTask.getRelAppCode(), context);
+                        taskDefs.stream().filter(def -> !def.getCode().isBlank()).forEach(def -> addTask(def.getCode(), def.getCron(), def.getFun(), def.getRelAppCode(), context));
                     }
                 })
                 .onFailure(e -> context.helper.error(e));
     }
 
-    public static Future<Void> initTasks(String funs, Long appId, ProcessContext context) {
-        ScriptProcessor.init(appId, funs);
+    public static Future<Void> initTasks(String funs, String appCode, ProcessContext context) {
+        ScriptProcessor.init(appCode, funs);
         var taskDef = TaskDef.builder()
                 .code("")
                 .cron("")
                 .fun(funs)
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build();
         return context.sql.tx(context, () ->
                 context.sql.getOne(new HashMap<>() {
                     {
                         put("code", "");
-                        put("rel_app_id", appId);
+                        put("rel_app_code", appCode);
                     }
                 }, TaskDef.class)
                         .compose(existTaskDef -> {
@@ -146,49 +147,49 @@ public class TaskProcessor extends EventBusProcessor {
                         }));
     }
 
-    public static Future<Void> addTask(String code, String cron, String fun, Long appId, ProcessContext context) {
-        ScriptProcessor.add(appId, code, fun);
+    public static Future<Void> addTask(String code, String cron, String fun, String appCode, ProcessContext context) {
+        ScriptProcessor.add(appCode, code, fun);
         if (!cron.isBlank()) {
-            CronHelper.addJob(code, appId + "", cron, (name, group) -> {
+            CronHelper.addJob(code, appCode, cron, (name, group) -> {
                 if (!context.cache.isLeader()) {
                     return;
                 }
-                execTask(code, appId, new ArrayList<>(), true, null, context);
+                execTask(code, appCode, new ArrayList<>(), true, null, context);
             });
         }
         var taskDef = TaskDef.builder()
                 .code(code)
                 .cron(cron)
                 .fun(fun)
-                .relAppId(appId)
+                .relAppCode(appCode)
                 .build();
         return context.sql.save(taskDef)
                 .compose(resp -> context.helper.success());
     }
 
-    public static Future<Void> modifyTask(String code, String cron, String fun, Long appId, ProcessContext context) {
-        ScriptProcessor.add(appId, code, fun);
-        CronHelper.removeJob(code, appId + "");
+    public static Future<Void> modifyTask(String code, String cron, String fun, String appCode, ProcessContext context) {
+        ScriptProcessor.add(appCode, code, fun);
+        CronHelper.removeJob(code, appCode);
         if (!cron.isBlank()) {
-            CronHelper.addJob(code, appId + "", cron, (name, group) -> {
+            CronHelper.addJob(code, appCode, cron, (name, group) -> {
                 if (!context.cache.isLeader()) {
                     return;
                 }
-                execTask(code, appId, new ArrayList<>(), true, null, context);
+                execTask(code, appCode, new ArrayList<>(), true, null, context);
             });
         }
         return context.helper.notExistToError(
                 context.sql.exists(new HashMap<>() {
                     {
                         put("code", code);
-                        put("rel_app_id", appId);
+                        put("rel_app_code", appCode);
                     }
                 }, TaskDef.class), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
                 .compose(resp ->
                         context.sql.update(new HashMap<>() {
                             {
                                 put("code", code);
-                                put("rel_app_id", appId);
+                                put("rel_app_code", appCode);
                             }
                         }, TaskDef.builder()
                                 .cron(cron)
@@ -197,30 +198,30 @@ public class TaskProcessor extends EventBusProcessor {
                 .compose(resp -> context.helper.success());
     }
 
-    public static Future<Void> deleteTask(String code, Long appId, ProcessContext context) {
-        CronHelper.removeJob(code, appId + "");
+    public static Future<Void> deleteTask(String code, String appCode, ProcessContext context) {
+        CronHelper.removeJob(code, appCode);
         return context.helper.notExistToError(
                 context.sql.exists(new HashMap<>() {
                     {
                         put("code", code);
-                        put("rel_app_id", appId);
+                        put("rel_app_code", appCode);
                     }
                 }, TaskDef.class), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
                 .compose(resp ->
                         context.sql.softDelete(new HashMap<>() {
                             {
                                 put("code", code);
-                                put("rel_app_id", appId);
+                                put("rel_app_code", appCode);
                             }
                         }, TaskDef.class))
                 .compose(resp -> context.helper.success());
     }
 
-    public static Future<Object> execTask(String code, Long appId, List<?> parameters, Boolean fromTimer, IdentOptExchangeInfo identOptCacheInfo, ProcessContext context) {
+    public static Future<Object> execTask(String code, String appCode, List<?> parameters, Boolean fromTimer, IdentOptExchangeInfo identOptCacheInfo, ProcessContext context) {
         if (!fromTimer) {
             return _vertx.getOrCreateContext().executeBlocking(promise -> {
                 try {
-                    var result = ScriptProcessor.execute(appId, code, parameters, identOptCacheInfo);
+                    var result = ScriptProcessor.execute(appCode, code, parameters, identOptCacheInfo);
                     promise.complete(result);
                 } catch (Exception e) {
                     log.warn("Execute task error: {}", e.getMessage(), e);
@@ -228,12 +229,12 @@ public class TaskProcessor extends EventBusProcessor {
                 }
             });
         }
-        log.trace("Executing timer task[{}-{}]", appId, code);
+        log.trace("Executing timer task[{}-{}]", appCode, code);
         return context.helper.notExistToError(
                 context.sql.getOne(new HashMap<>() {
                     {
                         put("code", code);
-                        put("rel_app_id", appId);
+                        put("rel_app_code", appCode);
                     }
                 }, TaskDef.class), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
                 .compose(taskDef ->
@@ -243,12 +244,11 @@ public class TaskProcessor extends EventBusProcessor {
                                 .success(false)
                                 .message("")
                                 .relTaskDefCode(taskDef.getCode())
-                                .relAppId(taskDef.getRelAppId())
                                 .build()))
                 .compose(taskInstId ->
                         _vertx.getOrCreateContext().executeBlocking(promise -> {
                             try {
-                                var result = ScriptProcessor.execute(appId, code, parameters, null);
+                                var result = ScriptProcessor.execute(appCode, code, parameters, null);
                                 context.sql.update(taskInstId, TaskInst.builder()
                                         .endTime(System.currentTimeMillis())
                                         .success(true)

@@ -18,7 +18,7 @@ import * as request from "../util/Request";
 import {IdentOptInfo} from "../domain/IdentOptInfo";
 import {AccountIdentKind, AuthSubjectKind, OptActionKind, ResourceKind} from "../domain/Enum";
 import {TenantResp} from "../domain/Tenant";
-import {AppIdentResp} from "../domain/App";
+import {AppIdentResp, AppResp} from "../domain/App";
 import {Page} from "../domain/Basic";
 
 const iamModuleName: string = 'iam'
@@ -156,6 +156,9 @@ const app = {
             name: appName
         })
     },
+    fetchApp(appId: number): Promise<AppResp> {
+        return request.req<AppResp>('fetchApp', 'http://' + iamModuleName + '/console/tenant/app/' + appId, OptActionKind.FETCH)
+    },
     fetchPublicKey(): Promise<string> {
         return request.req<string>('fetchPublicKey', 'http://' + iamModuleName + '/console/app/app/publicKey', OptActionKind.FETCH)
     },
@@ -219,6 +222,7 @@ export const iamSDK = {
     },
     app: {
         create: app.createApp,
+        fetch: app.fetchApp,
         ident: {
             list: app.listAppIdents,
             fetchSk: app.fetchAppIdentSk,

@@ -47,8 +47,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ScriptProcessor {
 
-    private static final Map<Long, Context> SCRIPT_CONTAINER = new HashMap<>();
-    private static final Map<Long, Lock> LOCKS = new HashMap<>();
+    private static final Map<String, Context> SCRIPT_CONTAINER = new HashMap<>();
+    private static final Map<String, Lock> LOCKS = new HashMap<>();
 
 
     private static String _gatewayServerUrl;
@@ -57,15 +57,15 @@ public class ScriptProcessor {
         _gatewayServerUrl = gatewayServerUrl;
     }
 
-    public static void init(Long appId, String funs) {
+    public static void init(String appCode, String funs) {
         if (funs.contains("Java.type")) {
             log.warn("[Script]Security warning,found the \"Java.type\" keyword");
             throw new RTScriptException("不能使用 [Java.type] 功能");
         }
-        if (!SCRIPT_CONTAINER.containsKey(appId)) {
-            LOCKS.putIfAbsent(appId, new ReentrantLock());
+        if (!SCRIPT_CONTAINER.containsKey(appCode)) {
+            LOCKS.putIfAbsent(appCode, new ReentrantLock());
         }
-        LOCKS.get(appId).lock();
+        LOCKS.get(appCode).lock();
         try {
             Context context = Context.newBuilder()
                     .allowHostAccess(HostAccess.newBuilder(HostAccess.ALL)
@@ -130,34 +130,34 @@ public class ScriptProcessor {
                             .build())
                     .allowHostClassLookup(s -> s.equalsIgnoreCase(ScriptExchangeHelper.class.getName()))
                     .build();
-            funs = funs.replace("DewSDK.init(\"REPLACE_IT\",-1)", "DewSDK.init('" + _gatewayServerUrl + "'," + appId + ")");
-            SCRIPT_CONTAINER.put(appId, context);
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "let global = this"));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const $ = Java.type('" + ScriptExchangeHelper.class.getName() + "')"));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", funs));
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "const DewSDK = JVM.DewSDK\n"));
+            funs = funs.replace("DewSDK.init(\"REPLACE_IT\",\"\")", "DewSDK.init('" + _gatewayServerUrl + "','" + appCode + "')");
+            SCRIPT_CONTAINER.put(appCode, context);
+            SCRIPT_CONTAINER.get(appCode).eval(Source.create("js", "let global = this"));
+            SCRIPT_CONTAINER.get(appCode).eval(Source.create("js", "const $ = Java.type('" + ScriptExchangeHelper.class.getName() + "')"));
+            SCRIPT_CONTAINER.get(appCode).eval(Source.create("js", funs));
+            SCRIPT_CONTAINER.get(appCode).eval(Source.create("js", "const DewSDK = JVM.DewSDK\n"));
         } finally {
-            LOCKS.get(appId).unlock();
+            LOCKS.get(appCode).unlock();
         }
     }
 
-    public static void add(Long appId, String funName, String funBody) {
-        LOCKS.get(appId).lock();
+    public static void add(String appCode, String funName, String funBody) {
+        LOCKS.get(appCode).lock();
         try {
-            SCRIPT_CONTAINER.get(appId).eval(Source.create("js", "async function " + funName + "(){\r\n" + funBody + "\r\n}"));
+            SCRIPT_CONTAINER.get(appCode).eval(Source.create("js", "async function " + funName + "(){\r\n" + funBody + "\r\n}"));
         } finally {
-            LOCKS.get(appId).unlock();
+            LOCKS.get(appCode).unlock();
         }
     }
 
-    public static void remove(Long appId) {
-        SCRIPT_CONTAINER.remove(appId);
+    public static void remove(String appCode) {
+        SCRIPT_CONTAINER.remove(appCode);
     }
 
-    public static Object execute(Long appId, String funName, List<?> parameters, IdentOptExchangeInfo identOptCacheInfo) {
-        LOCKS.get(appId).lock();
+    public static Object execute(String appCode, String funName, List<?> parameters, IdentOptExchangeInfo identOptCacheInfo) {
+        LOCKS.get(appCode).lock();
         try {
-            var createAuthFun = SCRIPT_CONTAINER.get(appId).getBindings("js").getMember("JVM").getMember("DewSDK").getMember("iam").getMember("auth").getMember("create");
+            var createAuthFun = SCRIPT_CONTAINER.get(appCode).getBindings("js").getMember("JVM").getMember("DewSDK").getMember("iam").getMember("auth").getMember("create");
             var result = new Object[2];
             Consumer<Object> then = (v) -> result[0] = v;
             Consumer<Object> catchy = (v) -> result[1] = v;
@@ -168,7 +168,7 @@ public class ScriptProcessor {
                 createAuthFun.execute("");
             }
             var funNamePath = funName.split("\\.");
-            var jsFun = SCRIPT_CONTAINER.get(appId).getBindings("js");
+            var jsFun = SCRIPT_CONTAINER.get(appCode).getBindings("js");
             if (funNamePath.length == 1) {
                 jsFun = jsFun.getMember(funNamePath[0]);
             } else {
@@ -182,7 +182,7 @@ public class ScriptProcessor {
             }
             return compatibilityResult(result[0]);
         } finally {
-            LOCKS.get(appId).unlock();
+            LOCKS.get(appCode).unlock();
         }
     }
 

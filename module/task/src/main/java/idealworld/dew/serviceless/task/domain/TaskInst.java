@@ -61,7 +61,5 @@ public class TaskInst extends IdEntity {
     @NotBlank
     @Size(max = 255)
     private String relTaskDefCode;
-    @NotNull
-    private Long relAppId;
 
 }

@@ -46,11 +46,11 @@ function _ts() {
 }
 
 function _dewBuild() {
-    return dewBuild(_path.action)
+    return dewBuild(_path.action,true)
 }
 
 function _dewTestBuild() {
-    return dewBuild(_path.action, '../../../module/task/src/test/resources/test.js')
+    return dewBuild(_path.action, true,'../../../module/task/src/test/resources/test.js')
 }
 
 function _jsBuild() {

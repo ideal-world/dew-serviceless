@@ -15,27 +15,39 @@
  */
 
 import {DewSDK} from "@idealworld/sdk";
+import {ResourceKind} from "@idealworld/sdk/dist/domain/Enum";
+
+let crt = require('../../../dew.json')
 
 export type ItemDTO = {
-    id: number,
+    id: number
     content: string
     createUserName: string
     createUserId: string
 }
 
+const config = DewSDK.conf(crt, 'process.env.NODE_ENV')
+
+const DB_URL = config.db.url
+const DB_USER = config.db.user
+const DB_PWD = config.db.pwd
+
 export const db = DewSDK.reldb.subject("todoDB")
 
-export async function init() {
+async function init() {
+    await DewSDK.iam.resource.subject.create('todoDB', ResourceKind.RELDB, "ToDo数据库", DB_URL, DB_USER, DB_PWD)
     await db.exec(`create table if not exists todo
 (
     id bigint auto_increment primary key,
     create_time timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-    create_user bigint not null comment '创建者Id',
+    create_user varchar(255) not null comment '创建者OpenId',
     content varchar(255) not null comment '内容'
 )
 comment '任务表'`, [])
     await db.exec('insert into todo(content,create_user) values (?,?)', ['这是个示例', ''])
 }
+
+init()
 
 export async function fetchItems(): Promise<ItemDTO[]> {
     return doFetchItems()

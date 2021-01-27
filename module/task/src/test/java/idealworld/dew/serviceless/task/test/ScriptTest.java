@@ -46,37 +46,37 @@ public class ScriptTest {
         ScriptProcessor.init("http://127.0.0.1:9001");
         String testJS = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/test.js")))
                 .lines().collect(Collectors.joining("\n"));
-        ScriptProcessor.init(1L, testJS);
-        ScriptProcessor.init(2L, testJS);
-        ScriptProcessor.init(3L, testJS);
+        ScriptProcessor.init("test", testJS);
+        ScriptProcessor.init("test", testJS);
+        ScriptProcessor.init("test", testJS);
     }
 
     @Test
     public void testScript() {
-        ScriptProcessor.add(1L, "test1", "await DewSDK.cache.del('test-key')");
-        ScriptProcessor.add(1L, "test2", "console.log(await DewSDK.cache.exists('test-key'))");
-        ScriptProcessor.add(1L, "test3", "i+1");
-        ScriptProcessor.add(1L, "test4", "1+1");
+        ScriptProcessor.add("test", "test1", "await DewSDK.cache.del('test-key')");
+        ScriptProcessor.add("test", "test2", "console.log(await DewSDK.cache.exists('test-key'))");
+        ScriptProcessor.add("test", "test3", "i+1");
+        ScriptProcessor.add("test", "test4", "1+1");
         try {
-            ScriptProcessor.execute(1L, "test1", new ArrayList<>(), null);
+            ScriptProcessor.execute("test", "test1", new ArrayList<>(), null);
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertEquals("java.net.ConnectException: Connection refused: no further information", e.getMessage());
         }
         try {
-            ScriptProcessor.execute(1L, "test2", new ArrayList<>(), null);
+            ScriptProcessor.execute("test", "test2", new ArrayList<>(), null);
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertEquals("java.net.ConnectException: Connection refused: no further information", e.getMessage());
         }
         try {
-            ScriptProcessor.execute(1L, "test3", new ArrayList<>(), null);
+            ScriptProcessor.execute("test", "test3", new ArrayList<>(), null);
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertEquals("ReferenceError: i is not defined", e.getMessage());
         }
         try {
-            ScriptProcessor.execute(1L, "test4", new ArrayList<>(), null);
+            ScriptProcessor.execute("test", "test4", new ArrayList<>(), null);
         } catch (Exception e) {
             Assertions.fail(e);
         }
@@ -85,10 +85,10 @@ public class ScriptTest {
     @SneakyThrows
     @Test
     public void testMultiThreadScript() {
-        ScriptProcessor.add(1L, "test1", "1+1");
-        ScriptProcessor.add(2L, "test2", "1+1");
-        ScriptProcessor.add(3L, "test3", "1+1");
-        var addThread = new Thread(() -> ScriptProcessor.add(3L, "test3_1", "1+1"));
+        ScriptProcessor.add("test", "test1", "1+1");
+        ScriptProcessor.add("test2", "test2", "1+1");
+        ScriptProcessor.add("test3", "test3", "1+1");
+        var addThread = new Thread(() -> ScriptProcessor.add("test3", "test3_1", "1+1"));
         addThread.start();
         addThread.join();
 
@@ -97,9 +97,9 @@ public class ScriptTest {
         new Thread(() -> {
             while (true) {
                 try {
-                    ScriptProcessor.add(1L, "test1_1", "1+1");
-                    ScriptProcessor.execute(1L, "test1", new ArrayList<>(), null);
-                    ScriptProcessor.execute(2L, "test2", new ArrayList<>(), null);
+                    ScriptProcessor.add("test", "test1_1", "1+1");
+                    ScriptProcessor.execute("test", "test1", new ArrayList<>(), null);
+                    ScriptProcessor.execute("test2", "test2", new ArrayList<>(), null);
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -110,8 +110,8 @@ public class ScriptTest {
         new Thread(() -> {
             while (true) {
                 try {
-                    ScriptProcessor.execute(1L, "test1", new ArrayList<>(), null);
-                    ScriptProcessor.execute(2L, "test2", new ArrayList<>(), null);
+                    ScriptProcessor.execute("test", "test1", new ArrayList<>(), null);
+                    ScriptProcessor.execute("test2", "test2", new ArrayList<>(), null);
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -122,8 +122,8 @@ public class ScriptTest {
         new Thread(() -> {
             while (true) {
                 try {
-                    ScriptProcessor.execute(3L, "test3", new ArrayList<>(), null);
-                    ScriptProcessor.execute(3L, "test3_1", new ArrayList<>(), null);
+                    ScriptProcessor.execute("test3", "test3", new ArrayList<>(), null);
+                    ScriptProcessor.execute("test3", "test3_1", new ArrayList<>(), null);
                     count.addAndGet(1);
                 } catch (Exception e) {
                     Assertions.fail(e);
@@ -145,7 +145,7 @@ public class ScriptTest {
      */
     @Test
     public void testGrammar() {
-        var result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestStr", new ArrayList<>() {
+        var result = ScriptProcessor.execute("test", "TodoAction2_test.ioTestStr", new ArrayList<>() {
             {
                 add("测试");
                 add(100);
@@ -160,7 +160,7 @@ public class ScriptTest {
             }
         }, null);
         Assertions.assertEquals("测试", result);
-        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestNum", new ArrayList<>() {
+        result = ScriptProcessor.execute("test", "TodoAction2_test.ioTestNum", new ArrayList<>() {
             {
                 add("测试");
                 add(100);
@@ -175,7 +175,7 @@ public class ScriptTest {
             }
         }, null);
         Assertions.assertEquals(100, result);
-        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestArr", new ArrayList<>() {
+        result = ScriptProcessor.execute("test", "TodoAction2_test.ioTestArr", new ArrayList<>() {
             {
                 add("测试");
                 add(100);
@@ -190,11 +190,11 @@ public class ScriptTest {
             }
         }, null);
         Assertions.assertEquals("3", ((JsonArray) result).getString(2));
-        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestArr2", new ArrayList<>(), null);
+        result = ScriptProcessor.execute("test", "TodoAction2_test.ioTestArr2", new ArrayList<>(), null);
         Assertions.assertEquals("xxxcxccc", ((JsonArray) result).getString(0));
-        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestArr3", new ArrayList<>(), null);
+        result = ScriptProcessor.execute("test", "TodoAction2_test.ioTestArr3", new ArrayList<>(), null);
         Assertions.assertEquals("xxxcxccc", ((JsonArray) result).getJsonObject(0).getString("content"));
-        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestObj", new ArrayList<>() {
+        result = ScriptProcessor.execute("test", "TodoAction2_test.ioTestObj", new ArrayList<>() {
             {
                 add("测试");
                 add(100);
@@ -209,7 +209,7 @@ public class ScriptTest {
             }
         }, null);
         Assertions.assertEquals("ddddd", result);
-        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestMap", new ArrayList<>() {
+        result = ScriptProcessor.execute("test", "TodoAction2_test.ioTestMap", new ArrayList<>() {
             {
                 add(new HashMap<>() {
                     {
@@ -220,7 +220,7 @@ public class ScriptTest {
         }, null);
         Assertions.assertEquals("xx", ((JsonObject) result).getString("xx"));
         Assertions.assertEquals("add", ((JsonObject) result).getString("add"));
-        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestDto", new ArrayList<>() {
+        result = ScriptProcessor.execute("test", "TodoAction2_test.ioTestDto", new ArrayList<>() {
             {
                 add(new HashMap<>() {
                     {
@@ -231,7 +231,7 @@ public class ScriptTest {
         }, null);
         Assertions.assertEquals("xx", ((JsonObject) result).getString("content"));
         Assertions.assertEquals("100", ((JsonObject) result).getString("createUserId"));
-        result = ScriptProcessor.execute(1L, "TodoAction2_test.ioTestDtos", new ArrayList<>() {
+        result = ScriptProcessor.execute("test", "TodoAction2_test.ioTestDtos", new ArrayList<>() {
             {
                 add(new ArrayList<>() {
                     {

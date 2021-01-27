@@ -24,20 +24,29 @@ const path = require('path')
 const browserify = require("browserify")
 
 const config = JSON.parse(fs.readFileSync('./package.json'))['dew']
-const crt = JSON.parse(fs.readFileSync('./dew.crt'))
+
 const serverUrl: string = config.serverUrl
 const appId: string = config.appId
-const ak: string = crt.ak
-const sk: string = crt.sk
+let ak: string
+let sk: string
 
 /**
  * Dew构建核心方法.
  *
  * @param relativeBasePath 要构建到后台的执行目录的相对路径
- * @param testToDist 是否是测试，不为空时会将编译的文件发送到后台，为空时仅测用将编译的文件写入到指定的目录
+ * @param envName 环境名称
+ * @param isProd 是否是生产环境
+ * @param toDist 是否生成文件，不为空时会将编译的文件发送到后台，为空时仅测用将编译的文件写入到指定的目录
  */
-export async function dewBuild(relativeBasePath: string, testToDist?: string): Promise<void> {
+export async function dewBuild(relativeBasePath: string, envName: string, isProd: Boolean, toDist?: string): Promise<void> {
+    let config = DewSDK.conf(fs.readFileSync(path.resolve('dew.json'), 'utf8'), envName)
+    ak = config['ak']
+    sk = config['sk']
     let basePath = path.join(process.cwd(), relativeBasePath)
+    return isProd ? dewBuildByProd(basePath, toDist) : dewBuildByDev(basePath)
+}
+
+async function dewBuildByProd(basePath: string, testToDist?: string): Promise<void> {
     fs.readdirSync(basePath).forEach(fileName => {
         let filePath = path.join(basePath, fileName)
         generateJVMFile(basePath, filePath)
@@ -49,7 +58,10 @@ export async function dewBuild(relativeBasePath: string, testToDist?: string): P
             standalone: "JVM"
         })
             .bundle(async (err, buf) => {
-                if (err) throw err
+                if (err) {
+                    reject(err)
+                    return
+                }
                 let content = buf.toString()
                 content = (await minify(content, {
                     ecma: 2020
@@ -72,6 +84,20 @@ export async function dewBuild(relativeBasePath: string, testToDist?: string): P
     });
 }
 
+async function dewBuildByDev(basePath: string): Promise<void> {
+    let appendInitContent = `
+const sdk = require("@idealworld/sdk");
+exports.DewSDK = sdk.DewSDK;
+sdk.DewSDK.init("` + serverUrl + `", "` + appId + `");
+    `
+    fs.readdirSync(basePath).forEach(fileName => {
+        let filePath = path.join(basePath, fileName)
+        let fileContent = fs.readFileSync(filePath, 'utf8')
+        fileContent = fileContent.replace(/process\.env\.NODE_ENV/g, s => eval(s))
+        fs.writeFileSync(filePath, appendInitContent + fileContent)
+    })
+}
+
 export function generateJVMFile(basePath: string, filePath: string) {
     let jvmPath = path.join(basePath, 'JVM.js')
     if (!fs.existsSync(jvmPath)) {
@@ -79,7 +105,7 @@ export function generateJVMFile(basePath: string, filePath: string) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sdk = require("@idealworld/sdk/dist/jvm");
 exports.DewSDK = sdk.DewSDK;
-sdk.DewSDK.init("REPLACE_IT", -1);
+sdk.DewSDK.init("REPLACE_IT", "");
 sdk.DewSDK.setting.ajax((url, headers, data) => {
   return new Promise((resolve, reject) => {
     try{
@@ -107,12 +133,13 @@ exports.` + fileName + ` = ` + fileName + `;
 }
 
 export function replaceImport(fileContent: string, toJVM: boolean): string {
+    fileContent = fileContent.replace(/process\.env\.NODE_ENV/g, s => eval(s))
     if (toJVM) {
         if (fileContent.indexOf('require("@idealworld/sdk")') !== -1) {
-            return fileContent.replace(/@idealworld\/sdk/g, '@idealworld/sdk/dist/jvm')
+            return fileContent.replace(/"@idealworld\/sdk"/g, '"@idealworld/sdk/dist/jvm"')
         }
     }
-    return fileContent.replace(/@idealworld\/sdk\/dist\/jvm/g, '@idealworld/sdk')
+    return fileContent.replace(/"@idealworld\/sdk\/dist\/jvm"/g, '"@idealworld/sdk"')
 }
 
 export function sendTask(fileContent: string): Promise<void> {

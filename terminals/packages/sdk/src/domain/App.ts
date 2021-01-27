@@ -14,9 +14,20 @@
  * limitations under the License.
  */
 
+import {CommonStatus} from "./Enum";
+
 export type AppIdentResp = {
     id: number
     note: string
     ak: string
     validTime: number
+}
+
+export type AppResp = {
+    id: number
+    openId: string
+    name: string
+    icon: string
+    parameters: string
+    status: CommonStatus
 }

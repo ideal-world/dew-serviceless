@@ -127,9 +127,6 @@ const createAppWithExistTenantSteps: any[] = [
             if (!val.trim()) {
                 return '请输入要创建应用的租户管理员的应用Id'
             }
-            if (isNaN(parseInt(val.trim()))) {
-                return '应用Id为数值类型'
-            }
             return true
         },
         filter: function (val: string) {
@@ -211,13 +208,14 @@ async function createApp(answers: any) {
     if (!confirmAnswer) {
         return;
     }
-    let appId
+    let appCode
     if (answers.createTenant) {
         let identOptInfo = await DewSDK.iam.tenant.register(answers.tenantName, answers.appName, answers.tenantAdminUsername, answers.tenantAdminPassword)
         DewSDK.iam.auth.set(identOptInfo)
-        appId = identOptInfo.appCode
+        appCode = identOptInfo.appCode
     } else {
-        appId = await DewSDK.iam.app.create(answers.appName)
+        let appId = await DewSDK.iam.app.create(answers.appName)
+        appCode = (await DewSDK.iam.app.fetch(appId)).openId
     }
     let identAKInfo = (await DewSDK.iam.app.ident.list()).objects[0]
     let identSk = await DewSDK.iam.app.ident.fetchSk(identAKInfo.id)
@@ -238,29 +236,41 @@ async function createApp(answers: any) {
     packageJsonFile['devDependencies']['@idealworld/plugin-gulp'] = SDK_VERSION
     packageJsonFile['dew'] = {
         "serverUrl": answers.serverUrl,
-        "appId": appId
+        "appId": appCode
     }
     fileHelper.writeFile(packagePath, JSON.stringify(packageJsonFile, null, 2))
-    let dewCrtPath = fsPath.resolve(path, 'dew.crt')
-    console.log(chalk.yellow('正在添加认证信息到 [' + dewCrtPath + ']'))
-    fileHelper.writeFile(dewCrtPath, JSON.stringify({
-        "ak": identAKInfo.ak,
-        "sk": identSk
-    }, null, 2))
-    let gitignorePath = fsPath.resolve(path, '.gitignore')
+    let dewCrtPath = fsPath.resolve(path, 'dew.json')
+    if (!fileHelper.exists(dewCrtPath)) {
+        console.log(chalk.yellow('正在添加认证信息到 [' + dewCrtPath + ']'))
+        fileHelper.writeFile(dewCrtPath, JSON.stringify({
+            "ak": identAKInfo.ak,
+            "sk": identSk,
+            "env":{
+                "dev":{
+                },
+                "test":{
+                },
+                "prod":{
+                }
+            }
+        }, null, 2))
+    }else{
+        console.warn(chalk.bgYellow('认证信息文件 [' + dewCrtPath + '] 已存在，忽略AK/SK创建'))
+    }
+    let gitignorePath = fsPath.resolve(path, '.npmignore')
     if (fileHelper.exists(gitignorePath)) {
-        if (fileHelper.readFile(gitignorePath).indexOf('dew.crt') === -1) {
-            fileHelper.append(gitignorePath, '\ndew.crt')
+        if (fileHelper.readFile(gitignorePath).indexOf('dew.json') === -1) {
+            fileHelper.append(gitignorePath, '\ndew.json')
         }
     } else {
-        fileHelper.writeFile(gitignorePath, '\ndew.crt')
+        fileHelper.writeFile(gitignorePath, '\ndew.json')
     }
     console.log(chalk.green.bold.bgWhite('应用创建完成，请到 [' + path + '] 中查看。\r\n' +
         '===================\r\n' +
-        '应用Id(AppId): ' + appId + '\r\n' +
+        '应用Id(AppId): ' + appCode + '\r\n' +
         '应用管理员: ' + answers.tenantAdminUsername + '\r\n' +
         '管理员密码: ' + answers.tenantAdminPassword + '\r\n' +
-        '[dew.crt]存放了密钥数据，请妥善保存！\r\n' +
+        '[dew.json]存放了密钥数据，请妥善保存！\r\n' +
         '==================='))
 }
 
