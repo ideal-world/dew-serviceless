@@ -51,12 +51,8 @@ public class ITBasicTest extends DewTest {
 
     private String request(OptActionKind optActionKind, String resourceUri, Object body, String token, Integer appId) {
         var header = new HashMap<String, String>();
-        if (token != null) {
-            header.put("Dew-Token", token);
-        }
-        if (appId != null) {
-            header.put("Dew-App-Id", appId + "");
-        }
+        header.put("Dew-Token", token != null ? token : "");
+        header.put("Dew-App-Id", appId != null ? appId + "" : "");
         var response = $.http.postWrap(gatewayServerUrl + "?"
                 + DewConstant.REQUEST_RESOURCE_URI_FLAG + "=" + URLEncoder.encode(resourceUri, StandardCharsets.UTF_8)
                 + "&"

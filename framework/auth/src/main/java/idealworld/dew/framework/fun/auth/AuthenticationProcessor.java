@@ -63,10 +63,10 @@ public class AuthenticationProcessor {
     public static Map<AuthSubjectKind, List<String>> packageSubjectInfo(IdentOptExchangeInfo identOptInfo) {
         var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
         if (identOptInfo != null) {
-            if (identOptInfo.getAccountCode() != null && !identOptInfo.getAccountCode().isEmpty()) {
+            if (identOptInfo.getAccountId() != null && identOptInfo.getAccountId() != DewConstant.OBJECT_UNDEFINED) {
                 subjectInfo.put(AuthSubjectKind.ACCOUNT, new ArrayList<>() {
                     {
-                        add(identOptInfo.getAccountCode());
+                        add(identOptInfo.getAccountId() + "");
                     }
                 });
             }
@@ -268,8 +268,9 @@ public class AuthenticationProcessor {
                         uri.getHost().equalsIgnoreCase(resourceUri.getHost())
                                 && uri.getPort() == resourceUri.getPort()
                                 && !uri.getPath().equalsIgnoreCase(resourceUri.getPath())
-                                && (uri.getRawQuery() == null && resourceUri.getRawQuery() == null
-                                || uri.getRawQuery().equalsIgnoreCase(resourceUri.getRawQuery()))
+                                && (uri.getRawQuery() == null
+                                || resourceUri.getRawQuery() != null
+                                && uri.getRawQuery().equalsIgnoreCase(resourceUri.getRawQuery()))
                                 && PATH_MATCHER.match(uri.getPath().toLowerCase(), resourceUri.getPath().toLowerCase())
                 )
                 .sorted((uri1, uri2) -> comparator.compare(uri1.getPath(), uri2.getPath()))

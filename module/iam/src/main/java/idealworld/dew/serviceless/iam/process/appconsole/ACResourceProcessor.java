@@ -245,7 +245,7 @@ public class ACResourceProcessor extends EventBusProcessor {
             whereParameters.put("%name", "%" + name + "%");
         }
         if (kind != null && !kind.isBlank()) {
-            whereParameters.put("%kind", "%" + kind + "%");
+            whereParameters.put("kind", kind);
         }
         return context.sql.list(
                 whereParameters,

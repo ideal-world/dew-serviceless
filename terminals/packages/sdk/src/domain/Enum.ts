@@ -138,3 +138,21 @@ export enum AuthSubjectKind {
      */
     ACCOUNT = "ACCOUNT",
 }
+
+
+export enum ExposeKind {
+
+    /**
+     * 应用级.
+     */
+    APP = "APP",
+    /**
+     * 租户级.
+     */
+    TENANT = "TENANT",
+    /**
+     * 系统级.
+     */
+    GLOBAL = "GLOBAL",
+
+}

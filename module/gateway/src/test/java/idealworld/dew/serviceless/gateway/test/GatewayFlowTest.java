@@ -199,7 +199,7 @@ public class GatewayFlowTest extends DewTest {
                 });
         Assertions.assertEquals("认证错误，AK不存在", Resp.generic(errorResult.result, Void.class).getMessage());
 
-        FunCacheClient.choose(MODULE_NAME).set(DewAuthConstant.CACHE_APP_AK + "xx", "skxx:1123456:789");
+        FunCacheClient.choose(MODULE_NAME).set(DewAuthConstant.CACHE_APP_AK + "xx", "skxx:1123456:789:acxxxx");
         vertx.setTimer(1000, h -> {
             var result = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
                             "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",

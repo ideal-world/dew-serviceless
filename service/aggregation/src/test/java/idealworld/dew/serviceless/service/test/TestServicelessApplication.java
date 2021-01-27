@@ -45,7 +45,7 @@ public class TestServicelessApplication extends ITBasicTest {
     public void testServer(Vertx vertx, VertxTestContext testContext) {
         var context = ProcessContext.builder().moduleName(new IAMModule().getModuleName()).build().init(IdentOptExchangeInfo.builder().build());
         iamAppCode = await(context.sql.getOne(1L, App.class))._0.getOpenId();
-        var iamIdentOpt = req(OptActionKind.CREATE, "http://iam/common/login", new HashMap<String, Object>() {
+        var iamIdentOpt = req(OptActionKind.CREATE, "http://iam.http.iam/common/login", new HashMap<String, Object>() {
             {
                 put("ak", IAM_USERNAME);
                 put("sk", DEW_PASSWORD);
@@ -54,7 +54,7 @@ public class TestServicelessApplication extends ITBasicTest {
         }, null, null, Map.class);
         var iamToken = iamIdentOpt.get("token").toString();
         // 应用管理员添加数据库资源主体
-        req(OptActionKind.CREATE, "http://iam/console/app/resource/subject", new HashMap<String, Object>() {
+        req(OptActionKind.CREATE, "http://iam.http.iam/console/app/resource/subject", new HashMap<String, Object>() {
             {
                 put("codePostfix", "default");
                 put("kind", "CACHE");
@@ -62,7 +62,7 @@ public class TestServicelessApplication extends ITBasicTest {
                 put("uri", "redis://localhost:" + redisConfig.getFirstMappedPort() + "/10");
             }
         }, iamToken, null, Long.class);
-        req(OptActionKind.CREATE, "http://iam/console/app/resource/subject", new HashMap<String, Object>() {
+        req(OptActionKind.CREATE, "http://iam.http.iam/console/app/resource/subject", new HashMap<String, Object>() {
             {
                 put("codePostfix", "default");
                 put("kind", "RELDB");
@@ -72,7 +72,7 @@ public class TestServicelessApplication extends ITBasicTest {
                 put("sk", mysqlConfig.getPassword());
             }
         }, iamToken, null, Long.class);
-        req(OptActionKind.CREATE, "http://iam/console/app/resource/subject", new HashMap<String, Object>() {
+        req(OptActionKind.CREATE, "http://iam.http.iam/console/app/resource/subject", new HashMap<String, Object>() {
             {
                 put("codePostfix", "httpbin");
                 put("kind", "HTTP");
@@ -82,7 +82,7 @@ public class TestServicelessApplication extends ITBasicTest {
         }, iamToken, null, Long.class);
 
         log.info("\n====================\n" +
-                "iam app code: " + iamAppCode + "\n" +
+                "iam appId(OpenId): " + iamAppCode + "\n" +
                 "=====================");
         new CountDownLatch(1).await();
     }

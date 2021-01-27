@@ -17,6 +17,7 @@
 package idealworld.dew.serviceless.iam.process;
 
 import com.ecfront.dew.common.$;
+import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.CommonStatus;
 import idealworld.dew.framework.dto.IdentOptInfo;
@@ -220,7 +221,12 @@ public class IAMBasicProcessor {
     public static Future<Void> checkAccountMembership(List<Long> accountIds, Long appId, Long tenantId, ProcessContext context) {
         var whereParametersMap = IntStream.range(0, accountIds.size())
                 .mapToObj(i -> new Object[]{"id" + i, accountIds.get(i)})
+                // 排除AKSK认证的虚拟账号
+                .filter(i -> ((Long) i[1]).longValue() != DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG)
                 .collect(Collectors.toMap(i -> (String) i[0], i -> i[1]));
+        if(whereParametersMap.isEmpty()){
+            return context.helper.success(null);
+        }
         var accountsWhere = whereParametersMap.keySet().stream().map(acc -> "#{" + acc + "}").collect(Collectors.joining(", "));
         whereParametersMap.putAll(new HashMap<>() {
             {

@@ -43,7 +43,7 @@ public class TCAppProcessor extends EventBusProcessor {
     {
         // 添加当前租户的应用
         addProcessor(OptActionKind.CREATE, "/console/tenant/app", eventBusContext ->
-                addApp(eventBusContext.req.body(AppAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addApp(eventBusContext.req.body(AppAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context, false));
         // 修改当前租户的某个应用
         addProcessor(OptActionKind.PATCH, "/console/tenant/app/{appId}", eventBusContext ->
                 modifyApp(Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.body(AppModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
@@ -62,8 +62,8 @@ public class TCAppProcessor extends EventBusProcessor {
         super(moduleName);
     }
 
-    public static Future<Long> addApp(AppAddReq appAddReq, Long relTenantId, ProcessContext context) {
-        var appCode = "ap" + $.field.createUUID().toLowerCase();
+    public static Future<Long> addApp(AppAddReq appAddReq, Long relTenantId, ProcessContext context, Boolean createIamApp) {
+        var appCode = createIamApp ? context.moduleName : "ap" + $.field.createUUID().toLowerCase();
         return context.helper.existToError(
                 context.sql.exists(
                         new HashMap<>() {

@@ -46,7 +46,7 @@
           <stringProp name="HTTPSampler.port">9000</stringProp>
           <stringProp name="HTTPSampler.protocol"></stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-          <stringProp name="HTTPSampler.path">/exec?Dew-Resource-Uri=http://iam/common/login&amp;Dew-Resource-Action=CREATE</stringProp>
+          <stringProp name="HTTPSampler.path">/exec?Dew-Resource-Uri=http://iam.http.iam/common/login&amp;Dew-Resource-Action=CREATE</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -126,7 +126,7 @@
           <stringProp name="HTTPSampler.port">9000</stringProp>
           <stringProp name="HTTPSampler.protocol"></stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-          <stringProp name="HTTPSampler.path">/exec?Dew-Resource-Uri=http://iam/common/login&amp;Dew-Resource-Action=FETCH</stringProp>
+          <stringProp name="HTTPSampler.path">/exec?Dew-Resource-Uri=http://iam.http.iam/common/login&amp;Dew-Resource-Action=FETCH</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>

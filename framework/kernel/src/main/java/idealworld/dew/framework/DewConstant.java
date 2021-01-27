@@ -40,6 +40,7 @@ public class DewConstant {
     public static final String PARAM_PROFILE_KEY = "dew.profile";
     public static final String PARAM_CONFIG = "dew.config";
     public static final String PARAM_CONFIG_ITEM_PREFIX = PARAM_CONFIG + ".";
+    public static final String RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT = ".";
 
     /**
      * 未定义对象的标识，多用于全局Id标识.

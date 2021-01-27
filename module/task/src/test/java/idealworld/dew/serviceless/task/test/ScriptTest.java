@@ -43,7 +43,6 @@ public class ScriptTest {
     @BeforeAll
     public static void before() {
         // 无法触达的地址
-        ScriptProcessor.init("http://127.0.0.1:9001");
         String testJS = new BufferedReader(new InputStreamReader(TaskProcessor.class.getResourceAsStream("/test.js")))
                 .lines().collect(Collectors.joining("\n"));
         ScriptProcessor.init("test", testJS);

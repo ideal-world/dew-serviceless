@@ -14,31 +14,33 @@
  * limitations under the License.
  */
 
-package idealworld.dew.framework.dto;
+package idealworld.dew.serviceless.iam.process.common.dto.app;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
- * Token对象，用于模块间传输.
+ * 注册应用请求.
  *
  * @author gudaoxuri
  */
-@EqualsAndHashCode(callSuper = true)
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class IdentOptExchangeInfo extends IdentOptCacheInfo {
+public class AppRegisterReq implements Serializable {
 
-    // 不被信任的应用OpenId，直接来自于外部传入未做校验
-    private String unauthorizedAppCode;
-    // 不被信任的应用Id，直接来自于外部传入未做校验
-    private Long unauthorizedAppId;
-    // 不被信任的租户Id，直接来自于外部传入未做校验
-    private Long unauthorizedTenantId;
+    // 应用名称
+    @NotNull
+    @NotBlank
+    @Size(max = 255)
+    private String appName;
 
 }

@@ -20,8 +20,9 @@ import {AccountIdentKind, AuthSubjectKind, OptActionKind, ResourceKind} from "..
 import {TenantResp} from "../domain/Tenant";
 import {AppIdentResp, AppResp} from "../domain/App";
 import {Page} from "../domain/Basic";
+import {ResourceSubjectResp} from "../domain/Resource";
 
-const iamModuleName: string = 'iam'
+const iamModuleName: string = 'iam.http.iam'
 
 let _identOptInfo: IdentOptInfo | null = null
 
@@ -49,6 +50,7 @@ const auth = {
         } else {
             request.setToken(_identOptInfo.token)
         }
+        request.setAkSk('','')
     },
 }
 const account = {
@@ -111,6 +113,10 @@ const resource = {
             sk: sk
         })
     },
+    fetchResourceSubjects(codeLike?: string, nameLike?: string, kind?: string): Promise<ResourceSubjectResp[]> {
+        return request.req('fetchResourceSubjects', 'http://' + iamModuleName + '/console/app/resource/subject?code='
+            + (codeLike ? codeLike : '') + '&name=' + (nameLike ? nameLike : '') + '&kind=' + (kind ? kind : ''), OptActionKind.FETCH)
+    },
     createResource(name: string, pathAndQuery: string, resourceSubjectId: number): Promise<number> {
         return request.req<number>('createResource', 'http://' + iamModuleName + '/console/app/resource', OptActionKind.CREATE, {
             name: name,
@@ -122,6 +128,7 @@ const resource = {
 }
 
 const authPolicy = {
+
     createAuthPolicy(subjectKind: AuthSubjectKind, subjectId: number, resourceId: number): Promise<void> {
         return request.req<void>('createAuthPolicy', 'http://' + iamModuleName + '/console/app/authpolicy', OptActionKind.CREATE, {
             relSubjectKind: subjectKind,
@@ -131,6 +138,7 @@ const authPolicy = {
             resultKind: "ACCEPT"
         })
     },
+
 }
 
 const tenant = {
@@ -151,6 +159,11 @@ const tenant = {
 
 const app = {
 
+    registerApp(appName: string): Promise<IdentOptInfo> {
+        return request.req<IdentOptInfo>('registerApp', 'http://' + iamModuleName + '/common/app', OptActionKind.CREATE, {
+            appName: appName,
+        })
+    },
     createApp(appName: string): Promise<number> {
         return request.req<number>('createApp', 'http://' + iamModuleName + '/console/tenant/app', OptActionKind.CREATE, {
             name: appName
@@ -179,7 +192,6 @@ const role = {
             name: roleDefName
         })
     },
-
     createRole(relRoleDefId: number): Promise<number> {
         return request.req<number>('createRole', 'http://' + iamModuleName + '/console/app/role', OptActionKind.CREATE, {
             relRoleDefId: relRoleDefId
@@ -207,7 +219,8 @@ export const iamSDK = {
     resource: {
         create: resource.createResource,
         subject: {
-            create: resource.createResourceSubject
+            create: resource.createResourceSubject,
+            fetch: resource.fetchResourceSubjects
         },
         menu: {
             fetch: resource.fetchMenu
@@ -221,6 +234,7 @@ export const iamSDK = {
         fetch: tenant.fetchTenant
     },
     app: {
+        register: app.registerApp,
         create: app.createApp,
         fetch: app.fetchApp,
         ident: {

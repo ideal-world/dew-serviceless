@@ -19,6 +19,7 @@ package idealworld.dew.serviceless.gateway.process;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.StandardCode;
 import idealworld.dew.framework.DewAuthConstant;
+import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
@@ -61,7 +62,12 @@ public class GatewayDistributeHandler extends AuthHttpHandler {
         String distributeModuleName;
         switch (ResourceKind.parse(uri.getScheme().toLowerCase())) {
             case HTTP:
-                if (uri.getHost().equalsIgnoreCase(distribute.getIamModuleName())) {
+                // iam.http.iam 为用户权限中心的 host
+                if (uri.getHost().equalsIgnoreCase(distribute.getIamModuleName()
+                        + DewConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                        + ResourceKind.HTTP.toString().toLowerCase()
+                        + DewConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                        + distribute.getIamModuleName())) {
                     distributeModuleName = distribute.getIamModuleName();
                 } else {
                     ctx.request().headers().forEach(h -> header.put(h.getKey(), h.getValue()));

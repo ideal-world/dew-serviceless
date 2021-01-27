@@ -50,11 +50,7 @@ public class ScriptProcessor {
     private static final Map<String, Context> SCRIPT_CONTAINER = new HashMap<>();
     private static final Map<String, Lock> LOCKS = new HashMap<>();
 
-
-    private static String _gatewayServerUrl;
-
-    public static void init(String gatewayServerUrl) {
-        _gatewayServerUrl = gatewayServerUrl;
+    public static void init() {
     }
 
     public static void init(String appCode, String funs) {
@@ -130,7 +126,6 @@ public class ScriptProcessor {
                             .build())
                     .allowHostClassLookup(s -> s.equalsIgnoreCase(ScriptExchangeHelper.class.getName()))
                     .build();
-            funs = funs.replace("DewSDK.init(\"REPLACE_IT\",\"\")", "DewSDK.init('" + _gatewayServerUrl + "','" + appCode + "')");
             SCRIPT_CONTAINER.put(appCode, context);
             SCRIPT_CONTAINER.get(appCode).eval(Source.create("js", "let global = this"));
             SCRIPT_CONTAINER.get(appCode).eval(Source.create("js", "const $ = Java.type('" + ScriptExchangeHelper.class.getName() + "')"));

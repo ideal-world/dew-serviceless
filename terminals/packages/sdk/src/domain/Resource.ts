@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package idealworld.dew.serviceless.iam;
+import {ExposeKind, ResourceKind} from "./Enum";
 
-import idealworld.dew.framework.DewAuthConstant;
-
-/**
- * IAM常量.
- *
- * @author gudaoxuri
- */
-public class IAMConstant extends DewAuthConstant {
-
-    public static final String CACHE_ACCESS_TOKEN = "dew:iam:oauth:access-token:";
-    public static final String CACHE_ACCOUNT_VCODE_TMP_REL = "dew:iam:account:vocde:tmprel:";
-    public static final String CACHE_ACCOUNT_VCODE_ERROR_TIMES = "dew:iam:account:vocde:errortimes:";
-
+export type ResourceSubjectResp = {
+    id: number
+    codePostfix: string
+    code: string
+    name: string
+    sort: number
+    parameters: string
+    kind: ResourceKind,
+    uri: string,
+    ak: string,
+    sk: string,
+    platformAccount: string,
+    platformProjectId: string,
+    timeoutMs: number,
+    relAppId: number,
+    relTenantId: number,
+    exposeKind: ExposeKind,
 }

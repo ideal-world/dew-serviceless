@@ -75,7 +75,7 @@ public class FunEventBusTest extends DewTest {
         FunEventBus.choose("").consumer("", (actionKind, uri, header, body) ->
                 EventBusDispatcher.chooseProcess("", null,null, actionKind, uri.getPath(), uri.getQuery(), header, body));
 
-        FunEventBus.choose("").request("", OptActionKind.MODIFY, "http://iam/app/n1/k1/enabled?q=测试",
+        FunEventBus.choose("").request("", OptActionKind.MODIFY, "http://iam.http.iam/app/n1/k1/enabled?q=测试",
                 JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer(), new HashMap<>() {
                     {
                         put("App-Id", "xxxx");
@@ -85,7 +85,7 @@ public class FunEventBusTest extends DewTest {
                     count.countDown();
                     Assertions.assertEquals("/app/{name}/{kind}/enabled", Resp.generic(resp._0.toString(StandardCharsets.UTF_8), String.class).getBody());
                 });
-        FunEventBus.choose("").request("", OptActionKind.MODIFY, "http://iam/app/n1/k1/enabled?q=测试",
+        FunEventBus.choose("").request("", OptActionKind.MODIFY, "http://iam.http.iam/app/n1/k1/enabled?q=测试",
                 JsonObject.mapFrom(User.builder()
                         .name(" 孤岛旭日 ")
                         .detail(User.Detail.builder()

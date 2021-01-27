@@ -226,7 +226,7 @@ public class TenantConsoleTest extends IAMBasicTest {
                 .ak("fyzm123")
                 .sk("sox3@4352")
                 .build(), Long.class)._0;
-        Assertions.assertEquals("账号认证类型与AK已存在", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident", AccountIdentAddReq.builder()
+        Assertions.assertEquals("账号认证类型[USERNAME]与AK[fyzm123]已存在", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident", AccountIdentAddReq.builder()
                 .kind(AccountIdentKind.USERNAME)
                 .ak("fyzm123")
                 .sk("sox3@4352")
@@ -238,7 +238,7 @@ public class TenantConsoleTest extends IAMBasicTest {
                 .build(), Long.class);
 
         // 修改当前租户某个账号的某个认证
-        Assertions.assertEquals("账号认证类型与AK已存在", req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId, AccountIdentModifyReq.builder()
+        Assertions.assertEquals("账号认证类型[USERNAME]与AK[gdxr123]已存在", req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId, AccountIdentModifyReq.builder()
                 .ak("gdxr123 ")
                 .build(), Void.class)._1.getMessage());
         Assertions.assertEquals("认证名规则不合法", req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId, AccountIdentModifyReq.builder()

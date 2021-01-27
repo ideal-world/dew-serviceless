@@ -31,7 +31,6 @@ import io.vertx.core.Future;
  */
 public class SCTenantProcessor extends EventBusProcessor {
 
-
     {
         // 添加租户
         addProcessor(OptActionKind.CREATE, "/console/system/tenant", eventBusContext ->

@@ -16,9 +16,11 @@
 
 package idealworld.dew.serviceless.iam;
 
+import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.DewModule;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
+import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectOperatorKind;
@@ -127,7 +129,7 @@ public class IAMModule extends DewModule<IAMConfig> {
                         .compose(resp ->
                                 TCAppProcessor.addApp(AppAddReq.builder()
                                         .name(iamConfig.getApp().getIamAppName())
-                                        .build(), dto.tenantId, context))
+                                        .build(), dto.tenantId, context,true))
                         // 初始化应用认证
                         .compose(appId -> {
                             dto.appId = appId;
@@ -237,7 +239,7 @@ public class IAMModule extends DewModule<IAMConfig> {
                         // 初始化资源主体
                         .compose(resp ->
                                 ACResourceProcessor.addResourceSubject(ResourceSubjectAddReq.builder()
-                                        .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
+                                        .codePostfix(getModuleName())
                                         .name(iamConfig.getApp().getIamAppName() + " APIs")
                                         .uri("http://" + getModuleName())
                                         .kind(ResourceKind.HTTP)
@@ -248,7 +250,7 @@ public class IAMModule extends DewModule<IAMConfig> {
                         })
                         .compose(resp ->
                                 ACResourceProcessor.addResourceSubject(ResourceSubjectAddReq.builder()
-                                        .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
+                                        .codePostfix(getModuleName())
                                         .name(iamConfig.getApp().getIamAppName() + " Menus")
                                         .uri("menu://" + getModuleName())
                                         .kind(ResourceKind.MENU)
@@ -292,6 +294,17 @@ public class IAMModule extends DewModule<IAMConfig> {
                         })
                         .compose(resp ->
                                 ACResourceProcessor.addResource(ResourceAddReq.builder()
+                                        .name("应用注册接口")
+                                        .pathAndQuery("/common/app")
+                                        .relResourceSubjectId(dto.iamAPIResourceSubjectId)
+                                        .exposeKind(ExposeKind.GLOBAL)
+                                        .build(), dto.appId, dto.tenantId, context))
+                        .compose(appRegisterAPIResourceId -> {
+                            dto.appRegisterAPIResourceId = appRegisterAPIResourceId;
+                            return Future.succeededFuture();
+                        })
+                        .compose(resp ->
+                                ACResourceProcessor.addResource(ResourceAddReq.builder()
                                         .name("应用控制台菜单")
                                         .pathAndQuery("/common/resource")
                                         .relResourceSubjectId(dto.iamMenuResourceSubjectId)
@@ -307,8 +320,24 @@ public class IAMModule extends DewModule<IAMConfig> {
                                         .build(), dto.appId, dto.tenantId, context))
                         .compose(resp ->
                                 ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
+                                        .relSubjectKind(AuthSubjectKind.ACCOUNT)
+                                        .relSubjectIds(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG + ",")
+                                        .subjectOperator(AuthSubjectOperatorKind.EQ)
+                                        .relResourceId(dto.systemAPIResourceId)
+                                        .resultKind(AuthResultKind.ACCEPT)
+                                        .build(), dto.appId, dto.tenantId, context))
+                        .compose(resp ->
+                                ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
                                         .relSubjectKind(AuthSubjectKind.ROLE)
                                         .relSubjectIds(dto.tenantRoleAdminId + ",")
+                                        .subjectOperator(AuthSubjectOperatorKind.EQ)
+                                        .relResourceId(dto.tenantAPIResourceId)
+                                        .resultKind(AuthResultKind.ACCEPT)
+                                        .build(), dto.appId, dto.tenantId, context))
+                        .compose(resp ->
+                                ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
+                                        .relSubjectKind(AuthSubjectKind.ACCOUNT)
+                                        .relSubjectIds(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG + ",")
                                         .subjectOperator(AuthSubjectOperatorKind.EQ)
                                         .relResourceId(dto.tenantAPIResourceId)
                                         .resultKind(AuthResultKind.ACCEPT)
@@ -319,6 +348,23 @@ public class IAMModule extends DewModule<IAMConfig> {
                                         .relSubjectIds(dto.appRoleAdminId + ",")
                                         .subjectOperator(AuthSubjectOperatorKind.EQ)
                                         .relResourceId(dto.appAPIResourceId)
+                                        .resultKind(AuthResultKind.ACCEPT)
+                                        .build(), dto.appId, dto.tenantId, context))
+                        .compose(resp ->
+                                ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
+                                        .relSubjectKind(AuthSubjectKind.ACCOUNT)
+                                        .relSubjectIds(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG + ",")
+                                        .subjectOperator(AuthSubjectOperatorKind.EQ)
+                                        .relResourceId(dto.appAPIResourceId)
+                                        .resultKind(AuthResultKind.ACCEPT)
+                                        .build(), dto.appId, dto.tenantId, context))
+                        .compose(resp ->
+                                ACAuthPolicyProcessor.addAuthPolicy(AuthPolicyAddReq.builder()
+                                        .relSubjectKind(AuthSubjectKind.ROLE)
+                                        .relSubjectIds(dto.tenantRoleAdminId + ",")
+                                        .subjectOperator(AuthSubjectOperatorKind.EQ)
+                                        .actionKind(OptActionKind.CREATE)
+                                        .relResourceId(dto.appRegisterAPIResourceId)
                                         .resultKind(AuthResultKind.ACCEPT)
                                         .build(), dto.appId, dto.tenantId, context))
                         .compose(resp -> {
@@ -377,6 +423,7 @@ public class IAMModule extends DewModule<IAMConfig> {
         public Long systemAPIResourceId;
         public Long tenantAPIResourceId;
         public Long appAPIResourceId;
+        public Long appRegisterAPIResourceId;
 
     }
 

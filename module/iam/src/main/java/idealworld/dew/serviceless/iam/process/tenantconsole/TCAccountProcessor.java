@@ -234,7 +234,7 @@ public class TCAccountProcessor extends EventBusProcessor {
                                         put("rel_tenant_id", relTenantId);
                                     }
                                 },
-                                AccountIdent.class), () -> new ConflictException("账号认证类型与AK已存在")))
+                                AccountIdent.class), () -> new ConflictException("账号认证类型[" + accountIdentAddReq.getKind() + "]与AK[" + accountIdentAddReq.getAk() + "]已存在")))
                 .compose(resp ->
                         IAMBasicProcessor.validRuleAndGetValidEndTime(
                                 accountIdentAddReq.getKind(),
@@ -288,7 +288,7 @@ public class TCAccountProcessor extends EventBusProcessor {
                                             put("rel_tenant_id", relTenantId);
                                         }
                                     },
-                                    AccountIdent.class), () -> new ConflictException("账号认证类型与AK已存在"))
+                                    AccountIdent.class), () -> new ConflictException("账号认证类型[" + accountIdent.getKind() + "]与AK[" + accountIdentAk + "]已存在"))
                             .compose(resp ->
                                     IAMBasicProcessor.validRuleAndGetValidEndTime(
                                             accountIdent.getKind(),
@@ -354,10 +354,23 @@ public class TCAccountProcessor extends EventBusProcessor {
                 .compose(resp ->
                         IAMBasicProcessor.checkAppMembership(appId, relTenantId, context))
                 .compose(resp ->
-                        context.sql.save(AccountApp.builder()
+                        context.sql.getOne(
+                                new HashMap<String,Object>() {
+                                    {
+                                        put("rel_account_id", accountId);
+                                        put("rel_app_id", appId);
+                                    }
+                                },
+                                AccountApp.class))
+                .compose(accountApp -> {
+                    if(accountApp==null){
+                        return context.sql.save(AccountApp.builder()
                                 .relAccountId(accountId)
                                 .relAppId(appId)
-                                .build()));
+                                .build());
+                    }
+                    return context.helper.success(accountApp.getId());
+                });
     }
 
     public static Future<Void> deleteAccountApp(Long accountAppId, Long relTenantId, ProcessContext context) {
@@ -391,11 +404,23 @@ public class TCAccountProcessor extends EventBusProcessor {
                 .compose(resp ->
                         IAMBasicProcessor.checkGroupNodeMembership(groupNodeId, relTenantId, context))
                 .compose(resp ->
-                        context.sql.save(AccountGroup.builder()
+                        context.sql.getOne(
+                                new HashMap<String,Object>() {
+                                    {
+                                        put("rel_account_id", accountId);
+                                        put("rel_group_node_id", groupNodeId);
+                                    }
+                                },
+                                AccountGroup.class))
+                .compose(accountGroup -> {
+                    if(accountGroup==null){
+                        return context.sql.save(AccountGroup.builder()
                                 .relAccountId(accountId)
                                 .relGroupNodeId(groupNodeId)
-                                .build())
-                );
+                                .build());
+                    }
+                    return context.helper.success(accountGroup.getId());
+                });
     }
 
     public static Future<Void> deleteAccountGroup(Long accountGroupId, Long relTenantId, ProcessContext context) {
@@ -424,10 +449,23 @@ public class TCAccountProcessor extends EventBusProcessor {
                 .compose(resp ->
                         IAMBasicProcessor.checkRoleMembership(roleId, relTenantId, context))
                 .compose(resp ->
-                        context.sql.save(AccountRole.builder()
-                                .relAccountId(accountId)
-                                .relRoleId(roleId)
-                                .build()));
+                        context.sql.getOne(
+                                new HashMap<String,Object>() {
+                                    {
+                                        put("rel_account_id", accountId);
+                                        put("rel_role_id", roleId);
+                                    }
+                                },
+                                AccountRole.class))
+                .compose(accountRole -> {
+                        if(accountRole==null){
+                           return context.sql.save(AccountRole.builder()
+                                    .relAccountId(accountId)
+                                    .relRoleId(roleId)
+                                    .build());
+                        }
+                        return context.helper.success(accountRole.getId());
+                });
     }
 
     public static Future<Void> deleteAccountRole(Long accountRoleId, Long relTenantId, ProcessContext context) {

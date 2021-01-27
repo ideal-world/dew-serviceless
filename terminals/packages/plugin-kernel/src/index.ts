@@ -89,6 +89,7 @@ async function dewBuildByDev(basePath: string): Promise<void> {
 const sdk = require("@idealworld/sdk");
 exports.DewSDK = sdk.DewSDK;
 sdk.DewSDK.init("` + serverUrl + `", "` + appId + `");
+sdk.DewSDK.setting.aksk("` + ak + `", "` + sk + `");
     `
     fs.readdirSync(basePath).forEach(fileName => {
         let filePath = path.join(basePath, fileName)
@@ -105,7 +106,8 @@ export function generateJVMFile(basePath: string, filePath: string) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sdk = require("@idealworld/sdk/dist/jvm");
 exports.DewSDK = sdk.DewSDK;
-sdk.DewSDK.init("REPLACE_IT", "");
+sdk.DewSDK.init("` + serverUrl + `", "` + appId + `");
+sdk.DewSDK.setting.aksk("` + ak + `", "` + sk + `");
 sdk.DewSDK.setting.ajax((url, headers, data) => {
   return new Promise((resolve, reject) => {
     try{
@@ -156,8 +158,9 @@ export function deleteJVMFile(basePath: string) {
 }
 
 export function initDewSDK(fileContent: string): string {
-    return 'const {DewSDK} = require("@idealworld/sdk");\n' +
-        fileContent
+    return `const {DewSDK} = require("@idealworld/sdk");
+DewSDK.init("` + serverUrl + `", "` + appId + `");
+` + fileContent
 }
 
 let postRemoveSegments: string[] = []

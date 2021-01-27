@@ -30,6 +30,7 @@ import idealworld.dew.serviceless.iam.domain.auth.ResourceSubject;
 import idealworld.dew.serviceless.iam.domain.ident.App;
 import idealworld.dew.serviceless.iam.domain.ident.AppIdent;
 import idealworld.dew.serviceless.iam.domain.ident.Tenant;
+import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -127,7 +128,7 @@ public class ExchangeProcessor extends EventBusProcessor {
 
     public static Future<Void> enableTenant(Long tenantId, ProcessContext context) {
         return context.sql.list(
-                String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time FROM %s AS ident" +
+                String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, app.open_id, ident.valid_time FROM %s AS ident" +
                                 " INNER JOIN %s AS app ON app.id = ident.rel_app_id AND app.status = #{status}" +
                                 " WHERE app.rel_tenant_id = #{rel_tenant_id} AND ident.valid_time > #{valid_time}",
                         new AppIdent().tableName(), new App().tableName()),
@@ -144,8 +145,9 @@ public class ExchangeProcessor extends EventBusProcessor {
                                     var ak = appIdent.getString("ak");
                                     var sk = appIdent.getString("sk");
                                     var appId = appIdent.getLong("rel_app_id");
+                                    var appCode = appIdent.getString("open_id");
                                     var validTime = appIdent.getLong("valid_time");
-                                    return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
+                                    return changeAppIdent(ak, sk, validTime, appId, appCode, tenantId, context);
                                 })
                                 .collect(Collectors.toList())))
                 .compose(resp -> context.helper.success());
@@ -200,7 +202,7 @@ public class ExchangeProcessor extends EventBusProcessor {
                                     var ak = appIdent.getString("ak");
                                     var sk = appIdent.getString("sk");
                                     var validTime = appIdent.getLong("valid_time");
-                                    return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
+                                    return changeAppIdent(ak, sk, validTime, appId, appCode, tenantId, context);
                                 })
                                 .collect(Collectors.toList())))
                 .compose(resp -> context.helper.success());
@@ -221,20 +223,22 @@ public class ExchangeProcessor extends EventBusProcessor {
     }
 
     public static Future<Void> changeAppIdent(AppIdent appIdent, Long appId, Long tenantId, ProcessContext context) {
-        return changeAppIdent(appIdent.getAk(), appIdent.getSk(), appIdent.getValidTime(), appId, tenantId, context);
+        return IAMBasicProcessor.getAppCodeById(appId, tenantId, context)
+                .compose(appCode ->
+                        changeAppIdent(appIdent.getAk(), appIdent.getSk(), appIdent.getValidTime(), appId, appCode, tenantId, context));
     }
 
     public static Future<Void> deleteAppIdent(String ak, ProcessContext context) {
         return context.cache.del(IAMConstant.CACHE_APP_AK + ak);
     }
 
-    private static Future<Void> changeAppIdent(String ak, String sk, Long validTime, Long appId, Long tenantId, ProcessContext context) {
+    private static Future<Void> changeAppIdent(String ak, String sk, Long validTime, Long appId, String appCode, Long tenantId, ProcessContext context) {
         return context.cache.del(IAMConstant.CACHE_APP_AK + ak)
                 .compose(resp -> {
                     if (validTime == null) {
-                        return context.cache.set(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId);
+                        return context.cache.set(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId + ":" + appCode);
                     } else {
-                        return context.cache.setex(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId,
+                        return context.cache.setex(IAMConstant.CACHE_APP_AK + ak, sk + ":" + tenantId + ":" + appId + ":" + appCode,
                                 (validTime - System.currentTimeMillis()) / 1000);
                     }
                 });
@@ -301,7 +305,7 @@ public class ExchangeProcessor extends EventBusProcessor {
             return context.helper.success();
         }
         return context.sql.list(
-                String.format("SELECT ident.ak, ident.sk, ident.rel_app_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
+                String.format("SELECT ident.ak, ident.sk, ident.rel_app_id,app.open_id, ident.valid_time, app.rel_tenant_id FROM %s AS ident" +
                                 " INNER JOIN %s AS app ON app.id = ident.rel_app_id AND app.status = #{status}" +
                                 " INNER JOIN %s AS tenant ON tenant.id = app.rel_tenant_id AND tenant.status = #{status}" +
                                 " WHERE ident.valid_time > #{valid_time}",
@@ -318,9 +322,10 @@ public class ExchangeProcessor extends EventBusProcessor {
                                     var ak = appIdent.getString("ak");
                                     var sk = appIdent.getString("sk");
                                     var appId = appIdent.getLong("rel_app_id");
+                                    var appCode = appIdent.getString("open_id");
                                     var validTime = appIdent.getLong("valid_time");
                                     var tenantId = appIdent.getLong("rel_tenant_id");
-                                    return changeAppIdent(ak, sk, validTime, appId, tenantId, context);
+                                    return changeAppIdent(ak, sk, validTime, appId, appCode, tenantId, context);
                                 })
                                 .collect(Collectors.toList())))
                 .compose(resp -> context.helper.success());

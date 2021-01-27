@@ -137,6 +137,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                         var appId = Long.parseLong(appInfoItems[0]);
                         var tenantId = Long.parseLong(appInfoItems[1]);
                         var identOptCacheInfo = new IdentOptExchangeInfo();
+                        identOptCacheInfo.setUnauthorizedAppCode(appCode);
                         identOptCacheInfo.setUnauthorizedAppId(appId);
                         identOptCacheInfo.setUnauthorizedTenantId(tenantId);
                         ctx.put(CONTEXT_INFO, identOptCacheInfo);
@@ -157,6 +158,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                             error(StandardCode.UNAUTHORIZED, GatewayIdentHandler.class, "认证错误，Token不合法", ctx);
                             return;
                         }
+                        identOptInfo.setUnauthorizedAppCode(identOptInfo.getAppCode());
                         identOptInfo.setUnauthorizedAppId(identOptInfo.getAppId());
                         identOptInfo.setUnauthorizedTenantId(identOptInfo.getTenantId());
                         identOptInfo.setToken(token);
@@ -202,6 +204,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                     var sk = skAndAppIdSplit[0];
                     var tenantId = Long.parseLong(skAndAppIdSplit[1]);
                     var appId = Long.parseLong(skAndAppIdSplit[2]);
+                    var appCode = skAndAppIdSplit[3];
                     var calcSignature = $.security.encodeStringToBase64(
                             $.security.digest.digest((reqMethod + "\n" + reqDate + "\n" + reqPath + "\n" + sortedReqQuery).toLowerCase(),
                                     sk, "HmacSHA1"),
@@ -212,10 +215,12 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                     }
                     var identOptInfo = new IdentOptExchangeInfo();
                     identOptInfo.setAppId(appId);
+                    identOptInfo.setAppCode(appCode);
                     identOptInfo.setTenantId(tenantId);
+                    identOptInfo.setUnauthorizedAppCode(appCode);
                     identOptInfo.setUnauthorizedAppId(appId);
                     identOptInfo.setUnauthorizedTenantId(tenantId);
-                    identOptInfo.setAccountCode(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG);
+                    identOptInfo.setAccountId(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG);
                     ctx.put(CONTEXT_INFO, identOptInfo);
                     ctx.next();
                 })

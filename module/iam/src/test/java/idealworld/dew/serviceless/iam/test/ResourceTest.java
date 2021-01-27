@@ -18,7 +18,6 @@ package idealworld.dew.serviceless.iam.test;
 
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
-import idealworld.dew.serviceless.iam.IAMConstant;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.resource.ResourceAddReq;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.resource.ResourceSubjectAddReq;
 import io.vertx.core.Vertx;
@@ -38,13 +37,13 @@ public class ResourceTest extends IAMBasicTest {
 
         // 添加当前应用的资源主体
         var resourceSubjectRelDBId = req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
+                .codePostfix(MODULE_NAME)
                 .kind(ResourceKind.RELDB)
                 .name("mysql")
                 .uri("mysql://root:123456@127.0.0.1:3306/test")
                 .build(), Long.class)._0;
         var resourceSubjectCacheId = req(OptActionKind.CREATE, "/console/app/resource/subject", ResourceSubjectAddReq.builder()
-                .codePostfix(IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_POSTFIX)
+                .codePostfix(MODULE_NAME)
                 .kind(ResourceKind.CACHE)
                 .name("redis")
                 .uri("redis://localhost:6379/10")

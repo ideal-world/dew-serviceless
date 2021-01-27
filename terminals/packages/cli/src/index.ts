@@ -214,8 +214,9 @@ async function createApp(answers: any) {
         DewSDK.iam.auth.set(identOptInfo)
         appCode = identOptInfo.appCode
     } else {
-        let appId = await DewSDK.iam.app.create(answers.appName)
-        appCode = (await DewSDK.iam.app.fetch(appId)).openId
+        let identOptInfo = await DewSDK.iam.app.register(answers.appName)
+        DewSDK.iam.auth.set(identOptInfo)
+        appCode = identOptInfo.appCode
     }
     let identAKInfo = (await DewSDK.iam.app.ident.list()).objects[0]
     let identSk = await DewSDK.iam.app.ident.fetchSk(identAKInfo.id)
@@ -240,22 +241,22 @@ async function createApp(answers: any) {
     }
     fileHelper.writeFile(packagePath, JSON.stringify(packageJsonFile, null, 2))
     let dewCrtPath = fsPath.resolve(path, 'dew.json')
+    console.log(chalk.yellow('正在添加认证信息到 [' + dewCrtPath + ']'))
     if (!fileHelper.exists(dewCrtPath)) {
-        console.log(chalk.yellow('正在添加认证信息到 [' + dewCrtPath + ']'))
         fileHelper.writeFile(dewCrtPath, JSON.stringify({
             "ak": identAKInfo.ak,
             "sk": identSk,
-            "env":{
-                "dev":{
-                },
-                "test":{
-                },
-                "prod":{
-                }
+            "env": {
+                "dev": {},
+                "test": {},
+                "prod": {}
             }
         }, null, 2))
-    }else{
-        console.warn(chalk.bgYellow('认证信息文件 [' + dewCrtPath + '] 已存在，忽略AK/SK创建'))
+    } else {
+        let dewCrtContent = JSON.parse(fileHelper.readFile(dewCrtPath))
+        dewCrtContent['ak'] = identAKInfo.ak
+        dewCrtContent['sk'] = identSk
+        fileHelper.writeFile(dewCrtPath, JSON.stringify(dewCrtContent, null, 2))
     }
     let gitignorePath = fsPath.resolve(path, '.npmignore')
     if (fileHelper.exists(gitignorePath)) {
@@ -265,7 +266,7 @@ async function createApp(answers: any) {
     } else {
         fileHelper.writeFile(gitignorePath, '\ndew.json')
     }
-    console.log(chalk.green.bold.bgWhite('应用创建完成，请到 [' + path + '] 中查看。\r\n' +
+    console.log(chalk.green.bold('应用创建完成，请到 [' + path + '] 中查看。\r\n' +
         '===================\r\n' +
         '应用Id(AppId): ' + appCode + '\r\n' +
         '应用管理员: ' + answers.tenantAdminUsername + '\r\n' +
