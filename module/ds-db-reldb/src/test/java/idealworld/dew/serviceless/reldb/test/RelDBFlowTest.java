@@ -121,8 +121,6 @@ public class RelDBFlowTest extends DewTest {
             }
         }));
 
-        Assertions.assertEquals("认证错误，AppId不合法", request("1.reldb.subjectCodexx", "{\"sql\":\"select name from iam_account\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
-
         Assertions.assertEquals("请求的SQL解析错误", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select1 name from iam_account1" + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
         Assertions.assertEquals("Table 'test.iam_account1' doesn't exist", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account1" + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
         Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\",\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));

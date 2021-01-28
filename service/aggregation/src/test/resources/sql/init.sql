@@ -14,22 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Copyright 2020. gudaoxuri
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 create table if not exists dew_config
 (
     id          bigint auto_increment
@@ -40,7 +24,7 @@ create table if not exists dew_config
     create_user bigint                              not null comment '创建者Id',
     update_time timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user bigint                              not null comment '最后一次修改者Id',
-    constraint UKov4r8jpo7opduuwck63hdl6kt
+    constraint u_k
         unique (k)
 )
     comment '通用配置信息';
@@ -56,7 +40,7 @@ create table if not exists dew_del_record
     create_user bigint                              not null comment '创建者Id',
     update_time timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user bigint                              not null comment '最后一次修改者Id',
-    constraint UKkcvl9uqv65cso9fs2dryswlkg
+    constraint u_entity_record
         unique (entity_name, record_id)
 )
     comment '记录删除信息';
@@ -76,12 +60,12 @@ create table if not exists iam_account
     create_user   bigint                              not null comment '创建者Id',
     update_time   timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user   bigint                              not null comment '最后一次修改者Id',
-    constraint UK8e5w1v41g6818g0f5e7qmxhmi
+    constraint u_open_id_parent_id
         unique (open_id, parent_id)
 )
     comment '账号';
 
-create index IDXqoxo6ajinakf764bmxk92w7y2
+create index i_tenant_status
     on iam_account (rel_tenant_id, status);
 
 create table if not exists iam_account_app
@@ -94,12 +78,12 @@ create table if not exists iam_account_app
     create_user    bigint                              not null comment '创建者Id',
     update_time    timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user    bigint                              not null comment '最后一次修改者Id',
-    constraint UKjhevyvb4pxena0dtoo3x05qdk
-        unique (rel_account_id, rel_app_id)
+    constraint u_account_app
+        unique (rel_app_id, rel_account_id)
 )
     comment '账号应用关联';
 
-create index IDXi9de746blpeo08vafc3dr6ind
+create index i_app
     on iam_account_app (rel_app_id);
 
 create table if not exists iam_account_bind
@@ -115,15 +99,15 @@ create table if not exists iam_account_bind
     create_user     bigint                              not null comment '创建者Id',
     update_time     timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user     bigint                              not null comment '最后一次修改者Id',
-    constraint UKltlc4t2jk2ax2bn5jqbfxdklt
+    constraint u_from_to_account
         unique (from_account_id, to_account_id)
 )
     comment '账号绑定';
 
-create index IDXd5pbls2wrseb56lie3woxi6ak
+create index i_to_tenant
     on iam_account_bind (to_tenant_id);
 
-create index IDXvlkusrg2ubeq6vskcmxp08qp
+create index i_from_tenant
     on iam_account_bind (from_tenant_id);
 
 create table if not exists iam_account_group
@@ -136,12 +120,12 @@ create table if not exists iam_account_group
     create_user       bigint                              not null comment '创建者Id',
     update_time       timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user       bigint                              not null comment '最后一次修改者Id',
-    constraint UKpc0hwtn4y3spjcup4x9m2b9wb
+    constraint u_account_group
         unique (rel_account_id, rel_group_node_id)
 )
     comment '账号群组关联';
 
-create index IDX3ry6uai59gurqtvuu7nqikuqe
+create index i_group
     on iam_account_group (rel_group_node_id);
 
 create table if not exists iam_account_ident
@@ -159,18 +143,15 @@ create table if not exists iam_account_ident
     create_user      bigint                              not null comment '创建者Id',
     update_time      timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user      bigint                              not null comment '最后一次修改者Id',
-    constraint UKfq7m36t7wu1x64w3xhon4pf9v
+    constraint u_tenant_kind_ak
         unique (rel_tenant_id, kind, ak)
 )
     comment '账号认证';
 
-create index IDX7xu3sl9j1og86u266n4bp53oa
+create index i_valid1
     on iam_account_ident (rel_tenant_id, rel_account_id, kind, ak, valid_start_time, valid_end_time);
 
-create index IDX8v0ywodmhx0nrpqtkela5t714
-    on iam_account_ident (rel_tenant_id, rel_account_id, kind, ak);
-
-create index IDXncy24n4jdaknv0elvbgvvuai0
+create index i_valid2
     on iam_account_ident (rel_account_id, kind, valid_start_time, valid_end_time);
 
 create table if not exists iam_account_role
@@ -183,12 +164,12 @@ create table if not exists iam_account_role
     create_user    bigint                              not null comment '创建者Id',
     update_time    timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user    bigint                              not null comment '最后一次修改者Id',
-    constraint UKd354dk326hn02bgr5lafrs3o9
+    constraint u_account_role
         unique (rel_account_id, rel_role_id)
 )
     comment '账号角色关联';
 
-create index IDX4haa22xu0379nl99a9qvywh7c
+create index i_role
     on iam_account_role (rel_role_id);
 
 create table if not exists iam_app
@@ -207,12 +188,12 @@ create table if not exists iam_app
     create_user   bigint                              not null comment '创建者Id',
     update_time   timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user   bigint                              not null comment '最后一次修改者Id',
-    constraint UKiy2dnjxng6jb88g7r7v0o6rgk
+    constraint u_tenant_name
         unique (rel_tenant_id, name)
 )
     comment '应用';
 
-create index IDX1jjwc4sh23jovpthkvapym5ix
+create index i_status
     on iam_app (status);
 
 create table if not exists iam_app_ident
@@ -228,12 +209,12 @@ create table if not exists iam_app_ident
     create_user bigint                              not null comment '创建者Id',
     update_time timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user bigint                              not null comment '最后一次修改者Id',
-    constraint UKljeojtvy3u0scc3mp39hr0874
+    constraint u_ak
         unique (ak)
 )
     comment '应用认证';
 
-create index IDXi4gnko54gfoijmtxfe9p2nfl4
+create index i_app_valid
     on iam_app_ident (rel_app_id, valid_time);
 
 create table if not exists iam_auth_policy
@@ -276,12 +257,12 @@ create table if not exists iam_group
     create_user       bigint                              not null comment '创建者Id',
     update_time       timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user       bigint                              not null comment '最后一次修改者Id',
-    constraint UKoipgouysoa4a57klvpxede9gu
+    constraint u_tenant_app_code
         unique (rel_tenant_id, rel_app_id, code)
 )
     comment '群组';
 
-create index IDXfs1qyakrurqoi32v30xxbp1ne
+create index i_expose
     on iam_group (expose_kind);
 
 create table if not exists iam_group_node
@@ -289,7 +270,7 @@ create table if not exists iam_group_node
     id           bigint auto_increment
         primary key,
     code         varchar(1000)                       not null comment '节点编码',
-    bus_code     varchar(1000)                       not null comment '业务编码',
+    bus_code     varchar(500)                       not null comment '业务编码',
     name         varchar(255)                        not null comment '节点名称',
     parameters   varchar(2000)                       not null comment '节点扩展信息，Json格式',
     rel_group_id bigint                              not null comment '关联群组Id',
@@ -299,6 +280,9 @@ create table if not exists iam_group_node
     update_user  bigint                              not null comment '最后一次修改者Id'
 )
     comment '群组节点';
+
+create index i_code
+    on iam_group (code, rel_group_id);
 
 create table if not exists iam_resource
 (
@@ -322,10 +306,10 @@ create table if not exists iam_resource
 )
     comment '资源';
 
-create index IDX2tig999ttn9s7d67l6wifr3bw
+create index i_expose
     on iam_resource (expose_kind);
 
-create index IDXqtt1cl5bpsru88k4ut4x54gim
+create index i_parent
     on iam_resource (parent_id);
 
 create table if not exists iam_resource_subject
@@ -348,12 +332,12 @@ create table if not exists iam_resource_subject
     create_user         bigint                              not null comment '创建者Id',
     update_time         timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user         bigint                              not null comment '最后一次修改者Id',
-    constraint UKqha1627a3vy6hscmfnw28viwg
+    constraint u_code
         unique (code)
 )
     comment '资源主体';
 
-create index IDXei74af3xufobhvh61mujbngqt
+create index i_tenant_app_kind
     on iam_resource_subject (rel_tenant_id, rel_app_id, kind);
 
 create table if not exists iam_role
@@ -371,12 +355,12 @@ create table if not exists iam_role
     create_user       bigint                              not null comment '创建者Id',
     update_time       timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user       bigint                              not null comment '最后一次修改者Id',
-    constraint UKfm6o97ipma326nnxsdw5xaja8
+    constraint u_role_group
         unique (rel_role_def_id, rel_group_node_id)
 )
     comment '角色';
 
-create index IDXnaxipcsq8ps9d86qvrg5a5e3k
+create index i_expose
     on iam_role (expose_kind);
 
 create table if not exists iam_role_def
@@ -392,7 +376,7 @@ create table if not exists iam_role_def
     create_user   bigint                              not null comment '创建者Id',
     update_time   timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user   bigint                              not null comment '最后一次修改者Id',
-    constraint UKq61oa4wbx1ggd9tqp4a7juw33
+    constraint u_tenant_app_code
         unique (rel_tenant_id, rel_app_id, code)
 )
     comment '角色定义';
@@ -413,7 +397,7 @@ create table if not exists iam_tenant
 )
     comment '租户';
 
-create index IDX3x7h6khiqtlwf1uewxh78xfx9
+create index u_status
     on iam_tenant (status);
 
 create table if not exists iam_tenant_ident
@@ -431,7 +415,7 @@ create table if not exists iam_tenant_ident
     create_user        bigint                              not null comment '创建者Id',
     update_time        timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user        bigint                              not null comment '最后一次修改者Id',
-    constraint UKcuj2mhpkb8x6brgrk61psetvl
+    constraint u_tenant_kind
         unique (rel_tenant_id, kind)
 )
     comment '租户认证配置';
@@ -447,24 +431,24 @@ create table if not exists iam_tenant_cert
     create_user   bigint                              not null comment '创建者Id',
     update_time   timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
     update_user   bigint                              not null comment '最后一次修改者Id',
-    constraint UKkxsomgbfhpvdtpo5w39sy6oyw
+    constraint u_tenant_category
         unique (rel_tenant_id, category)
 )
     comment '租户凭证配置';
 
 create table if not exists task_task_def
 (
-    id         bigint auto_increment
+    id           bigint auto_increment
         primary key,
-    code       varchar(255) not null comment '任务编码',
-    cron       varchar(100) not null comment '定时配置',
-    fun        longtext     not null comment '执行函数',
-    rel_app_code varchar(255)       not null comment '关联应用Open Id',
-    create_time timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-    create_user bigint not null comment '创建者Id',
-    update_time timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
-    update_user bigint not null comment '最后一次修改者Id',
-    constraint UKov4r8jpo7opduuwck63hdl6
+    code         varchar(255)                        not null comment '任务编码',
+    cron         varchar(100)                        not null comment '定时配置',
+    fun          longtext                            not null comment '执行函数',
+    rel_app_code varchar(255)                        not null comment '关联应用Open Id',
+    create_time  timestamp default CURRENT_TIMESTAMP null comment '创建时间',
+    create_user  bigint                              not null comment '创建者Id',
+    update_time  timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '最后一次修改时间',
+    update_user  bigint                              not null comment '最后一次修改者Id',
+    constraint u_code
         unique (rel_app_code, code)
 )
     comment '任务定义';
@@ -480,3 +464,4 @@ create table if not exists task_task_inst
     rel_task_def_code varchar(255)  not null comment '关联任务定义编码'
 )
     comment '任务实例';
+

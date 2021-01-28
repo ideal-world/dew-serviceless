@@ -176,8 +176,8 @@ public class ExposeTest extends IAMBasicTest {
         Assertions.assertEquals(1, resourceResps.size());
         Assertions.assertEquals("业务操作", resourceResps.get(0).getName());
         resourceResps = reqList("/console/app/resource?expose=true", ResourceResp.class)._0;
-        Assertions.assertEquals(3, resourceResps.size());
-        Assertions.assertEquals("公开资源", resourceResps.get(2).getName());
+        Assertions.assertEquals(4, resourceResps.size());
+        Assertions.assertEquals("应用注册接口", resourceResps.get(2).getName());
 
         // 交叉授权
         // 自己应用的资源 - 自己应用的角色

@@ -139,12 +139,11 @@ public class TodoTest extends ITBasicTest {
         try {
             req(OptActionKind.CREATE, "reldb://" + appCode + ".reldb.todoDB", new HashMap<String, Object>() {
                 {
-                    put("sql", "insert into todo(content, create_user, update_user) values (?, ?, ?)");
+                    put("sql", "insert into todo(content, create_user) values (?, ?)");
                     put("parameters", new ArrayList<>() {
                         {
-                            add(userIdentOpt.get("accountCode"));
-                            add(userIdentOpt.get("accountCode"));
                             add("还款");
+                            add(userIdentOpt.get("accountCode"));
                         }
                     });
                 }
@@ -155,11 +154,23 @@ public class TodoTest extends ITBasicTest {
         // 注册用户添加记录
         reqList(OptActionKind.CREATE, "reldb://" + appCode + ".reldb.todoDB", new HashMap<String, Object>() {
             {
-                put("sql", "insert into todo(content, create_user, update_user) values (?, ?, ?)");
+                put("sql", "create table if not exists todo\n" +
+                        "(\n" +
+                        "    id bigint auto_increment primary key,\n" +
+                        "    create_time timestamp default CURRENT_TIMESTAMP null comment '创建时间',\n" +
+                        "    create_user varchar(255) not null comment '创建者OpenId',\n" +
+                        "    content varchar(255) not null comment '内容'\n" +
+                        ")\n" +
+                        "comment '任务表'");
+                put("parameters", new ArrayList<>());
+            }
+        }, userToken, null, Map.class);
+        reqList(OptActionKind.CREATE, "reldb://" + appCode + ".reldb.todoDB", new HashMap<String, Object>() {
+            {
+                put("sql", "insert into todo(content, create_user) values (?, ?)");
                 put("parameters", new ArrayList<>() {
                     {
                         add("还款");
-                        add(userIdentOpt.get("accountCode"));
                         add(userIdentOpt.get("accountCode"));
                     }
                 });

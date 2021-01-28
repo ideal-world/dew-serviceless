@@ -20,8 +20,8 @@ import {ResourceKind} from "../src/domain/Enum";
 
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000"
 
-// 请先启动 TestServicelessApplication 并修改此变量
-let APP_ID = 'apd10636b51ed84fd5986ade4bc8832543'
+// 请先启动 TestServicelessApplication
+let APP_ID = 'iam'
 const USERNAME = "dew"
 const PASSWORD = "TestPwd1d"
 

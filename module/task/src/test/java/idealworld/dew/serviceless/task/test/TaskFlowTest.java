@@ -106,7 +106,9 @@ public class TaskFlowTest extends DewTest {
                 .tenantId(1L)
                 .unauthorizedTenantId(1L)
                 .appId(1L)
-                .appId(1L)
+                .appCode("app1")
+                .unauthorizedAppId(1L)
+                .unauthorizedAppCode("app1")
                 .accountId(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG)
                 .build();
         header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));

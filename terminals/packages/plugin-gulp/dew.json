@@ -1,17 +1,22 @@
 {
-    "ak":"ak1",
-    "sk":"sk1",
-    "env":{
-        "dev":{
-            "ak":"ak_dev",
-            "sk":"sk_dev",
-            "db":{
-                "url":"mysqlxxxx"
-            }
-        },
-        "test":{
-        },
-        "prod":{
-        }
+  "ak": "ak1",
+  "sk": "sk1",
+  "env": {
+    "dev": {
+      "ak": "ak_dev",
+      "sk": "sk_dev",
+      "db": {
+        "url": "mysqlxxxx"
+      }
+    },
+    "test": {
+    },
+    "prod": {
+      "db": {
+        "url": "mysqlxxxx",
+        "user": "",
+        "pwd": ""
+      }
     }
+  }
 }

@@ -72,8 +72,6 @@ public class AuthTest extends ITBasicTest {
         appAdminIdentOpt = req(OptActionKind.CREATE, "http://iam.http.iam/common/app", new HashMap<String, Object>() {
             {
                 put("appName", "测试应用2");
-                put("accountUserName", "gudaoxuri2");
-                put("accountPassword", "o2dd^!fdd");
             }
         }, appAdminToken, null, Map.class);
         Assertions.assertNotNull(appAdminIdentOpt);
