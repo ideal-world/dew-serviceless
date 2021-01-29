@@ -111,7 +111,8 @@ public class TaskFlowTest extends DewTest {
                 .unauthorizedAppCode("app1")
                 .accountId(DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG)
                 .build();
-        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
+        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG,
+                $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
         var req = FunEventBus.choose(MODULE_NAME)
                 .request(MODULE_NAME,
                         actionKind,

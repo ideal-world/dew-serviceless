@@ -50,7 +50,8 @@ public interface PlatformAPI {
                     }
                     return doGetAccessToken(ak, sk, context)
                             .compose(getAccessToken ->
-                                    context.cache.setex(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag(), getAccessToken._0, getAccessToken._1 - 10)
+                                    context.cache.setex(IAMConstant.CACHE_ACCESS_TOKEN + appId + ":" + getPlatformFlag(),
+                                            getAccessToken._0, getAccessToken._1 - 10)
                                             .compose(resp -> context.helper.success(getAccessToken._0)));
                 });
     }

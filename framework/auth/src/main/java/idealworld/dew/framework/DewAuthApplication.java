@@ -22,7 +22,8 @@ import io.vertx.core.Future;
 /**
  * 带数据交互处理的认证启动类.
  *
- * @param <C>
+ * @author gudaoxuri
+ * @param <C> 配置信息类
  */
 public abstract class DewAuthApplication<C extends DewAuthConfig> extends DewApplication<C> {
 

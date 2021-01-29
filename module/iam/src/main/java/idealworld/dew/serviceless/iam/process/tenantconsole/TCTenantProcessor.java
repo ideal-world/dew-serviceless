@@ -41,40 +41,52 @@ public class TCTenantProcessor extends EventBusProcessor {
     {
         // 修改当前租户
         addProcessor(OptActionKind.PATCH, "/console/tenant/tenant", eventBusContext ->
-                modifyTenant(eventBusContext.req.body(TenantModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyTenant(eventBusContext.req.body(TenantModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 获取当前租户信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/tenant", eventBusContext ->
                 getTenant(eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 添加当前租户的认证
         addProcessor(OptActionKind.CREATE, "/console/tenant/tenant/ident", eventBusContext ->
-                addTenantIdent(eventBusContext.req.body(TenantIdentAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addTenantIdent(eventBusContext.req.body(TenantIdentAddReq.class), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 修改当前租户的某个认证
         addProcessor(OptActionKind.PATCH, "/console/tenant/tenant/ident/{tenantIdentId}", eventBusContext ->
-                modifyTenantIdent(Long.parseLong(eventBusContext.req.params.get("tenantIdentId")), eventBusContext.req.body(TenantIdentModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyTenantIdent(Long.parseLong(eventBusContext.req.params.get("tenantIdentId")),
+                        eventBusContext.req.body(TenantIdentModifyReq.class),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个认证信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/ident/{tenantIdentId}", eventBusContext ->
-                getTenantIdent(Long.parseLong(eventBusContext.req.params.get("tenantIdentId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getTenantIdent(Long.parseLong(eventBusContext.req.params.get("tenantIdentId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 获取当前租户的认证列表信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/ident", eventBusContext ->
-                pageTenantIdents(eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                pageTenantIdents(eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 删除当前租户的某个认证
         addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/ident/{tenantIdentId}", eventBusContext ->
-                deleteTenantIdent(Long.parseLong(eventBusContext.req.params.get("tenantIdentId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteTenantIdent(Long.parseLong(eventBusContext.req.params.get("tenantIdentId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 添加当前租户的凭证
         addProcessor(OptActionKind.CREATE, "/console/tenant/tenant/cert", eventBusContext ->
-                addTenantCert(eventBusContext.req.body(TenantCertAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addTenantCert(eventBusContext.req.body(TenantCertAddReq.class), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 修改当前租户的某个凭证
         addProcessor(OptActionKind.PATCH, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
-                modifyTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.body(TenantCertModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.body(TenantCertModifyReq.class),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个凭证信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
-                getTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 获取当前租户的某个凭证信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert", eventBusContext ->
-                pageTenantCerts(eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                pageTenantCerts(eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 删除当前租户的某个认证
         addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
-                deleteTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
     }
 
     public TCTenantProcessor(String moduleName) {
@@ -120,7 +132,8 @@ public class TCTenantProcessor extends EventBusProcessor {
                 });
     }
 
-    public static Future<Void> modifyTenantIdent(Long tenantIdentId, TenantIdentModifyReq tenantIdentModifyReq, Long relTenantId, ProcessContext context) {
+    public static Future<Void> modifyTenantIdent(Long tenantIdentId, TenantIdentModifyReq tenantIdentModifyReq, Long relTenantId,
+                                                 ProcessContext context) {
         var tenantIdent = context.helper.convert(tenantIdentModifyReq, TenantIdent.class);
         return context.sql.update(new HashMap<>() {
             {
@@ -185,7 +198,8 @@ public class TCTenantProcessor extends EventBusProcessor {
                 });
     }
 
-    public static Future<Void> modifyTenantCert(Long tenantCertId, TenantCertModifyReq tenantCertModifyReq, Long relTenantId, ProcessContext context) {
+    public static Future<Void> modifyTenantCert(Long tenantCertId, TenantCertModifyReq tenantCertModifyReq, Long relTenantId,
+                                                ProcessContext context) {
         if (tenantCertModifyReq.getCategory() != null) {
             return context.helper.existToError(
                     context.sql.exists(

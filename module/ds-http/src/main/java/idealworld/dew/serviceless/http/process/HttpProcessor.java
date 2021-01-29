@@ -52,13 +52,14 @@ public class HttpProcessor extends EventBusProcessor {
         super(moduleName);
     }
 
-    public static Future<Buffer> exec(OptActionKind actionKind, String strResourceUri, Buffer body, Map<String, String> header, ProcessContext context) {
+    public static Future<Buffer> exec(OptActionKind actionKind, String strResourceUri, Buffer body, Map<String, String> header,
+                                      ProcessContext context) {
         var resourceUri = URIHelper.newURI(strResourceUri);
         var resourceSubjectCode = resourceUri.getHost();
         if (!FunHttpClient.contains(resourceSubjectCode)) {
             throw context.helper.error(new NotFoundException("找不到请求的资源主体[" + resourceSubjectCode + "]"));
         }
-        HttpMethod httpMethod = HttpMethod.GET;
+        HttpMethod httpMethod;
         switch (actionKind) {
             case FETCH:
                 httpMethod = HttpMethod.GET;
@@ -75,6 +76,8 @@ public class HttpProcessor extends EventBusProcessor {
             case DELETE:
                 httpMethod = HttpMethod.DELETE;
                 break;
+            default:
+                throw context.helper.error(new NotFoundException("找不到请求的HTTP方法[" + resourceSubjectCode + "]"));
         }
         header.remove(DewConstant.REQUEST_IDENT_OPT_FLAG);
         header.remove(DewConstant.REQUEST_RESOURCE_ACTION_FLAG);

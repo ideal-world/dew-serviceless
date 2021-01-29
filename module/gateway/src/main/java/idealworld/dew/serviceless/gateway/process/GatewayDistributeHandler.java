@@ -58,7 +58,8 @@ public class GatewayDistributeHandler extends AuthHttpHandler {
         var uri = (URI) ctx.get(DewAuthConstant.REQUEST_RESOURCE_URI_FLAG);
         Buffer body = ctx.getBody();
         var header = new HashMap<String, String>();
-        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
+        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG,
+                $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
         String distributeModuleName;
         switch (ResourceKind.parse(uri.getScheme().toLowerCase())) {
             case HTTP:

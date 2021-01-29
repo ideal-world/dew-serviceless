@@ -75,14 +75,21 @@ public class LocalResourceCache {
 
     public static void removeLocalResource(URI resourceUri, String actionKind) {
         if (actionKind == null || actionKind.equalsIgnoreCase("")) {
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.CREATE.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.MODIFY.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.PATCH.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.EXISTS.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.FETCH.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.DELETE.toString().toLowerCase(), new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.CREATE.toString().toLowerCase(),
+                    new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.MODIFY.toString().toLowerCase(),
+                    new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.PATCH.toString().toLowerCase(),
+                    new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.EXISTS.toString().toLowerCase(),
+                    new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.FETCH.toString().toLowerCase(),
+                    new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.DELETE.toString().toLowerCase(),
+                    new ArrayList<>()).remove(resourceUri);
         } else {
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(actionKind.toLowerCase(), new ArrayList<>()).remove(resourceUri);
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(actionKind.toLowerCase(),
+                    new ArrayList<>()).remove(resourceUri);
         }
     }
 

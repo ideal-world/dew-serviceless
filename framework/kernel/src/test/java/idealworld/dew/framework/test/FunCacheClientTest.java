@@ -96,6 +96,7 @@ public class FunCacheClientTest extends DewTest {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException ignore) {
+                        // ignore
                     }
                     return Future.succeededFuture();
                 })

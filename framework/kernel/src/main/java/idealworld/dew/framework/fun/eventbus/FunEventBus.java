@@ -85,11 +85,13 @@ public class FunEventBus {
         return new ArrayList<>();
     }
 
-    public Future<Tuple2<Buffer, Map<String, String>>> request(String moduleName, OptActionKind actionKind, String uri, Buffer body, Map<String, String> header) {
+    public Future<Tuple2<Buffer, Map<String, String>>> request(String moduleName, OptActionKind actionKind, String uri, Buffer body, Map<String,
+            String> header) {
         return request(moduleName, actionKind, uri, body, header, null);
     }
 
-    public Future<Tuple2<Buffer, Map<String, String>>> request(String moduleName, OptActionKind actionKind, String uri, Buffer body, Map<String, String> header, Long timeoutMs) {
+    public Future<Tuple2<Buffer, Map<String, String>>> request(String moduleName, OptActionKind actionKind, String uri, Buffer body, Map<String,
+            String> header, Long timeoutMs) {
         Promise<Tuple2<Buffer, Map<String, String>>> promise = Promise.promise();
         var deliveryOptions = new DeliveryOptions()
                 .addHeader(DewConstant.REQUEST_RESOURCE_ACTION_FLAG, actionKind.toString())

@@ -67,7 +67,8 @@ public class EventBusDispatcher {
         PROCESSORS.get(moduleName).get(actionKind).put(pathPattern, processFun);
     }
 
-    public static <E> Future<E> chooseProcess(String moduleName, Object config, Map<String, Boolean> funStatus, OptActionKind actionKind, String pathRequest, String query, Map<String, String> header, Buffer body) {
+    public static <E> Future<E> chooseProcess(String moduleName, Object config, Map<String, Boolean> funStatus, OptActionKind actionKind,
+                                              String pathRequest, String query, Map<String, String> header, Buffer body) {
         if (PROCESSORS.get(moduleName).get(actionKind).containsKey(pathRequest)) {
             return PROCESSORS.get(moduleName).get(actionKind).get(pathRequest).process(EventBusContext.builder()
                     .req(EventBusContext.Request.builder()
@@ -76,7 +77,8 @@ public class EventBusDispatcher {
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
-                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptExchangeInfo.class)
+                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG),
+                                            StandardCharsets.UTF_8)).mapTo(IdentOptExchangeInfo.class)
                                             : new IdentOptExchangeInfo())
                             .build())
                     .context(ProcessContext.builder()
@@ -105,7 +107,8 @@ public class EventBusDispatcher {
                             .body(body)
                             .identOptInfo(
                                     header.containsKey(DewConstant.REQUEST_IDENT_OPT_FLAG)
-                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptExchangeInfo.class)
+                                            ? new JsonObject($.security.decodeBase64ToString(header.get(DewConstant.REQUEST_IDENT_OPT_FLAG),
+                                            StandardCharsets.UTF_8)).mapTo(IdentOptExchangeInfo.class)
                                             : new IdentOptExchangeInfo())
                             .build())
                     .context(ProcessContext.builder()
@@ -120,7 +123,8 @@ public class EventBusDispatcher {
 
     public static Future<Void> watch(String moduleName, Object config, Map<String, Boolean> funStatus) {
         FunEventBus.choose(moduleName).consumer(moduleName, (actionKind, uri, header, body) ->
-                chooseProcess(moduleName, config, funStatus, actionKind, uri.getPath(), uri.getRawQuery() != null ? uri.getQuery() : null, header, body));
+                chooseProcess(moduleName, config, funStatus, actionKind, uri.getPath(), uri.getRawQuery() != null ? uri.getQuery() : null, header,
+                        body));
         return Future.succeededFuture();
     }
 

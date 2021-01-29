@@ -77,11 +77,13 @@ public class GatewayFlowTest extends DewTest {
                 ""), Void.class);
         Assertions.assertTrue(result.getMessage().contains("请求格式不合法，缺少"));
         result = Resp.generic($.http.post("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
-                        "=" + URLEncoder.encode("http//iam.service/console/tenant/account", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
+                        "=" + URLEncoder.encode("http//iam.service/console/tenant/account", StandardCharsets.UTF_8) + "&"
+                        + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                 ""), Void.class);
         Assertions.assertTrue(result.getMessage().contains("资源URI错误"));
         result = Resp.generic($.http.post("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
-                        "=" + URLEncoder.encode("http://iam.service/console/tenant/account", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=createx",
+                        "=" + URLEncoder.encode("http://iam.service/console/tenant/account", StandardCharsets.UTF_8) + "&"
+                        + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=createx",
                 ""), Void.class);
         Assertions.assertTrue(result.getMessage().contains("资源类型或操作类型不存在"));
         testContext.completeNow();
@@ -166,7 +168,8 @@ public class GatewayFlowTest extends DewTest {
                         put(DEW_SECURITY_CONFIG.getAkSkFieldName(), "xx");
                     }
                 });
-        Assertions.assertEquals("请求格式不合法，HTTP Header[" + DEW_SECURITY_CONFIG.getAkSkDateFieldName() + "]不存在", Resp.generic(errorResult.result, Void.class).getMessage());
+        Assertions.assertEquals("请求格式不合法，HTTP Header[" + DEW_SECURITY_CONFIG.getAkSkDateFieldName() + "]不存在", Resp.generic(errorResult.result,
+                Void.class).getMessage());
         var sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         var date = new Date();
@@ -179,7 +182,8 @@ public class GatewayFlowTest extends DewTest {
                         put(DEW_SECURITY_CONFIG.getAkSkDateFieldName(), sdf.format(date));
                     }
                 });
-        Assertions.assertEquals("请求格式不合法，HTTP Header[" + DEW_SECURITY_CONFIG.getAkSkFieldName() + "]格式错误", Resp.generic(errorResult.result, Void.class).getMessage());
+        Assertions.assertEquals("请求格式不合法，HTTP Header[" + DEW_SECURITY_CONFIG.getAkSkFieldName() + "]格式错误", Resp.generic(errorResult.result,
+                Void.class).getMessage());
         errorResult = $.http.postWrap("http://127.0.0.1:9000/exec?" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG +
                         "=" + URLEncoder.encode("http://httpbin.org/post", StandardCharsets.UTF_8) + "&" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "=create",
                 "测试内容", new HashMap<>() {

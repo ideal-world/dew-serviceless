@@ -50,37 +50,49 @@ public class ACGroupProcessor extends EventBusProcessor {
     {
         // 添加当前应用的群组
         addProcessor(OptActionKind.CREATE, "/console/app/group", eventBusContext ->
-                addGroup(eventBusContext.req.body(GroupAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addGroup(eventBusContext.req.body(GroupAddReq.class), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个群组
         addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}", eventBusContext ->
-                modifyGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.body(GroupModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.body(GroupModifyReq.class),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个群组信息
         addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}", eventBusContext ->
-                getGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的群组列表信息
         addProcessor(OptActionKind.FETCH, "/console/app/group", eventBusContext -> {
             if (eventBusContext.req.params.getOrDefault("expose", "false").equalsIgnoreCase("false")) {
-                return findGroups(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+                return findGroups(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null),
+                        eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
             } else {
-                return findExposeGroups(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+                return findExposeGroups(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name",
+                        null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
             }
         });
         // 删除当前应用的某个群组
         addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}", eventBusContext ->
-                deleteGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteGroup(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前应用某个群组的节点
         addProcessor(OptActionKind.CREATE, "/console/app/group/{groupId}/node", eventBusContext ->
-                addGroupNode(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.body(GroupNodeAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addGroupNode(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.body(GroupNodeAddReq.class),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用某个群组的节点
         addProcessor(OptActionKind.PATCH, "/console/app/group/{groupId}/node/{groupNodeId}", eventBusContext ->
-                modifyGroupNode(Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.body(GroupNodeModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyGroupNode(Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.body(GroupNodeModifyReq.class),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用某个群组的节点列表信息
         addProcessor(OptActionKind.FETCH, "/console/app/group/{groupId}/node", eventBusContext ->
-                findGroupNodes(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                findGroupNodes(Long.parseLong(eventBusContext.req.params.get("groupId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用某个群组的节点
         addProcessor(OptActionKind.DELETE, "/console/app/group/{groupId}/node/{groupNodeId}", eventBusContext ->
-                deleteGroupNode(Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteGroupNode(Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 
     public ACGroupProcessor(String moduleName) {
@@ -171,7 +183,8 @@ public class ACGroupProcessor extends EventBusProcessor {
                 .compose(groups -> context.helper.success(groups, GroupResp.class));
     }
 
-    public static Future<List<GroupResp>> findExposeGroups(String code, String name, String kind, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<List<GroupResp>> findExposeGroups(String code, String name, String kind, Long relAppId, Long relTenantId,
+                                                           ProcessContext context) {
         var sql = "SELECT * FROM %s" +
                 " WHERE (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
                 " OR expose_kind = #{expose_kind_global} )";
@@ -258,14 +271,16 @@ public class ACGroupProcessor extends EventBusProcessor {
         );
     }
 
-    public static Future<Void> modifyGroupNode(Long groupNodeId, GroupNodeModifyReq groupNodeModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Void> modifyGroupNode(Long groupNodeId, GroupNodeModifyReq groupNodeModifyReq, Long relAppId, Long relTenantId,
+                                               ProcessContext context) {
         var groupNodeSets = context.helper.convert(groupNodeModifyReq, GroupNode.class);
         return context.sql.tx(context, () ->
                 context.helper.notExistToError(
                         context.sql.getOne(
                                 String.format("SELECT node.* FROM %s AS node" +
                                                 " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
-                                                " WHERE node.id = #{id} AND _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id}",
+                                                " WHERE node.id = #{id} AND _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = " +
+                                                "#{rel_app_id}",
                                         new GroupNode().tableName(), new Group().tableName()),
                                 new HashMap<>() {
                                     {
@@ -276,7 +291,8 @@ public class ACGroupProcessor extends EventBusProcessor {
                                 },
                                 GroupNode.class), () -> new NotFoundException("找不到对应的关联群组"))
                         .compose(fetchGroupNode -> {
-                            if (groupNodeModifyReq.getParentId() != DewConstant.OBJECT_UNDEFINED || groupNodeModifyReq.getSiblingId() != DewConstant.OBJECT_UNDEFINED) {
+                            if (groupNodeModifyReq.getParentId() != DewConstant.OBJECT_UNDEFINED
+                                    || groupNodeModifyReq.getSiblingId() != DewConstant.OBJECT_UNDEFINED) {
                                 return packageGroupNodeCode(fetchGroupNode.getRelGroupId(), groupNodeModifyReq.getParentId(),
                                         groupNodeModifyReq.getSiblingId(), fetchGroupNode.getCode(), (IAMConfig) context.conf, context.sql, context)
                                         .compose(fetchGroupNodeCode ->
@@ -307,7 +323,8 @@ public class ACGroupProcessor extends EventBusProcessor {
         return context.sql.list(
                 String.format("SELECT node.* FROM %s AS node" +
                                 " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
-                                " WHERE _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id} AND node.rel_group_id = #{rel_group_id}" +
+                                " WHERE _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id} AND node.rel_group_id = " +
+                                "#{rel_group_id}" +
                                 " ORDER BY node.code ASC",
                         new GroupNode().tableName(), new Group().tableName()),
                 new HashMap<>() {
@@ -364,7 +381,8 @@ public class ACGroupProcessor extends EventBusProcessor {
                                                 context.sql.getOne(
                                                         String.format("SELECT node.* FROM %s AS node" +
                                                                         " INNER JOIN %s _group ON _group.id = node.rel_group_id" +
-                                                                        " WHERE node.id = #{node_id} AND _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id}",
+                                                                        " WHERE node.id = #{node_id} AND _group.rel_tenant_id = #{rel_tenant_id} " +
+                                                                        "AND _group.rel_app_id = #{rel_app_id}",
                                                                 new GroupNode().tableName(), new Group().tableName()),
                                                         new HashMap<>() {
                                                             {
@@ -376,12 +394,14 @@ public class ACGroupProcessor extends EventBusProcessor {
                                                         GroupNode.class)
                                                         .compose(fetchGroupNode ->
                                                                 context.sql.softDelete(fetchGroupNode.getId(), GroupNode.class)
-                                                                        .compose(re -> updateOtherGroupNodeCode(fetchGroupNode.getRelGroupId(), fetchGroupNode.getCode(), true, null,
+                                                                        .compose(re -> updateOtherGroupNodeCode(fetchGroupNode.getRelGroupId(),
+                                                                                fetchGroupNode.getCode(), true, null,
                                                                                 (IAMConfig) context.conf, context.sql, context))
                                                         ))));
     }
 
-    private static Future<String> packageGroupNodeCode(Long groupId, Long parentId, Long siblingId, String originalGroupNodeCode, IAMConfig config, FunSQLClient client, ProcessContext context) {
+    private static Future<String> packageGroupNodeCode(Long groupId, Long parentId, Long siblingId, String originalGroupNodeCode, IAMConfig config,
+                                                       FunSQLClient client, ProcessContext context) {
         if (parentId == DewConstant.OBJECT_UNDEFINED && siblingId == DewConstant.OBJECT_UNDEFINED) {
             var currentNodeCode = config.getApp().getInitNodeCode();
             return updateOtherGroupNodeCode(groupId, currentNodeCode, false, originalGroupNodeCode, config, client, context)
@@ -425,7 +445,8 @@ public class ACGroupProcessor extends EventBusProcessor {
                 });
     }
 
-    private static Future<Void> updateOtherGroupNodeCode(Long groupId, String currentGroupNodeCode, Boolean deleteOpt, String originalGroupNodeCode, IAMConfig config, FunSQLClient client, ProcessContext context) {
+    private static Future<Void> updateOtherGroupNodeCode(Long groupId, String currentGroupNodeCode, Boolean deleteOpt, String originalGroupNodeCode,
+                                                         IAMConfig config, FunSQLClient client, ProcessContext context) {
         var currentNodeLength = currentGroupNodeCode.length();
         var parentLength = currentNodeLength - config.getApp().getInitNodeCode().length();
         var parentNodeCode = currentGroupNodeCode.substring(0, parentLength);

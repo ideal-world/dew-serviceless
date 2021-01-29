@@ -42,10 +42,7 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class Account extends SafeEntity {
 
-    /**
-     * OpenId是账号对外提供的主键，给业务方使用，用于标识账号唯一性的字段。
-     */
-    // Open Id
+    // OpenId是账号对外提供的主键，给业务方使用，用于标识账号唯一性的字段。
     @NotNull
     @NotBlank
     @Size(max = 100)
@@ -65,11 +62,8 @@ public class Account extends SafeEntity {
     @NotBlank
     @Size(max = 2000)
     private String parameters;
-    /**
-     * 父子账号可用于支持RAM（ Resource Access Management）用户功能。
-     * <p>
-     * 父子账号间OpenId相同。
-     */
+    // 父子账号可用于支持RAM（ Resource Access Management）用户功能。
+    // 父子账号间OpenId相同。
     @NotNull
     private Long parentId;
     // 关联租户Id

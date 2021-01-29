@@ -37,6 +37,20 @@ public class CaseFormatter {
         return result.toString();
     }
 
+    public static JsonObject camelToSnake(JsonObject json) {
+        var formattedJson = new JsonObject();
+        json.forEach(j -> {
+            var key = camelToSnake(j.getKey());
+            var value = j.getValue();
+            if (value instanceof JsonObject) {
+                formattedJson.put(key, camelToSnake((JsonObject) value));
+            } else {
+                formattedJson.put(key, value);
+            }
+        });
+        return formattedJson;
+    }
+
     public static String snakeToCamel(String snake) {
         StringBuilder result = new StringBuilder();
         boolean startWorld = false;
@@ -52,20 +66,6 @@ public class CaseFormatter {
             }
         }
         return result.toString();
-    }
-
-    public static JsonObject camelToSnake(JsonObject json) {
-        var formattedJson = new JsonObject();
-        json.forEach(j -> {
-            var key = camelToSnake(j.getKey());
-            var value = j.getValue();
-            if (value instanceof JsonObject) {
-                formattedJson.put(key, camelToSnake((JsonObject) value));
-            } else {
-                formattedJson.put(key, value);
-            }
-        });
-        return formattedJson;
     }
 
     public static JsonObject snakeToCamel(JsonObject json) {

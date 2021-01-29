@@ -43,19 +43,23 @@ public class TCAppProcessor extends EventBusProcessor {
     {
         // 添加当前租户的应用
         addProcessor(OptActionKind.CREATE, "/console/tenant/app", eventBusContext ->
-                addApp(eventBusContext.req.body(AppAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context, false));
+                addApp(eventBusContext.req.body(AppAddReq.class), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context, false));
         // 修改当前租户的某个应用
         addProcessor(OptActionKind.PATCH, "/console/tenant/app/{appId}", eventBusContext ->
-                modifyApp(Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.body(AppModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyApp(Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.body(AppModifyReq.class),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个应用信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/app/{appId}", eventBusContext ->
-                getApp(Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getApp(Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 获取当前租户的某个应用的Id
         addProcessor(OptActionKind.FETCH, "/console/tenant/app/id", eventBusContext ->
                 getAppIdByCode(eventBusContext.req.params.get("appCode"), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的应用列表信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/app", eventBusContext ->
-                pageApps(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                pageApps(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.pageNumber(),
+                        eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 
     public TCAppProcessor(String moduleName) {

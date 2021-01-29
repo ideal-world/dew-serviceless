@@ -50,47 +50,61 @@ public class ACResourceProcessor extends EventBusProcessor {
     {
         // 添加当前应用的资源主体
         addProcessor(OptActionKind.CREATE, "/console/app/resource/subject", eventBusContext ->
-                addResourceSubject(eventBusContext.req.body(ResourceSubjectAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addResourceSubject(eventBusContext.req.body(ResourceSubjectAddReq.class), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个资源主体
         addProcessor(OptActionKind.PATCH, "/console/app/resource/subject/{resourceSubjectId}", eventBusContext ->
-                modifyResourceSubject(Long.parseLong(eventBusContext.req.params.get("resourceSubjectId")), eventBusContext.req.body(ResourceSubjectModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyResourceSubject(Long.parseLong(eventBusContext.req.params.get("resourceSubjectId")),
+                        eventBusContext.req.body(ResourceSubjectModifyReq.class), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个资源主体信息
         addProcessor(OptActionKind.FETCH, "/console/app/resource/subject/{resourceSubjectId}", eventBusContext ->
-                getResourceSubject(Long.parseLong(eventBusContext.req.params.get("resourceSubjectId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getResourceSubject(Long.parseLong(eventBusContext.req.params.get("resourceSubjectId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的资源主体列表信息
         addProcessor(OptActionKind.FETCH, "/console/app/resource/subject", eventBusContext ->
-                findResourceSubjects(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                findResourceSubjects(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null),
+                        eventBusContext.req.params.getOrDefault("kind", null), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用的某个资源主体
         addProcessor(OptActionKind.DELETE, "/console/app/resource/subject/{resourceSubjectId}", eventBusContext ->
-                deleteResourceSubject(Long.parseLong(eventBusContext.req.params.get("resourceSubjectId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteResourceSubject(Long.parseLong(eventBusContext.req.params.get("resourceSubjectId")),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前应用的资源
         addProcessor(OptActionKind.CREATE, "/console/app/resource", eventBusContext ->
-                addResource(eventBusContext.req.body(ResourceAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addResource(eventBusContext.req.body(ResourceAddReq.class), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个资源
         addProcessor(OptActionKind.PATCH, "/console/app/resource/{resourceId}", eventBusContext ->
-                modifyResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.body(ResourceModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.body(ResourceModifyReq.class),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个资源信息
         addProcessor(OptActionKind.FETCH, "/console/app/resource/{resourceId}", eventBusContext ->
-                getResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的资源列表信息
         addProcessor(OptActionKind.FETCH, "/console/app/resource", eventBusContext -> {
             if (eventBusContext.req.params.getOrDefault("expose", "false").equalsIgnoreCase("false")) {
-                return findResources(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("uri", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+                return findResources(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("uri", null),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
             } else {
-                return findExposeResources(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("uri", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+                return findExposeResources(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("uri",
+                        null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
             }
         });
         // 删除当前应用的某个资源
         addProcessor(OptActionKind.DELETE, "/console/app/resource/{resourceId}", eventBusContext ->
-                deleteResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteResource(Long.parseLong(eventBusContext.req.params.get("resourceId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 
     public ACResourceProcessor(String moduleName) {
         super(moduleName);
     }
 
-    public static Future<Long> addResourceSubject(ResourceSubjectAddReq resourceSubjectAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Long> addResourceSubject(ResourceSubjectAddReq resourceSubjectAddReq, Long relAppId, Long relTenantId,
+                                                  ProcessContext context) {
         return IAMBasicProcessor.getAppCodeById(relAppId, relTenantId, context)
                 .compose(appCode -> {
                     var resourceCode = appCode + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
@@ -137,7 +151,8 @@ public class ACResourceProcessor extends EventBusProcessor {
                 });
     }
 
-    public static Future<Void> modifyResourceSubject(Long resourceSubjectId, ResourceSubjectModifyReq resourceSubjectModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Void> modifyResourceSubject(Long resourceSubjectId, ResourceSubjectModifyReq resourceSubjectModifyReq, Long relAppId,
+                                                     Long relTenantId, ProcessContext context) {
         var future = Future.succeededFuture();
         if (resourceSubjectModifyReq.getUri() != null) {
             resourceSubjectModifyReq.setUri(URIHelper.formatUri(resourceSubjectModifyReq.getUri()));
@@ -231,7 +246,8 @@ public class ACResourceProcessor extends EventBusProcessor {
                                         .build()));
     }
 
-    public static Future<List<ResourceSubjectResp>> findResourceSubjects(String code, String name, String kind, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<List<ResourceSubjectResp>> findResourceSubjects(String code, String name, String kind, Long relAppId, Long relTenantId,
+                                                                         ProcessContext context) {
         var whereParameters = new HashMap<String, Object>() {
             {
                 put("rel_tenant_id", relTenantId);
@@ -340,7 +356,10 @@ public class ACResourceProcessor extends EventBusProcessor {
                 },
                 ResourceSubject.class)
                 .compose(resourceSubject -> {
-                    resourceAddReq.setPathAndQuery(URIHelper.formatUri(resourceSubject.getKind().toString().toLowerCase() + "://" + resourceSubject.getCode(), resourceAddReq.getPathAndQuery()));
+                    resourceAddReq.setPathAndQuery(
+                            URIHelper.formatUri(
+                                    resourceSubject.getKind().toString().toLowerCase() + "://" + resourceSubject.getCode(),
+                                    resourceAddReq.getPathAndQuery()));
                     return context.helper.existToError(
                             context.sql.exists(
                                     new HashMap<>() {
@@ -390,7 +409,8 @@ public class ACResourceProcessor extends EventBusProcessor {
                 });
     }
 
-    public static Future<Void> modifyResource(Long resourceId, ResourceModifyReq resourceModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Void> modifyResource(Long resourceId, ResourceModifyReq resourceModifyReq, Long relAppId, Long relTenantId,
+                                              ProcessContext context) {
         var future = Future.succeededFuture();
         if (resourceModifyReq.getPathAndQuery() != null) {
             future
@@ -399,7 +419,8 @@ public class ACResourceProcessor extends EventBusProcessor {
                                     context.sql.getOne(
                                             String.format("SELECT subject.code, subject.kind, subject.uri FROM %s AS resource" +
                                                             " INNER JOIN %s AS subject ON subject.id = resource.rel_resource_subject_id" +
-                                                            " WHERE resource.id = #{id} AND resource.rel_app_id = #{rel_app_id} AND resource.rel_tenant_id = #{rel_tenant_id}",
+                                                            " WHERE resource.id = #{id} AND resource.rel_app_id = #{rel_app_id} AND resource" +
+                                                            ".rel_tenant_id = #{rel_tenant_id}",
                                                     new Resource().tableName(), new ResourceSubject().tableName()),
                                             new HashMap<>() {
                                                 {
@@ -414,14 +435,21 @@ public class ACResourceProcessor extends EventBusProcessor {
                                                             new HashMap<>() {
                                                                 {
                                                                     put("!id", resourceId);
-                                                                    put("uri", URIHelper.formatUri(fetchResourceSubject.getString("kind").toLowerCase() + "://" + fetchResourceSubject.getString("code"), resourceModifyReq.getPathAndQuery()));
+                                                                    put("uri",
+                                                                            URIHelper.formatUri(
+                                                                                    fetchResourceSubject.getString("kind").toLowerCase()
+                                                                                            + "://" + fetchResourceSubject.getString("code"),
+                                                                                    resourceModifyReq.getPathAndQuery()));
                                                                     put("rel_app_id", relAppId);
                                                                     put("rel_tenant_id", relTenantId);
                                                                 }
                                                             },
                                                             Resource.class), () -> new ConflictException("资源URI已存在"))
                                                     .compose(r -> {
-                                                        resourceModifyReq.setPathAndQuery(URIHelper.formatUri(fetchResourceSubject.getString("kind").toLowerCase() + "://" + fetchResourceSubject.getString("code"), resourceModifyReq.getPathAndQuery()));
+                                                        resourceModifyReq.setPathAndQuery(
+                                                                URIHelper.formatUri(fetchResourceSubject.getString("kind").toLowerCase()
+                                                                                + "://" + fetchResourceSubject.getString("code"),
+                                                                        resourceModifyReq.getPathAndQuery()));
                                                         return context.helper.success();
                                                     }))
                     );

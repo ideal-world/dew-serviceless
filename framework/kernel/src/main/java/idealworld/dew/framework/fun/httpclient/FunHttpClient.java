@@ -82,10 +82,6 @@ public class FunHttpClient {
         return request(httpMethod, url, body, header, null);
     }
 
-    public Future<HttpResponse<Buffer>> requestByResourceSubject(HttpMethod httpMethod, String pathAndQuery, Buffer body, Map<String, String> header) {
-        return request(httpMethod, URIHelper.formatUri(httpClientConfig.getUri(), pathAndQuery), body, header, httpClientConfig.getTimeoutMs());
-    }
-
     public Future<HttpResponse<Buffer>> request(HttpMethod httpMethod, String url, Buffer body, Map<String, String> header, Long timeoutMs) {
         var request = webClient.requestAbs(httpMethod, url);
         if (timeoutMs != null) {
@@ -129,6 +125,11 @@ public class FunHttpClient {
             return request.sendBuffer(body);
         }
         return request.send();
+    }
+
+    public Future<HttpResponse<Buffer>> requestByResourceSubject(HttpMethod httpMethod, String pathAndQuery, Buffer body,
+                                                                 Map<String, String> header) {
+        return request(httpMethod, URIHelper.formatUri(httpClientConfig.getUri(), pathAndQuery), body, header, httpClientConfig.getTimeoutMs());
     }
 
 }

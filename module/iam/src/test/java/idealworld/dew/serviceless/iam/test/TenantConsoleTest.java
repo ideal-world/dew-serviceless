@@ -80,7 +80,8 @@ public class TenantConsoleTest extends IAMBasicTest {
 
         // 获取当前租户的某个认证信息
         var tenantIdentResp = req(OptActionKind.FETCH, "/console/tenant/tenant/ident/" + tenantIdentId, null, TenantIdentResp.class)._0;
-        Assertions.assertEquals("^[1](([3][0-9])|([4][5-9])|([5][0-3,5-9])|([6][5,6])|([7][0-8])|([8][0-9])|([9][1,8,9]))[0-9]{8}$", tenantIdentResp.getValidAkRule());
+        Assertions.assertEquals("^[1](([3][0-9])|([4][5-9])|([5][0-3,5-9])|([6][5,6])|([7][0-8])|([8][0-9])|([9][1,8,9]))[0-9]{8}$",
+                tenantIdentResp.getValidAkRule());
 
         // 获取当前租户的认证列表信息
         var tenantIdentResps = reqPage("/console/tenant/tenant/ident", 1L, 1L, TenantIdentResp.class)._0;
@@ -203,56 +204,67 @@ public class TenantConsoleTest extends IAMBasicTest {
         // --------------------------------------------------------------------
 
         // 添加当前租户某个账号的认证
-        Assertions.assertEquals("认证名规则不合法", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident", AccountIdentAddReq.builder()
-                .kind(AccountIdentKind.USERNAME)
-                .ak("fy")
-                .build(), Long.class)._1.getMessage());
-        Assertions.assertEquals("认证密钥规则不合法", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident", AccountIdentAddReq.builder()
-                .kind(AccountIdentKind.USERNAME)
-                .ak("fyzm123")
-                .build(), Long.class)._1.getMessage());
-        Assertions.assertEquals("认证密钥规则不合法", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident", AccountIdentAddReq.builder()
-                .kind(AccountIdentKind.USERNAME)
-                .ak("fyzm123")
-                .sk("123456")
-                .build(), Long.class)._1.getMessage());
-        Assertions.assertEquals("认证类型不存在或已禁用", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident", AccountIdentAddReq.builder()
-                .kind(AccountIdentKind.EMAIL)
-                .ak("fyzm123")
-                .sk("sox3@4352")
-                .build(), Long.class)._1.getMessage());
-        var accountIdentId = req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident", AccountIdentAddReq.builder()
-                .kind(AccountIdentKind.USERNAME)
-                .ak("fyzm123")
-                .sk("sox3@4352")
-                .build(), Long.class)._0;
-        Assertions.assertEquals("账号认证类型[USERNAME]与AK[fyzm123]已存在", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident", AccountIdentAddReq.builder()
-                .kind(AccountIdentKind.USERNAME)
-                .ak("fyzm123")
-                .sk("sox3@4352")
-                .build(), Long.class)._1.getMessage());
-        req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident", AccountIdentAddReq.builder()
-                .kind(AccountIdentKind.USERNAME)
-                .ak("gdxr123")
-                .sk("sox3@4352")
-                .build(), Long.class);
+        Assertions.assertEquals("认证名规则不合法", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident",
+                AccountIdentAddReq.builder()
+                        .kind(AccountIdentKind.USERNAME)
+                        .ak("fy")
+                        .build(), Long.class)._1.getMessage());
+        Assertions.assertEquals("认证密钥规则不合法", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident",
+                AccountIdentAddReq.builder()
+                        .kind(AccountIdentKind.USERNAME)
+                        .ak("fyzm123")
+                        .build(), Long.class)._1.getMessage());
+        Assertions.assertEquals("认证密钥规则不合法", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident",
+                AccountIdentAddReq.builder()
+                        .kind(AccountIdentKind.USERNAME)
+                        .ak("fyzm123")
+                        .sk("123456")
+                        .build(), Long.class)._1.getMessage());
+        Assertions.assertEquals("认证类型不存在或已禁用", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident",
+                AccountIdentAddReq.builder()
+                        .kind(AccountIdentKind.EMAIL)
+                        .ak("fyzm123")
+                        .sk("sox3@4352")
+                        .build(), Long.class)._1.getMessage());
+        var accountIdentId = req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident",
+                AccountIdentAddReq.builder()
+                        .kind(AccountIdentKind.USERNAME)
+                        .ak("fyzm123")
+                        .sk("sox3@4352")
+                        .build(), Long.class)._0;
+        Assertions.assertEquals("账号认证类型[USERNAME]与AK[fyzm123]已存在", req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident",
+                AccountIdentAddReq.builder()
+                        .kind(AccountIdentKind.USERNAME)
+                        .ak("fyzm123")
+                        .sk("sox3@4352")
+                        .build(), Long.class)._1.getMessage());
+        req(OptActionKind.CREATE, "/console/tenant/account/" + accountId + "/ident",
+                AccountIdentAddReq.builder()
+                        .kind(AccountIdentKind.USERNAME)
+                        .ak("gdxr123")
+                        .sk("sox3@4352")
+                        .build(), Long.class);
 
         // 修改当前租户某个账号的某个认证
-        Assertions.assertEquals("账号认证类型[USERNAME]与AK[gdxr123]已存在", req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId, AccountIdentModifyReq.builder()
-                .ak("gdxr123 ")
-                .build(), Void.class)._1.getMessage());
-        Assertions.assertEquals("认证名规则不合法", req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId, AccountIdentModifyReq.builder()
-                .ak("12")
-                .sk("4352")
-                .build(), Void.class)._1.getMessage());
-        Assertions.assertEquals("认证密钥规则不合法", req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId, AccountIdentModifyReq.builder()
-                .ak("gdxr456")
-                .sk("4352")
-                .build(), Void.class)._1.getMessage());
-        Assertions.assertNull(req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId, AccountIdentModifyReq.builder()
-                .ak("gdxr456")
-                .sk("sox3@4352")
-                .build(), Void.class)._1);
+        Assertions.assertEquals("账号认证类型[USERNAME]与AK[gdxr123]已存在", req(OptActionKind.PATCH,
+                "/console/tenant/account/" + accountId + "/ident/" + accountIdentId, AccountIdentModifyReq.builder()
+                        .ak("gdxr123 ")
+                        .build(), Void.class)._1.getMessage());
+        Assertions.assertEquals("认证名规则不合法", req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId,
+                AccountIdentModifyReq.builder()
+                        .ak("12")
+                        .sk("4352")
+                        .build(), Void.class)._1.getMessage());
+        Assertions.assertEquals("认证密钥规则不合法", req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId,
+                AccountIdentModifyReq.builder()
+                        .ak("gdxr456")
+                        .sk("4352")
+                        .build(), Void.class)._1.getMessage());
+        Assertions.assertNull(req(OptActionKind.PATCH, "/console/tenant/account/" + accountId + "/ident/" + accountIdentId,
+                AccountIdentModifyReq.builder()
+                        .ak("gdxr456")
+                        .sk("sox3@4352")
+                        .build(), Void.class)._1);
 
         // 获取当前租户某个账号的认证列表信息
         var accountIdentResp = reqList("/console/tenant/account/" + accountId + "/ident", AccountIdentResp.class)._0;

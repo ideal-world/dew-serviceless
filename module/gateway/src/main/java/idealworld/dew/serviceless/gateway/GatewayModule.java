@@ -42,8 +42,9 @@ public class GatewayModule extends DewModule<GatewayConfig> {
 
     @Override
     protected Future<Void> start(GatewayConfig config) {
-        var authPolicy = new GatewayAuthPolicy(getModuleName(), config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
-        return ExchangeHelper.loadAndWatchResources(getModuleName(),"")
+        var authPolicy = new GatewayAuthPolicy(getModuleName(), config.getSecurity().getResourceCacheExpireSec(),
+                config.getSecurity().getGroupNodeLength());
+        return ExchangeHelper.loadAndWatchResources(getModuleName(), "")
                 .compose(resp -> {
                     var identHttpHandler = new GatewayIdentHandler(getModuleName(), config.getSecurity());
                     var authHttpHandler = new GatewayAuthHandler(getModuleName(), authPolicy);

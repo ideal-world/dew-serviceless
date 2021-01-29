@@ -58,7 +58,7 @@ public class FunEventBusTest extends DewTest {
     @Test
     public void testComplexReqResp(Vertx vertx, VertxTestContext testContext) {
         var count = new CountDownLatch(4);
-        EventBusDispatcher.addProcessor("",OptActionKind.MODIFY, "/app/{name}/{kind}/enabled", context -> {
+        EventBusDispatcher.addProcessor("", OptActionKind.MODIFY, "/app/{name}/{kind}/enabled", context -> {
             Assertions.assertEquals("xxxx", context.req.header.get("App-Id"));
             Assertions.assertEquals("n1", context.req.params.get("name"));
             Assertions.assertEquals("k1", context.req.params.get("kind"));
@@ -73,7 +73,7 @@ public class FunEventBusTest extends DewTest {
             return Future.succeededFuture(Resp.success("/app/{name}/{kind}/enabled"));
         });
         FunEventBus.choose("").consumer("", (actionKind, uri, header, body) ->
-                EventBusDispatcher.chooseProcess("", null,null, actionKind, uri.getPath(), uri.getQuery(), header, body));
+                EventBusDispatcher.chooseProcess("", null, null, actionKind, uri.getPath(), uri.getQuery(), header, body));
 
         FunEventBus.choose("").request("", OptActionKind.MODIFY, "http://iam.http.iam/app/n1/k1/enabled?q=测试",
                 JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer(), new HashMap<>() {
@@ -83,7 +83,8 @@ public class FunEventBusTest extends DewTest {
                 })
                 .onSuccess(resp -> {
                     count.countDown();
-                    Assertions.assertEquals("/app/{name}/{kind}/enabled", Resp.generic(resp._0.toString(StandardCharsets.UTF_8), String.class).getBody());
+                    Assertions.assertEquals("/app/{name}/{kind}/enabled",
+                            Resp.generic(resp._0.toString(StandardCharsets.UTF_8), String.class).getBody());
                 });
         FunEventBus.choose("").request("", OptActionKind.MODIFY, "http://iam.http.iam/app/n1/k1/enabled?q=测试",
                 JsonObject.mapFrom(User.builder()
@@ -99,7 +100,8 @@ public class FunEventBusTest extends DewTest {
                 })
                 .onSuccess(resp -> {
                     count.countDown();
-                    Assertions.assertEquals("/app/{name}/{kind}/enabled", Resp.generic(resp._0.toString(StandardCharsets.UTF_8), String.class).getBody());
+                    Assertions.assertEquals("/app/{name}/{kind}/enabled",
+                            Resp.generic(resp._0.toString(StandardCharsets.UTF_8), String.class).getBody());
                 });
         count.await();
         testContext.completeNow();

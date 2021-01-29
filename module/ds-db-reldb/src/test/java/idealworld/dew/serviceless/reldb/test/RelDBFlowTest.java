@@ -67,7 +67,8 @@ public class RelDBFlowTest extends DewTest {
         var header = new HashMap<String, String>();
         identOptCacheInfo.setUnauthorizedTenantId(identOptCacheInfo.getUnauthorizedTenantId());
         identOptCacheInfo.setUnauthorizedAppId(identOptCacheInfo.getUnauthorizedAppId());
-        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptCacheInfo).toString(), StandardCharsets.UTF_8));
+        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptCacheInfo).toString(),
+                StandardCharsets.UTF_8));
         var req = FunEventBus.choose(MODULE_NAME)
                 .request(MODULE_NAME,
                         OptActionKind.FETCH,
@@ -88,7 +89,8 @@ public class RelDBFlowTest extends DewTest {
                 .unauthorizedTenantId(2000L)
                 .token("token01")
                 .build();
-        Assertions.assertEquals("找不到请求的资源主体[1.reldb.subjectCodexx]", request("1.reldb.subjectCodexx", "{\"sql\":\"select name from iam_account\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
+        Assertions.assertEquals("找不到请求的资源主体[1.reldb.subjectCodexx]", request("1.reldb.subjectCodexx", "{\"sql\":\"select name from iam_account\"," +
+                "\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
 
         // 添加资源主体
         FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resourcesubject.reldb/subjectCodexx",
@@ -113,7 +115,8 @@ public class RelDBFlowTest extends DewTest {
                 "\tstatus varchar(50) not null comment '账号状态'\n" +
                 ")\n" +
                 "comment '账号'"));
-        await(FunSQLClient.choose("1.reldb.subjectCodexx").rawExec("insert into iam_account(name, open_id, status) values (?, ?, ?)", new ArrayList<>() {
+        await(FunSQLClient.choose("1.reldb.subjectCodexx").rawExec("insert into iam_account(name, open_id, status) values (?, ?, ?)",
+                new ArrayList<>() {
             {
                 add("孤岛旭日1");
                 add("xxxx");
@@ -121,9 +124,12 @@ public class RelDBFlowTest extends DewTest {
             }
         }));
 
-        Assertions.assertEquals("请求的SQL解析错误", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select1 name from iam_account1" + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
-        Assertions.assertEquals("Table 'test.iam_account1' doesn't exist", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account1" + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
-        Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\",\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));
+        Assertions.assertEquals("请求的SQL解析错误", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select1 name from iam_account1" + "\",\"parameters" +
+                "\":[]}", identOptCacheInfo)._1.getMessage());
+        Assertions.assertEquals("Table 'test.iam_account1' doesn't exist", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from " +
+                "iam_account1" + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
+        Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\"," +
+                "\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));
 
         await(FunCacheClient.choose(MODULE_NAME).set(DewConstant.CACHE_AUTH_POLICY + "reldb:1.reldb.subjectCodexx/iam_account/name:fetch",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
@@ -145,7 +151,8 @@ public class RelDBFlowTest extends DewTest {
                 .build()).toBuffer(), new HashMap<>());
         Thread.sleep(1000);
 
-        Assertions.assertEquals("鉴权错误，没有权限访问对应的资源", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\",\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
+        Assertions.assertEquals("鉴权错误，没有权限访问对应的资源", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\"," +
+                "\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
 
         await(FunCacheClient.choose(MODULE_NAME).del(DewConstant.CACHE_AUTH_POLICY + "reldb:1.reldb.subjectCodexx/iam_account/name:fetch"));
         FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.DELETE, "eb://iam/resource.reldb", JsonObject.mapFrom(ResourceExchange.builder()
@@ -154,7 +161,8 @@ public class RelDBFlowTest extends DewTest {
                 .build()).toBuffer(), new HashMap<>());
         Thread.sleep(1000);
 
-        Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\",\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));
+        Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\"," +
+                "\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));
         testContext.completeNow();
     }
 

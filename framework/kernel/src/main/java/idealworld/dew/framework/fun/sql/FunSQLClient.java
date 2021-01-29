@@ -129,7 +129,11 @@ public class FunSQLClient {
 
     public <E> Future<List<E>> list(String sql, Map<String, Object> parameters, Class<E> returnClazz) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]List\r\n--------------\r\n{}\r\n{}", code, sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]List\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    parameters.entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         Promise<List<E>> promise = Promise.promise();
         SqlTemplate
@@ -212,7 +216,11 @@ public class FunSQLClient {
     public Future<Long> count(String sql, Map<String, Object> parameters) {
         var countSql = "SELECT COUNT(1) AS _count FROM (" + sql + ") AS _" + System.currentTimeMillis();
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Count\r\n--------------\r\n{}\r\n{}", code, countSql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Count\r\n--------------\r\n{}\r\n{}",
+                    code, countSql,
+                    parameters.entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         Promise<Long> promise = Promise.promise();
         SqlTemplate
@@ -240,7 +248,11 @@ public class FunSQLClient {
     public <E> Future<Page<E>> page(String sql, Map<String, Object> parameters, Long pageNumber, Long pageSize, Class<E> returnClazz) {
         var pageSql = sql + " LIMIT " + (pageNumber - 1) * pageSize + ", " + pageSize;
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Page\r\n--------------\r\n{}\r\n{}", code, pageSql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Page\r\n--------------\r\n{}\r\n{}",
+                    code, pageSql,
+                    parameters.entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         Promise<Page<E>> promise = Promise.promise();
         Page<E> page = new Page<>();
@@ -268,7 +280,11 @@ public class FunSQLClient {
         var values = caseEntity.stream().map(j -> "#{" + j.getKey() + "}").collect(Collectors.joining(", "));
         var sql = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + values + ")";
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Save\r\n--------------\r\n{}\r\n{}", code, sql, caseEntity.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Save\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    caseEntity.stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate
                 .forUpdate(client, sql)
@@ -284,7 +300,11 @@ public class FunSQLClient {
         var values = caseEntity.stream().map(j -> "#{" + j.getKey() + "}").collect(Collectors.joining(", "));
         var sql = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + values + ")";
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Save Batch(" + jsonEntities.size() + ") , first record\r\n--------------\r\n{}\r\n{}", code, sql, caseEntity.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Save Batch(" + jsonEntities.size() + ") , first record\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    caseEntity.stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql)
                 .mapFrom(TupleMapper.jsonObject())
@@ -295,14 +315,22 @@ public class FunSQLClient {
 
     public Future<Long> save(String sql, Map<String, Object> parameters) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Save\r\n--------------\r\n{}\r\n{}", code, sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Save\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    parameters.entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).execute(parameters), sql);
     }
 
     public Future<Long> save(String sql, List<Map<String, Object>> parameters) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Save Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}", code, sql, parameters.get(0).entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Save Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    parameters.get(0).entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).executeBatch(parameters), sql);
     }
@@ -313,7 +341,11 @@ public class FunSQLClient {
 
     public Future<Void> update(String sql, Map<String, Object> parameters) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Update\r\n--------------\r\n{}\r\n{}", code, sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Update\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    parameters.entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).execute(parameters), sql)
                 .compose(resp -> Future.succeededFuture());
@@ -321,7 +353,11 @@ public class FunSQLClient {
 
     public Future<Void> update(String sql, List<Map<String, Object>> parameters) {
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Update Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}", code, sql, parameters.get(0).entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Update Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    parameters.get(0).entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).executeBatch(parameters), sql)
                 .compose(resp -> Future.succeededFuture());
@@ -347,7 +383,11 @@ public class FunSQLClient {
         var sql = packageWhere("UPDATE " + tableName + " SET " + sets, whereParameters);
         caseEntity.putAll(whereParameters);
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Update\r\n--------------\r\n{}\r\n{}", code, sql, caseEntity.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]Update\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    caseEntity.entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return updateHandler(SqlTemplate.forUpdate(client, sql).execute(caseEntity), sql)
                 .compose(resp -> Future.succeededFuture());
@@ -391,7 +431,11 @@ public class FunSQLClient {
     public <E extends IdEntity> Future<Void> softDelete(String sql, Map<String, Object> parameters, Class<E> entityClazz) {
         var tableName = entityClazz.getDeclaredConstructor().newInstance().tableName();
         if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]SoftDelete\r\n--------------\r\n{}\r\n{}", code, sql, parameters.entrySet().stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+            log.trace("[SQL][{}]SoftDelete\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    parameters.entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return tx(client ->
                 client.list(sql, parameters, Map.class)

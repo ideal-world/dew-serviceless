@@ -56,13 +56,15 @@ public class ITBasicTest extends DewTest {
         var response = $.http.postWrap(gatewayServerUrl + "?"
                 + DewConstant.REQUEST_RESOURCE_URI_FLAG + "=" + URLEncoder.encode(resourceUri, StandardCharsets.UTF_8)
                 + "&"
-                + DewConstant.REQUEST_RESOURCE_ACTION_FLAG + "=" + optActionKind.toString(), body == null || body instanceof String ? Buffer.buffer() : JsonObject.mapFrom(body).toString(), header);
+                + DewConstant.REQUEST_RESOURCE_ACTION_FLAG + "=" + optActionKind.toString(), body == null || body instanceof String ?
+                Buffer.buffer() : JsonObject.mapFrom(body).toString(), header);
         if (response.statusCode != 200) {
             throw new RTException("Request [" + optActionKind.toString() + "][" + resourceUri + "] error : [" + response.statusCode + "]");
         }
         var result = new JsonObject(response.result);
         if (!result.getString("code").equals("200")) {
-            throw new RTException("Request [" + optActionKind.toString() + "][" + resourceUri + "] error : [" + result.getString("code") + "]:" + result.getString("message"));
+            throw new RTException("Request [" + optActionKind.toString() + "][" + resourceUri + "] error : [" + result.getString("code") + "]:"
+                    + result.getString("message"));
         }
         return response.result;
     }

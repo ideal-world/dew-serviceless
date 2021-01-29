@@ -115,7 +115,9 @@ public class TaskProcessor extends EventBusProcessor {
                         var initTask = taskDefs.stream().filter(def -> def.getCode().isBlank()).findAny().get();
 
                         initTasks(initTask.getFun(), initTask.getRelAppCode(), context);
-                        taskDefs.stream().filter(def -> !def.getCode().isBlank()).forEach(def -> addTask(def.getCode(), def.getCron(), def.getFun(), def.getRelAppCode(), context));
+                        taskDefs.stream().filter(def ->
+                                !def.getCode().isBlank()).forEach(def ->
+                                addTask(def.getCode(), def.getCron(), def.getFun(), def.getRelAppCode(), context));
                     }
                 })
                 .onFailure(e -> context.helper.error(e));
@@ -217,7 +219,8 @@ public class TaskProcessor extends EventBusProcessor {
                 .compose(resp -> context.helper.success());
     }
 
-    public static Future<Object> execTask(String code, String appCode, List<?> parameters, Boolean fromTimer, IdentOptExchangeInfo identOptCacheInfo, ProcessContext context) {
+    public static Future<Object> execTask(String code, String appCode, List<?> parameters, Boolean fromTimer,
+                                          IdentOptExchangeInfo identOptCacheInfo, ProcessContext context) {
         if (!fromTimer) {
             return _vertx.getOrCreateContext().executeBlocking(promise -> {
                 try {

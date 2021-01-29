@@ -84,7 +84,9 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                 || !queryMap.containsKey(DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG)
                 || queryMap.get(DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG).isBlank()
         ) {
-            error(StandardCode.BAD_REQUEST, GatewayIdentHandler.class, "请求格式不合法，缺少[" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG + "]或[" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "]", ctx);
+            error(StandardCode.BAD_REQUEST, GatewayIdentHandler.class,
+                    "请求格式不合法，缺少[" + DewAuthConstant.REQUEST_RESOURCE_URI_FLAG + "]或[" + DewAuthConstant.REQUEST_RESOURCE_ACTION_FLAG + "]",
+                    ctx);
             return;
         }
         URI resourceUri;
@@ -237,6 +239,7 @@ public class GatewayIdentHandler extends AuthHttpHandler {
                         return header.getValue();
                     }
                     break;
+                default:
             }
         }
         return request.remoteAddress().host();

@@ -36,7 +36,9 @@ public class RelDBModule extends DewModule<RelDBConfig> {
 
     @Override
     protected Future<Void> start(RelDBConfig config) {
-        var authPolicy = new RelDBAuthPolicy(getModuleName(), config.getSecurity().getResourceCacheExpireSec(), config.getSecurity().getGroupNodeLength());
+        var authPolicy = new RelDBAuthPolicy(getModuleName(),
+                config.getSecurity().getResourceCacheExpireSec(),
+                config.getSecurity().getGroupNodeLength());
         new RelDBProcessor(authPolicy, getModuleName());
         return RelDBExchangeProcessor.init(getModuleName(), config, vertx);
     }

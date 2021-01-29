@@ -112,7 +112,8 @@ public class CacheProcessor extends EventBusProcessor {
                         return cacheClient.expire(key, attrExpire);
                     }
                 }
-                log.warn("[Cache]Unsupported operations: action = {}, key = {}, fieldKey = {}, body = {}, expire = {}", actionKind.toString(), key, fieldName, strBody, attrExpire);
+                log.warn("[Cache]Unsupported operations: action = {}, key = {}, fieldKey = {}, body = {}, expire = {}",
+                        actionKind.toString(), key, fieldName, strBody, attrExpire);
                 throw context.helper.error(new BadRequestException("请求的格式不正确"));
             case DELETE:
                 if (fieldName == null || fieldName.isBlank() || fieldName.equals("*")) {

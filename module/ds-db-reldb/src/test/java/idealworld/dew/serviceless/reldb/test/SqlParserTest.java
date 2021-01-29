@@ -70,7 +70,8 @@ public class SqlParserTest extends DewTest {
         Assertions.assertEquals(sqlAst.get(0).getReturnFields().get(1), "age");
         Assertions.assertEquals(sqlAst.get(0).getCondFields().get(0), "age");
 
-        sqlAst = SqlParser.parse("select t1.name, t1.age from main t1 left join org o on t1.org_id = o.id and o.status = 1 where t1.age > ? and t1.enabled = true");
+        sqlAst = SqlParser.parse("select t1.name, t1.age from main t1 left join org o on t1.org_id = o.id and o.status = 1 where t1.age > ? and t1" +
+                ".enabled = true");
         Assertions.assertEquals(sqlAst.get(0).getActionKind(), OptActionKind.FETCH);
         Assertions.assertEquals(sqlAst.get(1).getActionKind(), OptActionKind.FETCH);
         Assertions.assertEquals(sqlAst.get(0).getTable(), "org");

@@ -52,7 +52,8 @@ public class GatewayAuthHandler extends AuthHttpHandler {
         authPolicy.authentication(getModuleName(), action.toString().toLowerCase(), resourceUri, subjectInfo)
                 .onSuccess(authResultKind -> {
                     if (authResultKind == AuthResultKind.REJECT) {
-                        error(StandardCode.UNAUTHORIZED, GatewayAuthHandler.class, "鉴权错误，没有权限访问对应的资源[" + action + "|" + resourceUri.toString() + "]", ctx);
+                        error(StandardCode.UNAUTHORIZED, GatewayAuthHandler.class,
+                                "鉴权错误，没有权限访问对应的资源[" + action + "|" + resourceUri.toString() + "]", ctx);
                         return;
                     }
                     ctx.next();

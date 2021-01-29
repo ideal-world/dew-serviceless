@@ -104,17 +104,6 @@ public class SqlParser {
         return packageSqlAst(sqlItems);
     }
 
-    private static List<SqlAst> parseCreate(MySqlCreateTableStatement sqlStatement) {
-        return new ArrayList<>() {
-            {
-                add(SqlAst.builder()
-                        .table(sqlStatement.getTableName())
-                        .actionKind(OptActionKind.CREATE)
-                        .build());
-            }
-        };
-    }
-
     private static List<SqlItem> parseSelect(SQLSelectQuery sqlSelectQuery, Map<String, String> tableNames) {
         var sqlItems = new ArrayList<SqlItem>();
         if (sqlSelectQuery instanceof MySqlSelectQueryBlock) {
@@ -124,6 +113,17 @@ public class SqlParser {
             sqlItems.addAll(parseExpr(OptActionKind.FETCH, FieldKind.CONDITION, query.getWhere(), tableNames));
         }
         return sqlItems;
+    }
+
+    private static List<SqlAst> parseCreate(MySqlCreateTableStatement sqlStatement) {
+        return new ArrayList<>() {
+            {
+                add(SqlAst.builder()
+                        .table(sqlStatement.getTableName())
+                        .actionKind(OptActionKind.CREATE)
+                        .build());
+            }
+        };
     }
 
     private static List<SqlItem> parseSet(List<SQLUpdateSetItem> sqlUpdateSetItems, Map<String, String> tableNames) {
@@ -180,7 +180,8 @@ public class SqlParser {
         } else if (sqlExpr instanceof SQLQueryExpr) {
             container.addAll(parseSelect(((SQLQueryExpr) sqlExpr).getSubQuery().getQuery(), tableNames));
         } else if (sqlExpr instanceof SQLPropertyExpr) {
-            container.add(new SqlItem(tableNames.get(tableNames.get(((SQLPropertyExpr) sqlExpr).getOwner().toString())), actionKind, fieldKind, ((SQLPropertyExpr) sqlExpr).getName()));
+            container.add(new SqlItem(tableNames.get(tableNames.get(((SQLPropertyExpr) sqlExpr).getOwner().toString())), actionKind, fieldKind,
+                    ((SQLPropertyExpr) sqlExpr).getName()));
         } else if (sqlExpr instanceof SQLIdentifierExpr) {
             container.add(new SqlItem(tableNames.get(""), actionKind, fieldKind, ((SQLIdentifierExpr) sqlExpr).getName()));
         }
@@ -244,6 +245,8 @@ public class SqlParser {
                 case EFFECT:
                     this.effectField = field;
                     break;
+                default:
+                    throw new RTException("暂不支持[" + fieldKind + "]操作");
             }
         }
     }

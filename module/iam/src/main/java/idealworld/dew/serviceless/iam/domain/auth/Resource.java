@@ -35,7 +35,7 @@ import javax.validation.constraints.Size;
  * path 为空时 表示为（整个）该资源主体
  * <p>
  * {@link ResourceKind#HTTP}:
- * path = <API路径>
+ * path = API路径
  * <p>
  * e.g.
  * <p>
@@ -46,24 +46,24 @@ import javax.validation.constraints.Size;
  * 则 资源的真正URI = http://10.20.0.10:8080/iam/admin/user
  * <p>
  * {@link ResourceKind#MENU}:
- * path = <菜单树节点Id>
+ * path = 菜单树节点Id
  * e.g.
  * <p>
  * path = userMgr/batchImport ，表示 用户管理（userMgr）/批量导入（batchImport）
  * <p>
  * {@link ResourceKind#ELEMENT}:
  * path = 页面路径/元素Id
- * 或 path = 页面路径?<属性名>=<属性值>
+ * 或 path = 页面路径?属性名=属性值
  * e.g.
  * <p>
  * path = userMgr/userDelete ，表示 用户管理页面（userMgr）的删除按钮（id  = 'userDelete'）
  * path = userMgr?class=userDelete ，表示 用户管理页面（userMgr）的删除按钮（class = 'userDelete'）
  * <p>
  * {@link ResourceKind#RELDB}:
- * path = <表名>
- * 或 path = <表名>/fields/<字段名>
- * 或 path = <表名>/rows/<主键值>
- * 或 path = <表名>/rows?<字段名>=<字段值>
+ * path = 表名
+ * 或 path = 表名/fields/字段名
+ * 或 path = 表名/rows/主键值
+ * 或 path = 表名/rows?字段名=字段值
  * <p>
  * e.g.
  * <p>
@@ -74,21 +74,21 @@ import javax.validation.constraints.Size;
  * // TODO 动态值
  * <p>
  * {@link ResourceKind#CACHE}:
- * path = <Key名称>
+ * path = Key名称
  * <p>
  * e.g.
  * <p>
  * path = user:ids ，表示 user:ids 的Key
  * <p>
  * {@link ResourceKind#MQ}:
- * path = <Topic名称>
+ * path = Topic名称
  * <p>
  * e.g.
  * <p>
  * path = addUser ，表示 addUser 主题
  * <p>
  * {@link ResourceKind#OBJECT}:
- * path = <Key名称>
+ * path = Key名称
  * <p>
  * e.g.
  * <p>

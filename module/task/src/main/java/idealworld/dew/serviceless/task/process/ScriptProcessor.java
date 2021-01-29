@@ -152,7 +152,8 @@ public class ScriptProcessor {
     public static Object execute(String appCode, String funName, List<?> parameters, IdentOptExchangeInfo identOptCacheInfo) {
         LOCKS.get(appCode).lock();
         try {
-            var createAuthFun = SCRIPT_CONTAINER.get(appCode).getBindings("js").getMember("JVM").getMember("DewSDK").getMember("iam").getMember("auth").getMember("create");
+            var createAuthFun = SCRIPT_CONTAINER.get(appCode).getBindings("js").getMember("JVM")
+                    .getMember("DewSDK").getMember("iam").getMember("auth").getMember("create");
             var result = new Object[2];
             Consumer<Object> then = (v) -> result[0] = v;
             Consumer<Object> catchy = (v) -> result[1] = v;

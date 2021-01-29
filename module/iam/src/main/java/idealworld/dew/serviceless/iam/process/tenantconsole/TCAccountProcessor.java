@@ -52,50 +52,67 @@ public class TCAccountProcessor extends EventBusProcessor {
                 addAccount(eventBusContext.req.body(AccountAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前租户的某个账号
         addProcessor(OptActionKind.PATCH, "/console/tenant/account/{accountId}", eventBusContext ->
-                modifyAccount(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.body(AccountModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyAccount(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.body(AccountModifyReq.class),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前租户的某个账号信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/account/{accountId}", eventBusContext ->
-                getAccount(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getAccount(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 获取当前租户的账号列表信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/account", eventBusContext ->
-                pageAccounts(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                pageAccounts(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.params.getOrDefault("name", null),
+                        eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 删除当前租户的某个账号、关联的账号认证、账号群组、账号角色、账号应用、账号绑定
         addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}", eventBusContext ->
-                deleteAccount(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteAccount(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
 
         // 添加当前租户某个账号的认证
         addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/ident", eventBusContext ->
-                addAccountIdent(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.body(AccountIdentAddReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addAccountIdent(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.body(AccountIdentAddReq.class),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前租户某个账号的某个认证
         addProcessor(OptActionKind.PATCH, "/console/tenant/account/{accountId}/ident/{accountIdentId}", eventBusContext ->
-                modifyAccountIdent(Long.parseLong(eventBusContext.req.params.get("accountIdentId")), eventBusContext.req.body(AccountIdentModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyAccountIdent(Long.parseLong(eventBusContext.req.params.get("accountIdentId")),
+                        eventBusContext.req.body(AccountIdentModifyReq.class), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 获取当前租户某个账号的认证列表信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/account/{accountId}/ident", eventBusContext ->
-                findAccountIdents(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                findAccountIdents(Long.parseLong(eventBusContext.req.params.get("accountId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 删除当前租户某个账号的某个认证
         addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/ident/{accountIdentId}", eventBusContext ->
-                deleteAccountIdent(Long.parseLong(eventBusContext.req.params.get("accountIdentId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteAccountIdent(Long.parseLong(eventBusContext.req.params.get("accountIdentId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
 
         // 添加当前租户某个账号的关联应用
         addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/app/{appId}", eventBusContext ->
-                addAccountApp(Long.parseLong(eventBusContext.req.params.get("accountId")), Long.parseLong(eventBusContext.req.params.get("appId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addAccountApp(Long.parseLong(eventBusContext.req.params.get("accountId")), Long.parseLong(eventBusContext.req.params.get("appId")),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户某个账号的某个关联应用
         addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/app/{accountAppId}", eventBusContext ->
-                deleteAccountApp(Long.parseLong(eventBusContext.req.params.get("accountAppId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteAccountApp(Long.parseLong(eventBusContext.req.params.get("accountAppId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
 
         // 添加当前租户某个账号的关联群组
         addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/group/{groupNodeId}", eventBusContext ->
-                addAccountGroup(Long.parseLong(eventBusContext.req.params.get("accountId")), Long.parseLong(eventBusContext.req.params.get("groupNodeId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addAccountGroup(Long.parseLong(eventBusContext.req.params.get("accountId")), Long.parseLong(eventBusContext.req.params.get(
+                        "groupNodeId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前租户某个账号的某个关联群组
         addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/group/{accountGroupId}", eventBusContext ->
-                deleteAccountGroup(Long.parseLong(eventBusContext.req.params.get("accountGroupId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteAccountGroup(Long.parseLong(eventBusContext.req.params.get("accountGroupId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
 
         // 添加当前租户某个账号的关联角色
         addProcessor(OptActionKind.CREATE, "/console/tenant/account/{accountId}/role/{roleId}", eventBusContext ->
-                addAccountRole(Long.parseLong(eventBusContext.req.params.get("accountId")), Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addAccountRole(Long.parseLong(eventBusContext.req.params.get("accountId")),
+                        Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 删除当前租户某个账号的某个关联角色
         addProcessor(OptActionKind.DELETE, "/console/tenant/account/{accountId}/role/{accountRoleId}", eventBusContext ->
-                deleteAccountRole(Long.parseLong(eventBusContext.req.params.get("accountRoleId")), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteAccountRole(Long.parseLong(eventBusContext.req.params.get("accountRoleId")), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
     }
 
     public TCAccountProcessor(String moduleName) {
@@ -150,7 +167,8 @@ public class TCAccountProcessor extends EventBusProcessor {
                 .compose(app -> context.helper.success(app, AccountResp.class));
     }
 
-    public static Future<Page<AccountResp>> pageAccounts(String name, String openId, Long pageNumber, Long pageSize, Long relTenantId, ProcessContext context) {
+    public static Future<Page<AccountResp>> pageAccounts(String name, String openId, Long pageNumber, Long pageSize, Long relTenantId,
+                                                         ProcessContext context) {
         var whereParameters = new HashMap<String, Object>() {
             {
                 put("rel_tenant_id", relTenantId);
@@ -234,7 +252,9 @@ public class TCAccountProcessor extends EventBusProcessor {
                                         put("rel_tenant_id", relTenantId);
                                     }
                                 },
-                                AccountIdent.class), () -> new ConflictException("账号认证类型[" + accountIdentAddReq.getKind() + "]与AK[" + accountIdentAddReq.getAk() + "]已存在")))
+                                AccountIdent.class),
+                                () -> new ConflictException("账号认证类型[" + accountIdentAddReq.getKind() + "]与AK[" + accountIdentAddReq.getAk() +
+                                        "]已存在")))
                 .compose(resp ->
                         IAMBasicProcessor.validRuleAndGetValidEndTime(
                                 accountIdentAddReq.getKind(),
@@ -266,7 +286,8 @@ public class TCAccountProcessor extends EventBusProcessor {
                 });
     }
 
-    public static Future<Void> modifyAccountIdent(Long accountIdentId, AccountIdentModifyReq accountIdentModifyReq, Long relTenantId, ProcessContext context) {
+    public static Future<Void> modifyAccountIdent(Long accountIdentId, AccountIdentModifyReq accountIdentModifyReq, Long relTenantId,
+                                                  ProcessContext context) {
         return context.helper.notExistToError(
                 context.sql.getOne(
                         new HashMap<>() {
@@ -288,7 +309,8 @@ public class TCAccountProcessor extends EventBusProcessor {
                                             put("rel_tenant_id", relTenantId);
                                         }
                                     },
-                                    AccountIdent.class), () -> new ConflictException("账号认证类型[" + accountIdent.getKind() + "]与AK[" + accountIdentAk + "]已存在"))
+                                    AccountIdent.class),
+                            () -> new ConflictException("账号认证类型[" + accountIdent.getKind() + "]与AK[" + accountIdentAk + "]已存在"))
                             .compose(resp ->
                                     IAMBasicProcessor.validRuleAndGetValidEndTime(
                                             accountIdent.getKind(),
@@ -355,7 +377,7 @@ public class TCAccountProcessor extends EventBusProcessor {
                         IAMBasicProcessor.checkAppMembership(appId, relTenantId, context))
                 .compose(resp ->
                         context.sql.getOne(
-                                new HashMap<String,Object>() {
+                                new HashMap<String, Object>() {
                                     {
                                         put("rel_account_id", accountId);
                                         put("rel_app_id", appId);
@@ -363,7 +385,7 @@ public class TCAccountProcessor extends EventBusProcessor {
                                 },
                                 AccountApp.class))
                 .compose(accountApp -> {
-                    if(accountApp==null){
+                    if (accountApp == null) {
                         return context.sql.save(AccountApp.builder()
                                 .relAccountId(accountId)
                                 .relAppId(appId)
@@ -405,7 +427,7 @@ public class TCAccountProcessor extends EventBusProcessor {
                         IAMBasicProcessor.checkGroupNodeMembership(groupNodeId, relTenantId, context))
                 .compose(resp ->
                         context.sql.getOne(
-                                new HashMap<String,Object>() {
+                                new HashMap<String, Object>() {
                                     {
                                         put("rel_account_id", accountId);
                                         put("rel_group_node_id", groupNodeId);
@@ -413,7 +435,7 @@ public class TCAccountProcessor extends EventBusProcessor {
                                 },
                                 AccountGroup.class))
                 .compose(accountGroup -> {
-                    if(accountGroup==null){
+                    if (accountGroup == null) {
                         return context.sql.save(AccountGroup.builder()
                                 .relAccountId(accountId)
                                 .relGroupNodeId(groupNodeId)
@@ -450,7 +472,7 @@ public class TCAccountProcessor extends EventBusProcessor {
                         IAMBasicProcessor.checkRoleMembership(roleId, relTenantId, context))
                 .compose(resp ->
                         context.sql.getOne(
-                                new HashMap<String,Object>() {
+                                new HashMap<String, Object>() {
                                     {
                                         put("rel_account_id", accountId);
                                         put("rel_role_id", roleId);
@@ -458,13 +480,13 @@ public class TCAccountProcessor extends EventBusProcessor {
                                 },
                                 AccountRole.class))
                 .compose(accountRole -> {
-                        if(accountRole==null){
-                           return context.sql.save(AccountRole.builder()
-                                    .relAccountId(accountId)
-                                    .relRoleId(roleId)
-                                    .build());
-                        }
-                        return context.helper.success(accountRole.getId());
+                    if (accountRole == null) {
+                        return context.sql.save(AccountRole.builder()
+                                .relAccountId(accountId)
+                                .relRoleId(roleId)
+                                .build());
+                    }
+                    return context.helper.success(accountRole.getId());
                 });
     }
 

@@ -51,19 +51,26 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
     {
         // 添加当前应用的权限策略
         addProcessor(OptActionKind.CREATE, "/console/app/authpolicy", eventBusContext ->
-                addAuthPolicy(eventBusContext.req.body(AuthPolicyAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addAuthPolicy(eventBusContext.req.body(AuthPolicyAddReq.class), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个权限策略
         addProcessor(OptActionKind.PATCH, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
-                modifyAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")), eventBusContext.req.body(AuthPolicyModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")),
+                        eventBusContext.req.body(AuthPolicyModifyReq.class), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // getAuthPolicy
         addProcessor(OptActionKind.FETCH, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
-                getAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的权限策略列表信息
         addProcessor(OptActionKind.FETCH, "/console/app/authpolicy", eventBusContext ->
-                pageAuthPolicies(eventBusContext.req.params.getOrDefault("subjectKind", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                pageAuthPolicies(eventBusContext.req.params.getOrDefault("subjectKind", null), eventBusContext.req.pageNumber(),
+                        eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 删除当前应用的某个权限策略
         addProcessor(OptActionKind.DELETE, "/console/app/authpolicy/{authPolicyId}", eventBusContext ->
-                deleteAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteAuthPolicy(Long.parseLong(eventBusContext.req.params.get("authPolicyId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 
     public ACAuthPolicyProcessor(String moduleName) {
@@ -120,6 +127,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                         case GROUP_NODE:
                             checkSubjectMembershipR = IAMBasicProcessor.checkGroupNodeMembership(subjectIds, relAppId, relTenantId, context);
                             break;
+                        default:
                     }
                     return checkSubjectMembershipR;
                 })
@@ -249,7 +257,8 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                 });
     }
 
-    public static Future<Void> modifyAuthPolicy(Long authPolicyId, AuthPolicyModifyReq authPolicyModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Void> modifyAuthPolicy(Long authPolicyId, AuthPolicyModifyReq authPolicyModifyReq, Long relAppId, Long relTenantId,
+                                                ProcessContext context) {
         if (authPolicyModifyReq.getRelSubjectKind() != null && authPolicyModifyReq.getRelSubjectIds() == null
                 || authPolicyModifyReq.getRelSubjectKind() == null && authPolicyModifyReq.getRelSubjectIds() != null) {
             throw new BadRequestException("关联权限主体类型与关联权限主体Id必须同时存在");
@@ -307,6 +316,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                             case GROUP_NODE:
                                 checkSubjectMembershipR = IAMBasicProcessor.checkGroupNodeMembership(subjectIds, relAppId, relTenantId, context);
                                 break;
+                            default:
                         }
                         return checkSubjectMembershipR;
                     }
@@ -374,7 +384,8 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                 .compose(authPolicy -> context.helper.success(authPolicy, AuthPolicyResp.class));
     }
 
-    public static Future<Page<AuthPolicyResp>> pageAuthPolicies(String subjectKind, Long pageNumber, Long pageSize, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Page<AuthPolicyResp>> pageAuthPolicies(String subjectKind, Long pageNumber, Long pageSize, Long relAppId, Long relTenantId,
+                                                                ProcessContext context) {
         var whereParameters = new HashMap<String, Object>() {
             {
                 put("rel_app_id", relAppId);

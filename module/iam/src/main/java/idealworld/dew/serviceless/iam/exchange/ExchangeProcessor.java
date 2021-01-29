@@ -228,11 +228,8 @@ public class ExchangeProcessor extends EventBusProcessor {
                         changeAppIdent(appIdent.getAk(), appIdent.getSk(), appIdent.getValidTime(), appId, appCode, tenantId, context));
     }
 
-    public static Future<Void> deleteAppIdent(String ak, ProcessContext context) {
-        return context.cache.del(IAMConstant.CACHE_APP_AK + ak);
-    }
-
-    private static Future<Void> changeAppIdent(String ak, String sk, Long validTime, Long appId, String appCode, Long tenantId, ProcessContext context) {
+    private static Future<Void> changeAppIdent(String ak, String sk, Long validTime, Long appId, String appCode, Long tenantId,
+                                               ProcessContext context) {
         return context.cache.del(IAMConstant.CACHE_APP_AK + ak)
                 .compose(resp -> {
                     if (validTime == null) {
@@ -242,6 +239,10 @@ public class ExchangeProcessor extends EventBusProcessor {
                                 (validTime - System.currentTimeMillis()) / 1000);
                     }
                 });
+    }
+
+    public static Future<Void> deleteAppIdent(String ak, ProcessContext context) {
+        return context.cache.del(IAMConstant.CACHE_APP_AK + ak);
     }
 
     public static Future<Void> addPolicy(AuthPolicyInfo policyInfo, ProcessContext context) {
@@ -260,10 +261,13 @@ public class ExchangeProcessor extends EventBusProcessor {
                     if (!policyValue.containsKey(policyInfo.subjectOperator.toString().toLowerCase())) {
                         policyValue.put(policyInfo.subjectOperator.toString().toLowerCase(), new JsonObject());
                     }
-                    if (!policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).containsKey(policyInfo.subjectKind.toString().toLowerCase())) {
-                        policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).put(policyInfo.subjectKind.toString().toLowerCase(), new JsonArray());
+                    if (!policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase())
+                            .containsKey(policyInfo.subjectKind.toString().toLowerCase())) {
+                        policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase())
+                                .put(policyInfo.subjectKind.toString().toLowerCase(), new JsonArray());
                     }
-                    policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).getJsonArray(policyInfo.subjectKind.toString().toLowerCase()).add(policyInfo.getSubjectId());
+                    policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase())
+                            .getJsonArray(policyInfo.subjectKind.toString().toLowerCase()).add(policyInfo.getSubjectId());
                     return context.cache.set(key, policyValue.toString());
                 });
     }
@@ -280,10 +284,12 @@ public class ExchangeProcessor extends EventBusProcessor {
                     }
                     var policyValue = new JsonObject(strPolicyValue);
                     if (!policyValue.containsKey(policyInfo.subjectOperator.toString().toLowerCase())
-                            || !policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).containsKey(policyInfo.subjectKind.toString().toLowerCase())) {
+                            || !policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase())
+                            .containsKey(policyInfo.subjectKind.toString().toLowerCase())) {
                         return context.helper.success();
                     }
-                    policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase()).getJsonArray(policyInfo.subjectKind.toString().toLowerCase()).remove(policyInfo.getSubjectId());
+                    policyValue.getJsonObject(policyInfo.subjectOperator.toString().toLowerCase())
+                            .getJsonArray(policyInfo.subjectKind.toString().toLowerCase()).remove(policyInfo.getSubjectId());
                     return context.cache.set(key, policyValue.toString());
                 });
     }

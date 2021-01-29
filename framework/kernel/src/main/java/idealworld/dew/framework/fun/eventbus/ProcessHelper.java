@@ -93,11 +93,13 @@ public class ProcessHelper {
                 .filter(j -> !excludeKeys.contains(j.getKey()))
                 .forEach(j -> {
                     if (j.getValue() instanceof JsonObject) {
-                        trimValues((JsonObject) j.getValue(), excludeKeys.stream().map(k -> k.substring(j.getKey().length() + 1)).collect(Collectors.toList()));
+                        trimValues((JsonObject) j.getValue(),
+                                excludeKeys.stream().map(k -> k.substring(j.getKey().length() + 1)).collect(Collectors.toList()));
                     } else if (j.getValue() instanceof JsonArray) {
                         ((JsonArray) j.getValue()).forEach(i -> {
                             if (j instanceof JsonObject) {
-                                trimValues((JsonObject) i, excludeKeys.stream().map(k -> k.substring(j.getKey().length() + 1)).collect(Collectors.toList()));
+                                trimValues((JsonObject) i,
+                                        excludeKeys.stream().map(k -> k.substring(j.getKey().length() + 1)).collect(Collectors.toList()));
                             }
                         });
                     } else if (j.getValue() instanceof String) {
@@ -112,11 +114,6 @@ public class ProcessHelper {
 
     public <E> Future<E> success(E result) {
         return Future.succeededFuture(result);
-    }
-
-    @SneakyThrows
-    public <E extends Throwable> E error(E e) {
-        throw e;
     }
 
     public <E extends IdResp, I extends IdEntity> Future<E> success(I entity, Class<E> clazz) {
@@ -140,6 +137,11 @@ public class ProcessHelper {
                 .map(r -> $.bean.copyProperties(r, clazz))
                 .collect(Collectors.toList()));
         return Future.succeededFuture(page);
+    }
+
+    @SneakyThrows
+    public <E extends Throwable> E error(E e) {
+        throw e;
     }
 
     public <E> E convert(Object bean, Class<E> clazz) {

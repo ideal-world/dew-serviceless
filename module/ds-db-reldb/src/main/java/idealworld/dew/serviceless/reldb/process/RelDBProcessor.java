@@ -51,7 +51,9 @@ public class RelDBProcessor extends EventBusProcessor {
         addProcessor("", eventBusContext ->
                 exec(
                         eventBusContext.req.header.get(DewConstant.REQUEST_RESOURCE_URI_FLAG),
-                        new JsonObject($.security.decodeBase64ToString(eventBusContext.req.header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8)).mapTo(IdentOptExchangeInfo.class),
+                        new JsonObject($.security.decodeBase64ToString(
+                                eventBusContext.req.header.get(DewConstant.REQUEST_IDENT_OPT_FLAG), StandardCharsets.UTF_8))
+                                .mapTo(IdentOptExchangeInfo.class),
                         eventBusContext.req.body(String.class),
                         eventBusContext.context));
     }

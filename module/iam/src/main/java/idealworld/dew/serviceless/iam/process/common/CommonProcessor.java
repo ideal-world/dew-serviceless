@@ -97,16 +97,19 @@ public class CommonProcessor extends EventBusProcessor {
                 logout(eventBusContext.req.identOptInfo, eventBusContext.context));
         // 修改账号
         addProcessor(OptActionKind.PATCH, "/common/account", eventBusContext ->
-                changeInfo(eventBusContext.req.body(AccountChangeReq.class), eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.context));
+                changeInfo(eventBusContext.req.body(AccountChangeReq.class), eventBusContext.req.identOptInfo.getAccountCode(),
+                        eventBusContext.context));
         // 修改账号认证
         addProcessor(OptActionKind.PATCH, "/common/account/ident", eventBusContext ->
-                changeIdent(eventBusContext.req.body(AccountIdentChangeReq.class), eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.context));
+                changeIdent(eventBusContext.req.body(AccountIdentChangeReq.class), eventBusContext.req.identOptInfo.getAccountCode(),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.context));
         // 注销账号
         addProcessor(OptActionKind.DELETE, "/common/account", eventBusContext ->
                 unRegister(eventBusContext.req.identOptInfo.getAccountCode(), eventBusContext.context));
         // 获取资源
         addProcessor(OptActionKind.FETCH, "/common/resource", eventBusContext ->
-                findResources(eventBusContext.req.params.get("kind"), eventBusContext.req.identOptInfo.getUnauthorizedAppId(), eventBusContext.req.identOptInfo.getUnauthorizedTenantId(), eventBusContext.context));
+                findResources(eventBusContext.req.params.get("kind"), eventBusContext.req.identOptInfo.getUnauthorizedAppId(),
+                        eventBusContext.req.identOptInfo.getUnauthorizedTenantId(), eventBusContext.context));
     }
 
     public CommonProcessor(String moduleName) {
@@ -198,7 +201,8 @@ public class CommonProcessor extends EventBusProcessor {
                                         dto.appId, dto.appCode, dto.tenantId, context)));
     }
 
-    public static Future<IdentOptInfo> registerApp(AppRegisterReq appRegisterReq, Long relAccountId, String relAccountCode, String relAccountName, Long relTenantId, ProcessContext context) {
+    public static Future<IdentOptInfo> registerApp(AppRegisterReq appRegisterReq, Long relAccountId, String relAccountCode, String relAccountName,
+                                                   Long relTenantId, ProcessContext context) {
         var dto = new RegisterAppDataDTO();
         return context.sql.tx(context, () ->
                 // 初始化应用
@@ -292,8 +296,10 @@ public class CommonProcessor extends EventBusProcessor {
                                                                                                     .relAppId(appId)
                                                                                                     .build()))
                                                                                     .compose(resp ->
-                                                                                            loginWithoutAuth(accountId, accountRegisterReq.getName(), accountCode,
-                                                                                                    appId, accountRegisterReq.getRelAppCode(), tenantId,
+                                                                                            loginWithoutAuth(accountId,
+                                                                                                    accountRegisterReq.getName(), accountCode,
+                                                                                                    appId, accountRegisterReq.getRelAppCode(),
+                                                                                                    tenantId,
                                                                                                     context)
                                                                                     )))
                                     );
@@ -321,7 +327,8 @@ public class CommonProcessor extends EventBusProcessor {
                                                         " AND accident.valid_start_time < #{now} AND accident.valid_end_time > #{now}" +
                                                         " AND accapp.rel_app_id = #{rel_app_id}" +
                                                         " AND acc.rel_tenant_id = #{rel_tenant_id} AND acc.status = #{status}",
-                                                new AccountIdent().tableName(), new AccountApp().tableName(), new TenantIdent().tableName(), new Account().tableName()),
+                                                new AccountIdent().tableName(), new AccountApp().tableName(), new TenantIdent().tableName(),
+                                                new Account().tableName()),
                                         new HashMap<>() {
                                             {
                                                 put("kind", accountLoginReq.getKind());
@@ -334,20 +341,24 @@ public class CommonProcessor extends EventBusProcessor {
                                         })
                                         .compose(accountInfo -> {
                                             if (accountInfo == null) {
-                                                log.warn("Login Fail: [{}-{}] AK {} doesn't exist or has expired or account doesn't exist", tenantId, appId, accountLoginReq.getAk());
-                                                context.helper.error(new UnAuthorizedException("登录认证[" + accountLoginReq.getAk() + "]不存在或已过期或是（应用关联）账号不存在"));
+                                                log.warn("Login Fail: [{}-{}] AK {} doesn't exist or has expired or account doesn't exist",
+                                                        tenantId, appId, accountLoginReq.getAk());
+                                                context.helper.error(new UnAuthorizedException("登录认证[" + accountLoginReq.getAk() +
+                                                        "]不存在或已过期或是（应用关联）账号不存在"));
                                             }
                                             var identSk = accountInfo.getString("sk");
                                             var accountId = accountInfo.getLong("id");
                                             var accountName = accountInfo.getString("name");
                                             var accountCode = accountInfo.getString("open_id");
-                                            return login(accountId, accountName, accountCode, accountLoginReq.getKind(), accountLoginReq.getAk(), accountLoginReq.getSk(), identSk, appId, accountLoginReq.getRelAppCode(), tenantId, context);
+                                            return login(accountId, accountName, accountCode, accountLoginReq.getKind(), accountLoginReq.getAk(),
+                                                    accountLoginReq.getSk(), identSk, appId, accountLoginReq.getRelAppCode(), tenantId, context);
                                         });
                             });
                 });
     }
 
-    public static Future<IdentOptInfo> login(Long accountId, String accountName, String accountCode, AccountIdentKind kind, String ak, String inputSk, String persistedSk, Long appId, String appCode, Long tenantId, ProcessContext context) {
+    public static Future<IdentOptInfo> login(Long accountId, String accountName, String accountCode, AccountIdentKind kind, String ak,
+                                             String inputSk, String persistedSk, Long appId, String appCode, Long tenantId, ProcessContext context) {
         return validateSK(kind, ak, inputSk, persistedSk, appId, tenantId, context)
                 .compose(resp -> {
                     log.info("Login Success:  [{}-{}] ak {}", tenantId, appId, ak);
@@ -355,7 +366,8 @@ public class CommonProcessor extends EventBusProcessor {
                 });
     }
 
-    public static Future<IdentOptInfo> loginWithoutAuth(Long accountId, String accountName, String accountCode, Long appId, String appCode, Long tenantId, ProcessContext context) {
+    public static Future<IdentOptInfo> loginWithoutAuth(Long accountId, String accountName, String accountCode, Long appId, String appCode,
+                                                        Long tenantId, ProcessContext context) {
         String token = KeyHelper.generateToken();
         var optInfo = new IdentOptCacheInfo();
         optInfo.setAccountId(accountId);

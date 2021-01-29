@@ -41,20 +41,26 @@ public class ACAppProcessor extends EventBusProcessor {
     {
         // 添加当前应用的认证
         addProcessor(OptActionKind.CREATE, "/console/app/app/ident", eventBusContext ->
-                addAppIdent(eventBusContext.req.body(AppIdentAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addAppIdent(eventBusContext.req.body(AppIdentAddReq.class), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个认证
         addProcessor(OptActionKind.PATCH, "/console/app/app/ident/{appIdentId}", eventBusContext ->
-                modifyAppIdent(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.body(AppIdentModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyAppIdent(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.body(AppIdentModifyReq.class),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的认证列表信息
         addProcessor(OptActionKind.FETCH, "/console/app/app/ident", eventBusContext ->
-                pageAppIdents(eventBusContext.req.params.getOrDefault("note", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                pageAppIdents(eventBusContext.req.params.getOrDefault("note", null), eventBusContext.req.pageNumber(),
+                        eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(),
+                        eventBusContext.context));
         // 删除当前应用的某个认证
         addProcessor(OptActionKind.DELETE, "/console/app/app/ident/{appIdentId}", eventBusContext ->
-                deleteAppIdent(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteAppIdent(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 获取当前应用的某个认证SK
         addProcessor(OptActionKind.FETCH, "/console/app/app/ident/{appIdentId}/sk", eventBusContext ->
-                showSk(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                showSk(Long.parseLong(eventBusContext.req.params.get("appIdentId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的公钥
         addProcessor(OptActionKind.FETCH, "/console/app/app/publicKey", eventBusContext ->
                 showPublicKey(eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
@@ -78,7 +84,8 @@ public class ACAppProcessor extends EventBusProcessor {
                                 .compose(r -> context.helper.success(saveAppIdentId)));
     }
 
-    public static Future<Void> modifyAppIdent(Long appIdentId, AppIdentModifyReq appIdentModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Void> modifyAppIdent(Long appIdentId, AppIdentModifyReq appIdentModifyReq, Long relAppId, Long relTenantId,
+                                              ProcessContext context) {
         return context.sql.update(
                 new HashMap<>() {
                     {
@@ -98,7 +105,8 @@ public class ACAppProcessor extends EventBusProcessor {
                                         ExchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId, context)));
     }
 
-    public static Future<Page<AppIdentResp>> pageAppIdents(String note, Long pageNumber, Long pageSize, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Page<AppIdentResp>> pageAppIdents(String note, Long pageNumber, Long pageSize, Long relAppId, Long relTenantId,
+                                                           ProcessContext context) {
         var whereParameters = new HashMap<String, Object>() {
             {
                 put("rel_app_id", relAppId);

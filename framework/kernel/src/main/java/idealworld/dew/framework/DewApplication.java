@@ -38,7 +38,8 @@ import java.util.stream.Collectors;
 /**
  * 服务启动基础类.
  *
- * @param <C>
+ * @author gudaoxuri
+ * @param <C> 配置信息类
  */
 @Slf4j
 public abstract class DewApplication<C extends DewConfig> extends AbstractVerticle {
@@ -46,15 +47,6 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
     private Class<C> configClazz = (Class<C>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
     private C config;
-
-    protected abstract Future<?> start(C config);
-
-    protected abstract Future<?> stop(C config);
-
-    private void prepare() {
-        ObjectMapper mapper = io.vertx.core.json.jackson.DatabindCodec.mapper();
-        mapper.registerModule(new JavaTimeModule());
-    }
 
     @Override
     public final void start(Promise<Void> startPromise) {
@@ -89,9 +81,9 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
                     log.error("[Startup]Start failure: {}", e.getMessage(), e);
                     startPromise.fail(e);
                 });
-
-
     }
+
+    protected abstract Future<?> start(C config);
 
     @Override
     public final void stop(Promise<Void> stopPromise) {
@@ -106,6 +98,13 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
                         stopPromise.fail(stopResult.cause());
                     }
                 });
+    }
+
+    protected abstract Future<?> stop(C config);
+
+    private void prepare() {
+        ObjectMapper mapper = io.vertx.core.json.jackson.DatabindCodec.mapper();
+        mapper.registerModule(new JavaTimeModule());
     }
 
     private CompositeFuture loadModules(List<DewConfig.ModuleConfig> moduleConfig) {
@@ -150,10 +149,12 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
         } else {
             config = $.file.readAllByClassPath("application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yml", StandardCharsets.UTF_8);
             if (config == null) {
-                config = $.file.readAllByClassPath("application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yaml", StandardCharsets.UTF_8);
+                config = $.file.readAllByClassPath("application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yaml",
+                        StandardCharsets.UTF_8);
             }
             if (config == null) {
-                throw new RTException("[Startup]Configuration file [" + "application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yml/yaml" + "] not found in classpath");
+                throw new RTException("[Startup]Configuration file [" + "application-" + System.getProperty(DewConstant.PARAM_PROFILE_KEY) + ".yml" +
+                        "/yaml" + "] not found in classpath");
             }
         }
         var configMap = (Map) YamlHelper.toObject(config);

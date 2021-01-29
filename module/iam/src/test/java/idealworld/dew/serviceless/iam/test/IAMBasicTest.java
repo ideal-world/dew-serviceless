@@ -152,8 +152,10 @@ public class IAMBasicTest extends DewTest {
                 ? Buffer.buffer((String) body, "utf-8")
                 : JsonObject.mapFrom(body).toBuffer();
         var header = new HashMap<String, String>();
-        var identOptInfo = token == null ? IdentOptExchangeInfo.builder().build() : await(AuthCacheProcessor.getOptInfo(token, context))._0.get();
-        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
+        var identOptInfo = token == null
+                ? IdentOptExchangeInfo.builder().build() : await(AuthCacheProcessor.getOptInfo(token, context))._0.get();
+        header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG,
+                $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
         var req = FunEventBus.choose(MODULE_NAME)
                 .request(MODULE_NAME,
                         actionKind,

@@ -98,7 +98,8 @@ public class AuthenticationProcessor {
         return subjectInfo;
     }
 
-    public static Future<AuthResultKind> authentication(String moduleName, String actionKind, URI resourceUri, Map<AuthSubjectKind, List<String>> subjectInfo) {
+    public static Future<AuthResultKind> authentication(String moduleName, String actionKind, URI resourceUri,
+                                                        Map<AuthSubjectKind, List<String>> subjectInfo) {
         return authentication(moduleName, actionKind,
                 new ArrayList<>() {
                     {
@@ -108,7 +109,8 @@ public class AuthenticationProcessor {
                 subjectInfo);
     }
 
-    public static Future<AuthResultKind> authentication(String moduleName, String actionKind, List<URI> resourceUris, Map<AuthSubjectKind, List<String>> subjectInfo) {
+    public static Future<AuthResultKind> authentication(String moduleName, String actionKind, List<URI> resourceUris, Map<AuthSubjectKind,
+            List<String>> subjectInfo) {
         var matchedResourceUris = resourceUris.stream()
                 .flatMap(resourceUri -> matchResourceUris(resourceUri, actionKind))
                 .collect(Collectors.toList());
@@ -125,7 +127,8 @@ public class AuthenticationProcessor {
         return promise.future();
     }
 
-    private static void doAuthentication(String moduleName, List<String> matchedResourceUris, String actionKind, Map<AuthSubjectKind, List<String>> subjectInfo, Promise<AuthResultKind> promise) {
+    private static void doAuthentication(String moduleName, List<String> matchedResourceUris, String actionKind,
+                                         Map<AuthSubjectKind, List<String>> subjectInfo, Promise<AuthResultKind> promise) {
         var currentProcessUri = matchedResourceUris.get(0);
         FunCacheClient.choose(moduleName).get(DewAuthConstant.CACHE_AUTH_POLICY
                 + currentProcessUri.replace("//", "") + ":"

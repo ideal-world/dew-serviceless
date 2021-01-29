@@ -22,7 +22,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Modify by org.springframework.util.AntPathMatcher
+ * Modify by org.springframework.util.AntPathMatcher.
+ *
+ * @author gudaoxuri
  */
 public class AntPathMatcher {
 

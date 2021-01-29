@@ -53,15 +53,6 @@ public class URIHelper {
                 + (uri.getRawQuery() != null ? "?" + query : "");
     }
 
-    public static String sortQuery(String query) {
-        if (query != null && !query.isBlank()) {
-            return Arrays.stream(query.split("&"))
-                    .sorted(Comparator.comparing(u -> u.split("=")[0]))
-                    .collect(Collectors.joining("&"));
-        }
-        return query;
-    }
-
     @SneakyThrows
     public static String formatUri(String host, String pathAndQuery) {
         if (!pathAndQuery.isBlank() && !pathAndQuery.startsWith("/")) {
@@ -78,6 +69,15 @@ public class URIHelper {
     public static String formatUri(String strUri) {
         var uri = new URI(strUri);
         return formatUri(uri);
+    }
+
+    public static String sortQuery(String query) {
+        if (query != null && !query.isBlank()) {
+            return Arrays.stream(query.split("&"))
+                    .sorted(Comparator.comparing(u -> u.split("=")[0]))
+                    .collect(Collectors.joining("&"));
+        }
+        return query;
     }
 
     @SneakyThrows
@@ -105,7 +105,8 @@ public class URIHelper {
         }
         return Arrays.stream(query.split("&"))
                 .map(i -> i.split("="))
-                .collect(Collectors.toMap(i -> toLowerCase ? i[0].toLowerCase() : i[0], i -> i.length > 1 ? URLDecoder.decode(i[1], StandardCharsets.UTF_8) : ""));
+                .collect(Collectors.toMap(i -> toLowerCase ? i[0].toLowerCase() : i[0],
+                        i -> i.length > 1 ? URLDecoder.decode(i[1], StandardCharsets.UTF_8) : ""));
     }
 
     @SneakyThrows

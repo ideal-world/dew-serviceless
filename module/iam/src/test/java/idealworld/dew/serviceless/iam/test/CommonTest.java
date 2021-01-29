@@ -169,10 +169,11 @@ public class CommonTest extends IAMBasicTest {
                 .ak("gdxrxxx")
                 .build(), Void.class)._1.getMessage());
         setToken(identOptInfo.getToken());
-        Assertions.assertEquals("用户[" + identOptInfo.getAccountCode() + "]对应的认证方式不存在", req(OptActionKind.PATCH, "/common/account/ident", AccountIdentChangeReq.builder()
-                .ak("dd")
-                .sk("sd")
-                .build(), Void.class)._1.getMessage());
+        Assertions.assertEquals("用户[" + identOptInfo.getAccountCode() + "]对应的认证方式不存在", req(OptActionKind.PATCH, "/common/account/ident",
+                AccountIdentChangeReq.builder()
+                        .ak("dd")
+                        .sk("sd")
+                        .build(), Void.class)._1.getMessage());
         Assertions.assertEquals("认证密钥规则不合法", req(OptActionKind.PATCH, "/common/account/ident", AccountIdentChangeReq.builder()
                 .ak("gdxr")
                 .sk("sd")
@@ -250,7 +251,7 @@ public class CommonTest extends IAMBasicTest {
                 .build(), Void.class);
         removeToken();
         // code只能用一次
-      /*  Assertions.assertEquals("认证类型不存在或已禁用", req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
+        /* Assertions.assertEquals("认证类型不存在或已禁用", req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
                 .code(oauthJson.get("wechat-xcx").get("code").asText())
                 .relAppCode(iamAppCode)
@@ -269,7 +270,7 @@ public class CommonTest extends IAMBasicTest {
                 .build(), IdentOptInfo.class)._0;
         Assertions.assertNotNull(identOptInfo.getAccountCode());
         // 登录 code只能用一次
-       /* identOptInfo = req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
+        /* identOptInfo = req(OptActionKind.CREATE,"/common/oauth/login", AccountOAuthLoginReq.builder()
                 .kind(AccountIdentKind.WECHAT_XCX)
                 .code(oauthJson.get("wechat-xcx").get("code").asText())
                 .relAppCode(iamAppCode)

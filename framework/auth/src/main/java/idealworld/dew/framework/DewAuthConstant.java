@@ -24,7 +24,7 @@ package idealworld.dew.framework;
 public class DewAuthConstant extends DewConstant {
 
     /**
-     * 鉴权策略缓存
+     * 鉴权策略缓存.
      */
     public static final String CACHE_AUTH_POLICY = "dew:iam:policy:";
     public static final String CACHE_APP_AK = "dew:iam:app:ak:";

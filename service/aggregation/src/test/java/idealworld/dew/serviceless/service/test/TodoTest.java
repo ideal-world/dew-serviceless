@@ -28,6 +28,7 @@ import java.util.Map;
 
 public class TodoTest extends ITBasicTest {
 
+    @SuppressWarnings("checkstyle:EmptyCatchBlock")
     @Test
     public void testTodo(Vertx vertx, VertxTestContext testContext) {
         // 注册租户
@@ -106,6 +107,7 @@ public class TodoTest extends ITBasicTest {
             }, null, null, Long.class);
             Assertions.fail();
         } catch (Exception ignored) {
+            // ignored
         }
         var resourceSubjectId = req(OptActionKind.CREATE, "http://iam.http.iam/console/app/resource/subject", new HashMap<String, Object>() {
             {
@@ -150,6 +152,7 @@ public class TodoTest extends ITBasicTest {
             }, null, null, Map.class);
             Assertions.fail();
         } catch (Exception ignored) {
+            // ignored
         }
         // 注册用户添加记录
         reqList(OptActionKind.CREATE, "reldb://" + appCode + ".reldb.todoDB", new HashMap<String, Object>() {

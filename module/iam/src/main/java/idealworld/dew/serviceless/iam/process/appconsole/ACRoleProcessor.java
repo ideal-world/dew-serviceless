@@ -43,40 +43,52 @@ public class ACRoleProcessor extends EventBusProcessor {
     {
         // 添加当前应用的角色定义
         addProcessor(OptActionKind.CREATE, "/console/app/role/def", eventBusContext ->
-                addRoleDef(eventBusContext.req.body(RoleDefAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addRoleDef(eventBusContext.req.body(RoleDefAddReq.class), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个角色定义
         addProcessor(OptActionKind.PATCH, "/console/app/role/def/{roleDefId}", eventBusContext ->
-                modifyRoleDef(Long.parseLong(eventBusContext.req.params.get("roleDefId")), eventBusContext.req.body(RoleDefModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyRoleDef(Long.parseLong(eventBusContext.req.params.get("roleDefId")), eventBusContext.req.body(RoleDefModifyReq.class),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个角色定义信息
         addProcessor(OptActionKind.FETCH, "/console/app/role/def/{roleDefId}", eventBusContext ->
-                getRoleDef(Long.parseLong(eventBusContext.req.params.get("roleDefId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getRoleDef(Long.parseLong(eventBusContext.req.params.get("roleDefId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的角色定义列表信息
         addProcessor(OptActionKind.FETCH, "/console/app/role/def", eventBusContext ->
-                pageRoleDef(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                pageRoleDef(eventBusContext.req.params.getOrDefault("code", null), eventBusContext.req.params.getOrDefault("name", null),
+                        eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 删除当前应用的某个角色定义
         addProcessor(OptActionKind.DELETE, "/console/app/role/def/{roleDefId}", eventBusContext ->
-                deleteRoleDef(Long.parseLong(eventBusContext.req.params.get("roleDefId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteRoleDef(Long.parseLong(eventBusContext.req.params.get("roleDefId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
 
         // 添加当前应用的角色
         addProcessor(OptActionKind.CREATE, "/console/app/role", eventBusContext ->
-                addRole(eventBusContext.req.body(RoleAddReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                addRole(eventBusContext.req.body(RoleAddReq.class), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 修改当前应用的某个角色
         addProcessor(OptActionKind.PATCH, "/console/app/role/{roleId}", eventBusContext ->
-                modifyRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.body(RoleModifyReq.class), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                modifyRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.body(RoleModifyReq.class),
+                        eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的某个角色信息
         addProcessor(OptActionKind.FETCH, "/console/app/role/{roleId}", eventBusContext ->
-                getRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                getRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
         // 获取当前应用的角色列表信息
         addProcessor(OptActionKind.FETCH, "/console/app/role", eventBusContext -> {
             if (eventBusContext.req.params.getOrDefault("expose", "false").equalsIgnoreCase("false")) {
-                return findRoles(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+                return findRoles(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
             } else {
-                return findExposeRoles(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
+                return findExposeRoles(eventBusContext.req.params.getOrDefault("name", null), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context);
             }
         });
         // 删除当前应用的某个角色
         addProcessor(OptActionKind.DELETE, "/console/app/role/{roleId}", eventBusContext ->
-                deleteRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getAppId(), eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
+                deleteRole(Long.parseLong(eventBusContext.req.params.get("roleId")), eventBusContext.req.identOptInfo.getAppId(),
+                        eventBusContext.req.identOptInfo.getTenantId(), eventBusContext.context));
     }
 
     public ACRoleProcessor(String moduleName) {
@@ -102,7 +114,8 @@ public class ACRoleProcessor extends EventBusProcessor {
                 });
     }
 
-    public static Future<Void> modifyRoleDef(Long roleDefId, RoleDefModifyReq roleDefModifyReq, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Void> modifyRoleDef(Long roleDefId, RoleDefModifyReq roleDefModifyReq, Long relAppId, Long relTenantId,
+                                             ProcessContext context) {
         var future = Future.succeededFuture();
         if (roleDefModifyReq.getCode() != null) {
             future
@@ -146,7 +159,8 @@ public class ACRoleProcessor extends EventBusProcessor {
                 .compose(roleDef -> context.helper.success(roleDef, RoleDefResp.class));
     }
 
-    public static Future<Page<RoleDefResp>> pageRoleDef(String code, String name, Long pageNumber, Long pageSize, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<Page<RoleDefResp>> pageRoleDef(String code, String name, Long pageNumber, Long pageSize, Long relAppId, Long relTenantId,
+                                                        ProcessContext context) {
         var whereParameters = new HashMap<String, Object>() {
             {
                 put("rel_tenant_id", relTenantId);
@@ -219,7 +233,8 @@ public class ACRoleProcessor extends EventBusProcessor {
                                     context.sql.getOne(
                                             String.format("SELECT node.name FROM %s AS node" +
                                                             " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
-                                                            " WHERE node.id = #{rel_group_node_id} AND _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id}",
+                                                            " WHERE node.id = #{rel_group_node_id} AND _group.rel_tenant_id = #{rel_tenant_id} AND " +
+                                                            "_group.rel_app_id = #{rel_app_id}",
                                                     new GroupNode().tableName(), new Group().tableName()),
                                             new HashMap<>() {
                                                 {

@@ -127,7 +127,8 @@ public class IAMBasicProcessor {
                         context.helper.success(fetchTenantResult.getLong("id")));
     }
 
-    public static Future<String> processIdentSk(AccountIdentKind identKind, String ak, String sk, Long relAppId, Long relTenantId, ProcessContext context) {
+    public static Future<String> processIdentSk(AccountIdentKind identKind, String ak, String sk, Long relAppId, Long relTenantId,
+                                                ProcessContext context) {
         switch (identKind) {
             case EMAIL:
             case PHONE:
@@ -224,7 +225,7 @@ public class IAMBasicProcessor {
                 // 排除AKSK认证的虚拟账号
                 .filter(i -> ((Long) i[1]).longValue() != DewAuthConstant.AK_SK_IDENT_ACCOUNT_FLAG)
                 .collect(Collectors.toMap(i -> (String) i[0], i -> i[1]));
-        if(whereParametersMap.isEmpty()){
+        if (whereParametersMap.isEmpty()) {
             return context.helper.success(null);
         }
         var accountsWhere = whereParametersMap.keySet().stream().map(acc -> "#{" + acc + "}").collect(Collectors.joining(", "));
@@ -238,7 +239,8 @@ public class IAMBasicProcessor {
                 context.sql.exists(
                         String.format("SELECT acc.id FROM %s AS acc" +
                                         " INNER JOIN %s AS accapp ON accapp.rel_account_id = acc.id" +
-                                        " WHERE acc.id in (" + accountsWhere + ") AND acc.rel_tenant_id = #{rel_tenant_id} AND accapp.rel_app_id = #{rel_app_id}",
+                                        " WHERE acc.id in (" + accountsWhere + ") AND acc.rel_tenant_id = #{rel_tenant_id} AND accapp.rel_app_id = " +
+                                        "#{rel_app_id}",
                                 new Account().tableName(), new AccountApp().tableName()),
                         whereParametersMap), () -> new UnAuthorizedException("账号不合法"))
                 .compose(resp -> context.helper.success());
@@ -404,7 +406,8 @@ public class IAMBasicProcessor {
 
     public static Future<Set<IdentOptInfo.GroupInfo>> findGroupInfo(Long accountId, ProcessContext context) {
         return context.sql.list(
-                String.format("SELECT _group.code AS group_code, _group.name AS group_name, node.code AS node_code, node.name AS node_name, node.bus_code FROM %s AS accgroup" +
+                String.format("SELECT _group.code AS group_code, _group.name AS group_name, node.code AS node_code, node.name AS node_name, node" +
+                                ".bus_code FROM %s AS accgroup" +
                                 " INNER JOIN %s node ON node.id = accgroup.rel_group_node_id" +
                                 " INNER JOIN %s _group ON _group.id = node.rel_group_id" +
                                 " WHERE accgroup.rel_account_id = #{rel_account_id}",
@@ -435,7 +438,8 @@ public class IAMBasicProcessor {
             throw new NotFoundException("找不到对应的应用");
         }
         return context.helper.notExistToError(
-                context.sql.getOne(String.format("SELECT open_id FROM %s WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}", new App().tableName()), new HashMap<>() {
+                context.sql.getOne(String.format("SELECT open_id FROM %s WHERE id = #{id} AND rel_tenant_id = #{rel_tenant_id}",
+                        new App().tableName()), new HashMap<>() {
                     {
                         put("id", appId);
                         put("rel_tenant_id", relTenantId);
@@ -449,12 +453,14 @@ public class IAMBasicProcessor {
             throw new NotFoundException("找不到对应的应用");
         }
         return context.helper.notExistToError(
-                context.sql.getOne(String.format("SELECT id FROM %s WHERE open_id = #{open_id} AND rel_tenant_id = #{rel_tenant_id}", new App().tableName()), new HashMap<>() {
-                    {
-                        put("open_id", appCode);
-                        put("rel_tenant_id", relTenantId);
-                    }
-                }), () -> new NotFoundException("找不到对应的应用"))
+                context.sql.getOne(
+                        String.format("SELECT id FROM %s WHERE open_id = #{open_id} AND rel_tenant_id = #{rel_tenant_id}",
+                                new App().tableName()), new HashMap<>() {
+                            {
+                                put("open_id", appCode);
+                                put("rel_tenant_id", relTenantId);
+                            }
+                        }), () -> new NotFoundException("找不到对应的应用"))
                 .compose(resp -> context.helper.success(resp.getLong("id")));
     }
 

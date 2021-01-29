@@ -37,7 +37,8 @@ import java.util.List;
 /**
  * 模块基础类.
  *
- * @param <C>
+ * @author gudaoxuri
+ * @param <C> 模块配置类
  */
 @Slf4j
 public abstract class DewModule<C extends Object> extends AbstractVerticle {
@@ -49,7 +50,43 @@ public abstract class DewModule<C extends Object> extends AbstractVerticle {
 
     public abstract String getModuleName();
 
+    @SneakyThrows
+    @Override
+    public final void start(Promise<Void> startPromise) {
+        var jsonFunConfig = vertx.getOrCreateContext().config().getJsonObject("funs");
+        funConfig = jsonFunConfig != null ? jsonFunConfig.mapTo(DewConfig.FunConfig.class) : DewConfig.FunConfig.builder().build();
+        var jsonConfig = vertx.getOrCreateContext().config().getJsonObject("config");
+        moduleConfig = jsonConfig != null ? jsonConfig.mapTo(configClazz) : configClazz.getDeclaredConstructor().newInstance();
+        CompositeFuture.all(loadFuns(funConfig))
+                .onSuccess(funLoadResult ->
+                        start(moduleConfig)
+                                .onSuccess(resp ->
+                                        EventBusDispatcher.watch(getModuleName(), moduleConfig, new HashMap<>() {
+                                            {
+                                                put("cache", enabledCacheFun());
+                                                put("httpserver", enabledHttpServerFun());
+                                                put("httpclient", enabledHttpClientFun());
+                                                put("sql", enabledSQLFun());
+                                                put("eventbus", enabledEventbus());
+                                            }
+                                        })
+                                                .onSuccess(rr -> startPromise.complete())
+                                                .onFailure(startPromise::fail))
+                                .onFailure(startPromise::fail)
+                )
+                .onFailure(startPromise::fail);
+    }
+
     protected abstract Future<Void> start(C config);
+
+    @Override
+    public final void stop(Promise<Void> stopPromise) {
+        CompositeFuture.all(unLoadFuns(funConfig))
+                .onSuccess(funUnloadResult -> stop(moduleConfig)
+                        .onSuccess(resp -> stopPromise.complete())
+                        .onFailure(stopPromise::fail))
+                .onFailure(stopPromise::fail);
+    }
 
     protected abstract Future<Void> stop(C config);
 
@@ -71,42 +108,6 @@ public abstract class DewModule<C extends Object> extends AbstractVerticle {
 
     protected List<Future> unLoadCustomFuns(DewConfig.FunConfig funConfig) {
         return new ArrayList<>();
-    }
-
-    @SneakyThrows
-    @Override
-    public final void start(Promise<Void> startPromise) {
-        var jsonFunConfig = vertx.getOrCreateContext().config().getJsonObject("funs");
-        funConfig = jsonFunConfig != null ? jsonFunConfig.mapTo(DewConfig.FunConfig.class) : DewConfig.FunConfig.builder().build();
-        var jsonConfig = vertx.getOrCreateContext().config().getJsonObject("config");
-        moduleConfig = jsonConfig != null ? jsonConfig.mapTo(configClazz) : configClazz.getDeclaredConstructor().newInstance();
-        CompositeFuture.all(loadFuns(funConfig))
-                .onSuccess(funLoadResult ->
-                        start(moduleConfig)
-                                .onSuccess(resp ->
-                                        EventBusDispatcher.watch(getModuleName(), moduleConfig, new HashMap<>() {
-                                    {
-                                        put("cache", enabledCacheFun());
-                                        put("httpserver", enabledHttpServerFun());
-                                        put("httpclient", enabledHttpClientFun());
-                                        put("sql", enabledSQLFun());
-                                        put("eventbus", enabledEventbus());
-                                    }
-                                })
-                                        .onSuccess(rr -> startPromise.complete())
-                                        .onFailure(startPromise::fail))
-                                .onFailure(startPromise::fail)
-                )
-                .onFailure(startPromise::fail);
-    }
-
-    @Override
-    public final void stop(Promise<Void> stopPromise) {
-        CompositeFuture.all(unLoadFuns(funConfig))
-                .onSuccess(funUnloadResult -> stop(moduleConfig)
-                        .onSuccess(resp -> stopPromise.complete())
-                        .onFailure(stopPromise::fail))
-                .onFailure(stopPromise::fail);
     }
 
     private ArrayList<Future> loadFuns(DewConfig.FunConfig funConfig) {

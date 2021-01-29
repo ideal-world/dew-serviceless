@@ -78,7 +78,8 @@ public class OAuthProcessor {
                                                             return context.sql.getOne(
                                                                     String.format("SELECT acc.id, acc.status FROM %s AS ident" +
                                                                                     " INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
-                                                                                    " WHERE ident.kind = #{kind} AND ident.ak = #{open_id} AND ident.rel_tenant_id = #{tenant_id}",
+                                                                                    " WHERE ident.kind = #{kind} AND ident.ak = #{open_id} AND " +
+                                                                                    "ident.rel_tenant_id = #{tenant_id}",
                                                                             new AccountIdent().tableName(), new Account().tableName()),
                                                                     new HashMap<>() {
                                                                         {
@@ -96,7 +97,8 @@ public class OAuthProcessor {
                                                                             }
                                                                         }
                                                                         if (accountId == null) {
-                                                                            log.info("OAuth Register : [{}-{}] {}", tenantId, appId, JsonObject.mapFrom(accountOAuthLoginReq).toString());
+                                                                            log.info("OAuth Register : [{}-{}] {}", tenantId, appId,
+                                                                                    JsonObject.mapFrom(accountOAuthLoginReq).toString());
                                                                             return CommonProcessor.registerAccount(AccountRegisterReq.builder()
                                                                                     .name("")
                                                                                     .kind(accountOAuthLoginReq.getKind())
@@ -105,8 +107,10 @@ public class OAuthProcessor {
                                                                                     .relAppCode(accountOAuthLoginReq.getRelAppCode())
                                                                                     .build(), context)
                                                                                     .onFailure(e -> {
-                                                                                        if (e instanceof MySQLException && e.getMessage().startsWith("Duplicate entry")) {
-                                                                                            log.info("OAuth Login : [{}-{}] {}", tenantId, appId, JsonObject.mapFrom(accountOAuthLoginReq).toString());
+                                                                                        if (e instanceof MySQLException && e.getMessage()
+                                                                                                .startsWith("Duplicate entry")) {
+                                                                                            log.info("OAuth Login : [{}-{}] {}", tenantId, appId,
+                                                                                                    JsonObject.mapFrom(accountOAuthLoginReq).toString());
                                                                                             CommonProcessor.login(AccountLoginReq.builder()
                                                                                                     .kind(accountOAuthLoginReq.getKind())
                                                                                                     .ak(userInfo.getOpenid())
@@ -119,7 +123,8 @@ public class OAuthProcessor {
                                                                                     })
                                                                                     .onSuccess(identOptInfo -> context.helper.success(identOptInfo));
                                                                         } else {
-                                                                            log.info("OAuth Login : [{}-{}] {}", tenantId, appId, JsonObject.mapFrom(accountOAuthLoginReq).toString());
+                                                                            log.info("OAuth Login : [{}-{}] {}", tenantId, appId,
+                                                                                    JsonObject.mapFrom(accountOAuthLoginReq).toString());
                                                                             return CommonProcessor.login(AccountLoginReq.builder()
                                                                                     .kind(accountOAuthLoginReq.getKind())
                                                                                     .ak(userInfo.getOpenid())
@@ -144,7 +149,8 @@ public class OAuthProcessor {
     }
 
     @SneakyThrows
-    private static Future<Tuple3<PlatformAPI, String, String>> checkAndGetAkSk(AccountIdentKind kind, Long appId, Long tenantId, ProcessContext context) {
+    private static Future<Tuple3<PlatformAPI, String, String>> checkAndGetAkSk(AccountIdentKind kind, Long appId, Long tenantId,
+                                                                               ProcessContext context) {
         PlatformAPI platformAPI;
         switch (kind) {
             case WECHAT_XCX:

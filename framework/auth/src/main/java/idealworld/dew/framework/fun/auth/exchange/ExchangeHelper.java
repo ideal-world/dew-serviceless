@@ -68,14 +68,18 @@ public class ExchangeHelper {
                             .unauthorizedTenantId(config.getTenantId())
                             .unauthorizedAppId(config.getAppId())
                             .build();
-                    header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
-                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX + "resource?kind=" + kind, null, header)
+                    header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(),
+                            StandardCharsets.UTF_8));
+                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH,
+                            DewAuthConstant.REQUEST_INNER_PATH_PREFIX + "resource?kind=" + kind, null, header)
                             .compose(result -> {
                                 var resources = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
                                 for (var resource : resources) {
                                     var resourceExchange = ((JsonObject) resource).mapTo(ResourceExchange.class);
-                                    LocalResourceCache.addLocalResource(URIHelper.newURI(resourceExchange.getUri()), resourceExchange.getActionKind().toLowerCase());
-                                    log.info("[Exchange]Init [resource.actionKind={}:uri={}] data", resourceExchange.getActionKind(), resourceExchange.getUri());
+                                    LocalResourceCache.addLocalResource(URIHelper.newURI(resourceExchange.getUri()),
+                                            resourceExchange.getActionKind().toLowerCase());
+                                    log.info("[Exchange]Init [resource.actionKind={}:uri={}] data", resourceExchange.getActionKind(),
+                                            resourceExchange.getUri());
                                 }
                                 return Future.succeededFuture();
                             });
@@ -102,11 +106,14 @@ public class ExchangeHelper {
                             LocalResourceCache.removeLocalResource(resourceUri, resourceActionKind);
                             log.info("[Exchange]Delete [resource.actionKind={},uri={}] data", resourceActionKind, resourceExchange.getUri());
                             break;
+                        default:
+                            log.warn("[Exchange]Not found action kind");
                     }
                 }));
     }
 
-    public static Future<Void> loadAndWatchResourceSubjects(String moduleName, ResourceKind kind, Consumer<ResourceSubjectExchange> addFun, Consumer<String> removeFun) {
+    public static Future<Void> loadAndWatchResourceSubjects(String moduleName, ResourceKind kind, Consumer<ResourceSubjectExchange> addFun,
+                                                            Consumer<String> removeFun) {
         return Future.succeededFuture()
                 .compose(resp -> {
                     if (config == null || config.getAppId() == null) {
@@ -120,8 +127,10 @@ public class ExchangeHelper {
                             .unauthorizedTenantId(config.getTenantId())
                             .unauthorizedAppId(config.getAppId())
                             .build();
-                    header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(), StandardCharsets.UTF_8));
-                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH, DewAuthConstant.REQUEST_INNER_PATH_PREFIX + "resource/subject?kind=" + kind.toString(), null, header)
+                    header.put(DewAuthConstant.REQUEST_IDENT_OPT_FLAG, $.security.encodeStringToBase64(JsonObject.mapFrom(identOptInfo).toString(),
+                            StandardCharsets.UTF_8));
+                    return FunEventBus.choose(moduleName).request(config.getModuleName(), OptActionKind.FETCH,
+                            DewAuthConstant.REQUEST_INNER_PATH_PREFIX + "resource/subject?kind=" + kind.toString(), null, header)
                             .compose(result -> {
                                 var resourceSubjects = new JsonArray(result._0.toString(StandardCharsets.UTF_8));
                                 for (var resourceSubject : resourceSubjects) {

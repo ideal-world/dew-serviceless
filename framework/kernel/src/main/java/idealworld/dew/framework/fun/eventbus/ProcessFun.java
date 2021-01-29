@@ -21,7 +21,8 @@ import io.vertx.core.Future;
 /**
  * 请求处理函数.
  *
- * @param <OUT>
+ * @author gudaoxuri
+ * @param <OUT> 输出结果
  */
 @FunctionalInterface
 public interface ProcessFun<OUT> {

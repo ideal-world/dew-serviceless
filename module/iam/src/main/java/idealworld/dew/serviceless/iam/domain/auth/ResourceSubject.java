@@ -32,7 +32,7 @@ import javax.validation.constraints.Size;
  * <p>
  * 所有三方调用都视为资源，需要配置资源主体，比如微信公众号、华为云等
  * <p>
- * code = <appId>.<kind>.<code | default>
+ * code = appCode.kind.code | default
  * <p>
  * {@link ResourceKind#MENU}:
  * uri = MENU路径

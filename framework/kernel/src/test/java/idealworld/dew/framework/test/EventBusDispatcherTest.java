@@ -87,7 +87,8 @@ public class EventBusDispatcherTest extends DewTest {
                 });
 
         Future.succeededFuture()
-                .compose(resp -> EventBusDispatcher.chooseProcess("", null, null, OptActionKind.CREATE, "/app/n1/k1/disabled", "q=测试", new HashMap<>(),
+                .compose(resp -> EventBusDispatcher.chooseProcess("", null, null, OptActionKind.CREATE, "/app/n1/k1/disabled", "q=测试",
+                        new HashMap<>(),
                         JsonObject.mapFrom(User.builder().name("孤岛旭日").build()).toBuffer()))
                 .onFailure(e -> {
                     Assertions.assertEquals("找不到对应的请求[CREATE:/app/n1/k1/disabled]处理器", e.getMessage());
