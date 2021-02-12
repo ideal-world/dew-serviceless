@@ -14,69 +14,70 @@
  * limitations under the License.
  */
 
-import * as request from "./util/Request";
 import * as iamSDK from "./module/IAMSDK";
 import * as cacheSDK from "./module/CacheSDK";
 import * as httpSDK from "./module/HttpSDK";
 import * as reldbSDK from "./module/RelDBSDK";
 import * as taskSDK from "./module/TaskSDK";
 import {JsonMap} from "./domain/Basic";
+import * as request from "./util/DewRequest";
+import {DewRequest} from "./util/DewRequest";
 
 /**
  * Dew SDK.
  */
-export const SDK = {
+export class SDK {
+
     /**
      * 初始化SDK.
      * @param serverUrl 服务网关地址
      * @param appId 当前应用Id
      */
-    init: init,
-    conf: loadConfig,
-    iam: iamSDK.iamSDK,
-    reldb: reldbSDK.reldbSDK(),
-    cache: cacheSDK.cacheSDK(),
-    http: httpSDK.httpSDK(),
-    task: taskSDK.taskSDK(),
-    setting: {
-        serverUrl: function (serverUrl: string): void {
-            request.setServerUrl(serverUrl)
-        },
-        appId: function (appId: string): void {
-            request.setAppId(appId)
-            iamSDK.init(appId)
-            reldbSDK.init(appId)
-            cacheSDK.init(appId)
-            httpSDK.init(appId)
-            taskSDK.init(appId)
-            // 重新赋值一次
-            SDK.reldb = reldbSDK.reldbSDK()
-            SDK.cache = cacheSDK.cacheSDK()
-            SDK.http = httpSDK.httpSDK()
-            SDK.task = taskSDK.taskSDK()
-        },
-        aksk: function (ak: string, sk: string): void {
-            request.setToken("")
-            request.setAkSk(ak, sk)
-        },
-        ajax: function (impl: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>): void {
-            request.setAjaxImpl(impl)
-        },
-        currentTime: function (impl: () => string): void {
-            request.setCurrentTime(impl)
-        },
-        signature: function (impl: (text: string, key: string) => string): void {
-            request.setSignature(impl)
+    constructor(serverUrl: string, appId: string) {
+        this.serverUrl = serverUrl;
+        this.appId = appId
+        this.request.setServerUrl(serverUrl)
+        this.request.setAppId(appId)
+    }
+
+    private request: DewRequest = new DewRequest()
+    private serverUrl: string
+    private appId: string
+    private _setting = () => {
+        const that = this
+
+        function aksk(ak: string, sk: string): void {
+            that.request.setToken("")
+            that.request.setAkSk(ak, sk)
+        }
+
+        return {
+            aksk: aksk,
+            conf: loadConfig
         }
     }
+
+    iam = new iamSDK.IAMSDK(this.request)
+    reldb = reldbSDK.reldbSDK(this.request)
+    cache = cacheSDK.cacheSDK(this.request)
+    http = httpSDK.httpSDK(this.request)
+    task = taskSDK.taskSDK(this.request)
+    setting = this._setting()
 }
 
-function init(serverUrl: string, appId: string): void {
-    SDK.setting.serverUrl(serverUrl)
-    SDK.setting.appId(appId)
+export function setAjax(impl: (url: string, headers?: JsonMap<any>, data?: any) => Promise<any>): void {
+    request.setAjaxImpl(impl)
 }
 
-function loadConfig(confContext: string | any, envName: string): any {
+export function setCurrentTime(impl: () => string): void {
+    request.setCurrentTime(impl)
+}
+
+export function setSignature(impl: (text: string, key: string) => string): void {
+    request.setSignature(impl)
+}
+
+export function loadConfig(confContext: string | any, envName: string): any {
     const config = typeof confContext === "string" ? JSON.parse(confContext.trim()) : confContext
     console.log("Load config " + envName + " ENV ")
     if (config.hasOwnProperty('env') && config['env'].hasOwnProperty(envName)) {

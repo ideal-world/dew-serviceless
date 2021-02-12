@@ -15,11 +15,23 @@
  */
 
 import {axiosReq, currentTime, signature} from "./util/NodeImpl";
-import {SDK} from "./DewSDK";
+import {SDK, setAjax, setCurrentTime, setSignature} from "./DewSDK";
 
-export const DewSDK = SDK
+/**
+ * SDK调用入口.
+ */
+export let DewSDK: SDK
 
-DewSDK.setting.ajax(axiosReq)
-DewSDK.setting.currentTime(currentTime)
-DewSDK.setting.signature(signature)
+/**
+ * 初始化默认的SDK
+ * @param serverUrl 服务网关地址
+ * @param appId 当前应用Id
+ */
+export function initDefaultSDK(serverUrl: string, appId: string): void {
+    DewSDK = new SDK(serverUrl, appId)
+}
+
+setAjax(axiosReq)
+setCurrentTime(currentTime)
+setSignature(signature)
 

@@ -26,7 +26,7 @@ export type ItemDTO = {
     createUserId: string
 }
 
-const config = DewSDK.conf(crt, 'process.env.NODE_ENV')
+const config = DewSDK.setting.conf(crt, 'process.env.NODE_ENV')
 
 const DB_URL = config.db.url
 const DB_USER = config.db.user

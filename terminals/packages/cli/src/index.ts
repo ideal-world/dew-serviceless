@@ -21,7 +21,7 @@ import clear from "clear";
 import figlet from "figlet";
 import * as fileHelper from './util/FileHelper';
 import fsPath from "path";
-import {DewSDK} from "@idealworld/sdk";
+import {DewSDK, initDefaultSDK} from "@idealworld/sdk";
 import pack from "../package.json";
 
 const TEMPLATE_SIMPLE_GIT_ADDR = 'https://github.com/ideal-world/dew-serviceless-template-simple.git'
@@ -176,7 +176,6 @@ const allSteps: any[] = [
             if (!val.trim()) {
                 return '请输入服务地址'
             }
-            DewSDK.setting.serverUrl(val)
             return true
         }
     }, {
@@ -192,12 +191,12 @@ const allSteps: any[] = [
 async function createApp(answers: any) {
     let confirmMessage
     if (!answers.createTenant) {
-        DewSDK.setting.appId(answers.tenantAdminAppId)
-        await DewSDK.iam.account.login(answers.tenantAdminUsername, answers.tenantAdminPassword)
+        initDefaultSDK(answers.serverUrl, answers.tenantAdminAppId)
+        await DewSDK.iam.auth.login(answers.tenantAdminUsername, answers.tenantAdminPassword)
         let tenantName = (await DewSDK.iam.tenant.fetch()).name
         confirmMessage = '即将在租户 [' + tenantName + '] 中创建应用 [' + answers.appName + ']'
     } else {
-        DewSDK.setting.appId('')
+        initDefaultSDK(answers.serverUrl, '')
         confirmMessage = '即将创建应用 [' + answers.appName + ']'
     }
     let confirmAnswer = await inquirer.prompt([{

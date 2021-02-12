@@ -16,7 +16,7 @@
 
 import * as JSASTHelper from "./util/JSASTHelper";
 import {DewNode} from "./util/JSASTHelper";
-import {DewSDK} from "@idealworld/sdk";
+import {DewSDK, initDefaultSDK} from "@idealworld/sdk";
 import {minify} from "terser";
 
 const fs = require('fs')
@@ -27,6 +27,9 @@ const config = JSON.parse(fs.readFileSync('./package.json'))['dew']
 
 const serverUrl: string = config.serverUrl
 const appId: string = config.appId
+
+initDefaultSDK(serverUrl, appId)
+
 let ak: string
 let sk: string
 
@@ -39,7 +42,7 @@ let sk: string
  * @param toDist 是否生成文件，不为空时会将编译的文件发送到后台，为空时仅测用将编译的文件写入到指定的目录
  */
 export async function dewBuild(relativeBasePath: string, envName: string, isProd: Boolean, toDist?: string): Promise<void> {
-    let config = DewSDK.conf(fs.readFileSync(path.resolve('dew.json'), 'utf8'), envName)
+    let config = DewSDK.setting.conf(fs.readFileSync(path.resolve('dew.json'), 'utf8'), envName)
     ak = config['ak']
     sk = config['sk']
     let basePath = path.join(process.cwd(), relativeBasePath)
@@ -88,7 +91,7 @@ async function dewBuildByDev(basePath: string): Promise<void> {
     let appendInitContent = `
 const sdk = require("@idealworld/sdk");
 exports.DewSDK = sdk.DewSDK;
-sdk.DewSDK.init("` + serverUrl + `", "` + appId + `");
+sdk.initDefaultSDK("` + serverUrl + `", "` + appId + `");
 sdk.DewSDK.setting.aksk("` + ak + `", "` + sk + `");
     `
     fs.readdirSync(basePath).forEach(fileName => {
@@ -106,23 +109,8 @@ export function generateJVMFile(basePath: string, filePath: string) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sdk = require("@idealworld/sdk/dist/jvm");
 exports.DewSDK = sdk.DewSDK;
-sdk.DewSDK.init("` + serverUrl + `", "` + appId + `");
+sdk.initDefaultSDK("` + serverUrl + `", "` + appId + `");
 sdk.DewSDK.setting.aksk("` + ak + `", "` + sk + `");
-sdk.DewSDK.setting.ajax((url, headers, data) => {
-  return new Promise((resolve, reject) => {
-    try{
-      resolve({data:JSON.parse($.req(url,headers,data))})
-    }catch(e){
-      reject({"message": e.getMessage(),"stack": []})
-    }
-  })
-});
-sdk.DewSDK.setting.currentTime(() => {
-  return $.currentTime()
-});
-sdk.DewSDK.setting.signature((text, key) => {
-  return $.signature(text, key)
-});
 `)
     }
     let rawFileName = filePath.substring(basePath.length + 1, filePath.lastIndexOf('.'));
@@ -145,7 +133,6 @@ export function replaceImport(fileContent: string, toJVM: boolean): string {
 }
 
 export function sendTask(fileContent: string): Promise<void> {
-    DewSDK.init(serverUrl, appId)
     DewSDK.setting.aksk(ak, sk)
     return DewSDK.task.initTasks(fileContent)
 }

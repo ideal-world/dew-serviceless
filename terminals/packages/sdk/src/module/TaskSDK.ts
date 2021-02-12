@@ -14,29 +14,25 @@
  * limitations under the License.
  */
 
-import * as request from "../util/Request";
 import {OptActionKind} from "../domain/Enum";
+import {DewRequest} from "../util/DewRequest";
 
-let _appId: string = ''
-
-export function init(appId: string): void {
-    _appId = appId
-}
-
-export function taskSDK() {
-    return new TaskSDK("default")
+export function taskSDK(request: DewRequest) {
+    return new TaskSDK("default", request)
 }
 
 export class TaskSDK {
 
-    constructor(codePostfix: string) {
+    constructor(codePostfix: string, request: DewRequest) {
         this.resourceSubjectCode = ".task." + codePostfix;
+        this.request = request
     }
 
     private readonly resourceSubjectCode: string
+    private readonly request: DewRequest
 
     initTasks(funs: string): Promise<void> {
-        return task<void>("initTasks", _appId + this.resourceSubjectCode, OptActionKind.CREATE, 'task', funs)
+        return task<void>(this.request, "initTasks", this.request.getAppId() + this.resourceSubjectCode, OptActionKind.CREATE, 'task', funs)
     }
 
     create(taskCode: string, fun: string, cron?: string): Promise<void> {
@@ -44,7 +40,7 @@ export class TaskSDK {
         if (cron) {
             query = '?cron=' + encodeURIComponent(cron)
         }
-        return task<void>("createTask", _appId + this.resourceSubjectCode, OptActionKind.CREATE, 'task/' + taskCode + query, fun)
+        return task<void>(this.request, "createTask", this.request.getAppId() + this.resourceSubjectCode, OptActionKind.CREATE, 'task/' + taskCode + query, fun)
     }
 
     modify(taskCode: string, fun: string, cron?: string): Promise<void> {
@@ -52,24 +48,24 @@ export class TaskSDK {
         if (cron) {
             query = '?cron=' + encodeURIComponent(cron)
         }
-        return task<void>("modifyTask", _appId + this.resourceSubjectCode, OptActionKind.MODIFY, 'task/' + taskCode + query, fun)
+        return task<void>(this.request, "modifyTask", this.request.getAppId() + this.resourceSubjectCode, OptActionKind.MODIFY, 'task/' + taskCode + query, fun)
     }
 
     delete(taskCode: string): Promise<void> {
-        return task<void>("deleteTask", _appId + this.resourceSubjectCode, OptActionKind.DELETE, 'task/' + taskCode)
+        return task<void>(this.request, "deleteTask", this.request.getAppId() + this.resourceSubjectCode, OptActionKind.DELETE, 'task/' + taskCode)
     }
 
     execute(taskCode: string, parameters: any[]): Promise<any> {
-        return task<any>("executeTask", _appId + this.resourceSubjectCode, OptActionKind.CREATE, 'exec/' + taskCode, parameters)
+        return task<any>(this.request, "executeTask", this.request.getAppId() + this.resourceSubjectCode, OptActionKind.CREATE, 'exec/' + taskCode, parameters)
     }
 
     subject(codePostfix: string) {
-        return new TaskSDK(codePostfix)
+        return new TaskSDK(codePostfix, this.request)
     }
 
 }
 
-function task<T>(name: string, resourceSubjectCode: string, optActionKind: OptActionKind, pathAndQuery: string, body?: any): Promise<T> {
+function task<T>(request: DewRequest, name: string, resourceSubjectCode: string, optActionKind: OptActionKind, pathAndQuery: string, body?: any): Promise<T> {
     return request.req<T>(name, 'task://' + resourceSubjectCode + '/' + pathAndQuery, optActionKind, body, {
         'Content-Type': 'text/plain'
     })

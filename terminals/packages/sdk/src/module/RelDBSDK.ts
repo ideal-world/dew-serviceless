@@ -14,38 +14,34 @@
  * limitations under the License.
  */
 
-import * as request from "../util/Request";
 import {OptActionKind} from "../domain/Enum";
+import {DewRequest} from "../util/DewRequest";
 
-let _appId: string = ''
-
-export function init(appId: string): void {
-    _appId = appId
-}
-
-export function reldbSDK() {
-    return new RelDBSDK("default")
+export function reldbSDK(request: DewRequest) {
+    return new RelDBSDK("default", request)
 }
 
 export class RelDBSDK {
 
-    constructor(codePostfix: string) {
+    constructor(codePostfix: string, request: DewRequest) {
         this.resourceSubjectCode = ".reldb." + codePostfix;
+        this.request = request
     }
 
     private readonly resourceSubjectCode: string
+    private readonly request: DewRequest
 
     exec<T>(sql: string, parameters: any[]): Promise<T[]> {
-        return doExec<T>(_appId + this.resourceSubjectCode, sql, parameters)
+        return doExec<T>(this.request, this.request.getAppId() + this.resourceSubjectCode, sql, parameters)
     }
 
     subject(codePostfix: string) {
-        return new RelDBSDK(codePostfix)
+        return new RelDBSDK(codePostfix, this.request)
     }
 
 }
 
-function doExec<T>(resourceSubjectCode: string, rawSql: string, parameters: any[]): Promise<T[]> {
+function doExec<T>(request: DewRequest, resourceSubjectCode: string, rawSql: string, parameters: any[]): Promise<T[]> {
     let sql = rawSql.trim().toLocaleLowerCase()
     let action = sql.startsWith('select ') && sql.indexOf(' from ') !== -1 ? 'FETCH'
         : sql.startsWith('insert ') && sql.indexOf(' into ') !== -1 && sql.indexOf(' values ') !== -1 ? 'CREATE'

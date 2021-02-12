@@ -14,55 +14,51 @@
  * limitations under the License.
  */
 
-import * as request from "../util/Request";
 import {OptActionKind} from "../domain/Enum";
 import {JsonMap} from "../domain/Basic";
+import {DewRequest} from "../util/DewRequest";
 
-let _appId: string = ''
-
-export function init(appId: string): void {
-    _appId = appId
-}
-
-export function httpSDK(): HttpSDK {
-    return new HttpSDK("default")
+export function httpSDK(request: DewRequest): HttpSDK {
+    return new HttpSDK("default", request)
 }
 
 export class HttpSDK {
 
-    constructor(codePostfix: string) {
+    constructor(codePostfix: string, request: DewRequest) {
         this.resourceSubjectCode = ".http." + codePostfix;
+        this.request = request
     }
 
     private readonly resourceSubjectCode: string
+    private readonly request: DewRequest
 
     get<T>(pathAndQuery: string, header?: JsonMap<any>): Promise<T> {
-        return http<T>(_appId + this.resourceSubjectCode, OptActionKind.FETCH, pathAndQuery, header)
+        return http<T>(this.request, this.request.getAppId() + this.resourceSubjectCode, OptActionKind.FETCH, pathAndQuery, header)
     }
 
     delete(pathAndQuery: string, header?: JsonMap<any>): Promise<void> {
-        return http<void>(_appId + this.resourceSubjectCode, OptActionKind.DELETE, pathAndQuery, header)
+        return http<void>(this.request, this.request.getAppId() + this.resourceSubjectCode, OptActionKind.DELETE, pathAndQuery, header)
     }
 
     post<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
-        return http<T>(_appId + this.resourceSubjectCode, OptActionKind.CREATE, pathAndQuery, header, body)
+        return http<T>(this.request, this.request.getAppId() + this.resourceSubjectCode, OptActionKind.CREATE, pathAndQuery, header, body)
     }
 
     put<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
-        return http<T>(_appId + this.resourceSubjectCode, OptActionKind.MODIFY, pathAndQuery, header, body)
+        return http<T>(this.request, this.request.getAppId() + this.resourceSubjectCode, OptActionKind.MODIFY, pathAndQuery, header, body)
     }
 
     patch<T>(pathAndQuery: string, body: any, header?: JsonMap<any>): Promise<T> {
-        return http<T>(_appId + this.resourceSubjectCode, OptActionKind.PATCH, pathAndQuery, header, body)
+        return http<T>(this.request, this.request.getAppId() + this.resourceSubjectCode, OptActionKind.PATCH, pathAndQuery, header, body)
     }
 
     subject(codePostfix: string): HttpSDK {
-        return new HttpSDK(codePostfix)
+        return new HttpSDK(codePostfix, this.request)
     }
 
 }
 
-function http<T>(resourceSubjectCode: string, optActionKind: OptActionKind, pathAndQuery: string, header?: JsonMap<any>, body?: any): Promise<T> {
+function http<T>(request: DewRequest, resourceSubjectCode: string, optActionKind: OptActionKind, pathAndQuery: string, header?: JsonMap<any>, body?: any): Promise<T> {
     if (!pathAndQuery.startsWith('/')) {
         pathAndQuery = '/' + pathAndQuery
     }

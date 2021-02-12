@@ -15,7 +15,7 @@
  */
 
 
-import {DewSDK} from "@idealworld/sdk";
+import {DewSDK, initDefaultSDK} from "@idealworld/sdk";
 import {ResourceKind} from "../src/domain/Enum";
 
 const GATEWAY_SERVER_URL = "http://127.0.0.1:9000"
@@ -26,14 +26,14 @@ const USERNAME = "dew"
 const PASSWORD = "TestPwd1d"
 
 beforeEach(async () => {
-    DewSDK.init(GATEWAY_SERVER_URL, APP_ID)
+    initDefaultSDK(GATEWAY_SERVER_URL, APP_ID)
 })
 
 test('Test iam sdk', async () => {
     let identOptInfo = await DewSDK.iam.tenant.register('t1', 'a1', USERNAME, PASSWORD)
     let newAppCode = identOptInfo.appCode
-    DewSDK.setting.appId(newAppCode)
-    identOptInfo = await DewSDK.iam.account.login(USERNAME, PASSWORD)
+    initDefaultSDK(GATEWAY_SERVER_URL, newAppCode)
+    identOptInfo = await DewSDK.iam.auth.login(USERNAME, PASSWORD)
     expect(identOptInfo.roleInfo[0].name).toContain('管理员')
     let resourceSubjectId = await DewSDK.iam.resource.subject.create('menu', ResourceKind.MENU, '菜单', 'menu://iam', '', '')
     await DewSDK.iam.resource.create('用户模块', '/user', resourceSubjectId)
@@ -41,7 +41,7 @@ test('Test iam sdk', async () => {
     expect(menus.length).toBe(1)
     let eles = await DewSDK.iam.resource.ele.fetch()
     expect(eles.length).toBe(0)
-    await DewSDK.iam.account.logout()
+    await DewSDK.iam.auth.logout()
     // TODO 更多接口
 })
 
@@ -100,7 +100,7 @@ test('Test cache sdk', async () => {
 })
 
 test('Test reldb sdk', async () => {
-    await DewSDK.iam.account.login(USERNAME, PASSWORD)
+    await DewSDK.iam.auth.login(USERNAME, PASSWORD)
     let publicKey = await DewSDK.iam.app.key.fetchPublicKey()
     let accounts = await DewSDK.reldb.exec('select name from iam_account', [])
     // @ts-ignore
@@ -139,7 +139,7 @@ test('Test http sdk', async () => {
 }, 200000)
 
 test('Test task sdk', async done => {
-    await DewSDK.iam.account.login(USERNAME, PASSWORD)
+    await DewSDK.iam.auth.login(USERNAME, PASSWORD)
     let ident = (await DewSDK.iam.app.ident.list()).objects[0]
     let sk = (await DewSDK.iam.app.ident.fetchSk(ident.id))
     DewSDK.setting.aksk(ident.ak, sk)
@@ -176,7 +176,7 @@ return 'timer'
 }, 15000)
 
 test("Test config", () => {
-    let devConfig = DewSDK.conf(`
+    let devConfig = DewSDK.setting.conf(`
 {
     "ak":"ak1",
     "sk":"sk1",
@@ -196,7 +196,7 @@ test("Test config", () => {
 }
 `, 'dev')
     expect(devConfig).toStrictEqual({"ak": "ak_dev", "db": {"url": "mysqlxxxx"}, "sk": "sk_dev"})
-    let testConfig = DewSDK.conf(`
+    let testConfig = DewSDK.setting.conf(`
 {
     "ak":"ak1",
     "sk":"sk1",
