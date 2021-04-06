@@ -429,7 +429,7 @@ public class FunCacheClient {
 
     private void doElection() {
         log.trace("[Redis]Electing...");
-        redisAPI.set(new ArrayList<>() {
+        var setF = redisAPI.set(new ArrayList<>() {
             {
                 add(CACHE_KEY_ELECTION_PREFIX + code);
                 add(instanceId);
@@ -437,27 +437,27 @@ public class FunCacheClient {
                 add((electionPeriodSec * 2 + 2) + "");
                 add("NX");
             }
-        })
-                .onSuccess(setResult -> {
-                    if (setResult != null && setResult.toString().equalsIgnoreCase("ok")) {
-                        leader.set(true);
+        });
+        setF.onSuccess(setResult -> {
+            if (setResult != null && setResult.toString().equalsIgnoreCase("ok")) {
+                leader.set(true);
+            } else {
+                var getF = redisAPI.get(CACHE_KEY_ELECTION_PREFIX + code);
+                getF.onSuccess(getResult -> {
+                    if (getResult == null) {
+                        doElection();
                     } else {
-                        redisAPI.get(CACHE_KEY_ELECTION_PREFIX + code)
-                                .onSuccess(getResult -> {
-                                    if (getResult == null) {
-                                        doElection();
-                                    } else {
-                                        leader.set(getResult.toString(StandardCharsets.UTF_8).equalsIgnoreCase(instanceId));
-                                    }
-                                })
-                                .onFailure(e ->
-                                        log.error("[Redis][{}]Election [{}] error: {}", code, CACHE_KEY_ELECTION_PREFIX + code, e.getMessage(), e)
-                                );
+                        leader.set(getResult.toString(StandardCharsets.UTF_8).equalsIgnoreCase(instanceId));
                     }
-                })
-                .onFailure(e ->
+                });
+                getF.onFailure(e ->
                         log.error("[Redis][{}]Election [{}] error: {}", code, CACHE_KEY_ELECTION_PREFIX + code, e.getMessage(), e)
                 );
+            }
+        });
+        setF.onFailure(e ->
+                log.error("[Redis][{}]Election [{}] error: {}", code, CACHE_KEY_ELECTION_PREFIX + code, e.getMessage(), e)
+        );
     }
 
 }

@@ -37,8 +37,8 @@ public class AntPathMatcher {
     private static final char[] WILDCARD_CHARS = {'*', '?', '{'};
     final Map<String, AntPathStringMatcher> stringMatcherCache = new ConcurrentHashMap<>(256);
     private final Map<String, String[]> tokenizedPatternCache = new ConcurrentHashMap<>(256);
-    private String pathSeparator;
-    private PathSeparatorPatternCache pathSeparatorPatternCache;
+    private final String pathSeparator;
+    private final PathSeparatorPatternCache pathSeparatorPatternCache;
     private boolean caseSensitive = true;
     private boolean trimTokens = false;
     private volatile Boolean cachePatterns;
@@ -307,7 +307,7 @@ public class AntPathMatcher {
     protected String[] tokenizePattern(String pattern) {
         String[] tokenized = null;
         Boolean cachePatterns = this.cachePatterns;
-        if (cachePatterns == null || cachePatterns.booleanValue()) {
+        if (cachePatterns == null || cachePatterns) {
             tokenized = this.tokenizedPatternCache.get(pattern);
         }
         if (tokenized == null) {
@@ -319,7 +319,7 @@ public class AntPathMatcher {
                 deactivatePatternCache();
                 return tokenized;
             }
-            if (cachePatterns == null || cachePatterns.booleanValue()) {
+            if (cachePatterns == null || cachePatterns) {
                 this.tokenizedPatternCache.put(pattern, tokenized);
             }
         }
@@ -339,7 +339,7 @@ public class AntPathMatcher {
     protected AntPathStringMatcher getStringMatcher(String pattern) {
         AntPathStringMatcher matcher = null;
         Boolean cachePatterns = this.cachePatterns;
-        if (cachePatterns == null || cachePatterns.booleanValue()) {
+        if (cachePatterns == null || cachePatterns) {
             matcher = this.stringMatcherCache.get(pattern);
         }
         if (matcher == null) {
@@ -351,73 +351,11 @@ public class AntPathMatcher {
                 deactivatePatternCache();
                 return matcher;
             }
-            if (cachePatterns == null || cachePatterns.booleanValue()) {
+            if (cachePatterns == null || cachePatterns) {
                 this.stringMatcherCache.put(pattern, matcher);
             }
         }
         return matcher;
-    }
-
-    public String combine(String pattern1, String pattern2) {
-        if (!hasText(pattern1) && !hasText(pattern2)) {
-            return "";
-        }
-        if (!hasText(pattern1)) {
-            return pattern2;
-        }
-        if (!hasText(pattern2)) {
-            return pattern1;
-        }
-
-        boolean pattern1ContainsUriVar = (pattern1.indexOf('{') != -1);
-        if (!pattern1.equals(pattern2) && !pattern1ContainsUriVar && match(pattern1, pattern2)) {
-            // /* + /hotel -> /hotel ; "/*.*" + "/*.html" -> /*.html
-            // However /user + /user -> /usr/user ; /{foo} + /bar -> /{foo}/bar
-            return pattern2;
-        }
-
-        // /hotels/* + /booking -> /hotels/booking
-        // /hotels/* + booking -> /hotels/booking
-        if (pattern1.endsWith(this.pathSeparatorPatternCache.getEndsOnWildCard())) {
-            return concat(pattern1.substring(0, pattern1.length() - 2), pattern2);
-        }
-
-        // /hotels/** + /booking -> /hotels/**/booking
-        // /hotels/** + booking -> /hotels/**/booking
-        if (pattern1.endsWith(this.pathSeparatorPatternCache.getEndsOnDoubleWildCard())) {
-            return concat(pattern1, pattern2);
-        }
-
-        int starDotPos1 = pattern1.indexOf("*.");
-        if (pattern1ContainsUriVar || starDotPos1 == -1 || this.pathSeparator.equals(".")) {
-            // simply concatenate the two patterns
-            return concat(pattern1, pattern2);
-        }
-
-        String ext1 = pattern1.substring(starDotPos1 + 1);
-        int dotPos2 = pattern2.indexOf('.');
-        String file2 = (dotPos2 == -1 ? pattern2 : pattern2.substring(0, dotPos2));
-        String ext2 = (dotPos2 == -1 ? "" : pattern2.substring(dotPos2));
-        boolean ext1All = (ext1.equals(".*") || ext1.isEmpty());
-        boolean ext2All = (ext2.equals(".*") || ext2.isEmpty());
-        if (!ext1All && !ext2All) {
-            throw new IllegalArgumentException("Cannot combine patterns: " + pattern1 + " vs " + pattern2);
-        }
-        String ext = (ext1All ? ext2 : ext1);
-        return file2 + ext;
-    }
-
-    private String concat(String path1, String path2) {
-        boolean path1EndsWithSeparator = path1.endsWith(this.pathSeparator);
-        boolean path2StartsWithSeparator = path2.startsWith(this.pathSeparator);
-
-        if (path1EndsWithSeparator && path2StartsWithSeparator) {
-            return path1 + path2.substring(1);
-        } else if (path1EndsWithSeparator || path2StartsWithSeparator) {
-            return path1 + path2;
-        } else {
-            return path1 + this.pathSeparator + path2;
-        }
     }
 
     protected static class AntPathStringMatcher {
@@ -436,10 +374,6 @@ public class AntPathMatcher {
         private final Pattern pattern;
 
         private final List<String> variableNames = new ArrayList<>();
-
-        public AntPathStringMatcher(String pattern) {
-            this(pattern, true);
-        }
 
         public AntPathStringMatcher(String pattern, boolean caseSensitive) {
             this.rawPattern = pattern;

@@ -136,31 +136,31 @@ public class FunSQLClient {
                             .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         Promise<List<E>> promise = Promise.promise();
-        SqlTemplate
+        var executeF = SqlTemplate
                 .forQuery(client, sql)
                 .mapTo(Row::toJson)
-                .execute(parameters)
-                .onSuccess(records -> {
-                    try {
-                        if (!records.iterator().hasNext()) {
-                            promise.complete(new ArrayList<>());
-                        } else {
-                            var result = $.fun.stream(records.iterator())
-                                    .map(rowJson -> returnClazz == JsonObject.class
-                                            ? (E) rowJson
-                                            : CaseFormatter.snakeToCamel(rowJson).mapTo(returnClazz))
-                                    .collect(Collectors.toList());
-                            promise.complete(result);
-                        }
-                    } catch (Exception e) {
-                        log.error("[SQL][{}]Select [{}] convert error: {}", code, sql, e.getMessage(), e);
-                        promise.fail(e);
-                    }
-                })
-                .onFailure(e -> {
-                    log.error("[SQL][{}]Select [{}] error: {}", code, sql, e.getMessage(), e);
-                    promise.fail(e);
-                });
+                .execute(parameters);
+        executeF.onSuccess(records -> {
+            try {
+                if (!records.iterator().hasNext()) {
+                    promise.complete(new ArrayList<>());
+                } else {
+                    var result = $.fun.stream(records.iterator())
+                            .map(rowJson -> returnClazz == JsonObject.class
+                                    ? (E) rowJson
+                                    : CaseFormatter.snakeToCamel(rowJson).mapTo(returnClazz))
+                            .collect(Collectors.toList());
+                    promise.complete(result);
+                }
+            } catch (Exception e) {
+                log.error("[SQL][{}]Select [{}] convert error: {}", code, sql, e.getMessage(), e);
+                promise.fail(e);
+            }
+        });
+        executeF.onFailure(e -> {
+            log.error("[SQL][{}]Select [{}] error: {}", code, sql, e.getMessage(), e);
+            promise.fail(e);
+        });
         return promise.future();
     }
 

@@ -157,6 +157,7 @@ public abstract class DewConfig {
         private Object config = new Object();
         @Builder.Default
         protected FunConfig funs = new FunConfig();
+
     }
 
 }

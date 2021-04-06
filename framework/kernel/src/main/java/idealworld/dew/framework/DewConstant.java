@@ -28,39 +28,37 @@ import java.text.ParseException;
  */
 public class DewConstant {
 
+    // 请求相关：资源URI标识
     public static final String REQUEST_RESOURCE_URI_FLAG = "Dew-Resource-Uri";
+    // 请求相关：资源操作标识
     public static final String REQUEST_RESOURCE_ACTION_FLAG = "Dew-Resource-Action";
+    // 请求相关：不需要返回的请求标识
     public static final String REQUEST_WITHOUT_RESP_FLAG = "Dew-Without-Resp";
+    // 请求相关：内部事件URI前缀
+    public static final String REQUEST_INNER_PATH_PREFIX = "/eb/inner/";
+    // 请求相关：内部认证流转标识
     public static final String REQUEST_IDENT_OPT_FLAG = "Dew-Ident-Opt";
 
-    public static final String REQUEST_INNER_PATH_PREFIX = "/eb/inner/";
-
-    public static final String PARAM_DEFAULT_TOKEN_KIND_FLAG = "DEFAULT";
-
+    // 参数相关：默认TOKEN类型参数名
+    public static final String PARAM_DEFAULT_TOKEN_KIND = "DEFAULT";
+    // 参数相关：环境参数名
     public static final String PARAM_PROFILE_KEY = "dew.profile";
+    // 参数相关：CLI参数根名
     public static final String PARAM_CONFIG = "dew.config";
+    // 参数相关：CLI参数名分隔符
     public static final String PARAM_CONFIG_ITEM_PREFIX = PARAM_CONFIG + ".";
+
+    // 缓存相关：鉴权策略缓存
+    public static final String CACHE_AUTH_POLICY = "dew:iam:policy:";
+    // 资源主题分隔符
+    // TODO 是否可以去掉
     public static final String RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT = ".";
 
-    /**
-     * 未定义对象的标识，多用于全局Id标识.
-     */
+    // 未定义对象的标识，多用于全局Id标识
     public static final long OBJECT_UNDEFINED = 0L;
-
-    /**
-     * 鉴权策略缓存.
-     */
-    public static final String CACHE_AUTH_POLICY = "dew:iam:policy:";
-    public static final String CACHE_APP_AK = "dew:iam:app:ak:";
-    public static final String CACHE_APP_INFO = "dew:iam:app:info:";
-
-    /**
-     * 最小的时间.
-     */
+    // 最小的时间
     public static Long MIN_TIME;
-    /**
-     * 最大的时间.
-     */
+    // 最大的时间
     public static Long MAX_TIME;
 
     static {

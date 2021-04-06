@@ -36,15 +36,14 @@ public class CacheHelper {
     private static final int CLEANING_INTERVAL_SEC = 60;
 
     static {
-        $.timer.periodic(CLEANING_INTERVAL_SEC, false, () -> {
-            CACHES.forEach((key, value) -> {
-                if (value == null
-                        || value.get() == null
-                        || ((long) value.get()[0]) < System.currentTimeMillis()) {
-                    CACHES.remove(key);
-                }
-            });
-        });
+        $.timer.periodic(CLEANING_INTERVAL_SEC, false, () ->
+                CACHES.forEach((key, value) -> {
+                    if (value == null
+                            || value.get() == null
+                            || ((long) value.get()[0]) < System.currentTimeMillis()) {
+                        CACHES.remove(key);
+                    }
+                }));
     }
 
     public static void set(String key, Object value, Integer cacheSec) {

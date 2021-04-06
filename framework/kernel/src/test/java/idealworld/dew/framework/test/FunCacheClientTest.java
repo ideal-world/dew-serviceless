@@ -294,7 +294,7 @@ public class FunCacheClientTest extends DewTest {
                 })
                 .compose(resp -> {
                     var promise = Promise.promise();
-                    vertx.setTimer(3000, t -> promise.complete());
+                    vertx.setTimer(4000, t -> promise.complete());
                     return promise.future();
                 })
                 .onSuccess(resp -> {

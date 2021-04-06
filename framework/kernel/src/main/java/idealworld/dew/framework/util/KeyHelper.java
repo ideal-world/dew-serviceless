@@ -26,35 +26,35 @@ import com.ecfront.dew.common.$;
 public class KeyHelper {
 
     /**
-     * Generate token string.
+     * Generate token.
      *
      * @return the string
      */
     public static String generateToken() {
         return "tk" + $.security.digest.digest(
-                $.field.createUUID().replaceAll("\\-", ""),
+                $.field.createUUID().replaceAll("-", ""),
                 "MD5"
         );
     }
 
     /**
-     * Generate ak string.
+     * Generate ak.
      *
      * @return the string
      */
     public static String generateAk() {
-        return "ak" + $.field.createUUID().replaceAll("\\-", "");
+        return "ak" + $.field.createUUID().replaceAll("-", "");
     }
 
     /**
-     * Generate sk string.
+     * Generate sk.
      *
      * @param key the key
      * @return the string
      */
     public static String generateSk(String key) {
         return "sk" + $.security.digest.digest(
-                key + $.field.createUUID().replaceAll("\\-", ""),
+                key + $.field.createUUID().replaceAll("-", ""),
                 "SHA1"
         );
     }

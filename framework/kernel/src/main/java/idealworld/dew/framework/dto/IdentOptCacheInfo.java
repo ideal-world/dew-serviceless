@@ -33,7 +33,7 @@ import lombok.experimental.SuperBuilder;
 public class IdentOptCacheInfo extends IdentOptInfo {
 
     @Builder.Default
-    private String tokenKind = DewConstant.PARAM_DEFAULT_TOKEN_KIND_FLAG;
+    private String tokenKind = DewConstant.PARAM_DEFAULT_TOKEN_KIND;
     private Long accountId;
     private Long appId;
     private Long tenantId;

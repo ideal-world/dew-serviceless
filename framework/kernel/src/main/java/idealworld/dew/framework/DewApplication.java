@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 /**
  * 服务启动基础类.
  *
- * @author gudaoxuri
  * @param <C> 配置信息类
+ * @author gudaoxuri
  */
 @Slf4j
 public abstract class DewApplication<C extends DewConfig> extends AbstractVerticle {
@@ -56,31 +56,31 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
         var config = loadConfig();
         this.config = config;
         log.info("[Startup]Loading custom operations...");
-        start(config)
-                .onSuccess(st -> {
-                    log.info("[Startup]Loading modules...");
-                    var modules = config.getModules();
-                    loadModules(modules)
-                            .onSuccess(moduleLoadResult -> {
-                                log.info("[Startup]Loading custom operations...");
-                                log.info("\r\n==============[Startup]==============\r\n" +
-                                        "The service has been started and contains the following modules:\r\n" +
-                                        modules.stream()
-                                                .filter(DewConfig.ModuleConfig::getEnabled)
-                                                .map(m -> ">>" + m.getClazzPackage())
-                                                .collect(Collectors.joining("\r\n")) +
-                                        "\r\n==============[Startup]==============");
-                                startPromise.complete();
-                            })
-                            .onFailure(e -> {
-                                log.error("[Startup]Start failure: {}", e.getMessage(), e);
-                                startPromise.fail(e);
-                            });
-                })
-                .onFailure(e -> {
-                    log.error("[Startup]Start failure: {}", e.getMessage(), e);
-                    startPromise.fail(e);
-                });
+        var startF = start(config);
+        startF.onSuccess(st -> {
+            log.info("[Startup]Loading modules...");
+            var modules = config.getModules();
+            var loadModelsF = loadModules(modules);
+            loadModelsF.onSuccess(moduleLoadResult -> {
+                log.info("[Startup]Loading custom operations...");
+                log.info("\r\n==============[Startup]==============\r\n" +
+                        "The service has been started and contains the following modules:\r\n" +
+                        modules.stream()
+                                .filter(DewConfig.ModuleConfig::getEnabled)
+                                .map(m -> ">>" + m.getClazzPackage())
+                                .collect(Collectors.joining("\r\n")) +
+                        "\r\n==============[Startup]==============");
+                startPromise.complete();
+            });
+            loadModelsF.onFailure(e -> {
+                log.error("[Startup]Start failure: {}", e.getMessage(), e);
+                startPromise.fail(e);
+            });
+        });
+        startF.onFailure(e -> {
+            log.error("[Startup]Start failure: {}", e.getMessage(), e);
+            startPromise.fail(e);
+        });
     }
 
     protected abstract Future<?> start(C config);
@@ -88,16 +88,16 @@ public abstract class DewApplication<C extends DewConfig> extends AbstractVertic
     @Override
     public final void stop(Promise<Void> stopPromise) {
         log.info("[Shutdown]Stopping custom operations...");
-        stop(config)
-                .onComplete(stopResult -> {
-                    if (stopResult.succeeded()) {
-                        log.info("[Shutdown]Stopped");
-                        stopPromise.complete();
-                    } else {
-                        log.error("[Shutdown]Stop failure: {}", stopResult.cause().getMessage(), stopResult.cause());
-                        stopPromise.fail(stopResult.cause());
-                    }
-                });
+        var stopF = stop(config);
+        stopF.onComplete(stopResult -> {
+            if (stopResult.succeeded()) {
+                log.info("[Shutdown]Stopped");
+                stopPromise.complete();
+            } else {
+                log.error("[Shutdown]Stop failure: {}", stopResult.cause().getMessage(), stopResult.cause());
+                stopPromise.fail(stopResult.cause());
+            }
+        });
     }
 
     protected abstract Future<?> stop(C config);

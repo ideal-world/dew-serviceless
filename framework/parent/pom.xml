@@ -43,7 +43,7 @@
         <dew-serviceless.version>1.0.0-SNAPSHOT</dew-serviceless.version>
         <dew-common.version>3.0.0-beta3</dew-common.version>
 
-        <vertx.version>4.0.0</vertx.version>
+        <vertx.version>4.0.3</vertx.version>
         <snakeyaml.version>1.27</snakeyaml.version>
         <mysql.version>8.0.21</mysql.version>
         <logback.version>1.2.3</logback.version>

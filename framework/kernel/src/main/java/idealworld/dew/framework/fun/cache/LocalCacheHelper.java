@@ -16,6 +16,7 @@
 
 package idealworld.dew.framework.fun.cache;
 
+import idealworld.dew.framework.util.CacheHelper;
 import io.vertx.core.Future;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,7 +28,7 @@ import java.util.function.Supplier;
  * @author gudaoxuri
  */
 @Slf4j
-public class LocalCacheHelper extends idealworld.dew.framework.util.CacheHelper {
+public class LocalCacheHelper extends CacheHelper {
 
     public static <E> Future<E> getSetF(String key, Integer cacheSec, Supplier<Future<E>> elseFun) {
         var valueInfo = CACHES.getOrDefault(key, null);
