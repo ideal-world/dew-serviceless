@@ -43,7 +43,7 @@ public class AccountRole extends SafeEntity {
     private Long relAccountId;
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "iam_" + super.tableName();
     }
 

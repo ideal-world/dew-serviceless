@@ -66,7 +66,7 @@ public class Group extends AppBasedEntity {
     private Long relGroupNodeId;
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "iam_" + super.tableName();
     }
 

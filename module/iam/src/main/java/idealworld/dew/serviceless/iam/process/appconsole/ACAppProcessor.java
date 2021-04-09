@@ -86,23 +86,25 @@ public class ACAppProcessor extends EventBusProcessor {
 
     public static Future<Void> modifyAppIdent(Long appIdentId, AppIdentModifyReq appIdentModifyReq, Long relAppId, Long relTenantId,
                                               ProcessContext context) {
-        return context.sql.update(
+        var updateF = context.sql.update(
+                context.helper.convert(appIdentModifyReq, AppIdent.class),
                 new HashMap<>() {
                     {
                         put("id", appIdentId);
                         put("rel_app_id", relAppId);
                     }
-                },
-                context.helper.convert(appIdentModifyReq, AppIdent.class))
-                .compose(resp ->
-                        context.sql.getOne(new HashMap<>() {
+                });
+        return updateF.compose(resp ->
+                context.sql.getOne(
+                        AppIdent.class,
+                        new HashMap<>() {
                             {
                                 put("id", appIdentId);
                                 put("rel_app_id", relAppId);
                             }
-                        }, AppIdent.class)
-                                .compose(appIdent ->
-                                        ExchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId, context)));
+                        })
+                        .compose(appIdent ->
+                                ExchangeProcessor.changeAppIdent(appIdent, relAppId, relTenantId, context)));
     }
 
     public static Future<Page<AppIdentResp>> pageAppIdents(String note, Long pageNumber, Long pageSize, Long relAppId, Long relTenantId,
@@ -116,66 +118,54 @@ public class ACAppProcessor extends EventBusProcessor {
             whereParameters.put("%note", "%" + note + "%");
         }
         return context.sql.page(
-                whereParameters,
+                AppIdent.class,
                 pageNumber,
                 pageSize,
-                AppIdent.class)
+                whereParameters)
                 .compose(appIdents -> context.helper.success(appIdents, AppIdentResp.class));
     }
 
     public static Future<Void> deleteAppIdent(Long appIdentId, Long relAppId, Long relTenantId, ProcessContext context) {
-        return context.sql.getOne(
+        var getF = context.sql.getOne(
+                AppIdent.class,
                 new HashMap<>() {
                     {
                         put("id", appIdentId);
                         put("rel_app_id", relAppId);
                     }
-                },
-                AppIdent.class)
-                .compose(fetchAppIdent ->
-                        context.sql.softDelete(
-                                new HashMap<>() {
-                                    {
-                                        put("id", appIdentId);
-                                        put("rel_app_id", relAppId);
-                                    }
-                                },
-                                AppIdent.class)
-                                .compose(resp ->
-                                        ExchangeProcessor.deleteAppIdent(fetchAppIdent.getAk(), context)));
+                });
+        return getF.compose(fetchAppIdent ->
+                context.sql.softDelete(
+                        AppIdent.class,
+                        new HashMap<>() {
+                            {
+                                put("id", appIdentId);
+                                put("rel_app_id", relAppId);
+                            }
+                        })
+                        .compose(resp ->
+                                ExchangeProcessor.deleteAppIdent(fetchAppIdent.getAk(), context)));
     }
 
     public static Future<String> showSk(Long appIdentId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.getOne(
+                AppIdent.class,
                 new HashMap<>() {
                     {
                         put("id", appIdentId);
                         put("rel_app_id", relAppId);
                     }
-                },
-                AppIdent.class)
+                })
                 .compose(fetchAppIdent -> Future.succeededFuture(fetchAppIdent.getSk()));
     }
 
     public static Future<String> showPublicKey(Long relAppId, Long relTenantId, ProcessContext context) {
-        return context.sql.getOne(
-                new HashMap<>() {
-                    {
-                        put("id", relAppId);
-                    }
-                },
-                App.class)
+        return context.sql.getOne(App.class, relAppId)
                 .compose(fetchApp -> Future.succeededFuture(fetchApp.getPubKey()));
     }
 
     public static Future<String> showPrivateKey(Long relAppId, Long relTenantId, ProcessContext context) {
-        return context.sql.getOne(
-                new HashMap<>() {
-                    {
-                        put("id", relAppId);
-                    }
-                },
-                App.class)
+        return context.sql.getOne(App.class, relAppId)
                 .compose(fetchApp -> Future.succeededFuture(fetchApp.getPriKey()));
     }
 

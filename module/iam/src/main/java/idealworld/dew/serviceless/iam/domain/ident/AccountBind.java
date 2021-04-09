@@ -55,7 +55,7 @@ public class AccountBind extends SafeEntity {
     private AccountIdentKind identKind;
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "iam_" + super.tableName();
     }
 

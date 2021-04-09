@@ -109,7 +109,7 @@ public class TaskProcessor extends EventBusProcessor {
     }
 
     public static void loadTasks(ProcessContext context) {
-        context.sql.list(new HashMap<>(), TaskDef.class)
+        context.sql.list(TaskDef.class, new HashMap<>())
                 .onSuccess(taskDefs -> {
                     if (!taskDefs.isEmpty()) {
                         var initTask = taskDefs.stream().filter(def -> def.getCode().isBlank()).findAny().get();
@@ -132,12 +132,14 @@ public class TaskProcessor extends EventBusProcessor {
                 .relAppCode(appCode)
                 .build();
         return context.sql.tx(context, () ->
-                context.sql.getOne(new HashMap<>() {
-                    {
-                        put("code", "");
-                        put("rel_app_code", appCode);
-                    }
-                }, TaskDef.class)
+                context.sql.getOne(
+                        TaskDef.class,
+                        new HashMap<>() {
+                            {
+                                put("code", "");
+                                put("rel_app_code", appCode);
+                            }
+                        })
                         .compose(existTaskDef -> {
                             if (existTaskDef != null) {
                                 taskDef.setId(existTaskDef.getId());
@@ -181,41 +183,49 @@ public class TaskProcessor extends EventBusProcessor {
             });
         }
         return context.helper.notExistToError(
-                context.sql.exists(new HashMap<>() {
-                    {
-                        put("code", code);
-                        put("rel_app_code", appCode);
-                    }
-                }, TaskDef.class), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
-                .compose(resp ->
-                        context.sql.update(new HashMap<>() {
+                context.sql.exists(
+                        TaskDef.class,
+                        new HashMap<>() {
                             {
                                 put("code", code);
                                 put("rel_app_code", appCode);
                             }
-                        }, TaskDef.builder()
-                                .cron(cron)
-                                .fun(fun)
-                                .build()))
+                        }), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
+                .compose(resp ->
+                        context.sql.update(
+                                TaskDef.builder()
+                                        .cron(cron)
+                                        .fun(fun)
+                                        .build(),
+                                new HashMap<>() {
+                                    {
+                                        put("code", code);
+                                        put("rel_app_code", appCode);
+                                    }
+                                }))
                 .compose(resp -> context.helper.success());
     }
 
     public static Future<Void> deleteTask(String code, String appCode, ProcessContext context) {
         CronHelper.removeJob(code, appCode);
         return context.helper.notExistToError(
-                context.sql.exists(new HashMap<>() {
-                    {
-                        put("code", code);
-                        put("rel_app_code", appCode);
-                    }
-                }, TaskDef.class), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
-                .compose(resp ->
-                        context.sql.softDelete(new HashMap<>() {
+                context.sql.exists(
+                        TaskDef.class,
+                        new HashMap<>() {
                             {
                                 put("code", code);
                                 put("rel_app_code", appCode);
                             }
-                        }, TaskDef.class))
+                        }), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
+                .compose(resp ->
+                        context.sql.softDelete(
+                                TaskDef.class,
+                                new HashMap<>() {
+                                    {
+                                        put("code", code);
+                                        put("rel_app_code", appCode);
+                                    }
+                                }))
                 .compose(resp -> context.helper.success());
     }
 
@@ -234,12 +244,14 @@ public class TaskProcessor extends EventBusProcessor {
         }
         log.trace("Executing timer task[{}-{}]", appCode, code);
         return context.helper.notExistToError(
-                context.sql.getOne(new HashMap<>() {
-                    {
-                        put("code", code);
-                        put("rel_app_code", appCode);
-                    }
-                }, TaskDef.class), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
+                context.sql.getOne(
+                        TaskDef.class,
+                        new HashMap<>() {
+                            {
+                                put("code", code);
+                                put("rel_app_code", appCode);
+                            }
+                        }), () -> new NotFoundException("找不到对应的任务[" + code + "]"))
                 .compose(taskDef ->
                         context.sql.save(TaskInst.builder()
                                 .startTime(System.currentTimeMillis())
@@ -252,19 +264,19 @@ public class TaskProcessor extends EventBusProcessor {
                         _vertx.getOrCreateContext().executeBlocking(promise -> {
                             try {
                                 var result = ScriptProcessor.execute(appCode, code, parameters, null);
-                                context.sql.update(taskInstId, TaskInst.builder()
+                                context.sql.update(TaskInst.builder()
                                         .endTime(System.currentTimeMillis())
                                         .success(true)
                                         .message("")
-                                        .build());
+                                        .build(), taskInstId);
                                 promise.complete(result);
                             } catch (Exception e) {
                                 log.warn("Execute timer task error: {}", e.getMessage(), e);
-                                context.sql.update(taskInstId, TaskInst.builder()
+                                context.sql.update(TaskInst.builder()
                                         .endTime(System.currentTimeMillis())
                                         .success(false)
                                         .message(e.getMessage())
-                                        .build());
+                                        .build(), taskInstId);
                                 promise.fail(e);
                             }
                         }));

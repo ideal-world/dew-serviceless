@@ -23,18 +23,24 @@ package idealworld.dew.framework;
  */
 public class DewAuthConstant extends DewConstant {
 
-    /**
-     * 鉴权策略缓存.
-     */
+    // 缓存相关：鉴权策略缓存
     public static final String CACHE_AUTH_POLICY = "dew:iam:policy:";
+    // 缓存相关：AK缓存
     public static final String CACHE_APP_AK = "dew:iam:app:ak:";
+    // 缓存相关：应用信息缓存
     public static final String CACHE_APP_INFO = "dew:iam:app:info:";
-    // token存储key : <token>:<opt info>
+    // 缓存相关：token存储key : <token>:<opt info>
     public static final String CACHE_TOKEN_INFO_FLAG = "dew:iam:token:info:";
-    // AccountCode 关联 Tokens : <account code>:<token kind##current time>:<token>
+    // 缓存相关：AccountCode 关联 Tokens : <account code>:<token>:<token kind##current time>
     public static final String CACHE_TOKEN_ID_REL_FLAG = "dew:iam:token:id:rel:";
+
+    // IAM模块名称
     public static final String MODULE_IAM_NAME = "iam";
+    // 群组与节点分隔标识，用于缓存
+    // TODO
     public static final String GROUP_CODE_NODE_CODE_SPLIT = "#";
+    // AKSK虚拟账号
+    // TODO
     public static final Long AK_SK_IDENT_ACCOUNT_FLAG = -1L;
 
 }

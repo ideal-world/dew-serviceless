@@ -60,7 +60,7 @@ public class AppIdent extends SafeEntity {
     private Long relAppId;
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "iam_" + super.tableName();
     }
 

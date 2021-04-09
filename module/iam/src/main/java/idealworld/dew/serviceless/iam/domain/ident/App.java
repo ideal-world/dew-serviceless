@@ -78,7 +78,7 @@ public class App extends SafeEntity {
     private CommonStatus status;
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "iam_" + super.tableName();
     }
 

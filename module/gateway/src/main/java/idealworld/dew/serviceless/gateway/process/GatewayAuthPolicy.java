@@ -16,15 +16,13 @@
 
 package idealworld.dew.serviceless.gateway.process;
 
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.fun.auth.AuthenticationProcessor;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
-import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import io.vertx.core.Future;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 鉴权策略.
@@ -34,17 +32,17 @@ import java.util.Map;
 @Slf4j
 public class GatewayAuthPolicy {
 
-    public GatewayAuthPolicy(String moduleName, Integer resourceCacheExpireSec, Integer groupNodeLength) {
-        AuthenticationProcessor.init(moduleName, resourceCacheExpireSec, groupNodeLength);
+    public GatewayAuthPolicy(Integer resourceCacheExpireSec, Integer groupNodeLength) {
+        AuthenticationProcessor.init(resourceCacheExpireSec, groupNodeLength);
     }
 
     public Future<AuthResultKind> authentication(
             String moduleName,
             String actionKind,
             URI resourceUri,
-            Map<AuthSubjectKind, List<String>> subjectInfo
+            IdentOptExchangeInfo identOptExchangeInfo
     ) {
-        return AuthenticationProcessor.authentication(moduleName, actionKind.toLowerCase(), resourceUri, subjectInfo);
+        return AuthenticationProcessor.authentication(moduleName, actionKind.toLowerCase(), resourceUri, identOptExchangeInfo);
     }
 
 

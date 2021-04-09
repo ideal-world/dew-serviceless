@@ -21,12 +21,14 @@ import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.DewModule;
 import idealworld.dew.framework.dto.IdentOptCacheInfo;
 import idealworld.dew.framework.dto.OptActionKind;
+import idealworld.dew.framework.fun.auth.AuthCacheProcessor;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectOperatorKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
 import idealworld.dew.serviceless.iam.domain.ident.Tenant;
+import idealworld.dew.serviceless.iam.domain.ident.TenantCert;
 import idealworld.dew.serviceless.iam.dto.AccountIdentKind;
 import idealworld.dew.serviceless.iam.dto.ExposeKind;
 import idealworld.dew.serviceless.iam.dto.GroupKind;
@@ -71,6 +73,7 @@ public class IAMModule extends DewModule<IAMConfig> {
 
     @Override
     protected Future<Void> start(IAMConfig config) {
+        // 初始化处理器
         new CommonProcessor(getModuleName());
         new SCTenantProcessor(getModuleName());
         new TCTenantProcessor(getModuleName());
@@ -82,19 +85,32 @@ public class IAMModule extends DewModule<IAMConfig> {
         new ACResourceProcessor(getModuleName());
         new ACAuthPolicyProcessor(getModuleName());
         var exchangeProcessor = new ExchangeProcessor(getModuleName());
+        // 初始化上下文
         var context = ProcessContext.builder()
                 .conf(config)
                 .moduleName(getModuleName())
                 .build()
                 .init(IdentOptCacheInfo.builder().build());
+        // 初始交换器
         return exchangeProcessor.init(context)
-                .compose(resp -> context.sql.count(
-                        new HashMap<>(),
-                        Tenant.class))
+                .compose(resp ->
+                        // 初始化凭证版本缓存
+                        context.sql.list(TenantCert.class, new HashMap<>())
+                                .compose(tenantCerts -> {
+                                    tenantCerts.forEach(tenantCert ->
+                                            AuthCacheProcessor.addRevisionHistoryLimit(
+                                                    tenantCert.getRelTenantId(),
+                                                    tenantCert.getCategory(),
+                                                    tenantCert.getVersion())
+                                    );
+                                    return context.helper.success();
+                                }))
+                .compose(resp -> context.sql.count(Tenant.class, new HashMap<>()))
                 .compose(tenantCount -> {
                     if (tenantCount != 0) {
                         return Future.succeededFuture();
                     }
+                    // 初始化默认数据
                     return initData(config, context);
                 });
     }
@@ -129,7 +145,7 @@ public class IAMModule extends DewModule<IAMConfig> {
                         .compose(resp ->
                                 TCAppProcessor.addApp(AppAddReq.builder()
                                         .name(iamConfig.getApp().getIamAppName())
-                                        .build(), dto.tenantId, context,true))
+                                        .build(), dto.tenantId, context, true))
                         // 初始化应用认证
                         .compose(appId -> {
                             dto.appId = appId;

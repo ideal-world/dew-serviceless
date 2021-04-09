@@ -17,6 +17,7 @@
 package idealworld.dew.serviceless.iam.process.appconsole;
 
 import idealworld.dew.framework.DewConstant;
+import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.exception.ConflictException;
 import idealworld.dew.framework.exception.NotFoundException;
@@ -38,7 +39,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * 应用控制台下的群组控制器.
@@ -102,14 +102,14 @@ public class ACGroupProcessor extends EventBusProcessor {
     public static Future<Long> addGroup(GroupAddReq groupAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.helper.existToError(
                 context.sql.exists(
+                        Group.class,
                         new HashMap<>() {
                             {
                                 put("code", groupAddReq.getCode());
                                 put("rel_app_id", relAppId);
                                 put("rel_tenant_id", relTenantId);
                             }
-                        },
-                        Group.class), () -> new ConflictException("群组编码已存在"))
+                        }), () -> new ConflictException("群组编码已存在"))
                 .compose(resp -> {
                     var group = context.helper.convert(groupAddReq, Group.class);
                     group.setRelTenantId(relTenantId);
@@ -125,6 +125,7 @@ public class ACGroupProcessor extends EventBusProcessor {
                     .compose(resp ->
                             context.helper.existToError(
                                     context.sql.exists(
+                                            Group.class,
                                             new HashMap<>() {
                                                 {
                                                     put("!id", groupId);
@@ -132,32 +133,31 @@ public class ACGroupProcessor extends EventBusProcessor {
                                                     put("rel_app_id", relAppId);
                                                     put("rel_tenant_id", relTenantId);
                                                 }
-                                            },
-                                            Group.class), () -> new ConflictException("群组编码已存在")));
+                                            }), () -> new ConflictException("群组编码已存在")));
         }
         return future
                 .compose(resp ->
                         context.sql.update(
+                                context.helper.convert(groupModifyReq, Group.class),
                                 new HashMap<>() {
                                     {
                                         put("id", groupId);
                                         put("rel_app_id", relAppId);
                                         put("rel_tenant_id", relTenantId);
                                     }
-                                },
-                                context.helper.convert(groupModifyReq, Group.class)));
+                                }));
     }
 
     public static Future<GroupResp> getGroup(Long groupId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.getOne(
+                Group.class,
                 new HashMap<>() {
                     {
                         put("id", groupId);
                         put("rel_app_id", relAppId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                Group.class)
+                })
                 .compose(group -> context.helper.success(group, GroupResp.class));
     }
 
@@ -177,62 +177,55 @@ public class ACGroupProcessor extends EventBusProcessor {
         if (kind != null && !kind.isBlank()) {
             whereParameters.put("%kind", "%" + kind + "%");
         }
-        return context.sql.list(
-                whereParameters,
-                Group.class)
+        return context.sql.list(Group.class, whereParameters)
                 .compose(groups -> context.helper.success(groups, GroupResp.class));
     }
 
     public static Future<List<GroupResp>> findExposeGroups(String code, String name, String kind, Long relAppId, Long relTenantId,
                                                            ProcessContext context) {
         var sql = "SELECT * FROM %s" +
-                " WHERE (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
-                " OR expose_kind = #{expose_kind_global} )";
-        var whereParameters = new HashMap<String, Object>() {
-            {
-                put("expose_kind_tenant", ExposeKind.TENANT);
-                put("rel_tenant_id", relTenantId);
-                put("expose_kind_global", ExposeKind.GLOBAL);
-            }
-        };
+                " WHERE (expose_kind = ? AND rel_tenant_id = ?" +
+                " OR expose_kind = ?)";
+        var parameters = new ArrayList<>();
+        parameters.add(Group.class);
+        parameters.add(ExposeKind.TENANT);
+        parameters.add(relTenantId);
+        parameters.add(ExposeKind.GLOBAL);
         if (code != null && !code.isBlank()) {
-            sql += " AND code = #{code}";
-            whereParameters.put("%code", "%" + code + "%");
+            sql += " AND code = ?";
+            parameters.add("%" + code + "%");
         }
         if (name != null && !name.isBlank()) {
-            sql += " AND name = #{name}";
-            whereParameters.put("%name", "%" + name + "%");
+            sql += " AND name = ?";
+            parameters.add("%" + name + "%");
         }
         if (kind != null && !kind.isBlank()) {
-            sql += " AND kind = #{kind}";
-            whereParameters.put("%kind", "%" + kind + "%");
+            sql += " AND kind = ?";
+            parameters.add("%" + kind + "%");
         }
-        return context.sql.list(
-                String.format(sql, new Group().tableName()),
-                whereParameters,
-                Group.class)
+        return context.sql.list(Group.class, sql, parameters)
                 .compose(groups -> context.helper.success(groups, GroupResp.class));
     }
 
     public static Future<Void> deleteGroup(Long groupId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.helper.existToError(
                 context.sql.exists(
+                        GroupNode.class,
                         new HashMap<>() {
                             {
                                 put("rel_group_id", groupId);
                             }
-                        },
-                        GroupNode.class), () -> new ConflictException("请先删除关联的群组节点数据"))
+                        }), () -> new ConflictException("请先删除关联的群组节点数据"))
                 .compose(resp ->
                         context.sql.softDelete(
+                                Group.class,
                                 new HashMap<>() {
                                     {
                                         put("id", groupId);
                                         put("rel_app_id", relAppId);
                                         put("rel_tenant_id", relTenantId);
                                     }
-                                },
-                                Group.class));
+                                }));
     }
 
     // --------------------------------------------------------------------
@@ -241,27 +234,27 @@ public class ACGroupProcessor extends EventBusProcessor {
         return context.sql.tx(context, () ->
                 context.helper.notExistToError(
                         context.sql.exists(
+                                Group.class,
                                 new HashMap<>() {
                                     {
                                         put("id", groupId);
                                         put("rel_tenant_id", relTenantId);
                                         put("rel_app_id", relAppId);
                                     }
-                                },
-                                Group.class), () -> new NotFoundException("找不到对应的关联群组"))
+                                }), () -> new NotFoundException("找不到对应的关联群组"))
                         .compose(resp ->
                                 packageGroupNodeCode(groupId, groupNodeAddReq.getParentId(), groupNodeAddReq.getSiblingId(), null,
                                         (IAMConfig) context.conf, context.sql, context)
                                         .compose(fetchGroupNodeCode ->
                                                 context.helper.existToError(
                                                         context.sql.exists(
+                                                                GroupNode.class,
                                                                 new HashMap<>() {
                                                                     {
                                                                         put("code", fetchGroupNodeCode);
                                                                         put("rel_group_id", groupId);
                                                                     }
-                                                                },
-                                                                GroupNode.class), () -> new ConflictException("群组节点编码已存在"))
+                                                                }), () -> new ConflictException("群组节点编码已存在"))
                                                         .compose(r -> {
                                                             var groupNode = context.helper.convert(groupNodeAddReq, GroupNode.class);
                                                             groupNode.setRelGroupId(groupId);
@@ -277,19 +270,12 @@ public class ACGroupProcessor extends EventBusProcessor {
         return context.sql.tx(context, () ->
                 context.helper.notExistToError(
                         context.sql.getOne(
-                                String.format("SELECT node.* FROM %s AS node" +
-                                                " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
-                                                " WHERE node.id = #{id} AND _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = " +
-                                                "#{rel_app_id}",
-                                        new GroupNode().tableName(), new Group().tableName()),
-                                new HashMap<>() {
-                                    {
-                                        put("id", groupNodeId);
-                                        put("rel_app_id", relAppId);
-                                        put("rel_tenant_id", relTenantId);
-                                    }
-                                },
-                                GroupNode.class), () -> new NotFoundException("找不到对应的关联群组"))
+                                GroupNode.class,
+                                "SELECT node.* FROM %s AS node" +
+                                        " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
+                                        " WHERE node.id = ? AND _group.rel_tenant_id = ? AND _group.rel_app_id = ?",
+                                GroupNode.class, Group.class, groupNodeId, relTenantId, relAppId),
+                        () -> new NotFoundException("找不到对应的关联群组"))
                         .compose(fetchGroupNode -> {
                             if (groupNodeModifyReq.getParentId() != DewConstant.OBJECT_UNDEFINED
                                     || groupNodeModifyReq.getSiblingId() != DewConstant.OBJECT_UNDEFINED) {
@@ -298,14 +284,14 @@ public class ACGroupProcessor extends EventBusProcessor {
                                         .compose(fetchGroupNodeCode ->
                                                 context.helper.existToError(
                                                         context.sql.exists(
+                                                                GroupNode.class,
                                                                 new HashMap<>() {
                                                                     {
                                                                         put("!id", groupNodeId);
                                                                         put("code", fetchGroupNodeCode);
                                                                         put("rel_group_id", fetchGroupNode.getRelGroupId());
                                                                     }
-                                                                },
-                                                                GroupNode.class), () -> new ConflictException("群组节点编码已存在"))
+                                                                }), () -> new ConflictException("群组节点编码已存在"))
                                                         .compose(resp -> {
                                                             groupNodeSets.setCode(fetchGroupNodeCode);
                                                             return context.helper.success();
@@ -315,26 +301,18 @@ public class ACGroupProcessor extends EventBusProcessor {
                                 return context.helper.success();
                             }
                         })
-                        .compose(resp -> context.sql.update(groupNodeId, groupNodeSets))
+                        .compose(resp -> context.sql.update(groupNodeSets, groupNodeId))
         );
     }
 
     public static Future<List<GroupNodeResp>> findGroupNodes(Long groupId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.list(
-                String.format("SELECT node.* FROM %s AS node" +
-                                " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
-                                " WHERE _group.rel_tenant_id = #{rel_tenant_id} AND _group.rel_app_id = #{rel_app_id} AND node.rel_group_id = " +
-                                "#{rel_group_id}" +
-                                " ORDER BY node.code ASC",
-                        new GroupNode().tableName(), new Group().tableName()),
-                new HashMap<>() {
-                    {
-                        put("rel_group_id", groupId);
-                        put("rel_app_id", relAppId);
-                        put("rel_tenant_id", relTenantId);
-                    }
-                },
-                GroupNode.class)
+                GroupNode.class,
+                "SELECT node.* FROM %s AS node" +
+                        " INNER JOIN %s AS _group ON _group.id = node.rel_group_id" +
+                        " WHERE _group.rel_tenant_id = ? AND _group.rel_app_id = ? AND node.rel_group_id = ?" +
+                        " ORDER BY node.code ASC",
+                GroupNode.class, Group.class, relTenantId, relAppId, groupId)
                 .compose(fetchGroupNodes -> {
                     var nodeLength = ((IAMConfig) context.conf).getApp().getInitNodeCode().length();
                     List<GroupNodeResp> roleNodeRespList = fetchGroupNodes.stream()
@@ -361,39 +339,34 @@ public class ACGroupProcessor extends EventBusProcessor {
         return context.sql.tx(context, () ->
                 context.helper.existToError(
                         context.sql.exists(
+                                AccountGroup.class,
                                 new HashMap<>() {
                                     {
                                         put("rel_group_node_id", groupNodeId);
                                     }
-                                },
-                                AccountGroup.class), () -> new ConflictException("请先删除关联的账号群组数据"))
+                                }),
+                        () -> new ConflictException("请先删除关联的账号群组数据"))
                         .compose(resp ->
                                 context.helper.existToError(
                                         context.sql.exists(
+                                                AuthPolicy.class,
                                                 new HashMap<>() {
                                                     {
                                                         put("rel_subject_kind", AuthSubjectKind.GROUP_NODE);
                                                         put("%rel_subject_ids", "%" + groupNodeId + ",%");
                                                     }
-                                                },
-                                                AuthPolicy.class), () -> new ConflictException("请先删除关联的权限策略数据"))
+                                                }),
+                                        () -> new ConflictException("请先删除关联的权限策略数据"))
                                         .compose(r ->
                                                 context.sql.getOne(
-                                                        String.format("SELECT node.* FROM %s AS node" +
-                                                                        " INNER JOIN %s _group ON _group.id = node.rel_group_id" +
-                                                                        " WHERE node.id = #{node_id} AND _group.rel_tenant_id = #{rel_tenant_id} " +
-                                                                        "AND _group.rel_app_id = #{rel_app_id}",
-                                                                new GroupNode().tableName(), new Group().tableName()),
-                                                        new HashMap<>() {
-                                                            {
-                                                                put("node_id", groupNodeId);
-                                                                put("rel_tenant_id", relTenantId);
-                                                                put("rel_app_id", relAppId);
-                                                            }
-                                                        },
-                                                        GroupNode.class)
+                                                        GroupNode.class,
+                                                        "SELECT node.* FROM %s AS node" +
+                                                                " INNER JOIN %s _group ON _group.id = node.rel_group_id" +
+                                                                " WHERE node.id = ? AND _group.rel_tenant_id = ? " +
+                                                                "AND _group.rel_app_id = ?",
+                                                        GroupNode.class, Group.class, groupNodeId, relTenantId, relAppId)
                                                         .compose(fetchGroupNode ->
-                                                                context.sql.softDelete(fetchGroupNode.getId(), GroupNode.class)
+                                                                context.sql.softDelete(GroupNode.class, fetchGroupNode.getId())
                                                                         .compose(re -> updateOtherGroupNodeCode(fetchGroupNode.getRelGroupId(),
                                                                                 fetchGroupNode.getCode(), true, null,
                                                                                 (IAMConfig) context.conf, context.sql, context))
@@ -409,15 +382,8 @@ public class ACGroupProcessor extends EventBusProcessor {
         }
         if (siblingId == DewConstant.OBJECT_UNDEFINED) {
             return client.getOne(
-                    String.format("SELECT code FROM %s" +
-                                    " WHERE rel_group_id = #{rel_group_id} AND id = #{id}",
-                            new GroupNode().tableName()),
-                    new HashMap<>() {
-                        {
-                            put("rel_group_id", groupId);
-                            put("id", parentId);
-                        }
-                    })
+                    "SELECT code FROM %s WHERE rel_group_id = ? AND id = ?",
+                    GroupNode.class, groupId, parentId)
                     .compose(fetchParentGroupNodeCode -> {
                         var currentNodeCode = fetchParentGroupNodeCode.getString("code") + config.getApp().getInitNodeCode();
                         return updateOtherGroupNodeCode(groupId, currentNodeCode, false, originalGroupNodeCode, config, client, context)
@@ -425,14 +391,8 @@ public class ACGroupProcessor extends EventBusProcessor {
                     });
         }
         return client.getOne(
-                String.format("SELECT code FROM %s" +
-                                " WHERE id = #{id}",
-                        new GroupNode().tableName()),
-                new HashMap<>() {
-                    {
-                        put("id", siblingId);
-                    }
-                })
+                "SELECT code FROM %s WHERE id = ?",
+                GroupNode.class, siblingId)
                 .compose(fetchSiblingCode -> {
                     var siblingCode = fetchSiblingCode.getString("code");
                     var currentNodeLength = siblingCode.length();
@@ -458,17 +418,10 @@ public class ACGroupProcessor extends EventBusProcessor {
             var originalParentNodeCode = originalGroupNodeCode.substring(0, originalParentLength);
             future.compose(resp ->
                     client.list(
-                            String.format("SELECT * FROM %s" +
-                                            " WHERE rel_group_id = #{rel_group_id} AND code like #{code} AND code >= #{code_goe}",
-                                    new GroupNode().tableName()),
-                            new HashMap<String, Object>() {
-                                {
-                                    put("rel_group_id", groupId);
-                                    put("code", originalParentNodeCode + "%");
-                                    put("code_goe", originalGroupNodeCode);
-                                }
-                            },
-                            GroupNode.class))
+                            GroupNode.class,
+                            "SELECT * FROM %s" +
+                                    " WHERE rel_group_id = ? AND code like ? AND code >= ?",
+                            GroupNode.class, groupId, originalParentNodeCode + "%", originalGroupNodeCode))
                     .compose(fetchGroupNodes -> {
                         originalGroupNodes.addAll(fetchGroupNodes);
                         return context.helper.success();
@@ -476,21 +429,15 @@ public class ACGroupProcessor extends EventBusProcessor {
         }
         return future.compose(resp -> {
             var updateSql = "SELECT * FROM %s" +
-                    " WHERE rel_group_id = #{rel_group_id} AND code like #{code} AND code >= #{code_goe}";
-            var parameters = new HashMap<String, Object>() {
-                {
-                    put("rel_group_id", groupId);
-                    put("code", parentNodeCode + "%");
-                    put("code_goe", currentGroupNodeCode);
-                }
-            };
+                    " WHERE rel_group_id = ? AND code like ? AND code >= ?";
+            var parameters = new ArrayList<>();
+            parameters.add(GroupNode.class);
+            parameters.add(groupId);
+            parameters.add(parentNodeCode + "%");
+            parameters.add(currentGroupNodeCode);
             if (!originalGroupNodes.isEmpty()) {
-                var originalGroupNodesMap = IntStream.range(0, originalGroupNodes.size())
-                        .mapToObj(i -> new Object[]{"ori_node_" + i, originalGroupNodes.get(i)})
-                        .collect(Collectors.toMap(i -> (String) i[0], i -> i[1]));
-                parameters.putAll(originalGroupNodesMap);
-                updateSql += " AND id NOT IN (" + originalGroupNodesMap.keySet().stream().map(i -> "#{" + i + "}").collect(Collectors.joining(", ")) + ")";
-
+                parameters.addAll(originalGroupNodes.stream().map(IdEntity::getId).collect(Collectors.toList()));
+                updateSql += " AND id NOT IN (" + originalGroupNodes.stream().map(i -> "?").collect(Collectors.joining(", ")) + ")";
             }
             // 排序，避免索引重复
             if (deleteOpt) {
@@ -498,10 +445,7 @@ public class ACGroupProcessor extends EventBusProcessor {
             } else {
                 updateSql += " ORDER BY code DESC";
             }
-            return client.list(
-                    String.format(updateSql, new GroupNode().tableName()),
-                    parameters,
-                    GroupNode.class)
+            return client.list(GroupNode.class, updateSql, parameters)
                     .compose(groupNodes ->
                             CompositeFuture.all(
                                     groupNodes.stream()

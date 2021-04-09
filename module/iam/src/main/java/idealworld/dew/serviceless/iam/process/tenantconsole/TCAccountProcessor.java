@@ -146,24 +146,24 @@ public class TCAccountProcessor extends EventBusProcessor {
         return future
                 .compose(resp ->
                         context.sql.update(
+                                context.helper.convert(accountModifyReq, Account.class),
                                 new HashMap<>() {
                                     {
                                         put("id", accountId);
                                         put("rel_tenant_id", relTenantId);
                                     }
-                                },
-                                context.helper.convert(accountModifyReq, Account.class)));
+                                }));
     }
 
     public static Future<AccountResp> getAccount(Long accountId, Long relTenantId, ProcessContext context) {
         return context.sql.getOne(
+                Account.class,
                 new HashMap<>() {
                     {
                         put("id", accountId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                Account.class)
+                })
                 .compose(app -> context.helper.success(app, AccountResp.class));
     }
 
@@ -180,54 +180,50 @@ public class TCAccountProcessor extends EventBusProcessor {
         if (openId != null && !openId.isBlank()) {
             whereParameters.put("%open_id", "%" + openId + "%");
         }
-        return context.sql.page(
-                whereParameters,
-                pageNumber,
-                pageSize,
-                Account.class)
+        return context.sql.page(Account.class, pageNumber, pageSize, whereParameters)
                 .compose(accounts -> context.helper.success(accounts, AccountResp.class));
     }
 
     public static Future<Void> deleteAccount(Long accountId, Long relTenantId, ProcessContext context) {
         return context.sql.tx(context, () ->
                 context.sql.softDelete(
+                        Account.class,
                         new HashMap<>() {
                             {
                                 put("id", accountId);
                                 put("rel_tenant_id", relTenantId);
                             }
-                        },
-                        Account.class)
+                        })
                         .compose(deleteNumber ->
                                 CompositeFuture.all(
                                         context.sql.softDelete(
+                                                AccountIdent.class,
                                                 new HashMap<>() {
                                                     {
                                                         put("rel_account_id", accountId);
                                                     }
-                                                },
-                                                AccountIdent.class),
+                                                }),
                                         context.sql.softDelete(
+                                                AccountRole.class,
                                                 new HashMap<>() {
                                                     {
                                                         put("rel_account_id", accountId);
                                                     }
-                                                },
-                                                AccountRole.class),
+                                                }),
                                         context.sql.softDelete(
+                                                AccountApp.class,
                                                 new HashMap<>() {
                                                     {
                                                         put("rel_account_id", accountId);
                                                     }
-                                                },
-                                                AccountApp.class),
+                                                }),
                                         context.sql.softDelete(
+                                                AccountGroup.class,
                                                 new HashMap<>() {
                                                     {
                                                         put("rel_account_id", accountId);
                                                     }
-                                                },
-                                                AccountGroup.class))
+                                                }))
                                         .compose(resp -> context.helper.success())));
     }
 
@@ -236,25 +232,25 @@ public class TCAccountProcessor extends EventBusProcessor {
     public static Future<Long> addAccountIdent(Long accountId, AccountIdentAddReq accountIdentAddReq, Long relTenantId, ProcessContext context) {
         return context.helper.notExistToError(
                 context.sql.exists(
+                        Account.class,
                         new HashMap<>() {
                             {
                                 put("id", accountId);
                                 put("rel_tenant_id", relTenantId);
                             }
-                        },
-                        Account.class), () -> new NotFoundException("找不到对应的关联账号"))
+                        }),
+                () -> new NotFoundException("找不到对应的关联账号"))
                 .compose(resp ->
                         context.helper.existToError(context.sql.exists(
+                                AccountIdent.class,
                                 new HashMap<>() {
                                     {
                                         put("kind", accountIdentAddReq.getKind());
                                         put("ak", accountIdentAddReq.getAk());
                                         put("rel_tenant_id", relTenantId);
                                     }
-                                },
-                                AccountIdent.class),
-                                () -> new ConflictException("账号认证类型[" + accountIdentAddReq.getKind() + "]与AK[" + accountIdentAddReq.getAk() +
-                                        "]已存在")))
+                                }),
+                                () -> new ConflictException("账号认证类型[" + accountIdentAddReq.getKind() + "]与AK[" + accountIdentAddReq.getAk() + "]已存在")))
                 .compose(resp ->
                         IAMBasicProcessor.validRuleAndGetValidEndTime(
                                 accountIdentAddReq.getKind(),
@@ -290,17 +286,19 @@ public class TCAccountProcessor extends EventBusProcessor {
                                                   ProcessContext context) {
         return context.helper.notExistToError(
                 context.sql.getOne(
+                        AccountIdent.class,
                         new HashMap<>() {
                             {
                                 put("id", accountIdentId);
                                 put("rel_tenant_id", relTenantId);
                             }
-                        },
-                        AccountIdent.class), () -> new NotFoundException("找不到对应的账号认证"))
+                        }),
+                () -> new NotFoundException("找不到对应的账号认证"))
                 .compose(accountIdent -> {
                     var accountIdentAk = accountIdentModifyReq.getAk() != null ? accountIdentModifyReq.getAk() : accountIdent.getAk();
                     return context.helper.existToError(
                             context.sql.exists(
+                                    AccountIdent.class,
                                     new HashMap<>() {
                                         {
                                             put("!id", accountIdentId);
@@ -308,8 +306,7 @@ public class TCAccountProcessor extends EventBusProcessor {
                                             put("ak", accountIdentAk);
                                             put("rel_tenant_id", relTenantId);
                                         }
-                                    },
-                                    AccountIdent.class),
+                                    }),
                             () -> new ConflictException("账号认证类型[" + accountIdent.getKind() + "]与AK[" + accountIdentAk + "]已存在"))
                             .compose(resp ->
                                     IAMBasicProcessor.validRuleAndGetValidEndTime(
@@ -336,37 +333,37 @@ public class TCAccountProcessor extends EventBusProcessor {
                         accountIdentModifyReq.setSk(inputSk);
                     }
                     return context.sql.update(
+                            context.helper.convert(accountIdentModifyReq, AccountIdent.class),
                             new HashMap<>() {
                                 {
                                     put("id", accountIdentId);
                                     put("rel_tenant_id", relTenantId);
                                 }
-                            },
-                            context.helper.convert(accountIdentModifyReq, AccountIdent.class));
+                            });
                 });
     }
 
     public static Future<List<AccountIdentResp>> findAccountIdents(Long accountId, Long relTenantId, ProcessContext context) {
         return context.sql.list(
+                AccountIdent.class,
                 new HashMap<>() {
                     {
                         put("rel_account_id", accountId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                AccountIdent.class)
+                })
                 .compose(accountIdents -> context.helper.success(accountIdents, AccountIdentResp.class));
     }
 
     public static Future<Void> deleteAccountIdent(Long accountIdentId, Long relTenantId, ProcessContext context) {
         return context.sql.softDelete(
+                AccountIdent.class,
                 new HashMap<>() {
                     {
                         put("id", accountIdentId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                AccountIdent.class);
+                });
     }
 
     // --------------------------------------------------------------------
@@ -377,13 +374,13 @@ public class TCAccountProcessor extends EventBusProcessor {
                         IAMBasicProcessor.checkAppMembership(appId, relTenantId, context))
                 .compose(resp ->
                         context.sql.getOne(
-                                new HashMap<String, Object>() {
+                                AccountApp.class,
+                                new HashMap<String,Object>() {
                                     {
                                         put("rel_account_id", accountId);
                                         put("rel_app_id", appId);
                                     }
-                                },
-                                AccountApp.class))
+                                }))
                 .compose(accountApp -> {
                     if (accountApp == null) {
                         return context.sql.save(AccountApp.builder()
@@ -398,12 +395,13 @@ public class TCAccountProcessor extends EventBusProcessor {
     public static Future<Void> deleteAccountApp(Long accountAppId, Long relTenantId, ProcessContext context) {
         return context.helper.notExistToError(
                 context.sql.getOne(
+                        AccountApp.class,
                         new HashMap<>() {
                             {
                                 put("id", accountAppId);
                             }
-                        },
-                        AccountApp.class), () -> new NotFoundException("找不到对应的账号应用"))
+                        }),
+                () -> new NotFoundException("找不到对应的账号应用"))
                 .compose(fetchAccountAppResult ->
                         IAMBasicProcessor.checkAccountMembership(
                                 fetchAccountAppResult.getRelAccountId(),
@@ -414,9 +412,7 @@ public class TCAccountProcessor extends EventBusProcessor {
                                         relTenantId,
                                         context
                                 ))
-                                .compose(resp -> context.sql.softDelete(
-                                        fetchAccountAppResult.getId(),
-                                        AccountApp.class)));
+                                .compose(resp -> context.sql.softDelete(AccountApp.class, fetchAccountAppResult.getId())));
     }
 
     // --------------------------------------------------------------------
@@ -427,13 +423,13 @@ public class TCAccountProcessor extends EventBusProcessor {
                         IAMBasicProcessor.checkGroupNodeMembership(groupNodeId, relTenantId, context))
                 .compose(resp ->
                         context.sql.getOne(
-                                new HashMap<String, Object>() {
+                                AccountGroup.class,
+                                new HashMap<String,Object>() {
                                     {
                                         put("rel_account_id", accountId);
                                         put("rel_group_node_id", groupNodeId);
                                     }
-                                },
-                                AccountGroup.class))
+                                }))
                 .compose(accountGroup -> {
                     if (accountGroup == null) {
                         return context.sql.save(AccountGroup.builder()
@@ -448,20 +444,19 @@ public class TCAccountProcessor extends EventBusProcessor {
     public static Future<Void> deleteAccountGroup(Long accountGroupId, Long relTenantId, ProcessContext context) {
         return context.helper.notExistToError(
                 context.sql.getOne(
+                        AccountGroup.class,
                         new HashMap<>() {
                             {
                                 put("id", accountGroupId);
                             }
-                        },
-                        AccountGroup.class), () -> new NotFoundException("找不到对应的账号群组"))
+                        }),
+                () -> new NotFoundException("找不到对应的账号群组"))
                 .compose(fetchAccountGroupResult ->
                         IAMBasicProcessor.checkAccountMembership(
                                 fetchAccountGroupResult.getRelAccountId(),
                                 relTenantId,
                                 context)
-                                .compose(resp -> context.sql.softDelete(
-                                        fetchAccountGroupResult.getId(),
-                                        AccountGroup.class)));
+                                .compose(resp -> context.sql.softDelete(AccountGroup.class, fetchAccountGroupResult.getId())));
     }
 
     // --------------------------------------------------------------------
@@ -472,13 +467,13 @@ public class TCAccountProcessor extends EventBusProcessor {
                         IAMBasicProcessor.checkRoleMembership(roleId, relTenantId, context))
                 .compose(resp ->
                         context.sql.getOne(
-                                new HashMap<String, Object>() {
+                                AccountRole.class,
+                                new HashMap<String,Object>() {
                                     {
                                         put("rel_account_id", accountId);
                                         put("rel_role_id", roleId);
                                     }
-                                },
-                                AccountRole.class))
+                                }))
                 .compose(accountRole -> {
                     if (accountRole == null) {
                         return context.sql.save(AccountRole.builder()
@@ -493,20 +488,19 @@ public class TCAccountProcessor extends EventBusProcessor {
     public static Future<Void> deleteAccountRole(Long accountRoleId, Long relTenantId, ProcessContext context) {
         return context.helper.notExistToError(
                 context.sql.getOne(
+                        AccountRole.class,
                         new HashMap<>() {
                             {
                                 put("id", accountRoleId);
                             }
-                        },
-                        AccountRole.class), () -> new NotFoundException("找不到对应的账号角色"))
+                        }),
+                () -> new NotFoundException("找不到对应的账号角色"))
                 .compose(fetchAccountRoleResult ->
                         IAMBasicProcessor.checkAccountMembership(
                                 fetchAccountRoleResult.getRelAccountId(),
                                 relTenantId,
                                 context)
-                                .compose(resp -> context.sql.softDelete(
-                                        fetchAccountRoleResult.getId(),
-                                        AccountRole.class)));
+                                .compose(resp -> context.sql.softDelete(AccountRole.class, fetchAccountRoleResult.getId())));
     }
 
 }

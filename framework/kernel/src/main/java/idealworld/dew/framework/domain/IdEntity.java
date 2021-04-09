@@ -40,7 +40,7 @@ public abstract class IdEntity implements Serializable {
     @NotNull
     protected Long id;
 
-    public String tableName() {
+    protected String tableName() {
         var clazzName = this.getClass().getSimpleName();
         clazzName = clazzName.substring(0, 1).toLowerCase() + clazzName.substring(1);
         return CaseFormatter.camelToSnake(clazzName);

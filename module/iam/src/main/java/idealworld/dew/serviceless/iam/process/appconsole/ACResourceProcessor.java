@@ -36,6 +36,7 @@ import idealworld.dew.serviceless.iam.process.IAMBasicProcessor;
 import idealworld.dew.serviceless.iam.process.appconsole.dto.resource.*;
 import io.vertx.core.Future;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -113,14 +114,15 @@ public class ACResourceProcessor extends EventBusProcessor {
                     resourceSubjectAddReq.setUri(URIHelper.formatUri(resourceSubjectAddReq.getUri()));
                     return context.helper.existToError(
                             context.sql.exists(
+                                    ResourceSubject.class,
                                     new HashMap<>() {
                                         {
                                             put("code", resourceCode);
                                             put("rel_app_id", relAppId);
                                             put("rel_tenant_id", relTenantId);
                                         }
-                                    },
-                                    ResourceSubject.class), () -> new ConflictException("资源主体编码已存在"))
+                                    }),
+                            () -> new ConflictException("资源主体编码已存在"))
                             .compose(resp -> {
                                 var resourceSubject = context.helper.convert(resourceSubjectAddReq, ResourceSubject.class);
                                 resourceSubject.setCode(resourceCode);
@@ -128,7 +130,7 @@ public class ACResourceProcessor extends EventBusProcessor {
                                 resourceSubject.setRelAppId(relAppId);
                                 return context.sql.save(resourceSubject);
                             })
-                            .compose(resourceSubjectId -> context.sql.getOne(resourceSubjectId, ResourceSubject.class))
+                            .compose(resourceSubjectId -> context.sql.getOne(ResourceSubject.class, resourceSubjectId))
                             .compose(resourceSubject -> {
                                 ExchangeProcessor.publish(
                                         OptActionKind.CREATE,
@@ -171,6 +173,7 @@ public class ACResourceProcessor extends EventBusProcessor {
                                 resourceSubject.setCode(resourceSubjectCode);
                                 return context.helper.existToError(
                                         context.sql.exists(
+                                                ResourceSubject.class,
                                                 new HashMap<>() {
                                                     {
                                                         put("!id", resourceSubjectId);
@@ -178,23 +181,24 @@ public class ACResourceProcessor extends EventBusProcessor {
                                                         put("rel_app_id", relAppId);
                                                         put("rel_tenant_id", relTenantId);
                                                     }
-                                                },
-                                                ResourceSubject.class), () -> new ConflictException("资源主体编码已存在"));
+                                                }),
+                                        () -> new ConflictException("资源主体编码已存在"));
                             })
                             .compose(resp -> context.helper.success(null));
         }
         return future
                 .compose(resp ->
                         context.sql.update(
+                                resourceSubject,
                                 new HashMap<>() {
                                     {
                                         put("id", resourceSubjectId);
                                         put("rel_app_id", relAppId);
                                         put("rel_tenant_id", relTenantId);
                                     }
-                                }, resourceSubject)
+                                })
                 )
-                .compose(resp -> context.sql.getOne(resourceSubjectId, ResourceSubject.class))
+                .compose(resp -> context.sql.getOne(ResourceSubject.class, resourceSubjectId))
                 .compose(storedResourceSubject -> {
                     ExchangeProcessor.publish(
                             OptActionKind.MODIFY,
@@ -218,14 +222,14 @@ public class ACResourceProcessor extends EventBusProcessor {
 
     public static Future<ResourceSubjectResp> getResourceSubject(Long resourceSubjectId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.getOne(
+                ResourceSubject.class,
                 new HashMap<>() {
                     {
                         put("id", resourceSubjectId);
                         put("rel_app_id", relAppId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                ResourceSubject.class)
+                })
                 .compose(resourceSubject ->
                         context.helper.success(
                                 ResourceSubjectResp.builder()
@@ -263,9 +267,7 @@ public class ACResourceProcessor extends EventBusProcessor {
         if (kind != null && !kind.isBlank()) {
             whereParameters.put("kind", kind);
         }
-        return context.sql.list(
-                whereParameters,
-                ResourceSubject.class)
+        return context.sql.list(ResourceSubject.class, whereParameters)
                 .compose(resourceSubjects ->
                         context.helper.success(
                                 resourceSubjects.stream()
@@ -293,33 +295,35 @@ public class ACResourceProcessor extends EventBusProcessor {
     public static Future<Void> deleteResourceSubject(Long resourceSubjectId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.helper.existToError(
                 context.sql.exists(
+                        Resource.class,
                         new HashMap<>() {
                             {
                                 put("rel_resource_subject_id", resourceSubjectId);
                             }
-                        },
-                        Resource.class), () -> new ConflictException("请先删除关联的资源数据"))
+                        }),
+                () -> new ConflictException("请先删除关联的资源数据"))
                 .compose(resp ->
                         context.helper.notExistToError(
                                 context.sql.getOne(
-                                        new HashMap<String, Object>() {
+                                        ResourceSubject.class,
+                                        new HashMap<String,Object>() {
                                             {
                                                 put("id", resourceSubjectId);
                                                 put("rel_app_id", relAppId);
                                                 put("rel_tenant_id", relTenantId);
                                             }
-                                        },
-                                        ResourceSubject.class), () -> new NotFoundException("找不到对应的资源主体")))
+                                        }),
+                                () -> new NotFoundException("找不到对应的资源主体")))
                 .compose(storedResourceSubject ->
                         context.sql.softDelete(
+                                ResourceSubject.class,
                                 new HashMap<>() {
                                     {
                                         put("id", resourceSubjectId);
                                         put("rel_app_id", relAppId);
                                         put("rel_tenant_id", relTenantId);
                                     }
-                                },
-                                ResourceSubject.class)
+                                })
                                 .compose(resp -> context.helper.success(storedResourceSubject)))
                 .compose(storedResourceSubject -> {
                     ExchangeProcessor.publish(
@@ -347,14 +351,14 @@ public class ACResourceProcessor extends EventBusProcessor {
 
     public static Future<Long> addResource(ResourceAddReq resourceAddReq, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.getOne(
+                ResourceSubject.class,
                 new HashMap<>() {
                     {
                         put("id", resourceAddReq.getRelResourceSubjectId());
                         put("rel_app_id", relAppId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                ResourceSubject.class)
+                })
                 .compose(resourceSubject -> {
                     resourceAddReq.setPathAndQuery(
                             URIHelper.formatUri(
@@ -362,26 +366,28 @@ public class ACResourceProcessor extends EventBusProcessor {
                                     resourceAddReq.getPathAndQuery()));
                     return context.helper.existToError(
                             context.sql.exists(
+                                    Resource.class,
                                     new HashMap<>() {
                                         {
                                             put("uri", resourceAddReq.getPathAndQuery());
                                             put("rel_app_id", relAppId);
                                             put("rel_tenant_id", relTenantId);
                                         }
-                                    },
-                                    Resource.class), () -> new ConflictException("资源URI已存在"))
+                                    }),
+                            () -> new ConflictException("资源URI已存在"))
                             .compose(resp -> {
                                 if (resourceAddReq.getParentId() != DewConstant.OBJECT_UNDEFINED) {
                                     return context.helper.notExistToError(
                                             context.sql.exists(
+                                                    Resource.class,
                                                     new HashMap<>() {
                                                         {
                                                             put("id", resourceAddReq.getParentId());
                                                             put("rel_app_id", relAppId);
                                                             put("rel_tenant_id", relTenantId);
                                                         }
-                                                    },
-                                                    Resource.class), () -> new NotFoundException("找不到对应的资源所属组"));
+                                                    }),
+                                            () -> new NotFoundException("找不到对应的资源所属组"));
                                 } else {
                                     return context.helper.success(true);
                                 }
@@ -393,7 +399,7 @@ public class ACResourceProcessor extends EventBusProcessor {
                                 resource.setRelAppId(relAppId);
                                 return context.sql.save(resource);
                             })
-                            .compose(resourceId -> context.sql.getOne(resourceId, Resource.class))
+                            .compose(resourceId -> context.sql.getOne(Resource.class, resourceId))
                             .compose(storedResource -> {
                                 ExchangeProcessor.publish(
                                         OptActionKind.CREATE,
@@ -417,21 +423,16 @@ public class ACResourceProcessor extends EventBusProcessor {
                     .compose(resp ->
                             context.helper.notExistToError(
                                     context.sql.getOne(
-                                            String.format("SELECT subject.code, subject.kind, subject.uri FROM %s AS resource" +
-                                                            " INNER JOIN %s AS subject ON subject.id = resource.rel_resource_subject_id" +
-                                                            " WHERE resource.id = #{id} AND resource.rel_app_id = #{rel_app_id} AND resource" +
-                                                            ".rel_tenant_id = #{rel_tenant_id}",
-                                                    new Resource().tableName(), new ResourceSubject().tableName()),
-                                            new HashMap<>() {
-                                                {
-                                                    put("id", resourceId);
-                                                    put("rel_app_id", relAppId);
-                                                    put("rel_tenant_id", relTenantId);
-                                                }
-                                            }), () -> new NotFoundException("找不到对应的资源主体"))
+                                            "SELECT subject.code, subject.kind, subject.uri FROM %s AS resource" +
+                                                    " INNER JOIN %s AS subject ON subject.id = resource.rel_resource_subject_id" +
+                                                    " WHERE resource.id = ? AND resource.rel_app_id = ? AND resource" +
+                                                    ".rel_tenant_id = ?",
+                                            Resource.class, ResourceSubject.class, resourceId, relAppId, relTenantId),
+                                    () -> new NotFoundException("找不到对应的资源主体"))
                                     .compose(fetchResourceSubject ->
                                             context.helper.existToError(
                                                     context.sql.exists(
+                                                            Resource.class,
                                                             new HashMap<>() {
                                                                 {
                                                                     put("!id", resourceId);
@@ -443,8 +444,8 @@ public class ACResourceProcessor extends EventBusProcessor {
                                                                     put("rel_app_id", relAppId);
                                                                     put("rel_tenant_id", relTenantId);
                                                                 }
-                                                            },
-                                                            Resource.class), () -> new ConflictException("资源URI已存在"))
+                                                            }),
+                                                    () -> new ConflictException("资源URI已存在"))
                                                     .compose(r -> {
                                                         resourceModifyReq.setPathAndQuery(
                                                                 URIHelper.formatUri(fetchResourceSubject.getString("kind").toLowerCase()
@@ -458,31 +459,32 @@ public class ACResourceProcessor extends EventBusProcessor {
             future.compose(resp ->
                     context.helper.notExistToError(
                             context.sql.exists(
+                                    Resource.class,
                                     new HashMap<>() {
                                         {
                                             put("id", resourceModifyReq.getParentId());
                                             put("rel_app_id", relAppId);
                                             put("rel_tenant_id", relTenantId);
                                         }
-                                    },
-                                    Resource.class), () -> new NotFoundException("找不到对应的资源所属组")));
+                                    }),
+                            () -> new NotFoundException("找不到对应的资源所属组")));
         }
         return future.compose(resp -> {
             var resource = context.helper.convert(resourceModifyReq, Resource.class);
             resource.setUri(resourceModifyReq.getPathAndQuery());
             return context.sql.update(
+                    resource,
                     new HashMap<>() {
                         {
                             put("id", resourceId);
                             put("rel_app_id", relAppId);
                             put("rel_tenant_id", relTenantId);
                         }
-                    },
-                    resource);
+                    });
         })
-                .compose(resp -> context.sql.getOne(resourceId, Resource.class))
+                .compose(resp -> context.sql.getOne(Resource.class, resourceId))
                 .compose(storedResource ->
-                        context.sql.getOne(storedResource.getRelResourceSubjectId(), ResourceSubject.class)
+                        context.sql.getOne(ResourceSubject.class, storedResource.getRelResourceSubjectId())
                                 .compose(resourceSubject -> {
                                     ExchangeProcessor.publish(
                                             OptActionKind.MODIFY,
@@ -500,14 +502,14 @@ public class ACResourceProcessor extends EventBusProcessor {
 
     public static Future<ResourceResp> getResource(Long resourceId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.getOne(
+                Resource.class,
                 new HashMap<>() {
                     {
                         put("id", resourceId);
                         put("rel_app_id", relAppId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                Resource.class)
+                })
                 .compose(resource ->
                         context.helper.success(
                                 ResourceResp.builder()
@@ -541,9 +543,7 @@ public class ACResourceProcessor extends EventBusProcessor {
         if (uri != null && !uri.isBlank()) {
             whereParameters.put("%uri", "%" + uri + "%");
         }
-        return context.sql.list(
-                whereParameters,
-                Resource.class)
+        return context.sql.list(Resource.class, whereParameters)
                 .compose(resources ->
                         context.helper.success(
                                 resources.stream()
@@ -570,27 +570,21 @@ public class ACResourceProcessor extends EventBusProcessor {
 
     public static Future<List<ResourceResp>> findExposeResources(String name, String uri, Long relAppId, Long relTenantId, ProcessContext context) {
         var sql = "SELECT * FROM %s" +
-                " WHERE (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id}" +
-                " OR expose_kind = #{expose_kind_global} )";
-        var whereParameters = new HashMap<String, Object>() {
-            {
-                put("expose_kind_tenant", ExposeKind.TENANT);
-                put("rel_tenant_id", relTenantId);
-                put("expose_kind_global", ExposeKind.GLOBAL);
-            }
-        };
+                " WHERE (expose_kind = ? AND rel_tenant_id = ? OR expose_kind = ?)";
+        var parameters = new ArrayList<>();
+        parameters.add(Resource.class);
+        parameters.add(ExposeKind.TENANT);
+        parameters.add(relTenantId);
+        parameters.add(ExposeKind.GLOBAL);
         if (name != null && !name.isBlank()) {
-            sql += " AND name = #{name}";
-            whereParameters.put("%name", "%" + name + "%");
+            sql += " AND name = ?";
+            parameters.add("%" + name + "%");
         }
         if (uri != null && !uri.isBlank()) {
-            sql += " AND uri = #{uri}";
-            whereParameters.put("%uri", "%" + uri + "%");
+            sql += " AND uri = ?";
+            parameters.add("%" + uri + "%");
         }
-        return context.sql.list(
-                String.format(sql, new Resource().tableName()),
-                whereParameters,
-                Resource.class)
+        return context.sql.list(Resource.class, sql, parameters)
                 .compose(resources ->
                         context.helper.success(
                                 resources.stream()
@@ -618,36 +612,38 @@ public class ACResourceProcessor extends EventBusProcessor {
     public static Future<Void> deleteResource(Long resourceId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.helper.existToError(
                 context.sql.exists(
+                        AuthPolicy.class,
                         new HashMap<>() {
                             {
                                 put("rel_resource_id", resourceId);
                             }
-                        },
-                        AuthPolicy.class), () -> new ConflictException("请先删除关联的权限策略数据"))
+                        }),
+                () -> new ConflictException("请先删除关联的权限策略数据"))
                 .compose(resp ->
                         context.helper.notExistToError(
                                 context.sql.getOne(
+                                        Resource.class,
                                         new HashMap<>() {
                                             {
                                                 put("id", resourceId);
                                                 put("rel_app_id", relAppId);
                                                 put("rel_tenant_id", relTenantId);
                                             }
-                                        },
-                                        Resource.class), () -> new NotFoundException("找不到对应的资源"))
+                                        }),
+                                () -> new NotFoundException("找不到对应的资源"))
                                 .compose(storedResource ->
                                         context.sql.softDelete(
+                                                Resource.class,
                                                 new HashMap<>() {
                                                     {
                                                         put("id", resourceId);
                                                         put("rel_app_id", relAppId);
                                                         put("rel_tenant_id", relTenantId);
                                                     }
-                                                },
-                                                Resource.class)
+                                                })
                                                 .compose(r -> context.helper.success(storedResource)))
                                 .compose(storedResource ->
-                                        context.sql.getOne(storedResource.getRelResourceSubjectId(), ResourceSubject.class)
+                                        context.sql.getOne(ResourceSubject.class, storedResource.getRelResourceSubjectId())
                                                 .compose(resourceSubject -> {
                                                     ExchangeProcessor.publish(
                                                             OptActionKind.DELETE,
@@ -668,16 +664,9 @@ public class ACResourceProcessor extends EventBusProcessor {
 
     private Future<List<Long>> doFindResourceAndGroups(Long resourceParentId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.list(
-                String.format("SELECT id FROM %s" +
-                                " WHERE parent_id = #{resource_parent_id} AND rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id}",
-                        new Resource().tableName()),
-                new HashMap<>() {
-                    {
-                        put("resource_parent_id", resourceParentId);
-                        put("rel_app_id", relAppId);
-                        put("rel_tenant_id", relTenantId);
-                    }
-                })
+                "SELECT id FROM %s" +
+                        " WHERE parent_id = ? AND rel_tenant_id = ? AND rel_app_id = ?",
+                Resource.class, resourceParentId, relTenantId, relAppId)
                 .compose(fetchResourceIds -> context.helper.success(
                         fetchResourceIds.stream()
                                 .map(id -> id.getLong("id"))

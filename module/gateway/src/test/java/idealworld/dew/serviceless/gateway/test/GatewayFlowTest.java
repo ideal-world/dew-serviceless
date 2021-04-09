@@ -22,6 +22,7 @@ import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceSubjectExchange;
+import idealworld.dew.framework.fun.auth.exchange.ExchangeHelper;
 import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.test.DewTest;
@@ -93,7 +94,7 @@ public class GatewayFlowTest extends DewTest {
     @Test
     public void testPublic(Vertx vertx, VertxTestContext testContext) {
         // 添加资源主体
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resourcesubject.http/httpbin",
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resourcesubject.http/httpbin",
                 JsonObject.mapFrom(ResourceSubjectExchange.builder()
                         .code("1.http.httpbin")
                         .name("测试API")
@@ -120,7 +121,7 @@ public class GatewayFlowTest extends DewTest {
     @Test
     public void testToken(Vertx vertx, VertxTestContext testContext) {
         // 添加资源主体
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resourcesubject.http/httpbin",
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resourcesubject.http/httpbin",
                 JsonObject.mapFrom(ResourceSubjectExchange.builder()
                         .code("1.http.httpbin")
                         .name("测试API")

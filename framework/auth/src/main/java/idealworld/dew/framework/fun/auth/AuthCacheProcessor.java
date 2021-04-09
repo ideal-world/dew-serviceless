@@ -25,7 +25,10 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
@@ -33,10 +36,21 @@ import java.util.stream.Collectors;
  * 登录鉴权处理器.
  *
  * @author gudaoxuri
- * @author gjason
  */
 @Slf4j
 public class AuthCacheProcessor {
+
+    private static final String TOKEN_ID_REL_SPLIT = "##";
+
+    // tenantId -> Token kind -> 保留的版本数
+    private static final Map<Long, Map<String, Integer>> REVISION_HISTORY_VERSION = new ConcurrentHashMap<>();
+
+    public static void addRevisionHistoryLimit(Long tenantId, String tokenKind, Integer revisionHistoryLimit) {
+        if (!REVISION_HISTORY_VERSION.containsKey(tenantId)) {
+            REVISION_HISTORY_VERSION.put(tenantId, new ConcurrentHashMap<>());
+        }
+        REVISION_HISTORY_VERSION.get(tenantId).put(tokenKind, revisionHistoryLimit);
+    }
 
     public static Future<Optional<IdentOptExchangeInfo>> getOptInfo(String token, ProcessContext context) {
         return context.cache.get(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token)
@@ -44,7 +58,7 @@ public class AuthCacheProcessor {
                     if (optInfoStr != null && !optInfoStr.isEmpty()) {
                         var identOpt = new JsonObject(optInfoStr).mapTo(IdentOptExchangeInfo.class);
                         identOpt.setUnauthorizedAppId(identOpt.getAppId());
-                        identOpt.setUnauthorizedTenantId(identOpt.getUnauthorizedTenantId());
+                        identOpt.setUnauthorizedTenantId(identOpt.getTenantId());
                         return context.helper.success(Optional.of(identOpt));
                     } else {
                         return context.helper.success(Optional.empty());
@@ -53,65 +67,66 @@ public class AuthCacheProcessor {
     }
 
     public static Future<Void> removeOptInfo(String token, ProcessContext context) {
-        return getOptInfo(token, context)
-                .compose(tokenInfoOpt -> {
-                    if (tokenInfoOpt.isPresent()) {
-                        return context.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token)
-                                .compose(resp ->
-                                        removeOldToken(tokenInfoOpt.get().getAccountCode(),
-                                                tokenInfoOpt.get().getTokenKind(), context));
-                    } else {
-                        return context.helper.success();
-                    }
-                });
+        var optInfoF = getOptInfo(token, context);
+        return optInfoF.compose(tokenInfoOpt -> {
+            if (tokenInfoOpt.isPresent()) {
+                var delF = context.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + token);
+                return delF.compose(resp ->
+                        removeOldToken(tokenInfoOpt.get().getAccountCode(),
+                                tokenInfoOpt.get().getAppId(), tokenInfoOpt.get().getTokenKind(), context));
+            } else {
+                return context.helper.success();
+            }
+        });
     }
 
     public static Future<Void> setOptInfo(IdentOptCacheInfo optInfo, Long expireSec, ProcessContext context) {
-        return context.cache.setnx(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(),
-                JsonObject.mapFrom(optInfo).toString())
-                .compose(success -> {
-                    if (!success) {
-                        return context.helper.success();
-                    }
-                    if (expireSec == DewAuthConstant.OBJECT_UNDEFINED) {
-                        return context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
-                                optInfo.getToken(),
-                                optInfo.getTokenKind() + "##" + System.currentTimeMillis())
-                                .compose(resp -> removeOldToken(optInfo.getAccountCode(), optInfo.getTokenKind(), context));
-                    }
-                    return context.cache.expire(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(), expireSec)
-                            .compose(resp ->
-                                    context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
-                                            optInfo.getToken(),
-                                            optInfo.getTokenKind() + "##" + System.currentTimeMillis()))
-                            .compose(resp -> removeOldToken(optInfo.getAccountCode(), optInfo.getTokenKind(), context));
-                });
+        var setTokenInfoF = context.cache.setnx(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(),
+                JsonObject.mapFrom(optInfo).toString());
+        return setTokenInfoF.compose(success -> {
+            if (!success) {
+                // 已存在
+                return context.helper.success();
+            }
+            if (expireSec == DewAuthConstant.OBJECT_UNDEFINED) {
+                var setRelF = context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
+                        optInfo.getToken(),
+                        optInfo.getTokenKind() + TOKEN_ID_REL_SPLIT + System.currentTimeMillis());
+                return setRelF.compose(resp -> removeOldToken(optInfo.getAccountCode(), optInfo.getTenantId(), optInfo.getTokenKind(), context));
+            }
+            var setExpireF = context.cache.expire(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + optInfo.getToken(), expireSec);
+            return setExpireF.compose(resp ->
+                    context.cache.hset(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + optInfo.getAccountCode(),
+                            optInfo.getToken(),
+                            optInfo.getTokenKind() + TOKEN_ID_REL_SPLIT + System.currentTimeMillis()))
+                    .compose(resp -> removeOldToken(optInfo.getAccountCode(), optInfo.getTenantId(), optInfo.getTokenKind(), context));
+        });
     }
 
-    private static Future<Void> removeOldToken(Object accountCode, String tokenKind, ProcessContext context) {
+    private static Future<Void> removeOldToken(Object accountCode, Long tenantId, String tokenKind, ProcessContext context) {
         // 当前 token kind 要求保留的历史版本数
-        // TODO
-        int revisionHistoryLimit = 0;
+        int revisionHistoryLimit = REVISION_HISTORY_VERSION.getOrDefault(tenantId, new HashMap<>()).getOrDefault(tokenKind, 1);
         // 当前 account code 关联的所有 token
-        return context.cache.hgetall(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode)
-                .compose(tokenKinds ->
-                        CompositeFuture.all(
-                                tokenKinds.entrySet().stream()
-                                        .filter(entry -> entry.getValue().split("##")[0].equalsIgnoreCase(tokenKind))
-                                        // 按创建时间倒序
-                                        .sorted((entry1, entry2) ->
-                                                Long.compare(Long.parseLong(entry2.getValue().split("##")[1]),
-                                                        Long.parseLong(entry1.getValue().split("##")[1])))
-                                        .skip(revisionHistoryLimit + 1)
-                                        .map(entry ->
-                                                // 删除多余版本
-                                                context.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + entry.getKey())
-                                                        .compose(r ->
-                                                                context.cache.hdel(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode,
-                                                                        entry.getKey())))
-                                        .collect(Collectors.toList())
-                        )
+        var getAllRelsF = context.cache.hgetall(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode);
+        return getAllRelsF.compose(tokenKinds ->
+                CompositeFuture.all(
+                        tokenKinds.entrySet().stream()
+                                .filter(entry -> entry.getValue().split(TOKEN_ID_REL_SPLIT)[0].equalsIgnoreCase(tokenKind))
+                                // 按创建时间倒序
+                                .sorted((entry1, entry2) ->
+                                        Long.compare(Long.parseLong(entry2.getValue().split(TOKEN_ID_REL_SPLIT)[1]),
+                                                Long.parseLong(entry1.getValue().split(TOKEN_ID_REL_SPLIT)[1])))
+                                .skip(revisionHistoryLimit + 1)
+                                .map(entry -> {
+                                    // 删除多余版本
+                                    var delF = context.cache.del(DewAuthConstant.CACHE_TOKEN_INFO_FLAG + entry.getKey());
+                                    return delF.compose(r ->
+                                            context.cache.hdel(DewAuthConstant.CACHE_TOKEN_ID_REL_FLAG + accountCode,
+                                                    entry.getKey()));
+                                })
+                                .collect(Collectors.toList())
                 )
+        )
                 .compose(rsp -> context.helper.success());
     }
 

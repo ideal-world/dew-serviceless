@@ -70,13 +70,14 @@ public class TCAppProcessor extends EventBusProcessor {
         var appCode = createIamApp ? context.moduleName : "ap" + $.field.createUUID().toLowerCase();
         return context.helper.existToError(
                 context.sql.exists(
+                        App.class,
                         new HashMap<>() {
                             {
                                 put("name", appAddReq.getName());
                                 put("rel_tenant_id", relTenantId);
                             }
-                        },
-                        App.class), () -> new ConflictException("应用名称已存在"))
+                        }),
+                () -> new ConflictException("应用名称已存在"))
                 .compose(resp -> {
                     var app = $.bean.copyProperties(appAddReq, App.class);
                     var keys = $.security.asymmetric.generateKeys("RSA", 1024);
@@ -99,33 +100,32 @@ public class TCAppProcessor extends EventBusProcessor {
                     if (appModifyReq.getName() != null) {
                         return context.helper.existToError(
                                 context.sql.exists(
+                                        App.class,
                                         new HashMap<>() {
                                             {
                                                 put("!id", appId);
                                                 put("name", appModifyReq.getName());
                                                 put("rel_tenant_id", relTenantId);
                                             }
-                                        },
-                                        App.class), () -> new ConflictException("应用名称已存在"));
+                                        }),
+                                () -> new ConflictException("应用名称已存在"));
                     } else {
                         return context.helper.success(true);
                     }
                 })
                 .compose(resp ->
                         context.sql.update(
+                                context.helper.convert(appModifyReq, App.class),
                                 new HashMap<>() {
                                     {
                                         put("id", appId);
                                         put("rel_tenant_id", relTenantId);
                                     }
-                                },
-                                context.helper.convert(appModifyReq, App.class)))
+                                }))
                 .compose(resp ->
-                        context.sql.getOne(String.format("SELECT open_id FROM %s WHERE id = #{id}", new App().tableName()), new HashMap<>() {
-                            {
-                                put("id", appId);
-                            }
-                        }))
+                        context.sql.getOne(
+                                "SELECT open_id FROM %s WHERE id = ?",
+                                App.class, appId))
                 .compose(appInfo -> {
                     if (appModifyReq.getStatus() != null) {
                         if (appModifyReq.getStatus() == CommonStatus.ENABLED) {
@@ -140,13 +140,13 @@ public class TCAppProcessor extends EventBusProcessor {
 
     public static Future<AppResp> getApp(Long appId, Long relTenantId, ProcessContext context) {
         return context.sql.getOne(
+                App.class,
                 new HashMap<>() {
                     {
                         put("id", appId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                App.class)
+                })
                 .compose(app -> context.helper.success(app, AppResp.class));
     }
 
@@ -163,11 +163,7 @@ public class TCAppProcessor extends EventBusProcessor {
         if (name != null && !name.isBlank()) {
             whereParameters.put("%name", "%" + name + "%");
         }
-        return context.sql.page(
-                whereParameters,
-                pageNumber,
-                pageSize,
-                App.class)
+        return context.sql.page(App.class, pageNumber, pageSize, whereParameters)
                 .compose(apps -> context.helper.success(apps, AppResp.class));
     }
 

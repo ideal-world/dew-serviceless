@@ -48,8 +48,6 @@ public class DewConstant {
     // 参数相关：CLI参数名分隔符
     public static final String PARAM_CONFIG_ITEM_PREFIX = PARAM_CONFIG + ".";
 
-    // 缓存相关：鉴权策略缓存
-    public static final String CACHE_AUTH_POLICY = "dew:iam:policy:";
     // 资源主题分隔符
     // TODO 是否可以去掉
     public static final String RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT = ".";

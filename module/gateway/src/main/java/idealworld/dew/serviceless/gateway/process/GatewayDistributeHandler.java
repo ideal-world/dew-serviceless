@@ -24,7 +24,7 @@ import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
-import idealworld.dew.framework.fun.httpserver.AuthHttpHandler;
+import idealworld.dew.framework.fun.httpserver.HttpHandler;
 import idealworld.dew.framework.util.JsonHelper;
 import idealworld.dew.serviceless.gateway.GatewayConfig;
 import io.vertx.core.buffer.Buffer;
@@ -42,7 +42,7 @@ import java.util.HashMap;
  * @author gudaoxuri
  */
 @Slf4j
-public class GatewayDistributeHandler extends AuthHttpHandler {
+public class GatewayDistributeHandler extends HttpHandler {
 
     private final GatewayConfig.Distribute distribute;
 

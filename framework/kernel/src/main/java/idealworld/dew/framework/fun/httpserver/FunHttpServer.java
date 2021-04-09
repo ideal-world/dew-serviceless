@@ -127,7 +127,7 @@ public class FunHttpServer {
         String path;
         @Builder.Default
         String produces = "application/json";
-        List<KernelHttpHandler> handlers;
+        List<HttpHandler> handlers;
 
     }
 }

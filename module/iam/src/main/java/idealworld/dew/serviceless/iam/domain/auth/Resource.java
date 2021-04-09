@@ -137,7 +137,7 @@ public class Resource extends AppBasedEntity {
     private Long relResourceSubjectId;
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "iam_" + super.tableName();
     }
 

@@ -16,9 +16,9 @@
 
 package idealworld.dew.serviceless.reldb.process;
 
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.fun.auth.AuthenticationProcessor;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
-import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import lombok.extern.slf4j.Slf4j;
@@ -35,32 +35,32 @@ import java.util.Map;
 @Slf4j
 public class RelDBAuthPolicy {
 
-    public RelDBAuthPolicy(String moduleName, Integer resourceCacheExpireSec, Integer groupNodeLength) {
-        AuthenticationProcessor.init(moduleName, resourceCacheExpireSec, groupNodeLength);
+    public RelDBAuthPolicy(Integer resourceCacheExpireSec, Integer groupNodeLength) {
+        AuthenticationProcessor.init(resourceCacheExpireSec, groupNodeLength);
     }
 
     public Future<AuthResultKind> authentication(
             String moduleName,
             Map<String, List<URI>> resourceInfo,
-            Map<AuthSubjectKind, List<String>> subjectInfo
+            IdentOptExchangeInfo identOptExchangeInfo
     ) {
         Promise<AuthResultKind> promise = Promise.promise();
         if (resourceInfo.isEmpty()) {
             promise.complete(AuthResultKind.ACCEPT);
             return promise.future();
         }
-        authentication(moduleName, resourceInfo, subjectInfo, promise);
+        authentication(moduleName, resourceInfo, identOptExchangeInfo, promise);
         return promise.future();
     }
 
     private void authentication(
             String moduleName,
             Map<String, List<URI>> resourceInfo,
-            Map<AuthSubjectKind, List<String>> subjectInfo,
+            IdentOptExchangeInfo identOptExchangeInfo,
             Promise<AuthResultKind> promise
     ) {
         var currentProcessInfo = resourceInfo.entrySet().iterator().next();
-        AuthenticationProcessor.authentication(moduleName, currentProcessInfo.getKey(), currentProcessInfo.getValue(), subjectInfo)
+        AuthenticationProcessor.authentication(moduleName, currentProcessInfo.getKey(), currentProcessInfo.getValue(), identOptExchangeInfo)
                 .onSuccess(authResultKind -> {
                     if (authResultKind == AuthResultKind.REJECT) {
                         promise.complete(authResultKind);
@@ -68,7 +68,7 @@ public class RelDBAuthPolicy {
                     }
                     resourceInfo.remove(currentProcessInfo.getKey());
                     if (!resourceInfo.isEmpty()) {
-                        authentication(moduleName, resourceInfo, subjectInfo, promise);
+                        authentication(moduleName, resourceInfo, identOptExchangeInfo, promise);
                         return;
                     }
                     promise.complete(authResultKind);

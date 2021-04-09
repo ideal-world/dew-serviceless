@@ -18,6 +18,8 @@ package idealworld.dew.serviceless.gateway.test;
 
 import idealworld.dew.framework.DewAuthConstant;
 import idealworld.dew.framework.DewConfig;
+import idealworld.dew.framework.dto.IdentOptExchangeInfo;
+import idealworld.dew.framework.dto.IdentOptInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.auth.dto.AuthSubjectKind;
@@ -38,10 +40,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 网关鉴权策略测试.
@@ -72,19 +71,19 @@ public class GatewayAuthPolicyTest extends DewTest {
     @SneakyThrows
     @Test
     public void testBasic(Vertx vertx, VertxTestContext testContext) {
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.CREATE.toString().toLowerCase())
                 .uri("http://iam.service/console/tenant/account")
                 .build()).toBuffer(), new HashMap<>());
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.DELETE.toString().toLowerCase())
                 .uri("http://iam.service/console/tenant/account/*")
                 .build()).toBuffer(), new HashMap<>());
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.DELETE.toString().toLowerCase())
                 .uri("http://iam.service/console/tenant/account/ident/*")
                 .build()).toBuffer(), new HashMap<>());
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.DELETE.toString().toLowerCase())
                 .uri("http://iam.service/console/tenant/account/ident/1")
                 .build()).toBuffer(), new HashMap<>());
@@ -97,7 +96,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.ROLE.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("r01");
+                                        add("1");
                                     }
                                 });
                             }
@@ -111,7 +110,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.ROLE.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("r01");
+                                        add("1");
                                     }
                                 });
                             }
@@ -125,7 +124,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.ROLE.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("r01");
+                                        add("1");
                                     }
                                 });
                             }
@@ -134,7 +133,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.ACCOUNT.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("a01");
+                                        add("100");
                                     }
                                 });
                             }
@@ -148,55 +147,50 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.ACCOUNT.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("a01");
+                                        add("100");
                                     }
                                 });
                             }
                         });
                     }
                 }).toString()));
-        var authPolicy = new GatewayAuthPolicy(MODULE_NAME, 60, 5);
+        var authPolicy = new GatewayAuthPolicy(60, 5);
         Thread.sleep(1000);
-        Map<AuthSubjectKind, List<String>> subjectInfo = new HashMap<>() {
-            {
-                put(AuthSubjectKind.ACCOUNT, new ArrayList<>() {
+        var identOptExchangeInfo = IdentOptExchangeInfo.builder()
+                .accountId(10L)
+                .roleInfo(new HashSet<>(){
                     {
-                        add("a00");
+                        add(IdentOptInfo.RoleInfo.builder()
+                                .id(0L)
+                                .build());
                     }
-                });
-                put(AuthSubjectKind.ROLE, new ArrayList<>() {
-                    {
-                        add("r00");
-                    }
-                });
-            }
-        };
+                })
+                .build();
         // 资源不需要认证
-        var result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/public"), subjectInfo));
+        var result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/public"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         // 资源需要认证，但没有权限主体
-        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/tenant/account"), new HashMap<>()));
+        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/tenant/account"),IdentOptExchangeInfo.builder().build()));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
         // 资源需要认证，但没有匹配到权限主体
-        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/tenant/account"), subjectInfo));
+        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/tenant/account"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
-        // 资源需要认证，且匹配到权限主体：角色r01
-        subjectInfo.get(AuthSubjectKind.ROLE).add("r01");
-        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/tenant/account"), subjectInfo));
+        // 资源需要认证，且匹配到权限主体：角色1
+        identOptExchangeInfo.getRoleInfo().add(IdentOptInfo.RoleInfo.builder().id(1L).build());
+        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/tenant/account"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
-        // 资源需要认证，且匹配到权限主体：角色r01
-        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/tenant/account/ident/1"), subjectInfo));
+        // 资源需要认证，且匹配到权限主体：角色1
+        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/tenant/account/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         // 资源需要认证，没有匹配到权限主体
-        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/tenant/account/ident/001"), subjectInfo));
+        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/tenant/account/ident/001"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
-        // 资源需要认证，没有匹配到权限主体：账号a01
-        subjectInfo.get(AuthSubjectKind.ACCOUNT).clear();
-        subjectInfo.get(AuthSubjectKind.ACCOUNT).add("a01");
-        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/tenant/account/ident/1"), subjectInfo));
+        // 资源需要认证，没有匹配到权限主体：账号100
+        identOptExchangeInfo.setAccountId(100L);
+        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/tenant/account/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
-        // 资源需要认证，且匹配到权限主体：账号a01
-        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/tenant/account/ident/2"), subjectInfo));
+        // 资源需要认证，且匹配到权限主体：账号100
+        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/tenant/account/ident/2"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         testContext.completeNow();
     }
@@ -204,19 +198,19 @@ public class GatewayAuthPolicyTest extends DewTest {
     @SneakyThrows
     @Test
     public void testGroup(Vertx vertx, VertxTestContext testContext) {
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.CREATE.toString().toLowerCase())
                 .uri("http://iam.service/console/app/group/**")
                 .build()).toBuffer(), new HashMap<>());
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.DELETE.toString().toLowerCase())
                 .uri("http://iam.service/console/app/group/**")
                 .build()).toBuffer(), new HashMap<>());
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.MODIFY.toString().toLowerCase())
                 .uri("http://iam.service/console/app/group/**")
                 .build()).toBuffer(), new HashMap<>());
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.http", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.PATCH.toString().toLowerCase())
                 .uri("http://iam.service/console/app/group/**")
                 .build()).toBuffer(), new HashMap<>());
@@ -228,7 +222,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.GROUP_NODE.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("1000010000");
+                                        add("1#1000010000");
                                     }
                                 });
                             }
@@ -242,7 +236,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.GROUP_NODE.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("1000010000");
+                                        add("1#1000010000");
                                     }
                                 });
                             }
@@ -256,7 +250,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.GROUP_NODE.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("1000010000");
+                                        add("1#1000010000");
                                     }
                                 });
                             }
@@ -270,86 +264,108 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.GROUP_NODE.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("1000010000");
+                                        add("1#1000010000");
                                     }
                                 });
                             }
                         });
                     }
                 }).toString()));
-        var authPolicy = new GatewayAuthPolicy(MODULE_NAME, 60, 5);
+        var authPolicy = new GatewayAuthPolicy(60, 5);
         Thread.sleep(1000);
-        Map<AuthSubjectKind, List<String>> subjectInfo = new HashMap<>() {
-            {
-                put(AuthSubjectKind.GROUP_NODE, new ArrayList<>() {
+        var identOptExchangeInfo = IdentOptExchangeInfo.builder()
+                .groupInfo(new HashSet<>(){
                     {
-                        add("1000010000");
+                        add(IdentOptInfo.GroupInfo.builder()
+                                .groupCode("1")
+                                .groupNodeCode("1000010000")
+                                .build());
                     }
-                });
-            }
-        };
+                })
+                .build();
         // NEQ
-        var result = await(authPolicy.authentication(MODULE_NAME, "patch", URIHelper.newURI("http://iam.service/console/app/group"), subjectInfo));
+        var result = await(authPolicy.authentication(MODULE_NAME, "patch", URIHelper.newURI("http://iam.service/console/app/group"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
         // EQ
-        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/app/group"), subjectInfo));
+        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/app/group"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         // INCLUDE, 当前级
-        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo));
+        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         // INCLUDE, 下级，拒绝
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("100001000010000");
-        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo));
+        identOptExchangeInfo.getGroupInfo().clear();
+        identOptExchangeInfo.getGroupInfo().add(IdentOptInfo.GroupInfo.builder()
+                .groupCode("1")
+                .groupNodeCode("100001000010000")
+                .build());
+        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
         // INCLUDE, 上级
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("10000");
-        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo));
+        identOptExchangeInfo.getGroupInfo().clear();
+        identOptExchangeInfo.getGroupInfo().add(IdentOptInfo.GroupInfo.builder()
+                .groupCode("1")
+                .groupNodeCode("10000")
+                .build());
+        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         // INCLUDE, 非上级，拒绝
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("10001");
-        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo));
+        identOptExchangeInfo.getGroupInfo().clear();
+        identOptExchangeInfo.getGroupInfo().add(IdentOptInfo.GroupInfo.builder()
+                .groupCode("1")
+                .groupNodeCode("10001")
+                .build());
+        result = await(authPolicy.authentication(MODULE_NAME, "delete", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
         // LIKE, 当前级
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("1000010000");
-        result = await(authPolicy.authentication(MODULE_NAME, "modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo));
+        identOptExchangeInfo.getGroupInfo().clear();
+        identOptExchangeInfo.getGroupInfo().add(IdentOptInfo.GroupInfo.builder()
+                .groupCode("1")
+                .groupNodeCode("1000010000")
+                .build());
+        result = await(authPolicy.authentication(MODULE_NAME, "modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         // LIKE, 下级
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("100001000010000");
-        result = await(authPolicy.authentication(MODULE_NAME, "modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo));
+        identOptExchangeInfo.getGroupInfo().clear();
+        identOptExchangeInfo.getGroupInfo().add(IdentOptInfo.GroupInfo.builder()
+                .groupCode("1")
+                .groupNodeCode("100001000010000")
+                .build());
+        result = await(authPolicy.authentication(MODULE_NAME, "modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         // LIKE, 非下级，拒绝
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("100001000110000");
-        result = await(authPolicy.authentication(MODULE_NAME, "modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo));
+        identOptExchangeInfo.getGroupInfo().clear();
+        identOptExchangeInfo.getGroupInfo().add(IdentOptInfo.GroupInfo.builder()
+                .groupCode("1")
+                .groupNodeCode("100001000110000")
+                .build());
+        result = await(authPolicy.authentication(MODULE_NAME, "modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
         // LIKE, 上级，拒绝
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).clear();
-        subjectInfo.get(AuthSubjectKind.GROUP_NODE).add("10000");
-        result = await(authPolicy.authentication(MODULE_NAME, "modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), subjectInfo));
+        identOptExchangeInfo.getGroupInfo().clear();
+        identOptExchangeInfo.getGroupInfo().add(IdentOptInfo.GroupInfo.builder()
+                .groupCode("1")
+                .groupNodeCode("10000")
+                .build());
+        result = await(authPolicy.authentication(MODULE_NAME, "modify", URIHelper.newURI("http://iam.service/console/app/group/ident/1"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
         testContext.completeNow();
     }
 
     @Test
     public void testDynamicModifyResources(Vertx vertx, VertxTestContext testContext) throws InterruptedException {
-        Map<AuthSubjectKind, List<String>> subjectInfo = new HashMap<>() {
-            {
-                put(AuthSubjectKind.ROLE, new ArrayList<>() {
+        var identOptExchangeInfo = IdentOptExchangeInfo.builder()
+                .roleInfo(new HashSet<>(){
                     {
-                        add("r00");
+                        add(IdentOptInfo.RoleInfo.builder()
+                                .id(1L)
+                                .build());
                     }
-                });
-            }
-        };
-        var authPolicy = new GatewayAuthPolicy(MODULE_NAME, 60, 5);
+                })
+                .build();
+        var authPolicy = new GatewayAuthPolicy(60, 5);
         Thread.sleep(1000);
         // 资源不存在
-        var result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/app/ident"), subjectInfo));
+        var result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/app/ident"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         // 添加资源
         await(cacheClient.set(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create",
@@ -359,7 +375,7 @@ public class GatewayAuthPolicyTest extends DewTest {
                             {
                                 put(AuthSubjectKind.ROLE.toString().toLowerCase(), new ArrayList<>() {
                                     {
-                                        add("r01");
+                                        add("2");
                                     }
                                 });
                             }
@@ -367,26 +383,26 @@ public class GatewayAuthPolicyTest extends DewTest {
                     }
                 }).toString()));
         // 通知资源变更
-        eventBus.publish("", OptActionKind.CREATE, "eb://iam/resource.http/xxxx",
+        eventBus.publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.http/xxxx",
                 JsonObject.mapFrom(ResourceExchange.builder()
                         .uri("http://iam.service/console/app/ident/**")
                         .actionKind(OptActionKind.CREATE.toString().toLowerCase())
                         .build()).toBuffer(), new HashMap<>());
         Thread.sleep(1000);
         // 资源已存在且没有匹配主体
-        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/app/ident"), subjectInfo));
+        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/app/ident"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.REJECT, result._0);
         // 删除资源
         await(cacheClient.del(DewAuthConstant.CACHE_AUTH_POLICY + "http:iam.service/console/app/ident/**:create"));
         // 通知资源变更
-        eventBus.publish("", OptActionKind.DELETE, "eb://iam/resource.http/xxxx",
+        eventBus.publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.DELETE, "eb://iam/resource.http/xxxx",
                 JsonObject.mapFrom(ResourceExchange.builder()
                         .uri("http://iam.service/console/app/ident/**")
                         .actionKind(OptActionKind.CREATE.toString().toLowerCase())
                         .build()).toBuffer(), new HashMap<>());
         Thread.sleep(1000);
         // 资源已存在且没有匹配主体
-        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/app/ident"), subjectInfo));
+        result = await(authPolicy.authentication(MODULE_NAME, "create", URIHelper.newURI("http://iam.service/console/app/ident"), identOptExchangeInfo));
         Assertions.assertEquals(AuthResultKind.ACCEPT, result._0);
         testContext.completeNow();
     }

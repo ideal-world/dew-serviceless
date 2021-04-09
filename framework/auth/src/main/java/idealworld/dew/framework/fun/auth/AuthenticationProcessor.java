@@ -55,62 +55,22 @@ public class AuthenticationProcessor {
     private static Integer resourceCacheExpireSec;
     private static Integer groupNodeLength;
 
-    public static void init(String moduleName, Integer resourceCacheExpireSec, Integer groupNodeLength) {
+    public static void init(Integer resourceCacheExpireSec, Integer groupNodeLength) {
         AuthenticationProcessor.resourceCacheExpireSec = resourceCacheExpireSec;
         AuthenticationProcessor.groupNodeLength = groupNodeLength;
     }
 
-    public static Map<AuthSubjectKind, List<String>> packageSubjectInfo(IdentOptExchangeInfo identOptInfo) {
-        var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
-        if (identOptInfo != null) {
-            if (identOptInfo.getAccountId() != null && identOptInfo.getAccountId() != DewConstant.OBJECT_UNDEFINED) {
-                subjectInfo.put(AuthSubjectKind.ACCOUNT, new ArrayList<>() {
-                    {
-                        add(identOptInfo.getAccountId() + "");
-                    }
-                });
-            }
-            if (identOptInfo.getGroupInfo() != null && !identOptInfo.getGroupInfo().isEmpty()) {
-                subjectInfo.put(AuthSubjectKind.GROUP_NODE, identOptInfo.getGroupInfo().stream()
-                        .map(group -> group.getGroupCode() + DewAuthConstant.GROUP_CODE_NODE_CODE_SPLIT + group.getGroupNodeCode())
-                        .collect(Collectors.toList()));
-            }
-            if (identOptInfo.getRoleInfo() != null && !identOptInfo.getRoleInfo().isEmpty()) {
-                subjectInfo.put(AuthSubjectKind.ROLE, identOptInfo.getRoleInfo().stream()
-                        .map(r -> r.getId() + "")
-                        .collect(Collectors.toList()));
-            }
-            if (identOptInfo.getUnauthorizedAppId() != null && identOptInfo.getUnauthorizedAppId() != DewConstant.OBJECT_UNDEFINED) {
-                subjectInfo.put(AuthSubjectKind.APP, new ArrayList<>() {
-                    {
-                        add(identOptInfo.getUnauthorizedAppId().toString());
-                    }
-                });
-            }
-            if (identOptInfo.getUnauthorizedTenantId() != null && identOptInfo.getUnauthorizedTenantId() != DewConstant.OBJECT_UNDEFINED) {
-                subjectInfo.put(AuthSubjectKind.TENANT, new ArrayList<>() {
-                    {
-                        add(identOptInfo.getUnauthorizedTenantId().toString());
-                    }
-                });
-            }
-        }
-        return subjectInfo;
-    }
-
-    public static Future<AuthResultKind> authentication(String moduleName, String actionKind, URI resourceUri,
-                                                        Map<AuthSubjectKind, List<String>> subjectInfo) {
+    public static Future<AuthResultKind> authentication(String moduleName, String actionKind, URI resourceUri, IdentOptExchangeInfo identOptInfo) {
         return authentication(moduleName, actionKind,
                 new ArrayList<>() {
                     {
                         add(resourceUri);
                     }
                 },
-                subjectInfo);
+                identOptInfo);
     }
 
-    public static Future<AuthResultKind> authentication(String moduleName, String actionKind, List<URI> resourceUris, Map<AuthSubjectKind,
-            List<String>> subjectInfo) {
+    public static Future<AuthResultKind> authentication(String moduleName, String actionKind, List<URI> resourceUris, IdentOptExchangeInfo identOptInfo) {
         var matchedResourceUris = resourceUris.stream()
                 .flatMap(resourceUri -> matchResourceUris(resourceUri, actionKind))
                 .collect(Collectors.toList());
@@ -118,6 +78,7 @@ public class AuthenticationProcessor {
             // 资源不需要鉴权
             return Future.succeededFuture(AuthResultKind.ACCEPT);
         }
+        var subjectInfo = packageSubjectInfo(identOptInfo);
         if (subjectInfo.isEmpty()) {
             // 资源需要鉴权但没有对应的权限主体
             return Future.succeededFuture(AuthResultKind.REJECT);
@@ -127,9 +88,48 @@ public class AuthenticationProcessor {
         return promise.future();
     }
 
+    private static Map<AuthSubjectKind, List<String>> packageSubjectInfo(IdentOptExchangeInfo identOptInfo) {
+        var subjectInfo = new LinkedHashMap<AuthSubjectKind, List<String>>();
+        if (identOptInfo == null) {
+            return subjectInfo;
+        }
+        if (identOptInfo.getAccountId() != null && identOptInfo.getAccountId() != DewConstant.OBJECT_UNDEFINED) {
+            subjectInfo.put(AuthSubjectKind.ACCOUNT, new ArrayList<>() {
+                {
+                    add(identOptInfo.getAccountId() + "");
+                }
+            });
+        }
+        if (identOptInfo.getGroupInfo() != null && !identOptInfo.getGroupInfo().isEmpty()) {
+            subjectInfo.put(AuthSubjectKind.GROUP_NODE, identOptInfo.getGroupInfo().stream()
+                    .map(group -> group.getGroupCode() + DewAuthConstant.GROUP_CODE_NODE_CODE_SPLIT + group.getGroupNodeCode())
+                    .collect(Collectors.toList()));
+        }
+        if (identOptInfo.getRoleInfo() != null && !identOptInfo.getRoleInfo().isEmpty()) {
+            subjectInfo.put(AuthSubjectKind.ROLE, identOptInfo.getRoleInfo().stream()
+                    .map(r -> r.getId() + "")
+                    .collect(Collectors.toList()));
+        }
+        if (identOptInfo.getUnauthorizedAppId() != null && identOptInfo.getUnauthorizedAppId() != DewConstant.OBJECT_UNDEFINED) {
+            subjectInfo.put(AuthSubjectKind.APP, new ArrayList<>() {
+                {
+                    add(identOptInfo.getUnauthorizedAppId().toString());
+                }
+            });
+        }
+        if (identOptInfo.getUnauthorizedTenantId() != null && identOptInfo.getUnauthorizedTenantId() != DewConstant.OBJECT_UNDEFINED) {
+            subjectInfo.put(AuthSubjectKind.TENANT, new ArrayList<>() {
+                {
+                    add(identOptInfo.getUnauthorizedTenantId().toString());
+                }
+            });
+        }
+        return subjectInfo;
+    }
+
     private static void doAuthentication(String moduleName, List<String> matchedResourceUris, String actionKind,
                                          Map<AuthSubjectKind, List<String>> subjectInfo, Promise<AuthResultKind> promise) {
-        var currentProcessUri = matchedResourceUris.get(0);
+        var currentProcessUri = matchedResourceUris.remove(0);
         FunCacheClient.choose(moduleName).get(DewAuthConstant.CACHE_AUTH_POLICY
                 + currentProcessUri.replace("//", "") + ":"
                 + actionKind, resourceCacheExpireSec)
@@ -155,7 +155,6 @@ public class AuthenticationProcessor {
                         promise.complete(AuthResultKind.ACCEPT);
                         return;
                     }
-                    matchedResourceUris.remove(0);
                     if (!matchedResourceUris.isEmpty()) {
                         doAuthentication(moduleName, matchedResourceUris, actionKind, subjectInfo, promise);
                         return;
@@ -221,9 +220,18 @@ public class AuthenticationProcessor {
         var subjectJson = json.getJsonArray(AuthSubjectKind.GROUP_NODE.toString().toLowerCase());
         var subjectIds = subjectInfo.get(AuthSubjectKind.GROUP_NODE);
         for (var item : subjectJson) {
-            var currentNodeCode = (String) item;
+            var currentNodeWithGroup = ((String) item).split(DewAuthConstant.GROUP_CODE_NODE_CODE_SPLIT);
+            var currentGroupCode = currentNodeWithGroup[0];
+            var currentNodeCode = currentNodeWithGroup[1];
+            var subjectIdsWithoutGroupCode = subjectIds.stream()
+                    .filter(id -> id.startsWith(currentGroupCode + DewAuthConstant.GROUP_CODE_NODE_CODE_SPLIT))
+                    .map(id -> id.split(DewAuthConstant.GROUP_CODE_NODE_CODE_SPLIT)[1])
+                    .collect(Collectors.toList());
+            if (subjectIdsWithoutGroupCode.isEmpty()) {
+                continue;
+            }
             while (currentNodeCode.length() > 0) {
-                if (subjectIds.contains(currentNodeCode)) {
+                if (subjectIdsWithoutGroupCode.contains(currentNodeCode)) {
                     return true;
                 }
                 currentNodeCode = currentNodeCode.substring(0, currentNodeCode.length() - groupNodeLength);

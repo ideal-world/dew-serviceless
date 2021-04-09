@@ -127,10 +127,9 @@ public class TenantConsoleTest extends IAMBasicTest {
         Assertions.assertEquals(3, tenantCertResp.getVersion());
 
         // 获取当前租户的认证列表信息
-        var tenantCertResps = reqPage("/console/tenant/tenant/cert", 1L, 10L, TenantCertResp.class)._0;
-        Assertions.assertEquals(3, tenantCertResps.getRecordTotal());
-        Assertions.assertEquals(1, tenantCertResps.getPageTotal());
-        Assertions.assertEquals("", tenantCertResps.getObjects().get(0).getCategory());
+        var tenantCertResps = reqList("/console/tenant/tenant/cert", TenantCertResp.class)._0;
+        Assertions.assertEquals(3, tenantCertResps.size());
+        Assertions.assertEquals("", tenantCertResps.get(0).getCategory());
 
         // 删除当前租户的某个凭证
         req(OptActionKind.DELETE, "/console/tenant/tenant/cert/" + tenantCertId, null, Void.class);

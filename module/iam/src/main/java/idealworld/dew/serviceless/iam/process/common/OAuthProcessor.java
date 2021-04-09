@@ -44,8 +44,6 @@ import io.vertx.mysqlclient.MySQLException;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-
 /**
  * OAuth服务.
  *
@@ -57,11 +55,9 @@ public class OAuthProcessor {
     private static final WechatXCXAPI WECHAT_XCXAPI = new WechatXCXAPI();
 
     public static Future<IdentOptInfo> login(AccountOAuthLoginReq accountOAuthLoginReq, ProcessContext context) {
-        return context.sql.getOne(String.format("SELECT id FROM %s WHERE open_id = #{open_id}", new App().tableName()), new HashMap<>() {
-            {
-                put("open_id", accountOAuthLoginReq.getRelAppCode());
-            }
-        })
+        return context.sql.getOne(
+                "SELECT id FROM %s WHERE open_id = ?",
+                App.class, accountOAuthLoginReq.getRelAppCode())
                 .compose(appInfo -> {
                     var appId = appInfo.getLong("id");
                     return IAMBasicProcessor.getEnabledTenantIdByAppId(appId, false, context)
@@ -76,18 +72,10 @@ public class OAuthProcessor {
                                                             var accessToken = oauthUserInfo._0;
                                                             var userInfo = oauthUserInfo._1;
                                                             return context.sql.getOne(
-                                                                    String.format("SELECT acc.id, acc.status FROM %s AS ident" +
-                                                                                    " INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
-                                                                                    " WHERE ident.kind = #{kind} AND ident.ak = #{open_id} AND " +
-                                                                                    "ident.rel_tenant_id = #{tenant_id}",
-                                                                            new AccountIdent().tableName(), new Account().tableName()),
-                                                                    new HashMap<>() {
-                                                                        {
-                                                                            put("kind", accountOAuthLoginReq.getKind());
-                                                                            put("open_id", userInfo.getOpenid());
-                                                                            put("tenant_id", tenantId);
-                                                                        }
-                                                                    })
+                                                                    "SELECT acc.id, acc.status FROM %s AS ident" +
+                                                                            " INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
+                                                                            " WHERE ident.kind = ? AND ident.ak = ? AND ident.rel_tenant_id = ?",
+                                                                    AccountIdent.class, Account.class, accountOAuthLoginReq.getKind(), userInfo.getOpenid(), tenantId)
                                                                     .compose(accountInfo -> {
                                                                         Long accountId = null;
                                                                         if (accountInfo != null) {
@@ -161,25 +149,18 @@ public class OAuthProcessor {
         }
         return context.helper.notExistToError(
                 context.sql.getOne(
-                        String.format("SELECT subject.ak, subject.sk FROM %s AS resource" +
-                                        " INNER JOIN %s subject ON subject.id = resource.rel_resource_subject_id" +
-                                        " WHERE ((resource.rel_app_id = #{app_id} AND resource.rel_tenant_id = #{tenant_id})" +
-                                        " OR (resource.expose_kind = #{expose_kind_tenant} AND resource.rel_tenant_id = #{tenant_id})" +
-                                        " OR resource.expose_kind = #{expose_kind_global})" +
-                                        " AND subject.kind = #{kind} AND subject.code = #{code}",
-                                new Resource().tableName(), new ResourceSubject().tableName()),
-                        new HashMap<>() {
-                            {
-                                put("app_id", appId);
-                                put("tenant_id", tenantId);
-                                put("expose_kind_tenant", ExposeKind.TENANT);
-                                put("expose_kind_global", ExposeKind.GLOBAL);
-                                put("kind", ResourceKind.OAUTH);
-                                put("code", appId + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
-                                        + ResourceKind.OAUTH.toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
-                                        + kind.toString());
-                            }
-                        }), () -> new NotFoundException("找不到对应的OAuth资源主体"))
+                        "SELECT subject.ak, subject.sk FROM %s AS resource" +
+                                " INNER JOIN %s subject ON subject.id = resource.rel_resource_subject_id" +
+                                " WHERE ((resource.rel_app_id = ? AND resource.rel_tenant_id = ?)" +
+                                " OR (resource.expose_kind = ? AND resource.rel_tenant_id = ?)" +
+                                " OR resource.expose_kind = ?)" +
+                                " AND subject.kind = ? AND subject.code = ?",
+                        Resource.class, ResourceSubject.class,
+                        appId, tenantId, ExposeKind.TENANT, tenantId, ExposeKind.GLOBAL, ResourceKind.OAUTH,
+                        appId + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                                + ResourceKind.OAUTH.toString().toLowerCase() + IAMConstant.RESOURCE_SUBJECT_DEFAULT_CODE_SPLIT
+                                + kind.toString()),
+                () -> new NotFoundException("找不到对应的OAuth资源主体"))
                 .compose(oauthResourceSubject -> {
                     var oauthAk = oauthResourceSubject.getString("ak");
                     var oauthSk = oauthResourceSubject.getString("sk");

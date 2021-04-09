@@ -235,26 +235,24 @@ public class CommonProcessor extends EventBusProcessor {
     public static Future<IdentOptInfo> registerAccount(AccountRegisterReq accountRegisterReq, ProcessContext context) {
         var accountCode = "ac" + $.field.createUUID();
         return context.sql.tx(context, () ->
-                context.sql.getOne(String.format("SELECT id  FROM %s WHERE open_id = #{open_id}", new App().tableName()), new HashMap<>() {
-                    {
-                        put("open_id", accountRegisterReq.getRelAppCode());
-                    }
-                })
+                context.sql.getOne(
+                        "SELECT id  FROM %s WHERE open_id = ?",
+                        App.class, accountRegisterReq.getRelAppCode())
                         .compose(appInfo -> {
                             var appId = appInfo.getLong("id");
                             return IAMBasicProcessor.getEnabledTenantIdByAppId(appId, true, context)
                                     .compose(tenantId ->
                                             context.helper.existToError(
                                                     context.sql.exists(
+                                                            AccountIdent.class,
                                                             new HashMap<>() {
                                                                 {
                                                                     put("ak", accountRegisterReq.getAk());
                                                                     put("kind", accountRegisterReq.getKind());
                                                                     put("rel_tenant_id", tenantId);
                                                                 }
-                                                            },
-                                                            AccountIdent.class
-                                                    ), () -> new ConflictException("账号凭证[" + accountRegisterReq.getAk() + "]已存在"))
+                                                            }),
+                                                    () -> new ConflictException("账号凭证[" + accountRegisterReq.getAk() + "]已存在"))
                                                     .compose(resp ->
                                                             context.sql.save(Account.builder()
                                                                     .name(accountRegisterReq.getName())
@@ -307,11 +305,9 @@ public class CommonProcessor extends EventBusProcessor {
     }
 
     public static Future<IdentOptInfo> login(AccountLoginReq accountLoginReq, ProcessContext context) {
-        return context.sql.getOne(String.format("SELECT id  FROM %s WHERE open_id = #{open_id}", new App().tableName()), new HashMap<>() {
-            {
-                put("open_id", accountLoginReq.getRelAppCode());
-            }
-        })
+        return context.sql.getOne(
+                "SELECT id  FROM %s WHERE open_id = ?",
+                App.class, accountLoginReq.getRelAppCode())
                 .compose(appInfo -> {
                     var appId = appInfo.getLong("id");
                     return IAMBasicProcessor.getEnabledTenantIdByAppId(appId, false, context)
@@ -319,26 +315,15 @@ public class CommonProcessor extends EventBusProcessor {
                                 log.info("login : [{}-{}] kind = {}, ak = {}", tenantId, appId, accountLoginReq.getKind(), accountLoginReq.getAk());
                                 var now = System.currentTimeMillis();
                                 return context.sql.getOne(
-                                        String.format("SELECT accident.sk, acc.id, acc.name, acc.open_id FROM %s AS accident" +
-                                                        " INNER JOIN %s AS accapp ON accapp.rel_account_id = accident.rel_account_id" +
-                                                        " INNER JOIN %s AS tenantident ON tenantident.rel_tenant_id = accident.rel_tenant_id" +
-                                                        " INNER JOIN %s AS acc ON acc.id = accident.rel_account_id" +
-                                                        " WHERE tenantident.kind = #{kind} AND accident.kind = #{kind} AND accident.ak = #{ak}" +
-                                                        " AND accident.valid_start_time < #{now} AND accident.valid_end_time > #{now}" +
-                                                        " AND accapp.rel_app_id = #{rel_app_id}" +
-                                                        " AND acc.rel_tenant_id = #{rel_tenant_id} AND acc.status = #{status}",
-                                                new AccountIdent().tableName(), new AccountApp().tableName(), new TenantIdent().tableName(),
-                                                new Account().tableName()),
-                                        new HashMap<>() {
-                                            {
-                                                put("kind", accountLoginReq.getKind());
-                                                put("ak", accountLoginReq.getAk());
-                                                put("now", now);
-                                                put("rel_app_id", appId);
-                                                put("rel_tenant_id", tenantId);
-                                                put("status", CommonStatus.ENABLED);
-                                            }
-                                        })
+                                        "SELECT accident.sk, acc.id, acc.name, acc.open_id FROM %s AS accident" +
+                                                " INNER JOIN %s AS accapp ON accapp.rel_account_id = accident.rel_account_id" +
+                                                " INNER JOIN %s AS tenantident ON tenantident.rel_tenant_id = accident.rel_tenant_id" +
+                                                " INNER JOIN %s AS acc ON acc.id = accident.rel_account_id" +
+                                                " WHERE tenantident.kind = ? AND accident.kind = ? AND accident.ak = ?" +
+                                                " AND accident.valid_start_time < ? AND accident.valid_end_time > ?" +
+                                                " AND accapp.rel_app_id = ?  AND acc.rel_tenant_id = ? AND acc.status = ?",
+                                        AccountIdent.class, AccountApp.class, TenantIdent.class, Account.class,
+                                        accountLoginReq.getKind(), accountLoginReq.getKind(), accountLoginReq.getAk(), now, now, appId, tenantId, CommonStatus.ENABLED)
                                         .compose(accountInfo -> {
                                             if (accountInfo == null) {
                                                 log.warn("Login Fail: [{}-{}] AK {} doesn't exist or has expired or account doesn't exist",
@@ -427,13 +412,12 @@ public class CommonProcessor extends EventBusProcessor {
             throw context.helper.error(new UnAuthorizedException("用户未登录"));
         }
         return context.sql.update(
+                context.helper.convert(accountChangeReq, Account.class),
                 new HashMap<>() {
                     {
                         put("open_id", relOpenId);
                     }
-                },
-                context.helper.convert(accountChangeReq, Account.class)
-        );
+                });
     }
 
     public static Future<Void> changeIdent(AccountIdentChangeReq accountIdentChangeReq, String relOpenId, Long relAppId, ProcessContext context) {
@@ -444,17 +428,11 @@ public class CommonProcessor extends EventBusProcessor {
                 .compose(tenantId ->
                         context.helper.notExistToError(
                                 context.sql.exists(
-                                        String.format("SELECT 1 FROM %s AS ident" +
-                                                        " INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
-                                                        " WHERE ident.kind = #{kind} AND ident.ak = #{ak} AND acc.open_id = #{open_id}",
-                                                new AccountIdent().tableName(), new Account().tableName()),
-                                        new HashMap<>() {
-                                            {
-                                                put("kind", accountIdentChangeReq.getKind());
-                                                put("ak", accountIdentChangeReq.getAk());
-                                                put("open_id", relOpenId);
-                                            }
-                                        }), () -> new UnAuthorizedException("用户[" + relOpenId + "]对应的认证方式不存在"))
+                                        "SELECT 1 FROM %s AS ident" +
+                                                " INNER JOIN %s AS acc ON acc.id = ident.rel_account_id" +
+                                                " WHERE ident.kind = ? AND ident.ak = ? AND acc.open_id = ?",
+                                        AccountIdent.class, Account.class, accountIdentChangeReq.getKind(), accountIdentChangeReq.getAk(), relOpenId),
+                                () -> new UnAuthorizedException("用户[" + relOpenId + "]对应的认证方式不存在"))
                                 .compose(resp ->
                                         IAMBasicProcessor.validRuleAndGetValidEndTime(
                                                 accountIdentChangeReq.getKind(),
@@ -471,16 +449,16 @@ public class CommonProcessor extends EventBusProcessor {
                                                                 context)
                                                                 .compose(processIdentSk ->
                                                                         context.sql.update(
+                                                                                AccountIdent.builder()
+                                                                                        .sk(processIdentSk)
+                                                                                        .build(),
                                                                                 new HashMap<>() {
                                                                                     {
                                                                                         put("kind", accountIdentChangeReq.getKind());
                                                                                         put("ak", accountIdentChangeReq.getAk());
                                                                                         put("rel_tenant_id", tenantId);
                                                                                     }
-                                                                                },
-                                                                                AccountIdent.builder()
-                                                                                        .sk(processIdentSk)
-                                                                                        .build())))));
+                                                                                })))));
     }
 
     public static Future<Void> unRegister(String relOpenId, ProcessContext context) {
@@ -488,36 +466,27 @@ public class CommonProcessor extends EventBusProcessor {
             throw context.helper.error(new UnAuthorizedException("用户未登录"));
         }
         return context.sql.update(
+                Account.builder()
+                        .status(CommonStatus.DISABLED)
+                        .build(),
                 new HashMap<>() {
                     {
                         put("open_id", relOpenId);
                     }
-                },
-                Account.builder()
-                        .status(CommonStatus.DISABLED)
-                        .build());
+                });
     }
 
     public static Future<List<ResourceResp>> findResources(String kind, Long relAppId, Long relTenantId, ProcessContext context) {
         //  TODO 根据 identOptCacheInfo 过滤
         return context.sql.list(
-                String.format("SELECT resource.* FROM %s AS resource" +
-                                " INNER JOIN %s AS subject ON subject.id = resource.rel_resource_subject_id" +
-                                " WHERE ((resource.rel_tenant_id = #{rel_tenant_id} AND resource.rel_app_id = #{rel_app_id})" +
-                                " OR (resource.expose_kind = #{expose_kind_tenant} AND resource.rel_tenant_id = #{rel_tenant_id})" +
-                                " OR resource.expose_kind = #{expose_kind_global})" +
-                                " AND subject.kind = #{kind}" +
-                                " ORDER BY resource.sort ASC",
-                        new Resource().tableName(), new ResourceSubject().tableName()),
-                new HashMap<>() {
-                    {
-                        put("kind", kind);
-                        put("expose_kind_tenant", ExposeKind.TENANT);
-                        put("expose_kind_global", ExposeKind.GLOBAL);
-                        put("rel_app_id", relAppId);
-                        put("rel_tenant_id", relTenantId);
-                    }
-                })
+                "SELECT resource.* FROM %s AS resource" +
+                        " INNER JOIN %s AS subject ON subject.id = resource.rel_resource_subject_id" +
+                        " WHERE ((resource.rel_tenant_id = ? AND resource.rel_app_id = ?)" +
+                        " OR (resource.expose_kind = ? AND resource.rel_tenant_id = ?)" +
+                        " OR resource.expose_kind = ?)" +
+                        " AND subject.kind = ?" +
+                        " ORDER BY resource.sort ASC",
+                Resource.class, ResourceSubject.class, relTenantId, relAppId, ExposeKind.TENANT, relTenantId, ExposeKind.GLOBAL, kind)
                 .compose(resourceInfos ->
                         context.helper.success(resourceInfos.stream()
                                 .map(resourceInfo -> ResourceResp.builder()

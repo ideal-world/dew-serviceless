@@ -18,6 +18,7 @@ package idealworld.dew.framework.fun.sql;
 
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.Page;
+import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewConfig;
 import idealworld.dew.framework.domain.IdEntity;
 import idealworld.dew.framework.domain.SoftDelEntity;
@@ -39,10 +40,7 @@ import io.vertx.sqlclient.templates.TupleMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -58,6 +56,7 @@ import java.util.stream.Collectors;
 public class FunSQLClient {
 
     private static final Map<String, FunSQLClient> SQL_CLIENTS = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, String> TABLE_NAMES = new ConcurrentHashMap<>();
     public Consumer addEntityByInsertFun;
     public Consumer addEntityByUpdateFun;
     private String code;
@@ -117,17 +116,22 @@ public class FunSQLClient {
         return updateHandler(SqlTemplate.forUpdate(client, sql).execute(new HashMap<>()), sql);
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<List<E>> list(Map<String, Object> whereParameters, Class<E> returnClazz) {
-        var sql = packageWhere("SELECT * FROM " + returnClazz.getDeclaredConstructor().newInstance().tableName(), whereParameters);
-        return list(sql, whereParameters, returnClazz);
+    public <E extends IdEntity> Future<List<E>> list(Class<E> returnClazz, Map<String, Object> whereParameters) {
+        var sql = packageWhere("SELECT * FROM " + getTableName(returnClazz), whereParameters);
+        return list(returnClazz, sql, whereParameters);
     }
 
-    public Future<List<JsonObject>> list(String sql, Map<String, Object> parameters) {
-        return list(sql, parameters, JsonObject.class);
+    public Future<List<JsonObject>> list(String sql, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return list(JsonObject.class, parseResult._0, parseResult._1);
     }
 
-    public <E> Future<List<E>> list(String sql, Map<String, Object> parameters, Class<E> returnClazz) {
+    public <E> Future<List<E>> list(Class<E> returnClazz, String sql, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return list(returnClazz, parseResult._0, parseResult._1);
+    }
+
+    private <E> Future<List<E>> list(Class<E> returnClazz, String sql, Map<String, Object> parameters) {
         if (log.isTraceEnabled()) {
             log.trace("[SQL][{}]List\r\n--------------\r\n{}\r\n{}",
                     code, sql,
@@ -164,27 +168,32 @@ public class FunSQLClient {
         return promise.future();
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<E> getOne(Object id, Class<E> returnClazz) {
-        return getOne(new HashMap<>() {
-            {
-                put("id", id);
-            }
-        }, returnClazz);
+    public <E extends IdEntity> Future<E> getOne(Class<E> returnClazz, Object id) {
+        return getOne(returnClazz,
+                new HashMap<>() {
+                    {
+                        put("id", id);
+                    }
+                });
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<E> getOne(Map<String, Object> whereParameters, Class<E> returnClazz) {
-        var sql = packageWhere("SELECT * FROM " + returnClazz.getDeclaredConstructor().newInstance().tableName(), whereParameters);
-        return getOne(sql, whereParameters, returnClazz);
+    public <E extends IdEntity> Future<E> getOne(Class<E> returnClazz, Map<String, Object> whereParameters) {
+        var sql = packageWhere("SELECT * FROM " + getTableName(returnClazz), whereParameters);
+        return getOne(returnClazz, sql, whereParameters);
     }
 
-    public Future<JsonObject> getOne(String sql, Map<String, Object> parameters) {
-        return getOne(sql, parameters, JsonObject.class);
+    public Future<JsonObject> getOne(String sql, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return getOne(JsonObject.class, parseResult._0, parseResult._1);
     }
 
-    public <E> Future<E> getOne(String sql, Map<String, Object> parameters, Class<E> returnClazz) {
-        return list(sql, parameters, returnClazz)
+    public <E> Future<E> getOne(Class<E> returnClazz, String sql, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return getOne(returnClazz, parseResult._0, parseResult._1);
+    }
+
+    private <E> Future<E> getOne(Class<E> returnClazz, String sql, Map<String, Object> parameters) {
+        return list(returnClazz, sql, parameters)
                 .compose(resp -> {
                     if (resp.size() > 1) {
                         return Future.failedFuture(new BadRequestException("Query to multiple records."));
@@ -195,25 +204,33 @@ public class FunSQLClient {
                 });
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<Boolean> exists(Map<String, Object> whereParameters, Class<E> entityClazz) {
-        var sql = packageWhere("SELECT 1 FROM " + entityClazz.getDeclaredConstructor().newInstance().tableName(), whereParameters);
+    public <E extends IdEntity> Future<Boolean> exists(Class<E> entityClazz, Map<String, Object> whereParameters) {
+        var sql = packageWhere("SELECT 1 FROM " + getTableName(entityClazz), whereParameters);
         return count(sql, whereParameters)
                 .compose(resp -> Future.succeededFuture(resp > 0));
     }
 
-    public Future<Boolean> exists(String sql, Map<String, Object> parameters) {
+    public Future<Boolean> exists(String sql, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return exists(parseResult._0, parseResult._1);
+    }
+
+    private Future<Boolean> exists(String sql, Map<String, Object> parameters) {
         return count(sql, parameters)
                 .compose(resp -> Future.succeededFuture(resp > 0));
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<Long> count(Map<String, Object> whereParameters, Class<E> entityClazz) {
-        var sql = packageWhere("SELECT 1 FROM " + entityClazz.getDeclaredConstructor().newInstance().tableName(), whereParameters);
+    public <E extends IdEntity> Future<Long> count(Class<E> entityClazz, Map<String, Object> whereParameters) {
+        var sql = packageWhere("SELECT 1 FROM " + getTableName(entityClazz), whereParameters);
         return count(sql, whereParameters);
     }
 
-    public Future<Long> count(String sql, Map<String, Object> parameters) {
+    public Future<Long> count(String sql, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return count(parseResult._0, parseResult._1);
+    }
+
+    private Future<Long> count(String sql, Map<String, Object> parameters) {
         var countSql = "SELECT COUNT(1) AS _count FROM (" + sql + ") AS _" + System.currentTimeMillis();
         if (log.isTraceEnabled()) {
             log.trace("[SQL][{}]Count\r\n--------------\r\n{}\r\n{}",
@@ -235,17 +252,22 @@ public class FunSQLClient {
         return promise.future();
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<Page<E>> page(Map<String, Object> whereParameters, Long pageNumber, Long pageSize, Class<E> returnClazz) {
-        var sql = packageWhere("SELECT * FROM " + returnClazz.getDeclaredConstructor().newInstance().tableName(), whereParameters);
-        return page(sql, whereParameters, pageNumber, pageSize, returnClazz);
+    public <E extends IdEntity> Future<Page<E>> page(Class<E> returnClazz, Long pageNumber, Long pageSize, Map<String, Object> whereParameters) {
+        var sql = packageWhere("SELECT * FROM " + getTableName(returnClazz), whereParameters);
+        return page(returnClazz, sql, pageNumber, pageSize, whereParameters);
     }
 
-    public Future<Page<JsonObject>> page(String sql, Map<String, Object> parameters, Long pageNumber, Long pageSize) {
-        return page(sql, parameters, pageNumber, pageSize, JsonObject.class);
+    public Future<Page<JsonObject>> page(String sql, Long pageNumber, Long pageSize, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return page(JsonObject.class, parseResult._0, pageNumber, pageSize, parseResult._1);
     }
 
-    public <E> Future<Page<E>> page(String sql, Map<String, Object> parameters, Long pageNumber, Long pageSize, Class<E> returnClazz) {
+    public <E> Future<Page<E>> page(Class<E> returnClazz, String sql, Long pageNumber, Long pageSize, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return page(returnClazz, parseResult._0, pageNumber, pageSize, parseResult._1);
+    }
+
+    private <E> Future<Page<E>> page(Class<E> returnClazz, String sql, Long pageNumber, Long pageSize, Map<String, Object> parameters) {
         var pageSql = sql + " LIMIT " + (pageNumber - 1) * pageSize + ", " + pageSize;
         if (log.isTraceEnabled()) {
             log.trace("[SQL][{}]Page\r\n--------------\r\n{}\r\n{}",
@@ -258,7 +280,7 @@ public class FunSQLClient {
         Page<E> page = new Page<>();
         page.setPageNumber(pageNumber);
         page.setPageSize(pageSize);
-        list(pageSql, parameters, returnClazz)
+        list(returnClazz, pageSql, parameters)
                 .onSuccess(selectResp -> {
                     page.setObjects(selectResp);
                     count(sql, parameters)
@@ -274,7 +296,7 @@ public class FunSQLClient {
     }
 
     public <E extends IdEntity> Future<Long> save(E entity) {
-        var tableName = entity.tableName();
+        var tableName = getTableName(entity.getClass());
         var caseEntity = CaseFormatter.camelToSnake(convertToJson(entity, true));
         var columns = caseEntity.stream().map(Map.Entry::getKey).collect(Collectors.joining(", "));
         var values = caseEntity.stream().map(j -> "#{" + j.getKey() + "}").collect(Collectors.joining(", "));
@@ -293,7 +315,7 @@ public class FunSQLClient {
     }
 
     public <E extends IdEntity> Future<Long> save(List<E> entities) {
-        var tableName = entities.get(0).tableName();
+        var tableName = getTableName(entities.get(0).getClass());
         var jsonEntities = entities.stream().map(entity -> convertToJson(entity, true)).collect(Collectors.toList());
         var caseEntity = CaseFormatter.camelToSnake(jsonEntities.get(0));
         var columns = caseEntity.stream().map(Map.Entry::getKey).collect(Collectors.joining(", "));
@@ -313,66 +335,22 @@ public class FunSQLClient {
                         .collect(Collectors.toList())), sql);
     }
 
-    public Future<Long> save(String sql, Map<String, Object> parameters) {
-        if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Save\r\n--------------\r\n{}\r\n{}",
-                    code, sql,
-                    parameters.entrySet().stream()
-                            .map(entry -> entry.getKey() + " = " + entry.getValue())
-                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
-        }
-        return updateHandler(SqlTemplate.forUpdate(client, sql).execute(parameters), sql);
-    }
-
-    public Future<Long> save(String sql, List<Map<String, Object>> parameters) {
-        if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Save Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}",
-                    code, sql,
-                    parameters.get(0).entrySet().stream()
-                            .map(entry -> entry.getKey() + " = " + entry.getValue())
-                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
-        }
-        return updateHandler(SqlTemplate.forUpdate(client, sql).executeBatch(parameters), sql);
-    }
-
     public <E extends IdEntity> Future<Void> update(E entity) {
-        return update(entity.getId(), entity);
+        return update(entity, entity.getId());
     }
 
-    public Future<Void> update(String sql, Map<String, Object> parameters) {
-        if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Update\r\n--------------\r\n{}\r\n{}",
-                    code, sql,
-                    parameters.entrySet().stream()
-                            .map(entry -> entry.getKey() + " = " + entry.getValue())
-                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
-        }
-        return updateHandler(SqlTemplate.forUpdate(client, sql).execute(parameters), sql)
-                .compose(resp -> Future.succeededFuture());
+
+    public <E extends IdEntity> Future<Void> update(E setItems, Object id) {
+        return update(setItems,
+                new HashMap<>() {
+                    {
+                        put("id", id);
+                    }
+                });
     }
 
-    public Future<Void> update(String sql, List<Map<String, Object>> parameters) {
-        if (log.isTraceEnabled()) {
-            log.trace("[SQL][{}]Update Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}",
-                    code, sql,
-                    parameters.get(0).entrySet().stream()
-                            .map(entry -> entry.getKey() + " = " + entry.getValue())
-                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
-        }
-        return updateHandler(SqlTemplate.forUpdate(client, sql).executeBatch(parameters), sql)
-                .compose(resp -> Future.succeededFuture());
-    }
-
-    public <E extends IdEntity> Future<Void> update(Object id, E setItems) {
-        return update(new HashMap<>() {
-            {
-                put("id", id);
-            }
-        }, setItems);
-    }
-
-    public <E extends IdEntity> Future<Void> update(Map<String, Object> whereParameters, E setItems) {
-        var tableName = setItems.tableName();
+    public <E extends IdEntity> Future<Void> update(E setItems, Map<String, Object> whereParameters) {
+        var tableName = getTableName(setItems.getClass());
         var caseEntity = CaseFormatter.camelToSnake(convertToJson(setItems, false))
                 .stream()
                 .filter(j -> j.getValue() != null)
@@ -393,43 +371,42 @@ public class FunSQLClient {
                 .compose(resp -> Future.succeededFuture());
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<Void> delete(Object id, Class<E> entityClazz) {
-        return delete(new HashMap<>() {
-            {
-                put("id", id);
-            }
-        }, entityClazz);
+    public <E extends IdEntity> Future<Void> delete(Class<E> entityClazz, Object id) {
+        return delete(entityClazz,
+                new HashMap<>() {
+                    {
+                        put("id", id);
+                    }
+                });
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<Void> delete(Map<String, Object> whereParameters, Class<E> entityClazz) {
-        var sql = packageWhere("DELETE FROM " + entityClazz.getDeclaredConstructor().newInstance().tableName(), whereParameters);
-        return delete(sql, whereParameters);
+    public <E extends IdEntity> Future<Void> delete(Class<E> entityClazz, Map<String, Object> whereParameters) {
+        var sql = packageWhere("DELETE FROM " + getTableName(entityClazz), whereParameters);
+        return execute(sql, whereParameters)
+                .compose(resp -> Future.succeededFuture());
     }
 
-    public Future<Void> delete(String sql, Map<String, Object> parameters) {
-        return update(sql, parameters);
+    public <E extends IdEntity> Future<Void> softDelete(Class<E> entityClazz, Object id) {
+        return softDelete(entityClazz,
+                new HashMap<>() {
+                    {
+                        put("id", id);
+                    }
+                });
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<Void> softDelete(Object id, Class<E> entityClazz) {
-        return softDelete(new HashMap<>() {
-            {
-                put("id", id);
-            }
-        }, entityClazz);
+    public <E extends IdEntity> Future<Void> softDelete(Class<E> entityClazz, Map<String, Object> whereParameters) {
+        var sql = packageWhere("SELECT * FROM " + getTableName(entityClazz), whereParameters);
+        return softDelete(entityClazz, sql, whereParameters);
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<Void> softDelete(Map<String, Object> whereParameters, Class<E> entityClazz) {
-        var sql = packageWhere("SELECT * FROM " + entityClazz.getDeclaredConstructor().newInstance().tableName(), whereParameters);
-        return softDelete(sql, whereParameters, entityClazz);
+    public <E extends IdEntity> Future<Void> softDelete(Class<E> entityClazz, String sql, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return softDelete(entityClazz, parseResult._0, parseResult._1);
     }
 
-    @SneakyThrows
-    public <E extends IdEntity> Future<Void> softDelete(String sql, Map<String, Object> parameters, Class<E> entityClazz) {
-        var tableName = entityClazz.getDeclaredConstructor().newInstance().tableName();
+    private <E extends IdEntity> Future<Void> softDelete(Class<E> entityClazz, String sql, Map<String, Object> parameters) {
+        var tableName = getTableName(entityClazz);
         if (log.isTraceEnabled()) {
             log.trace("[SQL][{}]SoftDelete\r\n--------------\r\n{}\r\n{}",
                     code, sql,
@@ -438,7 +415,7 @@ public class FunSQLClient {
                             .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
         }
         return tx(client ->
-                client.list(sql, parameters, Map.class)
+                client.list(Map.class, sql, parameters)
                         .compose(selectResp -> {
                             if (selectResp.isEmpty()) {
                                 return Future.succeededFuture(null);
@@ -467,9 +444,55 @@ public class FunSQLClient {
                             if (ids == null) {
                                 return Future.succeededFuture();
                             }
-                            return client.update("DELETE FROM " + tableName + " WHERE id = #{id}", ids);
+                            return client.execute("DELETE FROM " + tableName + " WHERE id = #{id}", ids)
+                                    .compose(resp -> Future.succeededFuture());
                         })
         );
+    }
+
+    public Future<Long> execute(String sql, Object... parameters) {
+        var parseResult = parseSqlAndParameters(sql, parameters);
+        return execute(parseResult._0, parseResult._1);
+    }
+
+    public Future<Long> executeBatch(String sql, List<Object[]> parameters) {
+        if (parameters.isEmpty()) {
+            return Future.succeededFuture(0L);
+        }
+        var parseResult = parseSqlAndParameters(sql, parameters.get(0));
+        var parameterMap = parameters.stream()
+                .map(paramItems -> {
+                    Map<String, Object> params = new HashMap<>();
+                    var idx = 0;
+                    for (String key : parseResult._1.keySet()) {
+                        params.put(key, paramItems[idx++]);
+                    }
+                    return params;
+                })
+                .collect(Collectors.toList());
+        return execute(parseResult._0, parameterMap);
+    }
+
+    private Future<Long> execute(String sql, Map<String, Object> parameters) {
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL][{}]Execute\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    parameters.entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
+        return updateHandler(SqlTemplate.forUpdate(client, sql).execute(parameters), sql);
+    }
+
+    private Future<Long> execute(String sql, List<Map<String, Object>> parameters) {
+        if (log.isTraceEnabled()) {
+            log.trace("[SQL][{}]Execute Batch(" + parameters.size() + ") , first record\r\n--------------\r\n{}\r\n{}",
+                    code, sql,
+                    parameters.get(0).entrySet().stream()
+                            .map(entry -> entry.getKey() + " = " + entry.getValue())
+                            .collect(Collectors.joining("\r\n", "-------\r\n", "\r\n--------------")));
+        }
+        return updateHandler(SqlTemplate.forUpdate(client, sql).executeBatch(parameters), sql);
     }
 
     public <E> Future<E> tx(ProcessContext context, Supplier<Future<E>> function) {
@@ -536,6 +559,33 @@ public class FunSQLClient {
         return txClient;
     }
 
+    private Tuple2<String, Map<String, Object>> parseSqlAndParameters(String sql, Object... parameters) {
+        Map<String, Object> parameterMap = new LinkedHashMap<>();
+        if (parameters.length == 0) {
+            return new Tuple2<>(sql, parameterMap);
+        }
+        if(parameters.length==1 && parameters[0] instanceof Collection){
+            parameters = ((Collection)parameters[0]).toArray();
+        }
+        var idx = 0;
+        while (sql.contains("%s") || sql.contains("?")) {
+            if (sql.contains("%s") && sql.indexOf("%s") < sql.indexOf("?")) {
+                // 替换 %s
+                if (parameters[idx] instanceof Class<?> && IdEntity.class.isAssignableFrom((Class<?>) parameters[idx])) {
+                    sql = sql.replaceFirst("%s", getTableName((Class<IdEntity>) parameters[idx]));
+                } else {
+                    sql = sql.replaceFirst("%s", parameters[idx].toString());
+                }
+            } else {
+                // 替换 ?
+                sql = sql.replaceFirst("\\?", "#{p_" + idx + "}");
+                parameterMap.put("p_" + idx, parameters[idx]);
+            }
+            idx++;
+        }
+        return new Tuple2<>(sql, parameterMap);
+    }
+
     private String packageWhere(String sqlWithoutWhere, Map<String, Object> whereParameters) {
         var sql = sqlWithoutWhere + " WHERE 1 = 1";
         var optKeys = new ArrayList<String>();
@@ -563,7 +613,7 @@ public class FunSQLClient {
         Promise<Long> promise = Promise.promise();
         handler
                 .onSuccess(records -> {
-                    if (sql.trim().toLowerCase().startsWith("insert into")) {
+                    if (sql.trim().toLowerCase().startsWith("insert")) {
                         promise.complete(records.property(MySQLClient.LAST_INSERTED_ID));
                     } else {
                         promise.complete((long) records.rowCount());
@@ -594,6 +644,17 @@ public class FunSQLClient {
                     }
                 });
         return promise.future();
+    }
+
+    @SneakyThrows
+    private <E extends IdEntity> String getTableName(Class<E> entityClazz) {
+        if (!TABLE_NAMES.containsKey(entityClazz)) {
+            var obj = entityClazz.getDeclaredConstructor().newInstance();
+            var method = $.bean.getMethods(entityClazz).stream().filter(m -> m.getName().equals("tableName")).findFirst().get();
+            var tableName = $.bean.getValue(obj, method);
+            TABLE_NAMES.put(entityClazz, (String) tableName);
+        }
+        return TABLE_NAMES.get(entityClazz);
     }
 
     private <E extends IdEntity> JsonObject convertToJson(E entity, Boolean insert) {

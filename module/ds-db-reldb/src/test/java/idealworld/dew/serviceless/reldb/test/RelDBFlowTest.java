@@ -19,10 +19,10 @@ package idealworld.dew.serviceless.reldb.test;
 import com.ecfront.dew.common.$;
 import com.ecfront.dew.common.tuple.Tuple2;
 import idealworld.dew.framework.DewAuthConstant;
-import idealworld.dew.framework.DewConstant;
 import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.*;
+import idealworld.dew.framework.fun.auth.exchange.ExchangeHelper;
 import idealworld.dew.framework.fun.cache.FunCacheClient;
 import idealworld.dew.framework.fun.eventbus.FunEventBus;
 import idealworld.dew.framework.fun.sql.FunSQLClient;
@@ -93,7 +93,7 @@ public class RelDBFlowTest extends DewTest {
                 "\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
 
         // 添加资源主体
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resourcesubject.reldb/subjectCodexx",
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resourcesubject.reldb/subjectCodexx",
                 JsonObject.mapFrom(ResourceSubjectExchange.builder()
                         .code("1.reldb.subjectCodexx")
                         .name("测试数据库")
@@ -117,12 +117,12 @@ public class RelDBFlowTest extends DewTest {
                 "comment '账号'"));
         await(FunSQLClient.choose("1.reldb.subjectCodexx").rawExec("insert into iam_account(name, open_id, status) values (?, ?, ?)",
                 new ArrayList<>() {
-            {
-                add("孤岛旭日1");
-                add("xxxx");
-                add("ENABLED");
-            }
-        }));
+                    {
+                        add("孤岛旭日1");
+                        add("xxxx");
+                        add("ENABLED");
+                    }
+                }));
 
         Assertions.assertEquals("请求的SQL解析错误", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select1 name from iam_account1" + "\",\"parameters" +
                 "\":[]}", identOptCacheInfo)._1.getMessage());
@@ -131,7 +131,7 @@ public class RelDBFlowTest extends DewTest {
         Assertions.assertEquals("[{\"name\":\"孤岛旭日1\"}]", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\"," +
                 "\"parameters\":[]}", identOptCacheInfo)._0.toString("utf-8"));
 
-        await(FunCacheClient.choose(MODULE_NAME).set(DewConstant.CACHE_AUTH_POLICY + "reldb:1.reldb.subjectCodexx/iam_account/name:fetch",
+        await(FunCacheClient.choose(MODULE_NAME).set(DewAuthConstant.CACHE_AUTH_POLICY + "reldb:1.reldb.subjectCodexx/iam_account/name:fetch",
                 JsonObject.mapFrom(new HashMap<String, Map<String, List<String>>>() {
                     {
                         put(AuthSubjectOperatorKind.EQ.toString().toLowerCase(), new HashMap<>() {
@@ -145,17 +145,17 @@ public class RelDBFlowTest extends DewTest {
                         });
                     }
                 }).toString()));
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.CREATE, "eb://iam/resource.reldb", JsonObject.mapFrom(ResourceExchange.builder()
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.CREATE, "eb://iam/resource.reldb", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.FETCH.toString().toLowerCase())
                 .uri("reldb://1.reldb.subjectCodexx/iam_account/name")
-                .build()).toBuffer(), new HashMap<>());
+                  .build()).toBuffer(), new HashMap<>());
         Thread.sleep(1000);
 
         Assertions.assertEquals("鉴权错误，没有权限访问对应的资源", request("1.reldb.subjectCodexx", "{\"sql\":\"" + "select name from iam_account" + "\"," +
                 "\"parameters\":[]}", identOptCacheInfo)._1.getMessage());
 
-        await(FunCacheClient.choose(MODULE_NAME).del(DewConstant.CACHE_AUTH_POLICY + "reldb:1.reldb.subjectCodexx/iam_account/name:fetch"));
-        FunEventBus.choose(MODULE_NAME).publish("", OptActionKind.DELETE, "eb://iam/resource.reldb", JsonObject.mapFrom(ResourceExchange.builder()
+        await(FunCacheClient.choose(MODULE_NAME).del(DewAuthConstant.CACHE_AUTH_POLICY + "reldb:1.reldb.subjectCodexx/iam_account/name:fetch"));
+        FunEventBus.choose(MODULE_NAME).publish(ExchangeHelper.EXCHANGE_WATCH_ADDRESS, OptActionKind.DELETE, "eb://iam/resource.reldb", JsonObject.mapFrom(ResourceExchange.builder()
                 .actionKind(OptActionKind.FETCH.toString().toLowerCase())
                 .uri("reldb://1.reldb.subjectCodexx/iam_account/name")
                 .build()).toBuffer(), new HashMap<>());

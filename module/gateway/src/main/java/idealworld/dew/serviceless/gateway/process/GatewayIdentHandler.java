@@ -25,7 +25,7 @@ import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.dto.OptActionKind;
 import idealworld.dew.framework.fun.auth.dto.ResourceKind;
 import idealworld.dew.framework.fun.cache.FunCacheClient;
-import idealworld.dew.framework.fun.httpserver.AuthHttpHandler;
+import idealworld.dew.framework.fun.httpserver.HttpHandler;
 import idealworld.dew.framework.util.URIHelper;
 import idealworld.dew.serviceless.gateway.GatewayConfig;
 import io.vertx.core.http.HttpServerRequest;
@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
  * @author gudaoxuri
  */
 @Slf4j
-public class GatewayIdentHandler extends AuthHttpHandler {
+public class GatewayIdentHandler extends HttpHandler {
 
     private final GatewayConfig.Security security;
 

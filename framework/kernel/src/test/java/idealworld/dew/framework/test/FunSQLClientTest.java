@@ -91,49 +91,29 @@ public class FunSQLClientTest extends DewTest {
     @Test
     @Order(2)
     public void testSimple(Vertx vertx, VertxTestContext testContext) {
+        var parameters = new ArrayList<>();
+        parameters.add(Account.class);
+        parameters.add("孤岛旭日1");
+        parameters.add("xxxx");
+        parameters.add("ENABLED");
         Future.succeededFuture()
                 .compose(resp ->
-                        funSQLClient.save("insert into account(name, open_id, status) values (#{name}, #{open_id}, #{status})",
-                                new HashMap<>() {
-                                    {
-                                        put("name", "孤岛旭日1");
-                                        put("open_id", "xxxx");
-                                        put("status", "ENABLED");
-                                    }
-                                })
+                        funSQLClient.execute("insert into %s(name, open_id, status) values (?, ?, ?)", parameters)
                 )
                 .compose(id ->
-                        funSQLClient.update("update account set name = #{name} where id = #{id}",
-                                new HashMap<>() {
-                                    {
-                                        put("name", "孤岛旭日_new");
-                                        put("id", id);
-                                    }
-                                })
+                        funSQLClient.execute("update account set name = ? where id = ?", "孤岛旭日_new", id)
                 )
                 .compose(resp ->
-                        funSQLClient.save("insert into account(name, open_id, status) values (#{name}, #{open_id}, #{status})",
+                        funSQLClient.executeBatch("insert into account(name, open_id, status) values (?, ?, ?)",
                                 new ArrayList<>() {
                                     {
-                                        add(new HashMap<>() {
-                                            {
-                                                put("name", "孤岛旭日2");
-                                                put("open_id", "xxxx");
-                                                put("status", "ENABLED");
-                                            }
-                                        });
-                                        add(new HashMap<>() {
-                                            {
-                                                put("name", "孤岛旭日3");
-                                                put("open_id", "xxxx");
-                                                put("status", "ENABLED");
-                                            }
-                                        });
+                                        add(new Object[]{"孤岛旭日2", "xxxx", "ENABLED"});
+                                        add(new Object[]{"孤岛旭日3", "xxxx", "ENABLED"});
                                     }
                                 })
                 )
                 .compose(resp ->
-                        funSQLClient.list("select * from account", new HashMap<>())
+                        funSQLClient.list("select * from account")
                 )
                 .compose(resp -> {
                     Assertions.assertEquals(3, resp.size());
@@ -143,26 +123,26 @@ public class FunSQLClientTest extends DewTest {
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.getOne("select * from account limit 1", new HashMap<>())
+                        funSQLClient.getOne("select * from account limit 1")
                 )
                 .compose(resp -> {
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.count("select * from account", new HashMap<>())
+                        funSQLClient.count("select * from account")
                 )
                 .compose(resp -> {
                     Assertions.assertEquals(3, resp);
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.exists("select * from account", new HashMap<>())
+                        funSQLClient.exists("select * from account")
                 )
                 .compose(resp -> {
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.page("select acc.name, acc.status AS stat from account AS acc", new HashMap<>(), 2L, 2L)
+                        funSQLClient.page("select acc.name, acc.status AS stat from account AS acc", 2L, 2L)
                 )
                 .onSuccess(resp -> {
                     Assertions.assertEquals(3, resp.getRecordTotal());
@@ -215,13 +195,8 @@ public class FunSQLClientTest extends DewTest {
                         })
                 )
                 .compose(resp ->
-                        funSQLClient.list("select acc.* from account AS acc where acc.name in (#{n1}, #{n2}, #{n3})", new HashMap<>() {
-                            {
-                                put("n1", "孤岛旭日4");
-                                put("n2", "孤岛旭日5");
-                                put("n3", "孤岛旭日6");
-                            }
-                        }, Account.class)
+                        funSQLClient.list(Account.class,
+                                "select acc.* from account AS acc where acc.name in (?, ?, ?)", "孤岛旭日4", "孤岛旭日5", "孤岛旭日6")
                 )
                 .compose(resp -> {
                     Assertions.assertEquals(3, resp.size());
@@ -231,22 +206,24 @@ public class FunSQLClientTest extends DewTest {
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.list(new HashMap<>() {
-                            {
-                                put("!name", "孤岛旭日4");
-                            }
-                        }, Account.class)
+                        funSQLClient.list(Account.class,
+                                new HashMap<>() {
+                                    {
+                                        put("!name", "孤岛旭日4");
+                                    }
+                                })
                 )
                 .compose(resp -> {
                     Assertions.assertFalse(resp.stream().anyMatch(r -> r.name.equalsIgnoreCase("孤岛旭日4")));
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.getOne(new HashMap<>() {
-                            {
-                                put("name", "孤岛旭日4");
-                            }
-                        }, Account.class)
+                        funSQLClient.getOne(Account.class,
+                                new HashMap<>() {
+                                    {
+                                        put("name", "孤岛旭日4");
+                                    }
+                                })
                 )
                 .compose(resp -> {
                     Assertions.assertEquals("孤岛旭日4", resp.name);
@@ -255,17 +232,14 @@ public class FunSQLClientTest extends DewTest {
                     return Future.succeededFuture(resp.getId());
                 })
                 .compose(id ->
-                        funSQLClient.update(id, Account.builder().name("孤岛旭日4_new").build())
+                        funSQLClient.update(Account.builder().name("孤岛旭日4_new").build(), id)
                 )
                 .compose(resp ->
-                        funSQLClient.list("select * from account where name in (#{n1})", new HashMap<>() {
-                            {
-                                put("n1", "孤岛旭日4_new");
-                            }
-                        }, Account.class)
+                        funSQLClient.list(Account.class,
+                                "select * from account where name in (?)", "孤岛旭日4_new")
                 )
                 .compose(resp ->
-                        funSQLClient.getOne(resp.get(0).getId(), Account.class)
+                        funSQLClient.getOne(Account.class, resp.get(0).getId())
                 )
                 .compose(resp -> {
                     Assertions.assertEquals("孤岛旭日4_new", resp.name);
@@ -274,20 +248,14 @@ public class FunSQLClientTest extends DewTest {
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.softDelete("select * from account where name in (#{n1})", new HashMap<>() {
-                            {
-                                put("n1", "孤岛旭日6");
-                            }
-                        }, Account.class))
-                .compose(resp ->
-                        funSQLClient.delete("delete from account where name = #{n1}", new HashMap<>() {
-                            {
-                                put("n1", "孤岛旭日5");
-                            }
-                        })
+                        funSQLClient.softDelete(Account.class,
+                                "select * from account where name in (?)", "孤岛旭日6")
                 )
                 .compose(resp ->
-                        funSQLClient.list("select * from account", new HashMap<>(), Account.class)
+                        funSQLClient.execute("delete from account where name = ?", "孤岛旭日5")
+                )
+                .compose(resp ->
+                        funSQLClient.list(Account.class, "select * from account")
                 )
                 .compose(resp -> {
                     Assertions.assertEquals(4, resp.size());
@@ -297,15 +265,14 @@ public class FunSQLClientTest extends DewTest {
                     return Future.succeededFuture();
                 })
                 .compose(resp ->
-                        funSQLClient.list("select * from " + new SoftDelEntity().tableName(), new HashMap<>(), SoftDelEntity.class)
+                        funSQLClient.list(SoftDelEntity.class, new HashMap<>())
                 )
                 .onSuccess(resp -> {
                     Assertions.assertEquals(1, resp.size());
                     Assertions.assertTrue(resp.get(0).getContent().contains("孤岛旭日6"));
                     testContext.completeNow();
                 })
-                .onFailure(e ->
-                        testContext.failNow(e));
+                .onFailure(testContext::failNow);
     }
 
     @Test
@@ -328,20 +295,13 @@ public class FunSQLClientTest extends DewTest {
                                                 .status(CommonStatus.DISABLED)
                                                 .build()))
                         .compose(resp ->
-                                funSQLClient.list("select * from account where name like #{name}", new HashMap<>() {
-                                    {
-                                        put("name", "idealworld%");
-                                    }
-                                }, Account.class))
+                                funSQLClient.list(Account.class, "select * from account where name like ?", "idealworld%"))
         )
                 .onComplete(resp -> {
                     Assertions.assertEquals(2, resp.result().size());
                     Assertions.assertEquals("idealworld1", resp.result().get(0).name);
-                    funSQLClient.list("select * from account where name like #{name}", new HashMap<>() {
-                        {
-                            put("name", "idealworld%");
-                        }
-                    }, Account.class)
+                    funSQLClient.list(Account.class,
+                            "select * from account where name like ?", "idealworld%")
                             .onComplete(r -> {
                                 Assertions.assertEquals(2, r.result().size());
                                 Assertions.assertEquals("idealworld1", r.result().get(0).name);
@@ -371,19 +331,12 @@ public class FunSQLClientTest extends DewTest {
                                                 .status(CommonStatus.DISABLED)
                                                 .build()))
                         .compose(resp ->
-                                client.list("select * from account where name like #{name}", new HashMap<>() {
-                                    {
-                                        put("name", "idealworld%");
-                                    }
-                                }, Account.class))
+                                client.list(Account.class, "select * from account where name like ?", "idealworld%"))
         )
                 .onComplete(resp -> {
                     Assertions.assertTrue(resp.failed());
-                    funSQLClient.list("select * from account where name like #{name}", new HashMap<>() {
-                        {
-                            put("name", "idealworld%");
-                        }
-                    }, Account.class)
+                    funSQLClient.list(Account.class,
+                            "select * from account where name like ?", "idealworld%")
                             .onComplete(r -> {
                                 Assertions.assertEquals(2, r.result().size());
                                 Assertions.assertEquals("idealworld1", r.result().get(0).name);
@@ -414,19 +367,13 @@ public class FunSQLClientTest extends DewTest {
                                                 .build()))
                         )
                         .compose(resp ->
-                                client.list("select * from account where name like #{name}", new HashMap<>() {
-                                    {
-                                        put("name", "idealworld%");
-                                    }
-                                }, Account.class))
+                                client.list(Account.class,
+                                        "select * from account where name like ?", "idealworld%"))
         )
                 .onComplete(resp -> {
                     Assertions.assertTrue(resp.failed());
-                    funSQLClient.list("select * from account where name like #{name}", new HashMap<>() {
-                        {
-                            put("name", "idealworld%");
-                        }
-                    }, Account.class)
+                    funSQLClient.list(Account.class,
+                            "select * from account where name like ?", "idealworld%")
                             .onComplete(r -> {
                                 Assertions.assertEquals(2, r.result().size());
                                 Assertions.assertEquals("idealworld1", r.result().get(0).name);
@@ -458,20 +405,14 @@ public class FunSQLClientTest extends DewTest {
                                                 .status(CommonStatus.DISABLED)
                                                 .build()))
                         .compose(resp ->
-                                eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
-                                    {
-                                        put("name", "dew%");
-                                    }
-                                }, Account.class))
+                                eventBusContext.context.sql.list(Account.class,
+                                        "select * from account where name like ?", "dew%"))
         )
                 .onComplete(resp -> {
                     Assertions.assertEquals(2, resp.result().size());
                     Assertions.assertEquals("dew1", resp.result().get(0).name);
-                    eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
-                        {
-                            put("name", "dew%");
-                        }
-                    }, Account.class)
+                    eventBusContext.context.sql.list(Account.class,
+                            "select * from account where name like ?", "dew%")
                             .onComplete(r -> {
                                 Assertions.assertEquals(2, r.result().size());
                                 Assertions.assertEquals("dew1", r.result().get(0).name);
@@ -502,19 +443,13 @@ public class FunSQLClientTest extends DewTest {
                                                 .status(CommonStatus.DISABLED)
                                                 .build()))
                         .compose(resp ->
-                                eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
-                                    {
-                                        put("name", "dew%");
-                                    }
-                                }, Account.class))
+                                eventBusContext.context.sql.list(Account.class,
+                                        "select * from account where name like ?", "dew%"))
         )
                 .onComplete(resp -> {
                     Assertions.assertTrue(resp.failed());
-                    eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
-                        {
-                            put("name", "dew%");
-                        }
-                    }, Account.class)
+                    eventBusContext.context.sql.list(Account.class,
+                            "select * from account where name like ?", "dew%")
                             .onComplete(r -> {
                                 Assertions.assertEquals(2, r.result().size());
                                 Assertions.assertEquals("dew1", r.result().get(0).name);
@@ -547,19 +482,13 @@ public class FunSQLClientTest extends DewTest {
                                                         .build()))
                         )
                         .compose(resp ->
-                                eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
-                                    {
-                                        put("name", "dew%");
-                                    }
-                                }, Account.class))
+                                eventBusContext.context.sql.list(Account.class,
+                                        "select * from account where name like ?", "dew%"))
         )
                 .onComplete(resp -> {
                     Assertions.assertTrue(resp.failed());
-                    eventBusContext.context.sql.list("select * from account where name like #{name}", new HashMap<>() {
-                        {
-                            put("name", "dew%");
-                        }
-                    }, Account.class)
+                    eventBusContext.context.sql.list(Account.class,
+                            "select * from account where name like ?", "dew%")
                             .onComplete(r -> {
                                 Assertions.assertEquals(2, r.result().size());
                                 Assertions.assertEquals("dew1", r.result().get(0).name);

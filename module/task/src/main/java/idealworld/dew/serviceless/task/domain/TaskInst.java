@@ -38,7 +38,7 @@ import javax.validation.constraints.Size;
 public class TaskInst extends IdEntity {
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "task_" + super.tableName();
     }
 

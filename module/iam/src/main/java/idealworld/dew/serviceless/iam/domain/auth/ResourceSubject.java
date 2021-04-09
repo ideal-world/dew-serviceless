@@ -145,7 +145,7 @@ public class ResourceSubject extends SafeEntity {
     private Long relTenantId;
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "iam_" + super.tableName();
     }
 

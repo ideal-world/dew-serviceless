@@ -48,6 +48,8 @@ import java.util.function.Consumer;
 @Slf4j
 public class ExchangeHelper {
 
+    public static final String EXCHANGE_WATCH_ADDRESS = "_EXCHANGE_";
+
     private static DewAuthConfig.IAMConfig config;
 
     public static void init(DewAuthConfig.IAMConfig _config) {
@@ -159,8 +161,8 @@ public class ExchangeHelper {
                 }));
     }
 
-    public static Future<Void> watch(String moduleName, Set<String> uris, Consumer<Tuple2<OptActionKind, Buffer>> fun) {
-        FunEventBus.choose(moduleName).consumer("", (FunEventBus.ConsumerFun<Void>) (actionKind, uri, header, body) -> {
+    private static Future<Void> watch(String moduleName, Set<String> uris, Consumer<Tuple2<OptActionKind, Buffer>> fun) {
+        FunEventBus.choose(moduleName).consumer(EXCHANGE_WATCH_ADDRESS, (FunEventBus.ConsumerFun<Void>) (actionKind, uri, header, body) -> {
             var strUri = uri.toString().toLowerCase();
             if (uris.stream().anyMatch(u -> strUri.startsWith(u.toLowerCase()))) {
                 log.trace("[Exchange]Received {}", body.toString());

@@ -37,7 +37,7 @@ import javax.validation.constraints.Size;
 public class SoftDelEntity extends SafeEntity {
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "dew_del_record";
     }
 

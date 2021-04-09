@@ -30,6 +30,7 @@ import idealworld.dew.serviceless.iam.process.tenantconsole.dto.tenant.*;
 import io.vertx.core.Future;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * 租户控制台下的租户控制器.
@@ -79,9 +80,9 @@ public class TCTenantProcessor extends EventBusProcessor {
         addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
                 getTenantCert(Long.parseLong(eventBusContext.req.params.get("tenantCertId")), eventBusContext.req.identOptInfo.getTenantId(),
                         eventBusContext.context));
-        // 获取当前租户的某个凭证信息
+        // 获取当前租户的所有凭证信息
         addProcessor(OptActionKind.FETCH, "/console/tenant/tenant/cert", eventBusContext ->
-                pageTenantCerts(eventBusContext.req.pageNumber(), eventBusContext.req.pageSize(), eventBusContext.req.identOptInfo.getTenantId(),
+                findTenantCerts(eventBusContext.req.identOptInfo.getTenantId(),
                         eventBusContext.context));
         // 删除当前租户的某个认证
         addProcessor(OptActionKind.DELETE, "/console/tenant/tenant/cert/{tenantCertId}", eventBusContext ->
@@ -95,7 +96,7 @@ public class TCTenantProcessor extends EventBusProcessor {
 
     public static Future<Void> modifyTenant(TenantModifyReq tenantModifyReq, Long relTenantId, ProcessContext context) {
         var tenant = context.helper.convert(tenantModifyReq, Tenant.class);
-        return context.sql.update(relTenantId, tenant)
+        return context.sql.update(tenant, relTenantId)
                 .compose(resp -> {
                     if (tenantModifyReq.getStatus() != null) {
                         if (tenantModifyReq.getStatus() == CommonStatus.ENABLED) {
@@ -109,7 +110,7 @@ public class TCTenantProcessor extends EventBusProcessor {
     }
 
     public static Future<TenantResp> getTenant(Long relTenantId, ProcessContext context) {
-        return context.sql.getOne(relTenantId, Tenant.class)
+        return context.sql.getOne(Tenant.class, relTenantId)
                 .compose(tenant -> context.helper.success(tenant, TenantResp.class));
     }
 
@@ -118,13 +119,14 @@ public class TCTenantProcessor extends EventBusProcessor {
     public static Future<Long> addTenantIdent(TenantIdentAddReq tenantIdentAddReq, Long relTenantId, ProcessContext context) {
         return context.helper.existToError(
                 context.sql.exists(
+                        TenantIdent.class,
                         new HashMap<>() {
                             {
                                 put("kind", tenantIdentAddReq.getKind());
                                 put("rel_tenant_id", relTenantId);
                             }
-                        },
-                        TenantIdent.class), () -> new ConflictException("租户认证类型已存在"))
+                        }),
+                () -> new ConflictException("租户认证类型已存在"))
                 .compose(resp -> {
                     var tenantIdent = context.helper.convert(tenantIdentAddReq, TenantIdent.class);
                     tenantIdent.setRelTenantId(relTenantId);
@@ -135,48 +137,50 @@ public class TCTenantProcessor extends EventBusProcessor {
     public static Future<Void> modifyTenantIdent(Long tenantIdentId, TenantIdentModifyReq tenantIdentModifyReq, Long relTenantId,
                                                  ProcessContext context) {
         var tenantIdent = context.helper.convert(tenantIdentModifyReq, TenantIdent.class);
-        return context.sql.update(new HashMap<>() {
-            {
-                put("id", tenantIdentId);
-                put("rel_tenant_id", relTenantId);
-            }
-        }, tenantIdent);
-    }
-
-    public static Future<TenantIdentResp> getTenantIdent(Long tenantIdentId, Long relTenantId, ProcessContext context) {
-        return context.sql.getOne(
+        return context.sql.update(
+                tenantIdent,
                 new HashMap<>() {
                     {
                         put("id", tenantIdentId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                TenantIdent.class)
+                });
+    }
+
+    public static Future<TenantIdentResp> getTenantIdent(Long tenantIdentId, Long relTenantId, ProcessContext context) {
+        return context.sql.getOne(
+                TenantIdent.class,
+                new HashMap<>() {
+                    {
+                        put("id", tenantIdentId);
+                        put("rel_tenant_id", relTenantId);
+                    }
+                })
                 .compose(tenantIdent -> context.helper.success(tenantIdent, TenantIdentResp.class));
     }
 
     public static Future<Page<TenantIdentResp>> pageTenantIdents(Long pageNumber, Long pageSize, Long relTenantId, ProcessContext context) {
         return context.sql.page(
+                TenantIdent.class,
+                pageNumber,
+                pageSize,
                 new HashMap<>() {
                     {
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                pageNumber,
-                pageSize,
-                TenantIdent.class)
+                })
                 .compose(tenantIdents -> context.helper.success(tenantIdents, TenantIdentResp.class));
     }
 
     public static Future<Void> deleteTenantIdent(Long tenantIdentId, Long relTenantId, ProcessContext context) {
         return context.sql.softDelete(
+                TenantIdent.class,
                 new HashMap<>() {
                     {
                         put("id", tenantIdentId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                TenantIdent.class);
+                });
     }
 
     // --------------------------------------------------------------------
@@ -184,13 +188,14 @@ public class TCTenantProcessor extends EventBusProcessor {
     public static Future<Long> addTenantCert(TenantCertAddReq tenantCertAddReq, Long relTenantId, ProcessContext context) {
         return context.helper.existToError(
                 context.sql.exists(
+                        TenantCert.class,
                         new HashMap<>() {
                             {
                                 put("category", tenantCertAddReq.getCategory());
                                 put("rel_tenant_id", relTenantId);
                             }
-                        },
-                        TenantCert.class), () -> new ConflictException("租户凭证类型已存在"))
+                        }),
+                () -> new ConflictException("租户凭证类型已存在"))
                 .compose(resp -> {
                     var tenantCert = context.helper.convert(tenantCertAddReq, TenantCert.class);
                     tenantCert.setRelTenantId(relTenantId);
@@ -203,67 +208,69 @@ public class TCTenantProcessor extends EventBusProcessor {
         if (tenantCertModifyReq.getCategory() != null) {
             return context.helper.existToError(
                     context.sql.exists(
+                            TenantCert.class,
                             new HashMap<>() {
                                 {
                                     put("category", tenantCertModifyReq.getCategory());
                                     put("rel_tenant_id", relTenantId);
                                     put("!id", tenantCertId);
                                 }
-                            },
-                            TenantCert.class), () -> new ConflictException("租户凭证类型已存在"))
+                            }), () -> new ConflictException("租户凭证类型已存在"))
                     .compose(resp -> {
                         var tenantCert = context.helper.convert(tenantCertModifyReq, TenantCert.class);
-                        return context.sql.update(new HashMap<>() {
-                            {
-                                put("id", tenantCertId);
-                                put("rel_tenant_id", relTenantId);
-                            }
-                        }, tenantCert);
+                        return context.sql.update(
+                                tenantCert,
+                                new HashMap<>() {
+                                    {
+                                        put("id", tenantCertId);
+                                        put("rel_tenant_id", relTenantId);
+                                    }
+                                });
                     });
         }
         var tenantCert = context.helper.convert(tenantCertModifyReq, TenantCert.class);
-        return context.sql.update(new HashMap<>() {
-            {
-                put("id", tenantCertId);
-                put("rel_tenant_id", relTenantId);
-            }
-        }, tenantCert);
-    }
-
-    public static Future<TenantCertResp> getTenantCert(Long tenantCertId, Long relTenantId, ProcessContext context) {
-        return context.sql.getOne(
+        return context.sql.update(
+                tenantCert,
                 new HashMap<>() {
                     {
                         put("id", tenantCertId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                TenantCert.class)
+                });
+    }
+
+    public static Future<TenantCertResp> getTenantCert(Long tenantCertId, Long relTenantId, ProcessContext context) {
+        return context.sql.getOne(
+                TenantCert.class,
+                new HashMap<>() {
+                    {
+                        put("id", tenantCertId);
+                        put("rel_tenant_id", relTenantId);
+                    }
+                })
                 .compose(tenantCert -> context.helper.success(tenantCert, TenantCertResp.class));
     }
 
-    public static Future<Page<TenantCertResp>> pageTenantCerts(Long pageNumber, Long pageSize, Long relTenantId, ProcessContext context) {
-        return context.sql.page(
+    public static Future<List<TenantCertResp>> findTenantCerts(Long relTenantId, ProcessContext context) {
+        return context.sql.list(
+                TenantCert.class,
                 new HashMap<>() {
                     {
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                pageNumber,
-                pageSize,
-                TenantCert.class)
+                })
                 .compose(tenantCerts -> context.helper.success(tenantCerts, TenantCertResp.class));
     }
 
     public static Future<Void> deleteTenantCert(Long tenantCertId, Long relTenantId, ProcessContext context) {
         return context.sql.softDelete(
+                TenantCert.class,
                 new HashMap<>() {
                     {
                         put("id", tenantCertId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                TenantCert.class);
+                });
     }
 
 }

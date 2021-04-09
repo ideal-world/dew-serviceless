@@ -53,7 +53,7 @@ public class Role extends AppBasedEntity {
     private Integer sort;
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "iam_" + super.tableName();
     }
 

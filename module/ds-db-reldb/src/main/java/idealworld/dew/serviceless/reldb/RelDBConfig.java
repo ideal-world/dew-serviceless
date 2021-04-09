@@ -35,8 +35,6 @@ public class RelDBConfig {
 
     @Builder.Default
     private Security security = new Security();
-    @Builder.Default
-    private ContextFlag contextFlag = new ContextFlag();
 
     @Data
     @Builder
@@ -50,19 +48,6 @@ public class RelDBConfig {
         private Integer resourceCacheExpireSec = 60 * 60 * 24;
         @Builder.Default
         private Integer groupNodeLength = 5;
-
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ContextFlag {
-
-        @Builder.Default
-        private String currentUserId = "#{USER_ID}";
-        @Builder.Default
-        private String currentTimestamp = "#{TIMESTAMP}";
 
     }
 

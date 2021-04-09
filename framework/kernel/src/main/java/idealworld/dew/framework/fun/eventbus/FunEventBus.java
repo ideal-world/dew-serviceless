@@ -90,7 +90,7 @@ public class FunEventBus {
         return request(moduleName, actionKind, uri, body, header, null);
     }
 
-    public Future<Tuple2<Buffer, Map<String, String>>> request(String moduleName, OptActionKind actionKind, String uri, Buffer body, Map<String,
+    public Future<Tuple2<Buffer, Map<String, String>>> request(String moduleNameOrAddress, OptActionKind actionKind, String uri, Buffer body, Map<String,
             String> header, Long timeoutMs) {
         Promise<Tuple2<Buffer, Map<String, String>>> promise = Promise.promise();
         var deliveryOptions = new DeliveryOptions()
@@ -102,12 +102,12 @@ public class FunEventBus {
         if (timeoutMs != null) {
             deliveryOptions.setSendTimeout(timeoutMs);
         }
-        eventBus.request(moduleName,
+        eventBus.request(moduleNameOrAddress,
                 body,
                 deliveryOptions,
                 (Handler<AsyncResult<Message<Buffer>>>) event -> {
                     if (event.failed()) {
-                        log.error("[EventBus][{}]Request [{}]{}:{} error", code, moduleName, actionKind.toString(), uri);
+                        log.error("[EventBus][{}]Request [{}]{}:{} error", code, moduleNameOrAddress, actionKind.toString(), uri);
                         promise.fail(event.cause());
                     } else {
                         var respHeader = new HashMap<String, String>();
@@ -119,7 +119,7 @@ public class FunEventBus {
         return promise.future();
     }
 
-    public void publish(String moduleName, OptActionKind actionKind, String uri, Buffer body, Map<String, String> header) {
+    public void publish(String moduleNameOrAddress, OptActionKind actionKind, String uri, Buffer body, Map<String, String> header) {
         var deliveryOptions = new DeliveryOptions()
                 .addHeader(DewConstant.REQUEST_RESOURCE_ACTION_FLAG, actionKind.toString())
                 .addHeader(DewConstant.REQUEST_RESOURCE_URI_FLAG, uri)
@@ -127,13 +127,13 @@ public class FunEventBus {
         if (header != null) {
             header.forEach(deliveryOptions::addHeader);
         }
-        eventBus.publish(moduleName,
+        eventBus.publish(moduleNameOrAddress,
                 body,
                 deliveryOptions
         );
     }
 
-    public void send(String moduleName, OptActionKind actionKind, String uri, Object body, Map<String, String> header) {
+    public void send(String moduleNameOrAddress, OptActionKind actionKind, String uri, Object body, Map<String, String> header) {
         var deliveryOptions = new DeliveryOptions()
                 .addHeader(DewConstant.REQUEST_RESOURCE_ACTION_FLAG, actionKind.toString())
                 .addHeader(DewConstant.REQUEST_RESOURCE_URI_FLAG, uri)
@@ -141,14 +141,14 @@ public class FunEventBus {
         if (header != null) {
             header.forEach(deliveryOptions::addHeader);
         }
-        eventBus.send(moduleName,
+        eventBus.send(moduleNameOrAddress,
                 body,
                 deliveryOptions
         );
     }
 
-    public <E> void consumer(String moduleName, ConsumerFun<E> consumerFun) {
-        eventBus.consumer(moduleName,
+    public <E> void consumer(String moduleNameOrAddress, ConsumerFun<E> consumerFun) {
+        eventBus.consumer(moduleNameOrAddress,
                 (Handler<Message<Buffer>>) event -> {
                     var header = new HashMap<String, String>();
                     event.headers().forEach(h -> header.put(h.getKey(), h.getValue()));
@@ -184,7 +184,7 @@ public class FunEventBus {
                         }
                         processF
                                 .onFailure(e -> {
-                                    log.error("[EventBus][{}]Process [{}]{}:{} error", code, moduleName, actionKind.toString(), uri, e);
+                                    log.error("[EventBus][{}]Process [{}]{}:{} error", code, moduleNameOrAddress, actionKind.toString(), uri, e);
                                     if (e instanceof DewException) {
                                         event.fail(((DewException) e).getCode(), e.getMessage());
                                     } else {
@@ -192,7 +192,7 @@ public class FunEventBus {
                                     }
                                 });
                     } catch (Exception e) {
-                        log.error("[EventBus][{}]Process [{}]{}:{} error", code, moduleName, actionKind.toString(), uri, e);
+                        log.error("[EventBus][{}]Process [{}]{}:{} error", code, moduleNameOrAddress, actionKind.toString(), uri, e);
                         if (e instanceof DewException) {
                             event.fail(((DewException) e).getCode(), e.getMessage());
                         } else {

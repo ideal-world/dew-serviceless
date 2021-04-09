@@ -32,11 +32,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Data
-public abstract class KernelHttpHandler implements Handler<RoutingContext> {
+public abstract class HttpHandler implements Handler<RoutingContext> {
+
+    protected static final String CONTEXT_INFO = "CONTEXT";
 
     private String moduleName;
 
-    public KernelHttpHandler(String moduleName) {
+    public HttpHandler(String moduleName) {
         this.moduleName = moduleName;
     }
 

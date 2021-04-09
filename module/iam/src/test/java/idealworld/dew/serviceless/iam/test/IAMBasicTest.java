@@ -71,7 +71,7 @@ public class IAMBasicTest extends DewTest {
         iamConfig = mapIamConfig != null ? JsonObject.mapFrom(mapIamConfig).mapTo(IAMConfig.class) : IAMConfig.builder().build();
         vertx.deployVerticle(iamApplicationTest, event -> {
             context = ProcessContext.builder().moduleName(MODULE_NAME).build().init(IdentOptExchangeInfo.builder().build());
-            context.sql.getOne(1L, App.class)
+            context.sql.getOne(App.class, 1L)
                     .onSuccess(app -> {
                         iamAppCode = app.getOpenId();
                         testContext.completeNow();

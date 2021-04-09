@@ -60,7 +60,7 @@ public class GroupNode extends SafeEntity {
     private Long relGroupId;
 
     @Override
-    public String tableName() {
+    protected String tableName() {
         return "iam_" + super.tableName();
     }
 

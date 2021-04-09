@@ -23,7 +23,6 @@ import idealworld.dew.framework.dto.IdentOptExchangeInfo;
 import idealworld.dew.framework.exception.BadRequestException;
 import idealworld.dew.framework.exception.NotFoundException;
 import idealworld.dew.framework.exception.UnAuthorizedException;
-import idealworld.dew.framework.fun.auth.AuthenticationProcessor;
 import idealworld.dew.framework.fun.auth.dto.AuthResultKind;
 import idealworld.dew.framework.fun.eventbus.EventBusProcessor;
 import idealworld.dew.framework.fun.eventbus.ProcessContext;
@@ -89,8 +88,7 @@ public class RelDBProcessor extends EventBusProcessor {
                     );
                 })
                 .collect(Collectors.groupingBy(item -> item._1, Collectors.mapping(item -> item._0, Collectors.toList())));
-        var subjectInfo = AuthenticationProcessor.packageSubjectInfo(identOptCacheInfo);
-        return authPolicy.authentication(context.moduleName, resources, subjectInfo)
+        return authPolicy.authentication(context.moduleName, resources, identOptCacheInfo)
                 .compose(authResultKind -> {
                     if (authResultKind == AuthResultKind.REJECT) {
                         context.helper.error(new UnAuthorizedException("鉴权错误，没有权限访问对应的资源"));

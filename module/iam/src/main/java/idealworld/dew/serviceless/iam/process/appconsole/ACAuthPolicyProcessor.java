@@ -85,21 +85,13 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
         final String[] resourceUrl = new String[1];
         return context.helper.notExistToError(
                 context.sql.getOne(
-                        String.format("SELECT uri FROM %s" +
-                                        " WHERE id = #{id} AND" +
-                                        " ((rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id})" +
-                                        " OR (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id})" +
-                                        " OR expose_kind = #{expose_kind_global})",
-                                new Resource().tableName()),
-                        new HashMap<>() {
-                            {
-                                put("id", authPolicyAddReq.getRelResourceId());
-                                put("expose_kind_tenant", ExposeKind.TENANT);
-                                put("expose_kind_global", ExposeKind.GLOBAL);
-                                put("rel_app_id", relAppId);
-                                put("rel_tenant_id", relTenantId);
-                            }
-                        }), () -> new NotFoundException("找不到对应的权限策略"))
+                        "SELECT uri FROM %s" +
+                                " WHERE id = ? AND" +
+                                " ((rel_tenant_id = ? AND rel_app_id = ?)" +
+                                " OR (expose_kind = ? AND rel_tenant_id = ?)" +
+                                " OR expose_kind = ?)",
+                        Resource.class, authPolicyAddReq.getRelResourceId(), relTenantId, relAppId, ExposeKind.TENANT, relTenantId, ExposeKind.GLOBAL),
+                () -> new NotFoundException("找不到对应的权限策略"))
                 .compose(fetchResourceUri -> {
                     resourceUrl[0] = fetchResourceUri.getString("uri");
                     subjectIds.addAll(Arrays.stream(authPolicyAddReq.getRelSubjectIds().split(","))
@@ -146,9 +138,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                         whereParameters.put("action_kind", authPolicyAddReq.getActionKind());
                     }
                     return context.helper.existToError(
-                            context.sql.exists(
-                                    whereParameters,
-                                    AuthPolicy.class), () -> new ConflictException("权限策略已存在"));
+                            context.sql.exists(AuthPolicy.class, whereParameters), () -> new ConflictException("权限策略已存在"));
                 })
                 .compose(resp -> {
                     var authPolicy = context.helper.convert(authPolicyAddReq, AuthPolicy.class);
@@ -181,7 +171,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                                     var exchangeProcess = new ArrayList<Future>();
                                     subjectIds.forEach(subjectId -> {
                                         exchangeProcess.add(
-                                                ExchangeProcessor.addPolicy(
+                                                ExchangeProcessor.addAuthPolicy(
                                                         ExchangeProcessor.AuthPolicyInfo.builder()
                                                                 .resourceUri(resourceUrl[0])
                                                                 .actionKind(OptActionKind.CREATE)
@@ -190,7 +180,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                                                                 .subjectId(subjectId + "")
                                                                 .build(), context));
                                         exchangeProcess.add(
-                                                ExchangeProcessor.addPolicy(
+                                                ExchangeProcessor.addAuthPolicy(
                                                         ExchangeProcessor.AuthPolicyInfo.builder()
                                                                 .resourceUri(resourceUrl[0])
                                                                 .actionKind(OptActionKind.EXISTS)
@@ -199,7 +189,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                                                                 .subjectId(subjectId + "")
                                                                 .build(), context));
                                         exchangeProcess.add(
-                                                ExchangeProcessor.addPolicy(
+                                                ExchangeProcessor.addAuthPolicy(
                                                         ExchangeProcessor.AuthPolicyInfo.builder()
                                                                 .resourceUri(resourceUrl[0])
                                                                 .actionKind(OptActionKind.FETCH)
@@ -208,7 +198,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                                                                 .subjectId(subjectId + "")
                                                                 .build(), context));
                                         exchangeProcess.add(
-                                                ExchangeProcessor.addPolicy(
+                                                ExchangeProcessor.addAuthPolicy(
                                                         ExchangeProcessor.AuthPolicyInfo.builder()
                                                                 .resourceUri(resourceUrl[0])
                                                                 .actionKind(OptActionKind.MODIFY)
@@ -217,7 +207,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                                                                 .subjectId(subjectId + "")
                                                                 .build(), context));
                                         exchangeProcess.add(
-                                                ExchangeProcessor.addPolicy(
+                                                ExchangeProcessor.addAuthPolicy(
                                                         ExchangeProcessor.AuthPolicyInfo.builder()
                                                                 .resourceUri(resourceUrl[0])
                                                                 .actionKind(OptActionKind.PATCH)
@@ -226,7 +216,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                                                                 .subjectId(subjectId + "")
                                                                 .build(), context));
                                         exchangeProcess.add(
-                                                ExchangeProcessor.addPolicy(
+                                                ExchangeProcessor.addAuthPolicy(
                                                         ExchangeProcessor.AuthPolicyInfo.builder()
                                                                 .resourceUri(resourceUrl[0])
                                                                 .actionKind(OptActionKind.DELETE)
@@ -243,7 +233,7 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                                 .compose(r ->
                                         CompositeFuture.all(subjectIds.stream()
                                                 .map(id ->
-                                                        ExchangeProcessor.addPolicy(
+                                                        ExchangeProcessor.addAuthPolicy(
                                                                 ExchangeProcessor.AuthPolicyInfo.builder()
                                                                         .resourceUri(resourceUrl[0])
                                                                         .actionKind(authPolicy.getActionKind())
@@ -263,28 +253,20 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                 || authPolicyModifyReq.getRelSubjectKind() == null && authPolicyModifyReq.getRelSubjectIds() != null) {
             throw new BadRequestException("关联权限主体类型与关联权限主体Id必须同时存在");
         }
-        return Future.succeededFuture()
+        return context.helper.success()
                 .compose(resp -> {
                     if (authPolicyModifyReq.getRelResourceId() == null) {
                         return Future.succeededFuture();
                     }
                     return context.helper.notExistToError(
                             context.sql.exists(
-                                    String.format("SELECT id FROM %s" +
-                                                    " WHERE id = #{id} AND " +
-                                                    " ((rel_tenant_id = #{rel_tenant_id} AND rel_app_id = #{rel_app_id})" +
-                                                    " OR (expose_kind = #{expose_kind_tenant} AND rel_tenant_id = #{rel_tenant_id})" +
-                                                    " OR expose_kind = #{expose_kind_global})",
-                                            new Resource().tableName()),
-                                    new HashMap<>() {
-                                        {
-                                            put("id", authPolicyModifyReq.getRelResourceId());
-                                            put("expose_kind_tenant", ExposeKind.TENANT);
-                                            put("expose_kind_global", ExposeKind.GLOBAL);
-                                            put("rel_app_id", relAppId);
-                                            put("rel_tenant_id", relTenantId);
-                                        }
-                                    }), () -> new NotFoundException("找不到对应的权限策略"));
+                                    "SELECT id FROM %s" +
+                                            " WHERE id = ? AND " +
+                                            " ((rel_tenant_id = ? AND rel_app_id = ?)" +
+                                            " OR (expose_kind = ? AND rel_tenant_id = ?)" +
+                                            " OR expose_kind = ?)",
+                                    Resource.class, authPolicyModifyReq.getRelResourceId(), relTenantId, relAppId, ExposeKind.TENANT, relTenantId, ExposeKind.GLOBAL),
+                            () -> new NotFoundException("找不到对应的权限策略"));
                 })
                 .compose(resp -> {
                     if (authPolicyModifyReq.getRelSubjectIds() != null) {
@@ -323,64 +305,67 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
                     return context.helper.success();
                 })
                 .compose(resp ->
-                        context.helper.notExistToError(context.sql.getOne(new HashMap<String, Object>() {
-                            {
-                                put("id", authPolicyId);
-                                put("rel_app_id", relAppId);
-                                put("rel_tenant_id", relTenantId);
-                            }
-                        }, AuthPolicy.class), () -> new NotFoundException("找不到对应的权限策略"))
+                        context.helper.notExistToError(context.sql.getOne(
+                                AuthPolicy.class,
+                                new HashMap<String, Object>() {
+                                    {
+                                        put("id", authPolicyId);
+                                        put("rel_app_id", relAppId);
+                                        put("rel_tenant_id", relTenantId);
+                                    }
+                                }), () -> new NotFoundException("找不到对应的权限策略"))
                 )
-                .compose(originalAuthPolicy ->
-                        context.sql.update(authPolicyId, context.helper.convert(authPolicyModifyReq, AuthPolicy.class))
-                                .compose(resp ->
-                                        context.sql.getOne(originalAuthPolicy.getRelResourceId(), Resource.class)
-                                )
-                                .compose(storedResource ->
-                                        context.sql.getOne(authPolicyId, AuthPolicy.class)
-                                                .compose(newAuthPolicy ->
-                                                        CompositeFuture.all(Arrays.stream(originalAuthPolicy.getRelSubjectIds().split(","))
-                                                                .filter(id -> !id.trim().isBlank())
-                                                                .map(id -> Long.parseLong(id.trim()))
-                                                                .map(id ->
-                                                                        ExchangeProcessor.removePolicy(
-                                                                                ExchangeProcessor.AuthPolicyInfo.builder()
-                                                                                        .resourceUri(storedResource.getUri())
-                                                                                        .actionKind(originalAuthPolicy.getActionKind())
-                                                                                        .subjectKind(originalAuthPolicy.getRelSubjectKind())
-                                                                                        .subjectOperator(originalAuthPolicy.getSubjectOperator())
-                                                                                        .subjectId(id + "")
-                                                                                        .build(), context))
-                                                                .collect(Collectors.toList()))
-                                                                .compose(resp ->
-                                                                        CompositeFuture.all(Arrays.stream(newAuthPolicy.getRelSubjectIds().split(","))
-                                                                                .filter(id -> !id.trim().isBlank())
-                                                                                .map(id -> Long.parseLong(id.trim()))
-                                                                                .map(id ->
-                                                                                        ExchangeProcessor.addPolicy(
-                                                                                                ExchangeProcessor.AuthPolicyInfo.builder()
-                                                                                                        .resourceUri(storedResource.getUri())
-                                                                                                        .actionKind(newAuthPolicy.getActionKind())
-                                                                                                        .subjectKind(newAuthPolicy.getRelSubjectKind())
-                                                                                                        .subjectOperator(newAuthPolicy.getSubjectOperator())
-                                                                                                        .subjectId(id + "")
-                                                                                                        .build(), context))
-                                                                                .collect(Collectors.toList()))
-                                                                )
-                                                                .compose(r -> context.helper.success())))
-                );
+                .compose(originalAuthPolicy -> {
+                    var getStoredResourceF = context.sql.update(context.helper.convert(authPolicyModifyReq, AuthPolicy.class), authPolicyId)
+                            .compose(resp ->
+                                    context.sql.getOne(Resource.class, originalAuthPolicy.getRelResourceId())
+                            );
+                    return getStoredResourceF.compose(storedResource -> {
+                        var getAuthPolicyF = context.sql.getOne(AuthPolicy.class, authPolicyId);
+                        return getAuthPolicyF.compose(newAuthPolicy ->
+                                CompositeFuture.all(Arrays.stream(originalAuthPolicy.getRelSubjectIds().split(","))
+                                        .filter(id -> !id.trim().isBlank())
+                                        .map(id -> Long.parseLong(id.trim()))
+                                        .map(id ->
+                                                ExchangeProcessor.removeAuthPolicy(
+                                                        ExchangeProcessor.AuthPolicyInfo.builder()
+                                                                .resourceUri(storedResource.getUri())
+                                                                .actionKind(originalAuthPolicy.getActionKind())
+                                                                .subjectKind(originalAuthPolicy.getRelSubjectKind())
+                                                                .subjectOperator(originalAuthPolicy.getSubjectOperator())
+                                                                .subjectId(id + "")
+                                                                .build(), context))
+                                        .collect(Collectors.toList()))
+                                        .compose(resp ->
+                                                CompositeFuture.all(Arrays.stream(newAuthPolicy.getRelSubjectIds().split(","))
+                                                        .filter(id -> !id.trim().isBlank())
+                                                        .map(id -> Long.parseLong(id.trim()))
+                                                        .map(id ->
+                                                                ExchangeProcessor.addAuthPolicy(
+                                                                        ExchangeProcessor.AuthPolicyInfo.builder()
+                                                                                .resourceUri(storedResource.getUri())
+                                                                                .actionKind(newAuthPolicy.getActionKind())
+                                                                                .subjectKind(newAuthPolicy.getRelSubjectKind())
+                                                                                .subjectOperator(newAuthPolicy.getSubjectOperator())
+                                                                                .subjectId(id + "")
+                                                                                .build(), context))
+                                                        .collect(Collectors.toList()))
+                                        )
+                                        .compose(r -> context.helper.success()));
+                    });
+                });
     }
 
     public static Future<AuthPolicyResp> getAuthPolicy(Long authPolicyId, Long relAppId, Long relTenantId, ProcessContext context) {
         return context.sql.getOne(
+                AuthPolicy.class,
                 new HashMap<>() {
                     {
                         put("id", authPolicyId);
                         put("rel_app_id", relAppId);
                         put("rel_tenant_id", relTenantId);
                     }
-                },
-                AuthPolicy.class)
+                })
                 .compose(authPolicy -> context.helper.success(authPolicy, AuthPolicyResp.class));
     }
 
@@ -396,40 +381,43 @@ public class ACAuthPolicyProcessor extends EventBusProcessor {
             whereParameters.put("%rel_subject_kind", "%" + subjectKind + "%");
         }
         return context.sql.page(
-                whereParameters,
+                AuthPolicy.class,
                 pageNumber,
                 pageSize,
-                AuthPolicy.class)
+                whereParameters)
                 .compose(authPolicy -> context.helper.success(authPolicy, AuthPolicyResp.class));
     }
 
     public static Future<Void> deleteAuthPolicy(Long authPolicyId, Long relAppId, Long relTenantId, ProcessContext context) {
-        return context.helper.notExistToError(context.sql.getOne(new HashMap<>() {
-            {
-                put("id", authPolicyId);
-                put("rel_app_id", relAppId);
-                put("rel_tenant_id", relTenantId);
-            }
-        }, AuthPolicy.class), () -> new NotFoundException("找不到对应的权限策略"))
-                .compose(originalAuthPolicy ->
-                        context.sql.getOne(originalAuthPolicy.getRelResourceId(), Resource.class)
-                                .compose(storedResource ->
-                                        context.sql.softDelete(authPolicyId, AuthPolicy.class)
-                                                .compose(resp ->
-                                                        CompositeFuture.all(Arrays.stream(originalAuthPolicy.getRelSubjectIds().split(","))
-                                                                .filter(id -> !id.trim().isBlank())
-                                                                .map(id -> Long.parseLong(id.trim()))
-                                                                .map(id ->
-                                                                        ExchangeProcessor.removePolicy(
-                                                                                ExchangeProcessor.AuthPolicyInfo.builder()
-                                                                                        .resourceUri(storedResource.getUri())
-                                                                                        .actionKind(originalAuthPolicy.getActionKind())
-                                                                                        .subjectKind(originalAuthPolicy.getRelSubjectKind())
-                                                                                        .subjectOperator(originalAuthPolicy.getSubjectOperator())
-                                                                                        .subjectId(id + "")
-                                                                                        .build(), context))
-                                                                .collect(Collectors.toList())))
-                                                .compose(r -> context.helper.success())));
+        var getOriAuthPolicyF = context.helper.notExistToError(context.sql.getOne(
+                AuthPolicy.class,
+                new HashMap<>() {
+                    {
+                        put("id", authPolicyId);
+                        put("rel_app_id", relAppId);
+                        put("rel_tenant_id", relTenantId);
+                    }
+                }), () -> new NotFoundException("找不到对应的权限策略"));
+        return getOriAuthPolicyF.compose(originalAuthPolicy -> {
+            var getStoredResourceF = context.sql.getOne(Resource.class, originalAuthPolicy.getRelResourceId());
+            return getStoredResourceF.compose(storedResource ->
+                    context.sql.softDelete(AuthPolicy.class, authPolicyId)
+                            .compose(resp ->
+                                    CompositeFuture.all(Arrays.stream(originalAuthPolicy.getRelSubjectIds().split(","))
+                                            .filter(id -> !id.trim().isBlank())
+                                            .map(id -> Long.parseLong(id.trim()))
+                                            .map(id ->
+                                                    ExchangeProcessor.removeAuthPolicy(
+                                                            ExchangeProcessor.AuthPolicyInfo.builder()
+                                                                    .resourceUri(storedResource.getUri())
+                                                                    .actionKind(originalAuthPolicy.getActionKind())
+                                                                    .subjectKind(originalAuthPolicy.getRelSubjectKind())
+                                                                    .subjectOperator(originalAuthPolicy.getSubjectOperator())
+                                                                    .subjectId(id + "")
+                                                                    .build(), context))
+                                            .collect(Collectors.toList())))
+                            .compose(r -> context.helper.success()));
+        });
     }
 
 }

@@ -21,29 +21,24 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * 鉴权策略.
- * <p>
- * Redis格式：
- * <p>
- * 资源类型:资源URI:资源操作类型 = {权限主体运算类型:{权限主体类型:[权限主体Id]}}
+ * 本地资源缓存.
  *
  * @author gudaoxuri
  */
 @Slf4j
 public class LocalResourceCache {
 
-    // resourceKind -> actionKind -> uris
+    // ResourceKind -> ActionKind -> URIs
     private static final Map<String, Map<String, List<URI>>> LOCAL_RESOURCES = new ConcurrentHashMap<>();
 
     public static Map<String, List<URI>> getResourceInfo(String resourceKind) {
-        return LOCAL_RESOURCES.getOrDefault(resourceKind, new HashMap<>());
+        return LOCAL_RESOURCES.getOrDefault(resourceKind, new ConcurrentHashMap<>());
     }
 
     public static void addLocalResource(URI resourceUri, String actionKind) {
@@ -75,20 +70,20 @@ public class LocalResourceCache {
 
     public static void removeLocalResource(URI resourceUri, String actionKind) {
         if (actionKind == null || actionKind.equalsIgnoreCase("")) {
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.CREATE.toString().toLowerCase(),
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new ConcurrentHashMap<>()).getOrDefault(OptActionKind.CREATE.toString().toLowerCase(),
                     new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.MODIFY.toString().toLowerCase(),
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new ConcurrentHashMap<>()).getOrDefault(OptActionKind.MODIFY.toString().toLowerCase(),
                     new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.PATCH.toString().toLowerCase(),
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new ConcurrentHashMap<>()).getOrDefault(OptActionKind.PATCH.toString().toLowerCase(),
                     new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.EXISTS.toString().toLowerCase(),
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new ConcurrentHashMap<>()).getOrDefault(OptActionKind.EXISTS.toString().toLowerCase(),
                     new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.FETCH.toString().toLowerCase(),
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new ConcurrentHashMap<>()).getOrDefault(OptActionKind.FETCH.toString().toLowerCase(),
                     new ArrayList<>()).remove(resourceUri);
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(OptActionKind.DELETE.toString().toLowerCase(),
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new ConcurrentHashMap<>()).getOrDefault(OptActionKind.DELETE.toString().toLowerCase(),
                     new ArrayList<>()).remove(resourceUri);
         } else {
-            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new HashMap<>()).getOrDefault(actionKind.toLowerCase(),
+            LOCAL_RESOURCES.getOrDefault(resourceUri.getScheme(), new ConcurrentHashMap<>()).getOrDefault(actionKind.toLowerCase(),
                     new ArrayList<>()).remove(resourceUri);
         }
     }

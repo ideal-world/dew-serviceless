@@ -24,4 +24,3 @@ modules:
         appInfoCacheExpireSec: 0
   - clazzPackage: idealworld.dew.serviceless.cache.CacheModule
   - clazzPackage: idealworld.dew.serviceless.http.HttpModule
-  - clazzPackage: idealworld.dew.serviceless.task.TaskModule

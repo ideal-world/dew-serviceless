@@ -44,7 +44,7 @@ public class TestServicelessApplication extends ITBasicTest {
     @Test
     public void testServer(Vertx vertx, VertxTestContext testContext) {
         var context = ProcessContext.builder().moduleName(new IAMModule().getModuleName()).build().init(IdentOptExchangeInfo.builder().build());
-        iamAppCode = await(context.sql.getOne(1L, App.class))._0.getOpenId();
+        iamAppCode = await(context.sql.getOne(App.class,1L))._0.getOpenId();
         var iamIdentOpt = req(OptActionKind.CREATE, "http://iam.http.iam/common/login", new HashMap<String, Object>() {
             {
                 put("ak", IAM_USERNAME);
