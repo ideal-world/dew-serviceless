@@ -1,4 +1,1 @@
-== New generation Serviceless platform.
-
-Building……
-
+## Move to : https://github.com/ideal-world/bios
